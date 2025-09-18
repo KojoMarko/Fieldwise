@@ -11,6 +11,7 @@ import { RecentWorkOrders } from '@/components/recent-work-orders';
 import { workOrders } from '@/lib/data';
 import { useAuth } from '@/hooks/use-auth';
 import TechnicianDashboardPage from './technician/page';
+import CustomerDashboardPage from './customer/page';
 
 
 export default function DashboardPage() {
@@ -18,6 +19,10 @@ export default function DashboardPage() {
 
     if (user?.role === 'Technician') {
         return <TechnicianDashboardPage />
+    }
+    
+    if (user?.role === 'Customer') {
+        return <CustomerDashboardPage />
     }
 
   const openWorkOrders = workOrders.filter(

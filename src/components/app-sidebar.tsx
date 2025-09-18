@@ -34,11 +34,22 @@ const technicianNavItems = [
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
 ]
 
+const customerNavItems = [
+    { href: '/dashboard', icon: Home, label: 'Dashboard' },
+    { href: '/dashboard/work-orders', icon: Wrench, label: 'My Service History' },
+]
+
 export function AppSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  const navItems = user?.role === 'Technician' ? technicianNavItems : adminNavItems;
+  let navItems = adminNavItems;
+  if (user?.role === 'Technician') {
+    navItems = technicianNavItems;
+  } else if (user?.role === 'Customer') {
+      navItems = customerNavItems;
+  }
+
 
   return (
     <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-sidebar sm:flex">

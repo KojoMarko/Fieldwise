@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -29,7 +30,7 @@ export default function LoginPage() {
   }, [user, isLoading, router])
 
 
-  if(isLoading || user) {
+  if(isLoading) {
       return <div className="flex h-screen w-full items-center justify-center">Loading...</div>
   }
 

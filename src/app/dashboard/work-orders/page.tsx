@@ -13,6 +13,15 @@ import { DataTable } from './components/data-table';
 import { workOrders } from '@/lib/data';
 
 export default function WorkOrdersPage() {
+  const allOrders = workOrders;
+  const activeOrders = workOrders.filter(
+    (wo) => wo.status === 'Scheduled' || wo.status === 'In-Progress'
+  );
+  const completedOrders = workOrders.filter(
+    (wo) => wo.status === 'Completed' || wo.status === 'Invoiced'
+  );
+  const draftOrders = workOrders.filter((wo) => wo.status === 'Draft');
+
   return (
     <Tabs defaultValue="all">
       <div className="flex items-center">
@@ -42,13 +51,52 @@ export default function WorkOrdersPage() {
       <TabsContent value="all">
         <Card>
           <CardHeader>
-            <CardTitle>Work Orders</CardTitle>
+            <CardTitle>All Work Orders</CardTitle>
             <CardDescription>
               Manage all service jobs and assignments.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <DataTable columns={columns} data={workOrders} />
+            <DataTable columns={columns} data={allOrders} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+       <TabsContent value="active">
+        <Card>
+          <CardHeader>
+            <CardTitle>Active Work Orders</CardTitle>
+            <CardDescription>
+              Work orders that are scheduled or in-progress.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataTable columns={columns} data={activeOrders} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+       <TabsContent value="completed">
+        <Card>
+          <CardHeader>
+            <CardTitle>Completed Work Orders</CardTitle>
+            <CardDescription>
+              Work orders that have been completed or invoiced.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataTable columns={columns} data={completedOrders} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+       <TabsContent value="draft">
+        <Card>
+          <CardHeader>
+            <CardTitle>Draft Work Orders</CardTitle>
+            <CardDescription>
+             Work orders that are not yet scheduled.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataTable columns={columns} data={draftOrders} />
           </CardContent>
         </Card>
       </TabsContent>

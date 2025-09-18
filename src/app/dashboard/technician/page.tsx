@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Wrench,
   CheckCircle,
@@ -14,42 +16,43 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { workOrders, customers, assets, users } from '@/lib/data';
+import { workOrders, customers } from '@/lib/data';
 import Link from 'next/link';
-import { format, isToday, isFuture } from 'date-fns';
-
-// Assuming the logged-in technician is user-2 for demonstration
-const currentTechnicianId = 'user-2';
-const technician = users.find(u => u.id === currentTechnicianId);
-
-const myWorkOrders = workOrders.filter(
-  wo => wo.technicianId === currentTechnicianId
-);
-
-const todaysJobs = myWorkOrders.filter(wo =>
-  isToday(new Date(wo.scheduledDate))
-);
-const upcomingJobs = myWorkOrders.filter(wo =>
-  isFuture(new Date(wo.scheduledDate))
-);
-
-const completedThisWeek = myWorkOrders.filter(wo => {
-    if (!wo.completedDate) return false;
-    const completedDate = new Date(wo.completedDate);
-    const today = new Date();
-    const oneWeekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
-    return completedDate >= oneWeekAgo;
-}).length;
+import { format, isToday, isFuture, parseISO, startOfWeek, isWithinInterval } from 'date-fns';
+import { useAuth } from '@/hooks/use-auth';
 
 
 export default function TechnicianDashboardPage() {
+    const { user } = useAuth();
+    
+    if (!user) return null;
+
+    const myWorkOrders = workOrders.filter(
+    wo => wo.technicianId === user.id
+    );
+
+    const todaysJobs = myWorkOrders.filter(wo =>
+    isToday(parseISO(wo.scheduledDate))
+    );
+    const upcomingJobs = myWorkOrders.filter(wo =>
+    isFuture(parseISO(wo.scheduledDate)) && !isToday(parseISO(wo.scheduledDate))
+    );
+
+    const completedThisWeek = myWorkOrders.filter(wo => {
+        if (!wo.completedDate) return false;
+        const completedDate = parseISO(wo.completedDate);
+        const today = new Date();
+        const start = startOfWeek(today);
+        return isWithinInterval(completedDate, { start, end: today });
+    }).length;
+
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">
-          Welcome, {technician?.name.split(' ')[0]}
+          Welcome, {user.name.split(' ')[0]}
         </h1>
         <Badge variant="outline" className="text-sm">Technician View</Badge>
       </div>
@@ -146,7 +149,7 @@ export default function TechnicianDashboardPage() {
                                     <div>
                                         <p className="font-medium">{wo.title}</p>
                                         <p className="text-sm text-muted-foreground">{customer?.name}</p>
-                                        <p className="text-xs font-semibold text-primary mt-1">{format(new Date(wo.scheduledDate), 'eeee, MMM d')}</p>
+                                        <p className="text-xs font-semibold text-primary mt-1">{format(parseISO(wo.scheduledDate), 'eeee, MMM d')}</p>
                                     </div>
                                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                 </div>

@@ -32,12 +32,20 @@ import {
   Package,
   LayoutDashboard,
 } from 'lucide-react';
-import { users } from '@/lib/data';
-
-// A placeholder for the current user
-const currentUser = users.find((u) => u.role === 'Admin')!;
+import { useAuth } from '@/hooks/use-auth';
 
 export function Header() {
+    const { user, logout } = useAuth();
+
+    if (!user) {
+        return (
+             <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+                <div className="ml-auto" />
+             </header>
+        )
+    }
+
+
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
       <Sheet>
@@ -131,12 +139,12 @@ export function Header() {
           >
             <Avatar>
               <AvatarImage
-                src={currentUser.avatarUrl}
-                alt={currentUser.name}
+                src={user.avatarUrl}
+                alt={user.name}
                 data-ai-hint="person face"
               />
               <AvatarFallback>
-                {currentUser.name.charAt(0)}
+                {user.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
           </Button>
@@ -144,12 +152,14 @@ export function Header() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-           <DropdownMenuItem asChild>
-            <Link href="/dashboard/technician">
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              <span>My Dashboard</span>
-            </Link>
-          </DropdownMenuItem>
+           {user.role === 'Technician' && (
+             <DropdownMenuItem asChild>
+                <Link href="/dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  <span>My Dashboard</span>
+                </Link>
+              </DropdownMenuItem>
+           )}
           <DropdownMenuItem asChild>
             <Link href="/dashboard/profile">
               <User className="mr-2 h-4 w-4" />
@@ -163,7 +173,7 @@ export function Header() {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem onClick={logout}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>
           </DropdownMenuItem>

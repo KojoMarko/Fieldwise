@@ -1,3 +1,4 @@
+'use client';
 import {
   Wrench,
   CheckCircle,
@@ -8,8 +9,17 @@ import { KpiCard } from '@/components/kpi-card';
 import { WorkOrderStatusChart } from '@/components/work-order-status-chart';
 import { RecentWorkOrders } from '@/components/recent-work-orders';
 import { workOrders } from '@/lib/data';
+import { useAuth } from '@/hooks/use-auth';
+import TechnicianDashboardPage from './technician/page';
+
 
 export default function DashboardPage() {
+    const { user } = useAuth();
+
+    if (user?.role === 'Technician') {
+        return <TechnicianDashboardPage />
+    }
+
   const openWorkOrders = workOrders.filter(
     (wo) =>
       wo.status === 'Scheduled' ||

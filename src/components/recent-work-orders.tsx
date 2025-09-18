@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Table,
   TableBody,
@@ -26,6 +28,9 @@ import { MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { WorkOrderStatus } from '@/lib/types';
+import { useState } from 'react';
+import { AssignTechnicianDialog } from '@/app/dashboard/work-orders/components/assign-technician-dialog';
+
 
 const statusStyles: Record<WorkOrderStatus, string> = {
     Draft: 'bg-gray-200 text-gray-800',
@@ -39,8 +44,23 @@ const statusStyles: Record<WorkOrderStatus, string> = {
 
 export function RecentWorkOrders() {
   const recentOrders = workOrders.slice(0, 5);
+   const [isAssignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<typeof workOrders[0] | null>(null);
+
+  const handleAssignClick = (order: typeof workOrders[0]) => {
+    setSelectedOrder(order);
+    setAssignDialogOpen(true);
+  }
 
   return (
+    <>
+    {selectedOrder && (
+        <AssignTechnicianDialog
+            open={isAssignDialogOpen}
+            onOpenChange={setAssignDialogOpen}
+            workOrder={selectedOrder}
+        />
+    )}
     <Card>
       <CardHeader>
         <CardTitle>Recent Work Orders</CardTitle>
@@ -94,7 +114,7 @@ export function RecentWorkOrders() {
                         <DropdownMenuItem asChild>
                            <Link href={`/dashboard/work-orders/${order.id}`}>View Details</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Assign Technician</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAssignClick(order)}>Assign Technician</DropdownMenuItem>
                         <DropdownMenuItem>Mark as Completed</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -106,5 +126,6 @@ export function RecentWorkOrders() {
         </Table>
       </CardContent>
     </Card>
+    </>
   );
 }

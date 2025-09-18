@@ -10,21 +10,24 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { WorkOrder, WorkOrderStatus } from '@/lib/types';
 import { customers, users } from '@/lib/data';
 import Link from 'next/link';
+import { AssignTechnicianDialog } from './assign-technician-dialog';
+import { GenerateInvoiceDialog } from './generate-invoice-dialog';
+import { useState } from 'react';
 
 const statusStyles: Record<WorkOrderStatus, string> = {
-    Draft: 'bg-gray-200 text-gray-800',
-    Scheduled: 'bg-blue-100 text-blue-800',
-    'In-Progress': 'bg-yellow-100 text-yellow-800',
-    Completed: 'bg-green-100 text-green-800',
-    Invoiced: 'bg-purple-100 text-purple-800',
-    Cancelled: 'bg-red-100 text-red-800',
+  Draft: 'bg-gray-200 text-gray-800',
+  Scheduled: 'bg-blue-100 text-blue-800',
+  'In-Progress': 'bg-yellow-100 text-yellow-800',
+  Completed: 'bg-green-100 text-green-800',
+  Invoiced: 'bg-purple-100 text-purple-800',
+  Cancelled: 'bg-red-100 text-red-800',
 };
-
 
 export const columns: ColumnDef<WorkOrder>[] = [
   {
@@ -50,28 +53,28 @@ export const columns: ColumnDef<WorkOrder>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'id',
-    header: 'Order ID',
-  },
-  {
     accessorKey: 'title',
     header: 'Title',
     cell: ({ row }) => {
-        const customer = customers.find(c => c.id === row.original.customerId);
-        return (
-            <div>
-                <div className="font-medium">{row.original.title}</div>
-                <div className="text-sm text-muted-foreground">{customer?.name}</div>
-            </div>
-        )
-    }
+      const customer = customers.find((c) => c.id === row.original.customerId);
+      return (
+        <div>
+          <div className="font-medium">{row.original.title}</div>
+          <div className="text-sm text-muted-foreground">{customer?.name}</div>
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'status',
     header: 'Status',
     cell: ({ row }) => {
       const status = row.getValue('status') as WorkOrderStatus;
-      return <Badge className={statusStyles[status]} variant="outline">{status}</Badge>;
+      return (
+        <Badge className={statusStyles[status]} variant="outline">
+          {status}
+        </Badge>
+      );
     },
   },
   {
@@ -92,9 +95,13 @@ export const columns: ColumnDef<WorkOrder>[] = [
     accessorKey: 'technicianId',
     header: 'Technician',
     cell: ({ row }) => {
-        const techId = row.getValue('technicianId') as string;
-        const technician = users.find(u => u.id === techId);
-        return technician ? technician.name : <span className="text-muted-foreground">Unassigned</span>;
+      const techId = row.getValue('technicianId') as string;
+      const technician = users.find((u) => u.id === techId);
+      return technician ? (
+        technician.name
+      ) : (
+        <span className="text-muted-foreground">Unassigned</span>
+      );
     },
   },
   {
@@ -107,26 +114,47 @@ export const columns: ColumnDef<WorkOrder>[] = [
   },
   {
     id: 'actions',
-    cell: ({ row }) => {
+    cell: function Cell({ row }) {
       const workOrder = row.original;
+      const [isAssignDialogOpen, setAssignDialogOpen] = useState(false);
+      const [isInvoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-                <Link href={`/dashboard/work-orders/${workOrder.id}`}>View Details</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>Assign Technician</DropdownMenuItem>
-            <DropdownMenuItem>Generate Invoice</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <>
+          <AssignTechnicianDialog
+            open={isAssignDialogOpen}
+            onOpenChange={setAssignDialogOpen}
+            workOrder={workOrder}
+          />
+          <GenerateInvoiceDialog
+            open={isInvoiceDialogOpen}
+            onOpenChange={setInvoiceDialogOpen}
+            workOrder={workOrder}
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/work-orders/${workOrder.id}`}>
+                  View Details
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setAssignDialogOpen(true)}>
+                Assign Technician
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setInvoiceDialogOpen(true)}>
+                Generate Invoice
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
       );
     },
   },

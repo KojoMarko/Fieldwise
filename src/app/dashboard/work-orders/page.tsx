@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { columns } from './components/columns';
 import { DataTable } from './components/data-table';
 import { workOrders } from '@/lib/data';
+import Link from 'next/link';
 
 export default function WorkOrdersPage() {
   const allOrders = workOrders;
@@ -40,11 +41,13 @@ export default function WorkOrdersPage() {
               Export
             </span>
           </Button>
-          <Button size="sm" className="h-8 gap-1">
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Create Work Order
-            </span>
+          <Button size="sm" className="h-8 gap-1" asChild>
+            <Link href="/dashboard/work-orders/new">
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Create Work Order
+              </span>
+            </Link>
           </Button>
         </div>
       </div>
@@ -61,7 +64,7 @@ export default function WorkOrdersPage() {
           </CardContent>
         </Card>
       </TabsContent>
-       <TabsContent value="active">
+      <TabsContent value="active">
         <Card>
           <CardHeader>
             <CardTitle>Active Work Orders</CardTitle>
@@ -74,7 +77,7 @@ export default function WorkOrdersPage() {
           </CardContent>
         </Card>
       </TabsContent>
-       <TabsContent value="completed">
+      <TabsContent value="completed">
         <Card>
           <CardHeader>
             <CardTitle>Completed Work Orders</CardTitle>
@@ -87,12 +90,12 @@ export default function WorkOrdersPage() {
           </CardContent>
         </Card>
       </TabsContent>
-       <TabsContent value="draft">
+      <TabsContent value="draft">
         <Card>
           <CardHeader>
             <CardTitle>Draft Work Orders</CardTitle>
             <CardDescription>
-             Work orders that are not yet scheduled.
+              Work orders that are not yet scheduled.
             </CardDescription>
           </CardHeader>
           <CardContent>

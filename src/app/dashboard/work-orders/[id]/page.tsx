@@ -1,7 +1,10 @@
+
+'use client';
 import {
   ChevronLeft,
   MoreVertical,
   Wrench,
+  ShieldAlert,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,15 +14,18 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { workOrders, customers, assets, users } from '@/lib/data';
 import type { WorkOrderStatus } from '@/lib/types';
 import Link from 'next/link';
 import { WorkOrderClientSection } from './components/work-order-client-section';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WorkOrderPartsTab } from './components/work-order-parts-tab';
+import { useAuth } from '@/hooks/use-auth';
+import { useEffect, useMemo } from 'react';
 
 const statusStyles: Record<WorkOrderStatus, string> = {
   Draft: 'bg-gray-200 text-gray-800',
@@ -36,14 +42,79 @@ export default function WorkOrderDetailPage({
 }: {
   params: { id: string };
 }) {
-  const workOrder = workOrders.find((wo) => wo.id === params.id);
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const workOrder = useMemo(() => workOrders.find((wo) => wo.id === params.id), [params.id]);
+
+  useEffect(() => {
+    if (!user || !workOrder) return;
+
+    if (user.role === 'Admin') return; // Admins can see everything
+
+    if (user.role === 'Technician' && workOrder.technicianId !== user.id) {
+      router.push('/dashboard/work-orders');
+    }
+
+    if (user.role === 'Customer') {
+      const customerProfile = customers.find(c => c.contactEmail === user.email);
+      if (workOrder.customerId !== customerProfile?.id) {
+        router.push('/dashboard/work-orders');
+      }
+    }
+  }, [user, workOrder, router]);
+
+
   if (!workOrder) {
-    notFound();
+    return notFound();
   }
 
   const customer = customers.find((c) => c.id === workOrder.customerId);
   const asset = assets.find((a) => a.id === workOrder.assetId);
   const technician = users.find((u) => u.id === workOrder.technicianId);
+  
+  if (!user) {
+    return null; // or a loading state
+  }
+  
+  // Final check to prevent rendering for unauthorized users before redirect kicks in
+  const isAuthorized = useMemo(() => {
+    if (!user || !workOrder) return false;
+    if (user.role === 'Admin') return true;
+    if (user.role === 'Technician') return workOrder.technicianId === user.id;
+    if (user.role === 'Customer') {
+       const customerProfile = customers.find(c => c.contactEmail === user.email);
+       return workOrder.customerId === customerProfile?.id;
+    }
+    return false;
+  }, [user, workOrder]);
+
+  if (!isAuthorized) {
+       return (
+        <div className="flex flex-col items-center justify-center h-full text-center gap-4 p-4">
+            <Card className='max-w-md'>
+                <CardHeader>
+                    <CardTitle className='flex items-center gap-2'>
+                        <ShieldAlert className="h-6 w-6 text-destructive" />
+                        Access Denied
+                    </CardTitle>
+                    <CardDescription>
+                        You do not have permission to view this work order.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className='text-sm text-muted-foreground'>You are being redirected to your dashboard.</p>
+                </CardContent>
+                <CardFooter>
+                     <Button asChild className="w-full">
+                        <Link href="/dashboard/work-orders">Return to Work Orders</Link>
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
+    )
+  }
+
 
   return (
     <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4">
@@ -60,12 +131,14 @@ export default function WorkOrderDetailPage({
         <Badge variant="outline" className={statusStyles[workOrder.status]}>
           {workOrder.status}
         </Badge>
-        <div className="hidden items-center gap-2 md:ml-auto md:flex">
-          <Button variant="outline" size="sm">
-            Discard
-          </Button>
-          <Button size="sm">Save</Button>
-        </div>
+        {user.role === 'Admin' && (
+            <div className="hidden items-center gap-2 md:ml-auto md:flex">
+                <Button variant="outline" size="sm">
+                    Discard
+                </Button>
+                <Button size="sm">Save</Button>
+            </div>
+        )}
       </div>
       <Tabs defaultValue="details">
         <TabsList className="grid w-full grid-cols-2 md:w-[400px]">

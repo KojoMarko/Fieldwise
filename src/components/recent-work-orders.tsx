@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -27,9 +28,10 @@ import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import type { WorkOrderStatus } from '@/lib/types';
+import type { WorkOrder, WorkOrderStatus } from '@/lib/types';
 import { useState } from 'react';
 import { AssignTechnicianDialog } from '@/app/dashboard/work-orders/components/assign-technician-dialog';
+import { useAuth } from '@/hooks/use-auth';
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {
@@ -44,11 +46,28 @@ const statusStyles: Record<WorkOrderStatus, string> = {
 
 
 export function RecentWorkOrders() {
-  const recentOrders = workOrders.slice(0, 5);
-   const [isAssignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<typeof workOrders[0] | null>(null);
+  const { user } = useAuth();
 
-  const handleAssignClick = (order: typeof workOrders[0]) => {
+  const getFilteredWorkOrders = () => {
+    if (!user) return [];
+    
+    if (user.role === 'Admin') {
+      return workOrders;
+    } else if (user.role === 'Technician') {
+      return workOrders.filter(wo => wo.technicianId === user.id);
+    } else if (user.role === 'Customer') {
+      const customerProfile = customers.find(c => c.contactEmail === user.email);
+      if (!customerProfile) return [];
+      return workOrders.filter(wo => wo.customerId === customerProfile.id);
+    }
+    return [];
+  };
+
+  const recentOrders = getFilteredWorkOrders().slice(0, 5);
+  const [isAssignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
+
+  const handleAssignClick = (order: WorkOrder) => {
     setSelectedOrder(order);
     setAssignDialogOpen(true);
   }

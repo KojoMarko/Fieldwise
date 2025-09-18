@@ -1,3 +1,5 @@
+
+'use client';
 import { File, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,18 +12,38 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { columns } from './components/columns';
 import { DataTable } from './components/data-table';
-import { workOrders } from '@/lib/data';
+import { workOrders, customers } from '@/lib/data';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/use-auth';
+import type { WorkOrder } from '@/lib/types';
+import { useMemo } from 'react';
 
 export default function WorkOrdersPage() {
-  const allOrders = workOrders;
-  const activeOrders = workOrders.filter(
+  const { user } = useAuth();
+
+  const userWorkOrders = useMemo(() => {
+    if (!user) return [];
+    
+    if (user.role === 'Admin') {
+      return workOrders;
+    } else if (user.role === 'Technician') {
+      return workOrders.filter(wo => wo.technicianId === user.id);
+    } else if (user.role === 'Customer') {
+      const customerProfile = customers.find(c => c.contactEmail === user.email);
+      if (!customerProfile) return [];
+      return workOrders.filter(wo => wo.customerId === customerProfile.id);
+    }
+    return [];
+  }, [user]);
+
+  const allOrders = userWorkOrders;
+  const activeOrders = userWorkOrders.filter(
     (wo) => wo.status === 'Scheduled' || wo.status === 'In-Progress' || wo.status === 'On-Hold'
   );
-  const completedOrders = workOrders.filter(
+  const completedOrders = userWorkOrders.filter(
     (wo) => wo.status === 'Completed' || wo.status === 'Invoiced'
   );
-  const draftOrders = workOrders.filter((wo) => wo.status === 'Draft');
+  const draftOrders = userWorkOrders.filter((wo) => wo.status === 'Draft');
 
   return (
     <Tabs defaultValue="all">
@@ -30,22 +52,26 @@ export default function WorkOrdersPage() {
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="active">Active</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="draft" className="hidden sm:flex">
-            Draft
-          </TabsTrigger>
+          {user?.role === 'Admin' && (
+            <TabsTrigger value="draft" className="hidden sm:flex">
+              Draft
+            </TabsTrigger>
+          )}
         </TabsList>
         <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-8 gap-1">
-            <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Export
-            </span>
-          </Button>
+          {user?.role === 'Admin' && (
+            <Button size="sm" variant="outline" className="h-8 gap-1">
+                <File className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Export
+                </span>
+            </Button>
+          )}
           <Button size="sm" className="h-8 gap-1" asChild>
             <Link href="/dashboard/work-orders/new">
               <PlusCircle className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Create Work Order
+                {user?.role === 'Customer' ? 'Request Service' : 'Create Work Order'}
               </span>
             </Link>
           </Button>
@@ -71,7 +97,7 @@ export default function WorkOrdersPage() {
             <CardDescription>
               Work orders that are scheduled, in-progress, or on-hold.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
             <DataTable columns={columns} data={activeOrders} />
           </CardContent>
@@ -84,7 +110,7 @@ export default function WorkOrdersPage() {
             <CardDescription>
               Work orders that have been completed or invoiced.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
             <DataTable columns={columns} data={completedOrders} />
           </CardContent>
@@ -97,7 +123,7 @@ export default function WorkOrdersPage() {
             <CardDescription>
               Work orders that are not yet scheduled.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
             <DataTable columns={columns} data={draftOrders} />
           </CardContent>

@@ -15,7 +15,6 @@ import { DataTable } from './components/data-table';
 import { workOrders, customers } from '@/lib/data';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import type { WorkOrder } from '@/lib/types';
 import { useMemo } from 'react';
 
 export default function WorkOrdersPage() {
@@ -97,7 +96,7 @@ export default function WorkOrdersPage() {
             <CardDescription>
               Work orders that are scheduled, in-progress, or on-hold.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
             <DataTable columns={columns} data={activeOrders} />
           </CardContent>
@@ -110,7 +109,7 @@ export default function WorkOrdersPage() {
             <CardDescription>
               Work orders that have been completed or invoiced.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
             <DataTable columns={columns} data={completedOrders} />
           </CardContent>

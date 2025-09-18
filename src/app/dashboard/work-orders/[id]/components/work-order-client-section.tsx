@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import {
   Sparkles,
   LoaderCircle,
@@ -16,9 +17,18 @@ import {
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import type { WorkOrder } from '@/lib/types';
+import type { WorkOrder, Customer, User } from '@/lib/types';
+import { format } from 'date-fns';
 
-export function WorkOrderClientSection({ workOrder }: { workOrder: WorkOrder }) {
+export function WorkOrderClientSection({
+  workOrder,
+  customer,
+  technician,
+}: {
+  workOrder: WorkOrder;
+  customer?: Customer;
+  technician?: User;
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const { toast } = useToast();
@@ -45,25 +55,71 @@ export function WorkOrderClientSection({ workOrder }: { workOrder: WorkOrder }) 
     }
   };
 
+  const ServiceReport = () => (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Service Report</CardTitle>
+            <CardDescription>
+              Work Order: {workOrder.id}
+            </CardDescription>
+          </div>
+          <FileText className="h-6 w-6 text-muted-foreground" />
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="p-6 border-t">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="font-medium">Customer</p>
+              <p className="text-muted-foreground">{customer?.name}</p>
+              <p className="text-muted-foreground">{customer?.address}</p>
+            </div>
+            <div className="text-right">
+              <p className="font-medium">Completed Date</p>
+              <p className="text-muted-foreground">
+                {workOrder.completedDate
+                  ? format(new Date(workOrder.completedDate), 'PPP')
+                  : 'N/A'}
+              </p>
+            </div>
+          </div>
+        </div>
+        <Separator />
+        <div className="p-6">
+          <h4 className="font-medium mb-2">Technician Notes</h4>
+          <p className="text-sm text-muted-foreground">
+            {workOrder.technicianNotes}
+          </p>
+        </div>
+        <Separator />
+        <div className="p-6">
+          <h4 className="font-medium mb-2">Parts Used</h4>
+          <ul className="list-disc list-inside text-sm text-muted-foreground">
+            <li>Filter Kit (PN: FIL-HEPA-1212)</li>
+            <li>Main Bearing Bolt (PN: BLT-M8-25)</li>
+          </ul>
+        </div>
+        <Separator />
+        <div className="p-6">
+           <h4 className="font-medium mb-2">Customer Approval</h4>
+           <div className="mt-4 border bg-muted rounded-lg h-32 flex items-center justify-center">
+                <p className="text-sm text-muted-foreground italic">Customer Signature</p>
+           </div>
+           <div className="mt-2 text-sm">
+                <p>Signed by: {customer?.contactPerson}</p>
+                <p className="text-muted-foreground">Date: {workOrder.completedDate ? format(new Date(workOrder.completedDate), 'PPP') : 'N/A'}</p>
+           </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {workOrder.status === 'Completed' && workOrder.technicianNotes ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              <span>Service Report</span>
-            </CardTitle>
-            <CardDescription>
-              Report submitted by the technician upon work completion.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="prose prose-sm max-w-none text-sm text-muted-foreground">
-              <p>{workOrder.technicianNotes}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <ServiceReport />
       ) : (
         <Card>
           <CardHeader>

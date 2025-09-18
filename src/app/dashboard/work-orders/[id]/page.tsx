@@ -88,7 +88,7 @@ export default function WorkOrderDetailPage({
               </p>
             </CardContent>
           </Card>
-           <WorkOrderClientSection workOrder={workOrder} />
+           <WorkOrderClientSection workOrder={workOrder} customer={customer} technician={technician} />
         </div>
         <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
           <Card className="overflow-hidden">

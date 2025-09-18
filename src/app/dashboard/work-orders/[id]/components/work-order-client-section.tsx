@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -16,6 +17,7 @@ import {
   FileText,
   Play,
   Check,
+  Pause,
 } from 'lucide-react';
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
@@ -33,6 +35,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { HoldWorkOrderDialog } from './hold-work-order-dialog';
 
 export function WorkOrderClientSection({
   workOrder,
@@ -51,6 +54,7 @@ export function WorkOrderClientSection({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const { toast } = useToast();
   const [isQuestionnaireOpen, setQuestionnaireOpen] = useState(false);
+  const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
   const [questionnaireData, setQuestionnaireData] = useState<ServiceReportQuestionnaire>({
       workPerformed: '',
       partsUsed: '',
@@ -84,6 +88,8 @@ export function WorkOrderClientSection({
   const handleStatusChange = (status: WorkOrder['status']) => {
     if (status === 'Completed') {
         setQuestionnaireOpen(true);
+    } else if (status === 'On-Hold') {
+        setHoldDialogOpen(true);
     } else {
         setCurrentWorkOrder(prev => ({...prev, status}));
         toast({
@@ -91,6 +97,20 @@ export function WorkOrderClientSection({
             description: `Status changed to "${status}"`,
         });
     }
+  };
+
+  const handlePutOnHold = (reason: string) => {
+    setCurrentWorkOrder(prev => ({
+      ...prev,
+      status: 'On-Hold',
+      technicianNotes: `Work put on hold. Reason: ${reason}`,
+    }));
+    toast({
+      variant: 'default',
+      title: 'Work Order On Hold',
+      description: 'The work order status has been updated.',
+    });
+    setHoldDialogOpen(false);
   };
 
   const handleQuestionnaireSubmit = async () => {
@@ -185,15 +205,20 @@ export function WorkOrderClientSection({
             <CardDescription>Update the work order status.</CardDescription>
         </CardHeader>
         <CardContent className="flex gap-2">
-            {currentWorkOrder.status === 'Scheduled' && (
+            {(currentWorkOrder.status === 'Scheduled' || currentWorkOrder.status === 'On-Hold') && (
                 <Button onClick={() => handleStatusChange('In-Progress')}>
                     <Play className="mr-2" /> Start Work
                 </Button>
             )}
              {currentWorkOrder.status === 'In-Progress' && (
+                <>
                 <Button onClick={() => handleStatusChange('Completed')}>
                     <Check className="mr-2" /> Complete Work
                 </Button>
+                <Button variant="outline" onClick={() => handleStatusChange('On-Hold')}>
+                    <Pause className="mr-2" /> Put on Hold
+                </Button>
+                </>
             )}
             { (currentWorkOrder.status === 'Completed' || currentWorkOrder.status === 'Invoiced') && (
                  <p className="text-sm text-muted-foreground flex items-center"><CheckCircle className="h-4 w-4 mr-2 text-green-500" /> Work completed.</p>
@@ -204,6 +229,11 @@ export function WorkOrderClientSection({
 
   return (
     <>
+      <HoldWorkOrderDialog 
+        open={isHoldDialogOpen}
+        onOpenChange={setHoldDialogOpen}
+        onSubmit={handlePutOnHold}
+      />
       <Dialog open={isQuestionnaireOpen} onOpenChange={setQuestionnaireOpen}>
           <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
@@ -251,7 +281,7 @@ export function WorkOrderClientSection({
             <>
                 {isTechnicianView && currentWorkOrder.status !== 'Completed' && currentWorkOrder.status !== 'Invoiced' && <TechnicianActions />}
 
-                {currentWorkOrder.status === 'Completed' && currentWorkOrder.technicianNotes ? (
+                {(currentWorkOrder.status === 'Completed' || currentWorkOrder.status === 'On-Hold') && currentWorkOrder.technicianNotes ? (
                     <div className="md:col-span-2"><ServiceReport /></div>
                 ) : (
                     <>
@@ -334,5 +364,3 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-    

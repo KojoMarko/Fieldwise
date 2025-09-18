@@ -27,6 +27,7 @@ const statusOrder: WorkOrderStatus[] = [
   'Draft',
   'Scheduled',
   'In-Progress',
+  'On-Hold',
   'Completed',
   'Invoiced',
   'Cancelled',

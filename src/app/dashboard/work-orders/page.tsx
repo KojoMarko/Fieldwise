@@ -16,7 +16,7 @@ import Link from 'next/link';
 export default function WorkOrdersPage() {
   const allOrders = workOrders;
   const activeOrders = workOrders.filter(
-    (wo) => wo.status === 'Scheduled' || wo.status === 'In-Progress'
+    (wo) => wo.status === 'Scheduled' || wo.status === 'In-Progress' || wo.status === 'On-Hold'
   );
   const completedOrders = workOrders.filter(
     (wo) => wo.status === 'Completed' || wo.status === 'Invoiced'
@@ -69,7 +69,7 @@ export default function WorkOrdersPage() {
           <CardHeader>
             <CardTitle>Active Work Orders</CardTitle>
             <CardDescription>
-              Work orders that are scheduled or in-progress.
+              Work orders that are scheduled, in-progress, or on-hold.
             </CardDescription>
           </CardHeader>
           <CardContent>

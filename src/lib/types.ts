@@ -45,6 +45,7 @@ export type WorkOrderStatus =
   | 'Draft'
   | 'Scheduled'
   | 'In-Progress'
+  | 'On-Hold'
   | 'Completed'
   | 'Invoiced'
   | 'Cancelled';

@@ -5,6 +5,7 @@ import {
   WorkOrder,
   WorkOrderStatus,
   WorkOrderPriority,
+  SparePart,
 } from '@/lib/types';
 import { subDays, formatISO } from 'date-fns';
 
@@ -86,6 +87,37 @@ export const assets: Asset[] = [
     location: 'ICU, Bed 5',
   },
 ];
+
+export const spareParts: SparePart[] = [
+    {
+        id: 'sp-1',
+        name: 'MRI Cooling Pump',
+        partNumber: 'PMP-50-23-A',
+        quantity: 3,
+        location: 'Warehouse A, Shelf 14'
+    },
+    {
+        id: 'sp-2',
+        name: 'Blood Analyzer Sample Needle',
+        partNumber: 'N-ROC-8000-S',
+        quantity: 25,
+        location: 'Warehouse B, Bin 3'
+    },
+    {
+        id: 'sp-3',
+        name: 'Ventilator Oxygen Sensor',
+        partNumber: 'SEN-O2-DR-V500',
+        quantity: 12,
+        location: 'Warehouse A, Shelf 8'
+    },
+    {
+        id: 'sp-4',
+        name: 'HEPA Filter 12x12',
+        partNumber: 'FIL-HEPA-1212',
+        quantity: 50,
+        location: 'Warehouse C, Shelf 1'
+    }
+]
 
 const now = new Date();
 export const workOrders: WorkOrder[] = [

@@ -30,6 +30,14 @@ export type Asset = {
   location: string; // Address
 };
 
+export type SparePart = {
+    id: string;
+    name: string;
+    partNumber: string;
+    quantity: number;
+    location: string;
+}
+
 export type WorkOrderStatus =
   | 'Draft'
   | 'Scheduled'

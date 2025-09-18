@@ -33,6 +33,10 @@ export default function LoginPage() {
   if(isLoading) {
       return <div className="flex h-screen w-full items-center justify-center">Loading...</div>
   }
+  
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">

@@ -1,11 +1,11 @@
 'use client';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Header } from '@/components/header';
-import { AuthProvider, useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-function DashboardLayoutContent({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -20,8 +20,8 @@ function DashboardLayoutContent({
   }, [isLoading, user, router]);
 
   if (isLoading || !user) {
-      // You can show a loading spinner here
-      return <div className="flex h-screen w-full items-center justify-center">Loading...</div>
+    // You can show a loading spinner here
+    return <div className="flex h-screen w-full items-center justify-center">Loading...</div>
   }
 
   return (
@@ -35,16 +35,4 @@ function DashboardLayoutContent({
       </div>
     </div>
   );
-}
-
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-    return (
-        <AuthProvider>
-            <DashboardLayoutContent>{children}</DashboardLayoutContent>
-        </AuthProvider>
-    )
 }

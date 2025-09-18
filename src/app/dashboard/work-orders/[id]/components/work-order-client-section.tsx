@@ -13,32 +13,58 @@ import {
   AlertCircle,
   CheckCircle,
   FileText,
+  Play,
+  Square,
+  Check,
+  Clipboard,
 } from 'lucide-react';
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
+import { generateServiceReport, type ServiceReportQuestionnaire } from '@/ai/flows/generate-service-report';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import type { WorkOrder, Customer, User } from '@/lib/types';
+import type { WorkOrder, Customer, User, Asset } from '@/lib/types';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 export function WorkOrderClientSection({
   workOrder,
   customer,
   technician,
+  asset,
 }: {
   workOrder: WorkOrder;
   customer?: Customer;
   technician?: User;
+  asset?: Asset;
 }) {
+  const { user } = useAuth();
+  const [currentWorkOrder, setCurrentWorkOrder] = useState<WorkOrder>(workOrder);
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const { toast } = useToast();
+  const [isQuestionnaireOpen, setQuestionnaireOpen] = useState(false);
+  const [questionnaireData, setQuestionnaireData] = useState<ServiceReportQuestionnaire>({
+      workPerformed: '',
+      partsUsed: '',
+      finalObservations: '',
+      customerFeedback: ''
+  });
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const handleSuggestParts = async () => {
     setIsLoading(true);
     setSuggestions([]);
     try {
       const result = await suggestSpareParts({
-        workOrderDescription: workOrder.description,
+        workOrderDescription: currentWorkOrder.description,
       });
       if (result.suggestedSpareParts) {
         setSuggestions(result.suggestedSpareParts);
@@ -55,6 +81,51 @@ export function WorkOrderClientSection({
     }
   };
 
+  const handleStatusChange = (status: WorkOrder['status']) => {
+    if (status === 'Completed') {
+        setQuestionnaireOpen(true);
+    } else {
+        setCurrentWorkOrder(prev => ({...prev, status}));
+        toast({
+            title: 'Work Order Updated',
+            description: `Status changed to "${status}"`,
+        });
+    }
+  };
+
+  const handleQuestionnaireSubmit = async () => {
+    setQuestionnaireOpen(false);
+    setIsGeneratingReport(true);
+    try {
+        const result = await generateServiceReport({
+            ...questionnaireData,
+            workOrderTitle: currentWorkOrder.title,
+            assetName: asset?.name || 'N/A',
+        });
+        setCurrentWorkOrder(prev => ({
+            ...prev,
+            status: 'Completed',
+            technicianNotes: result.report,
+            completedDate: new Date().toISOString(),
+        }));
+        toast({
+            title: 'Service Report Generated',
+            description: 'The AI-powered service report has been successfully created.',
+        });
+    } catch (error) {
+        console.error('Error generating report:', error);
+         toast({
+            variant: 'destructive',
+            title: 'Report Generation Failed',
+            description: 'Could not generate the service report at this time.',
+        });
+    } finally {
+        setIsGeneratingReport(false);
+    }
+  }
+
+  const isTechnicianView = user?.role === 'Technician';
+
   const ServiceReport = () => (
     <Card>
       <CardHeader>
@@ -62,7 +133,7 @@ export function WorkOrderClientSection({
           <div>
             <CardTitle>Service Report</CardTitle>
             <CardDescription>
-              Work Order: {workOrder.id}
+              Work Order: {currentWorkOrder.id}
             </CardDescription>
           </div>
           <FileText className="h-6 w-6 text-muted-foreground" />
@@ -79,27 +150,18 @@ export function WorkOrderClientSection({
             <div className="text-right">
               <p className="font-medium">Completed Date</p>
               <p className="text-muted-foreground">
-                {workOrder.completedDate
-                  ? format(new Date(workOrder.completedDate), 'PPP')
+                {currentWorkOrder.completedDate
+                  ? format(new Date(currentWorkOrder.completedDate), 'PPP')
                   : 'N/A'}
               </p>
             </div>
           </div>
         </div>
         <Separator />
-        <div className="p-6">
-          <h4 className="font-medium mb-2">Technician Notes</h4>
-          <p className="text-sm text-muted-foreground">
-            {workOrder.technicianNotes}
-          </p>
-        </div>
-        <Separator />
-        <div className="p-6">
-          <h4 className="font-medium mb-2">Parts Used</h4>
-          <ul className="list-disc list-inside text-sm text-muted-foreground">
-            <li>Filter Kit (PN: FIL-HEPA-1212)</li>
-            <li>Main Bearing Bolt (PN: BLT-M8-25)</li>
-          </ul>
+        <div className="p-6 prose prose-sm max-w-none">
+          <h4 className="font-medium mb-2">Technician Report</h4>
+          {/* Using dangerouslySetInnerHTML is okay here if we trust the AI output is safe markdown */}
+          <div dangerouslySetInnerHTML={{ __html: currentWorkOrder.technicianNotes?.replace(/\n/g, '<br />') || '' }} />
         </div>
         <Separator />
         <div className="p-6">
@@ -109,92 +171,166 @@ export function WorkOrderClientSection({
            </div>
            <div className="mt-2 text-sm">
                 <p>Signed by: {customer?.contactPerson}</p>
-                <p className="text-muted-foreground">Date: {workOrder.completedDate ? format(new Date(workOrder.completedDate), 'PPP') : 'N/A'}</p>
+                <p className="text-muted-foreground">Date: {currentWorkOrder.completedDate ? format(new Date(currentWorkOrder.completedDate), 'PPP') : 'N/A'}</p>
            </div>
         </div>
       </CardContent>
     </Card>
   );
 
-  return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {workOrder.status === 'Completed' && workOrder.technicianNotes ? (
-        <ServiceReport />
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Technician Report</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                placeholder="Enter observations, work performed, and any issues..."
-                className="min-h-[120px]"
-              />
-            </div>
-            <Button>Submit Report</Button>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
+  const TechnicianActions = () => (
+    <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>AI Spare Part Suggester</span>
-            <Sparkles className="h-5 w-5 text-primary" />
-          </CardTitle>
+            <CardTitle>Technician Controls</CardTitle>
+            <CardDescription>Update the work order status.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Get AI-powered suggestions for spare parts based on the work order
-            description.
-          </p>
-          <Button
-            onClick={handleSuggestParts}
-            disabled={isLoading}
-            variant="outline"
-          >
-            {isLoading ? (
-              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Wrench className="mr-2 h-4 w-4" />
+        <CardContent className="flex gap-2">
+            {currentWorkOrder.status === 'Scheduled' && (
+                <Button onClick={() => handleStatusChange('In-Progress')}>
+                    <Play className="mr-2" /> Start Work
+                </Button>
             )}
-            Suggest Spare Parts
-          </Button>
-
-          {isLoading && (
-            <div className="flex items-center text-sm text-muted-foreground">
-              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing work order...
-            </div>
-          )}
-
-          {suggestions.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm flex items-center">
-                <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                Suggested Parts:
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {suggestions.map((part, index) => (
-                  <Badge key={index} variant="secondary">
-                    {part}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!isLoading && suggestions.length === 0 && (
-            <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-              <AlertCircle className="h-4 w-4 mr-2" />
-              Click the button to generate suggestions.
-            </div>
-          )}
+             {currentWorkOrder.status === 'In-Progress' && (
+                <Button onClick={() => handleStatusChange('Completed')}>
+                    <Check className="mr-2" /> Complete Work
+                </Button>
+            )}
+            { (currentWorkOrder.status === 'Completed' || currentWorkOrder.status === 'Invoiced') && (
+                 <p className="text-sm text-muted-foreground flex items-center"><CheckCircle className="h-4 w-4 mr-2 text-green-500" /> Work completed.</p>
+            )}
         </CardContent>
-      </Card>
-    </div>
+    </Card>
+  )
+
+  return (
+    <>
+      <Dialog open={isQuestionnaireOpen} onOpenChange={setQuestionnaireOpen}>
+          <DialogContent className="sm:max-w-2xl">
+              <DialogHeader>
+                  <DialogTitle>Service Completion Questionnaire</DialogTitle>
+                  <DialogDescription>Please fill out the details of the work performed.</DialogDescription>
+              </DialogHeader>
+              <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                   <div className="space-y-2">
+                      <Label htmlFor="q-work-performed">Summary of Work Performed</Label>
+                      <Textarea id="q-work-performed" value={questionnaireData.workPerformed} onChange={e => setQuestionnaireData({...questionnaireData, workPerformed: e.target.value})} placeholder="Describe the service, repairs, and checks you completed..." />
+                  </div>
+                   <div className="space-y-2">
+                      <Label htmlFor="q-parts-used">Parts Used (comma-separated)</Label>
+                      <Input id="q-parts-used" value={questionnaireData.partsUsed} onChange={e => setQuestionnaireData({...questionnaireData, partsUsed: e.target.value})} placeholder="e.g., FIL-HEPA-1212, BLT-M8-25" />
+                  </div>
+                   <div className="space-y-2">
+                      <Label htmlFor="q-observations">Final Observations & Recommendations</Label>
+                      <Textarea id="q-observations" value={questionnaireData.finalObservations} onChange={e => setQuestionnaireData({...questionnaireData, finalObservations: e.target.value})} placeholder="Any notes for the customer or for future service?" />
+                  </div>
+                   <div className="space-y-2">
+                      <Label htmlFor="q-customer-feedback">Customer On-Site Feedback</Label>
+                      <Textarea id="q-customer-feedback" value={questionnaireData.customerFeedback} onChange={e => setQuestionnaireData({...questionnaireData, customerFeedback: e.target.value})} placeholder="Any comments or feedback from the customer?" />
+                  </div>
+              </div>
+              <DialogFooter>
+                  <Button variant="outline" onClick={() => setQuestionnaireOpen(false)}>Cancel</Button>
+                  <Button onClick={handleQuestionnaireSubmit}>Generate Report</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
+    
+      <div className="grid gap-4 md:grid-cols-2">
+      
+        {isGeneratingReport && (
+            <Card className="md:col-span-2">
+                <CardContent className="p-6 flex flex-col items-center justify-center min-h-[300px]">
+                    <LoaderCircle className="h-10 w-10 animate-spin text-primary mb-4" />
+                    <p className="font-medium">Generating Service Report...</p>
+                    <p className="text-sm text-muted-foreground">The AI is writing a professional summary of your work.</p>
+                </CardContent>
+            </Card>
+        )}
+
+        {!isGeneratingReport && (
+            <>
+                {isTechnicianView && currentWorkOrder.status !== 'Completed' && currentWorkOrder.status !== 'Invoiced' && <TechnicianActions />}
+
+                {currentWorkOrder.status === 'Completed' && currentWorkOrder.technicianNotes ? (
+                    <div className="md:col-span-2"><ServiceReport /></div>
+                ) : (
+                    <>
+                    {/* Hide for technician if work is not completed */}
+                    { !isTechnicianView &&
+                        <Card>
+                        <CardHeader>
+                            <CardTitle>Technician Report</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                                <AlertCircle className="h-4 w-4 mr-2" />
+                                A service report will be available once the technician completes the work.
+                            </div>
+                        </CardContent>
+                        </Card>
+                    }
+                    </>
+                )}
+
+                <Card className={currentWorkOrder.status === 'Completed' ? 'md:col-span-2' : ''}>
+                    <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                        <span>AI Spare Part Suggester</span>
+                        <Sparkles className="h-5 w-5 text-primary" />
+                    </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                        Get AI-powered suggestions for spare parts based on the work order
+                        description.
+                    </p>
+                    <Button
+                        onClick={handleSuggestParts}
+                        disabled={isLoading}
+                        variant="outline"
+                    >
+                        {isLoading ? (
+                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                        <Wrench className="mr-2 h-4 w-4" />
+                        )}
+                        Suggest Spare Parts
+                    </Button>
+
+                    {isLoading && (
+                        <div className="flex items-center text-sm text-muted-foreground">
+                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing work order...
+                        </div>
+                    )}
+
+                    {suggestions.length > 0 && (
+                        <div className="space-y-2">
+                        <h4 className="font-medium text-sm flex items-center">
+                            <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                            Suggested Parts:
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                            {suggestions.map((part, index) => (
+                            <Badge key={index} variant="secondary">
+                                {part}
+                            </Badge>
+                            ))}
+                        </div>
+                        </div>
+                    )}
+
+                    {!isLoading && suggestions.length === 0 && (
+                        <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                        <AlertCircle className="h-4 w-4 mr-2" />
+                        Click the button to generate suggestions.
+                        </div>
+                    )}
+                    </CardContent>
+                </Card>
+            </>
+        )}
+      </div>
+    </>
   );
 }

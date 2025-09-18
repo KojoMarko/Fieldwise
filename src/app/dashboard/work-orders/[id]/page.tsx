@@ -5,6 +5,9 @@ import {
   MoreVertical,
   Truck,
   Wrench,
+  Play,
+  Square,
+  Check,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +32,7 @@ import { workOrders, customers, assets, users } from '@/lib/data';
 import type { WorkOrderStatus } from '@/lib/types';
 import Link from 'next/link';
 import { WorkOrderClientSection } from './components/work-order-client-section';
+import { useAuth } from '@/hooks/use-auth';
 
 const statusStyles: Record<WorkOrderStatus, string> = {
   Draft: 'bg-gray-200 text-gray-800',
@@ -88,7 +92,7 @@ export default function WorkOrderDetailPage({
               </p>
             </CardContent>
           </Card>
-           <WorkOrderClientSection workOrder={workOrder} customer={customer} technician={technician} />
+           <WorkOrderClientSection workOrder={workOrder} customer={customer} technician={technician} asset={asset} />
         </div>
         <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
           <Card className="overflow-hidden">

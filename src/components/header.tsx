@@ -30,6 +30,7 @@ import {
   LogOut,
   User,
   Package,
+  LayoutDashboard,
 } from 'lucide-react';
 import { users } from '@/lib/data';
 
@@ -143,6 +144,12 @@ export function Header() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
+           <DropdownMenuItem asChild>
+            <Link href="/dashboard/technician">
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              <span>My Dashboard</span>
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/dashboard/profile">
               <User className="mr-2 h-4 w-4" />

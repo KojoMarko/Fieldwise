@@ -1,3 +1,6 @@
+import type { z } from 'zod';
+import type { ServiceReportQuestionnaireSchema } from './schemas';
+
 export type UserRole = 'Admin' | 'Technician' | 'Customer';
 
 export type User = {
@@ -61,3 +64,7 @@ export type WorkOrder = {
   createdAt: string;
   technicianNotes?: string;
 };
+
+export type ServiceReportQuestionnaire = z.infer<typeof ServiceReportQuestionnaireSchema>;
+
+    

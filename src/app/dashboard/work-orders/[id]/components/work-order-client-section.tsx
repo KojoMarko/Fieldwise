@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import {
   Sparkles,
@@ -14,12 +15,11 @@ import {
   CheckCircle,
   FileText,
   Play,
-  Square,
   Check,
-  Clipboard,
 } from 'lucide-react';
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
-import { generateServiceReport, type ServiceReportQuestionnaire } from '@/ai/flows/generate-service-report';
+import { generateServiceReport } from '@/ai/flows/generate-service-report';
+import type { ServiceReportQuestionnaire } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import type { WorkOrder, Customer, User, Asset } from '@/lib/types';
@@ -334,3 +334,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    

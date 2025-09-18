@@ -47,15 +47,15 @@ export const customers: Customer[] = [
     id: 'cust-1',
     name: 'City General Hospital',
     contactPerson: 'Dr. Evans',
-    contactEmail: 'evans@cgh.com',
+    contactEmail: 'sarah.j@example.com', // To associate with an admin for demo purposes if needed
     address: '123 Health St, Los Angeles, CA',
     phone: '555-0101',
   },
   {
     id: 'cust-2',
     name: 'Downtown Medical Clinic',
-    contactPerson: 'Maria Garcia',
-    contactEmail: 'm.garcia@dmc.com',
+    contactPerson: 'David Miller',
+    contactEmail: 'david.m@example.com', // Corrected email
     address: '456 Wellness Ave, Los Angeles, CA',
     phone: '555-0102',
   },
@@ -85,6 +85,14 @@ export const assets: Asset[] = [
     serialNumber: 'SN-VENT-003',
     customerId: 'cust-1',
     location: 'ICU, Bed 5',
+  },
+   {
+    id: 'asset-4',
+    name: 'Ultrasound System',
+    model: 'GE Logiq E10',
+    serialNumber: 'SN-US-004',
+    customerId: 'cust-2',
+    location: 'Imaging Suite 3',
   },
 ];
 
@@ -216,12 +224,14 @@ The annual maintenance is complete, and the reported issue has been rectified. T
     id: 'WO-005',
     title: 'Quarterly Checkup - Blood Analyzer',
     description: 'Routine quarterly inspection and cleaning of Cobas 8000.',
-    status: 'Scheduled',
+    status: 'Completed',
     priority: 'Low',
     assetId: 'asset-2',
     customerId: 'cust-2',
     technicianId: 'user-3',
-    scheduledDate: formatISO(new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000)), // 5 days from now
-    createdAt: formatISO(subDays(now, 3)),
+    scheduledDate: formatISO(subDays(now, 5)),
+    completedDate: formatISO(subDays(now, 4)),
+    createdAt: formatISO(subDays(now, 8)),
+    technicianNotes: 'Routine checkup completed, no issues found.',
   },
 ];

@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "avatar-1",
+      "description": "User avatar 1",
+      "imageUrl": "https://picsum.photos/seed/avatar1/100/100",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-2",
+      "description": "User avatar 2",
+      "imageUrl": "https://picsum.photos/seed/avatar2/100/100",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-3",
+      "description": "User avatar 3",
+      "imageUrl": "https://picsum.photos/seed/avatar3/100/100",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar-4",
+      "description": "User avatar 4",
+      "imageUrl": "https://picsum.photos/seed/avatar4/100/100",
+      "imageHint": "person face"
+    },
+    {
+      "id": "asset-1",
+      "description": "Biomedical equipment analyzer",
+      "imageUrl": "https://picsum.photos/seed/asset1/400/300",
+      "imageHint": "medical equipment"
+    },
+    {
+      "id": "asset-2",
+      "description": "Ventilator machine",
+      "imageUrl": "https://picsum.photos/seed/asset2/400/300",
+      "imageHint": "medical equipment"
+    },
+    {
+      "id": "asset-3",
+      "description": "Centrifuge machine",
+      "imageUrl": "https://picsum.photos/seed/asset3/400/300",
+      "imageHint": "medical equipment"
+    },
+    {
+      "id": "map-background",
+      "description": "City map background",
+      "imageUrl": "https://picsum.photos/seed/mapbg/1200/800",
+      "imageHint": "city map"
+    }
+  ]
 }

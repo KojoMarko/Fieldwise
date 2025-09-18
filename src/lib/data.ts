@@ -163,10 +163,11 @@ export const workOrders: WorkOrder[] = [
     id: 'WO-004',
     title: 'Emergency Repair: MRI Noise',
     description: 'Patient table on Magnetom Skyra is making loud grinding noises.',
-    status: 'Draft',
+    status: 'Scheduled',
     priority: 'High',
     assetId: 'asset-1',
     customerId: 'cust-1',
+    technicianId: 'user-2',
     scheduledDate: formatISO(new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000)), // Tomorrow
     createdAt: formatISO(now),
   },

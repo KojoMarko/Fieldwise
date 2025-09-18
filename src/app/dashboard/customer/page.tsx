@@ -108,11 +108,13 @@ export default function CustomerDashboardPage() {
               A list of your assets being managed by FieldWise.
             </CardDescription>
           </div>
-          <Button size="sm" className="h-8 gap-1">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Request Service
-                </span>
+          <Button size="sm" className="h-8 gap-1" asChild>
+                <Link href="/dashboard/work-orders/new">
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        Request Service
+                    </span>
+                </Link>
             </Button>
         </CardHeader>
         <CardContent>
@@ -132,7 +134,7 @@ export default function CustomerDashboardPage() {
                   </p>
                 </div>
                 <Button variant="outline" size="sm" asChild>
-                    <Link href="/dashboard/work-orders">
+                    <Link href={`/dashboard/work-orders?assetId=${asset.id}`}>
                         View Service History
                     </Link>
                 </Button>

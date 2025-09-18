@@ -1,3 +1,5 @@
+
+'use client';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,26 +11,34 @@ import {
 } from '@/components/ui/card';
 import Link from 'next/link';
 import { WorkOrderForm } from '../components/work-order-form';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function NewWorkOrderPage() {
+  const { user } = useAuth();
+  const isCustomer = user?.role === 'Customer';
+
   return (
     <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-4">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" className="h-7 w-7" asChild>
-          <Link href="/dashboard/work-orders">
+          <Link href="/dashboard">
             <ChevronLeft className="h-4 w-4" />
             <span className="sr-only">Back</span>
           </Link>
         </Button>
         <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-          Create New Work Order
+          {isCustomer ? 'Request New Service' : 'Create New Work Order'}
         </h1>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Work Order Details</CardTitle>
+          <CardTitle>
+            {isCustomer ? 'Service Request Details' : 'Work Order Details'}
+          </CardTitle>
           <CardDescription>
-            Fill out the form below to create a new work order.
+            {isCustomer
+              ? 'Please fill out the form below to submit a new service request.'
+              : 'Fill out the form below to create a new work order.'}
           </CardDescription>
         </CardHeader>
         <CardContent>

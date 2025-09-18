@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,6 +35,7 @@ import { format } from 'date-fns';
 import { customers, assets } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 const workOrderSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -51,22 +53,28 @@ type WorkOrderFormValues = z.infer<typeof workOrderSchema>;
 export function WorkOrderForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
+
+  const customerProfile = user?.role === 'Customer' ? customers.find(c => c.contactEmail === user.email) : undefined;
 
   const form = useForm<WorkOrderFormValues>({
     resolver: zodResolver(workOrderSchema),
     defaultValues: {
       priority: 'Medium',
+      customerId: customerProfile?.id || '',
     },
   });
 
   function onSubmit(data: WorkOrderFormValues) {
     console.log('New Work Order Submitted:', data);
     toast({
-      title: 'Work Order Created',
-      description: `The work order "${data.title}" has been successfully created.`,
+      title: user?.role === 'Customer' ? 'Service Request Submitted' : 'Work Order Created',
+      description: `The request "${data.title}" has been successfully submitted.`,
     });
     router.push('/dashboard/work-orders');
   }
+  
+  const isCustomer = user?.role === 'Customer';
 
   return (
     <Form {...form}>
@@ -76,10 +84,13 @@ export function WorkOrderForm() {
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel>Service Title</FormLabel>
               <FormControl>
-                <Input placeholder="E.g., Annual Maintenance" {...field} />
+                <Input placeholder="E.g., Machine is making a strange noise" {...field} />
               </FormControl>
+               <FormDescription>
+                  Provide a brief, clear title for your service request.
+                </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -89,10 +100,10 @@ export function WorkOrderForm() {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Problem Description</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Provide a detailed description of the work to be performed..."
+                  placeholder="Please provide as much detail as possible about the issue..."
                   {...field}
                 />
               </FormControl>
@@ -110,6 +121,7 @@ export function WorkOrderForm() {
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
+                  disabled={isCustomer}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -133,7 +145,7 @@ export function WorkOrderForm() {
             name="assetId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Asset</FormLabel>
+                <FormLabel>Which equipment needs service?</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -171,7 +183,7 @@ export function WorkOrderForm() {
             name="priority"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Priority</FormLabel>
+                <FormLabel>Urgency</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -182,9 +194,9 @@ export function WorkOrderForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
+                    <SelectItem value="Low">Low - Routine check-up</SelectItem>
+                    <SelectItem value="Medium">Medium - Affecting performance</SelectItem>
+                    <SelectItem value="High">High - Out of service</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -196,7 +208,7 @@ export function WorkOrderForm() {
             name="scheduledDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Scheduled Date</FormLabel>
+                <FormLabel>Preferred Service Date</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -221,11 +233,14 @@ export function WorkOrderForm() {
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < new Date('1900-01-01')}
+                      disabled={(date) => date < new Date() || date < new Date('1900-01-01')}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
+                 <FormDescription>
+                  This is a preferred date and is subject to availability.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -233,7 +248,7 @@ export function WorkOrderForm() {
         </div>
         <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
-            <Button type="submit">Create Work Order</Button>
+            <Button type="submit">{isCustomer ? 'Submit Request' : 'Create Work Order'}</Button>
         </div>
       </form>
     </Form>

@@ -116,6 +116,20 @@ export const spareParts: SparePart[] = [
         partNumber: 'FIL-HEPA-1212',
         quantity: 50,
         location: 'Warehouse C, Shelf 1'
+    },
+    {
+        id: 'sp-5',
+        name: 'Main Bearing for Patient Table',
+        partNumber: 'BRG-PT-S-900',
+        quantity: 8,
+        location: 'Warehouse A, Shelf 3'
+    },
+    {
+        id: 'sp-6',
+        name: 'M8x25mm Bolt',
+        partNumber: 'BLT-M8-25',
+        quantity: 200,
+        location: 'Warehouse C, Bin 45'
     }
 ]
 
@@ -133,7 +147,34 @@ export const workOrders: WorkOrder[] = [
     scheduledDate: formatISO(subDays(now, 10)),
     completedDate: formatISO(subDays(now, 9)),
     createdAt: formatISO(subDays(now, 15)),
-    technicianNotes: 'Completed annual maintenance. The grinding noise from the patient table was caused by a loose bolt on the main bearing, which has been tightened to spec. All other systems operating normally. Helium level is at 95%.',
+    technicianNotes: `
+### Service Report
+
+**Work Order:** MRI Machine Annual Maintenance
+**Asset Serviced:** MRI Machine
+
+**Summary of Work:**
+Completed annual preventive maintenance on the Siemens Magnetom Skyra MRI. The primary issue reported was a grinding noise from the patient table, which has been resolved. All systems are now operating within normal parameters.
+
+**Detailed Breakdown:**
+1.  **Patient Table Inspection:** Inspected the patient table movement mechanism. Identified a loose bolt on the main bearing assembly.
+2.  **Repair:** Tightened the main bearing bolt to the manufacturer's specified torque. Tested table movement; the grinding noise is no longer present.
+3.  **System Checks:** Performed standard annual checks on all major systems.
+    *   Verified magnet cooling system is stable.
+    *   Inspected gradient and RF coils; no issues found.
+    *   Checked helium level, which is currently at 95%.
+
+**Parts Used:**
+*   **M8x25mm Bolt:** Part #BLT-M8-25 (1 used)
+*   **Loctite 242:** Part #ADH-LT-242 (1 used)
+
+
+**Technician's Observations:**
+The loose bolt on the patient table appears to be due to normal operational vibrations over time. Recommend checking the torque on all table mounting bolts during the next service cycle as a preventive measure.
+
+**Conclusion:**
+The annual maintenance is complete, and the reported issue has been rectified. The asset is fully operational and ready for clinical use.
+`,
   },
   {
     id: 'WO-002',

@@ -11,6 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { ServiceReportQuestionnaireSchema } from '@/lib/schemas';
+import { findPartNumber } from './find-part-number';
 
 
 const GenerateServiceReportInputSchema = ServiceReportQuestionnaireSchema.extend({
@@ -35,6 +36,7 @@ const prompt = ai.definePrompt({
   name: 'generateServiceReportPrompt',
   input: { schema: GenerateServiceReportInputSchema },
   output: { schema: GenerateServiceReportOutputSchema },
+  tools: [findPartNumber],
   prompt: `You are an expert technical writer specializing in creating professional service reports for a field service company. Your task is to generate a comprehensive and well-formatted service report based on the questionnaire answers provided by a technician.
 
 The report should be structured, clear, and written in a professional tone. It will be presented to the customer.
@@ -54,7 +56,7 @@ Use the following information from the technician's questionnaire to generate th
 **Instructions:**
 1.  **Summary of Work:** Start with a clear and concise summary of the work performed.
 2.  **Detailed Breakdown:** Elaborate on the steps taken during the service.
-3.  **Parts:** If parts were used, list them clearly. If no parts were mentioned, state "No parts were required for this service."
+3.  **Parts:** If parts were used, use the 'findPartNumber' tool to look up the part number for each part mentioned. List the part name and its corresponding part number. If no parts were mentioned, state "No parts were required for this service."
 4.  **Technician's Observations:** Detail any important observations or recommendations for future maintenance.
 5.  **Conclusion:** Conclude the report professionally.
 
@@ -72,5 +74,3 @@ const generateServiceReportFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

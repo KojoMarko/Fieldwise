@@ -133,6 +133,7 @@ export const workOrders: WorkOrder[] = [
     scheduledDate: formatISO(subDays(now, 10)),
     completedDate: formatISO(subDays(now, 9)),
     createdAt: formatISO(subDays(now, 15)),
+    technicianNotes: 'Completed annual maintenance. The grinding noise from the patient table was caused by a loose bolt on the main bearing, which has been tightened to spec. All other systems operating normally. Helium level is at 95%.',
   },
   {
     id: 'WO-002',

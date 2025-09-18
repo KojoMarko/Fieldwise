@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
@@ -11,6 +11,7 @@ import {
   Wrench,
   AlertCircle,
   CheckCircle,
+  FileText,
 } from 'lucide-react';
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { useToast } from '@/hooks/use-toast';
@@ -46,22 +47,42 @@ export function WorkOrderClientSection({ workOrder }: { workOrder: WorkOrder }) 
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle>Technician Report</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Enter observations, work performed, and any issues..."
-              className="min-h-[120px]"
-            />
-          </div>
-          <Button>Submit Report</Button>
-        </CardContent>
-      </Card>
+      {workOrder.status === 'Completed' && workOrder.technicianNotes ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              <span>Service Report</span>
+            </CardTitle>
+            <CardDescription>
+              Report submitted by the technician upon work completion.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="prose prose-sm max-w-none text-sm text-muted-foreground">
+              <p>{workOrder.technicianNotes}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Technician Report</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="Enter observations, work performed, and any issues..."
+                className="min-h-[120px]"
+              />
+            </div>
+            <Button>Submit Report</Button>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -111,7 +132,7 @@ export function WorkOrderClientSection({ workOrder }: { workOrder: WorkOrder }) 
           )}
 
           {!isLoading && suggestions.length === 0 && (
-             <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+            <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
               <AlertCircle className="h-4 w-4 mr-2" />
               Click the button to generate suggestions.
             </div>

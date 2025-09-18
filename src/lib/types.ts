@@ -59,4 +59,5 @@ export type WorkOrder = {
   scheduledDate: string;
   completedDate?: string;
   createdAt: string;
+  technicianNotes?: string;
 };

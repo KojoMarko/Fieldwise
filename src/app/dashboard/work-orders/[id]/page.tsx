@@ -17,7 +17,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { workOrders, customers, assets, users } from '@/lib/data';
 import type { WorkOrderStatus } from '@/lib/types';
 import Link from 'next/link';
@@ -147,8 +147,8 @@ export default function WorkOrderDetailPage({
           <TabsTrigger value="parts">Parts &amp; Inventory</TabsTrigger>
         </TabsList>
         <TabsContent value="details">
-          <div className="grid gap-4 lg:grid-cols-3 lg:gap-8 mt-4">
-            <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
+          <div className="grid gap-4 xl:grid-cols-3 xl:gap-8 mt-4">
+            <div className="grid auto-rows-max items-start gap-4 xl:col-span-2 xl:gap-8">
               <Card>
                 <CardHeader>
                   <CardTitle>Work Order Details</CardTitle>
@@ -167,7 +167,7 @@ export default function WorkOrderDetailPage({
                 asset={asset}
               />
             </div>
-            <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
+            <div className="grid auto-rows-max items-start gap-4 xl:gap-8">
               <Card className="overflow-hidden">
                 <CardHeader>
                   <CardTitle>Asset Details</CardTitle>

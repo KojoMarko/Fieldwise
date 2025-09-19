@@ -36,29 +36,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser) => {
-        if (fbUser) {
-            setFirebaseUser(fbUser);
-            const userDocRef = doc(db, 'users', fbUser.uid);
-            const userDoc = await getDoc(userDocRef);
+      setIsLoading(true);
+      if (fbUser) {
+        setFirebaseUser(fbUser);
+        const userDocRef = doc(db, 'users', fbUser.uid);
+        const userDoc = await getDoc(userDocRef);
 
-            if (userDoc.exists()) {
-                setUser(userDoc.data() as User);
-            } else {
-                // Fallback for initial mock users who don't exist in Firestore yet
-                const mockUser = mockUsers.find(u => u.email === fbUser.email);
-                if (mockUser) {
-                    const userToSave: User = { ...mockUser, id: fbUser.uid };
-                    await setDoc(userDocRef, userToSave);
-                    setUser(userToSave);
-                } else {
-                    setUser(null);
-                }
-            }
+        if (userDoc.exists()) {
+          setUser(userDoc.data() as User);
         } else {
-            setFirebaseUser(null);
-            setUser(null);
+          // This block is for migrating mock users who don't exist in Firestore yet.
+          const mockUser = mockUsers.find(u => u.email === fbUser.email);
+          if (mockUser) {
+            const userToSave: User = { ...mockUser, id: fbUser.uid };
+            await setDoc(userDocRef, userToSave);
+            setUser(userToSave);
+          } else {
+            setUser(null); // Should not happen for a logged-in user unless DB is cleared.
+          }
         }
-        setIsLoading(false);
+      } else {
+        setFirebaseUser(null);
+        setUser(null);
+      }
+      setIsLoading(false);
     });
 
     return () => unsubscribe();

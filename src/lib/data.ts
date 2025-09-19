@@ -1,10 +1,9 @@
+
 import {
   User,
   Customer,
   Asset,
   WorkOrder,
-  WorkOrderStatus,
-  WorkOrderPriority,
   SparePart,
 } from '@/lib/types';
 import { subDays, formatISO } from 'date-fns';
@@ -12,226 +11,144 @@ import { subDays, formatISO } from 'date-fns';
 export const users: User[] = [
   {
     id: 'user-1',
-    name: 'Sarah Johnson',
-    email: 'sarah.j@example.com',
+    name: 'Harriet',
+    email: 'harriet@example.com',
     role: 'Admin',
     avatarUrl: 'https://picsum.photos/seed/avatar1/100/100',
   },
   {
     id: 'user-2',
-    name: 'Mike Brown',
-    email: 'mike.b@example.com',
+    name: 'Caleb',
+    email: 'caleb@example.com',
     role: 'Technician',
     avatarUrl: 'https://picsum.photos/seed/avatar2/100/100',
     location: { lat: 34.0522, lng: -118.2437 },
   },
   {
     id: 'user-3',
-    name: 'Jessica Williams',
-    email: 'jess.w@example.com',
+    name: 'David',
+    email: 'david@example.com',
     role: 'Technician',
     avatarUrl: 'https://picsum.photos/seed/avatar3/100/100',
     location: { lat: 34.06, lng: -118.25 },
   },
+   {
+    id: 'user-5',
+    name: 'Gilbert Degraft',
+    email: 'gilbert@example.com',
+    role: 'Technician',
+    avatarUrl: 'https://picsum.photos/seed/avatar5/100/100',
+    location: { lat: 34.07, lng: -118.26 },
+  },
   {
     id: 'user-4',
-    name: 'David Miller',
-    email: 'david.m@example.com',
+    name: 'Ben',
+    email: 'ben@example.com',
     role: 'Customer',
     avatarUrl: 'https://picsum.photos/seed/avatar4/100/100',
   },
 ];
 
 export const customers: Customer[] = [
-  {
-    id: 'cust-1',
-    name: 'City General Hospital',
-    contactPerson: 'Dr. Evans',
-    contactEmail: 'sarah.j@example.com', // To associate with an admin for demo purposes if needed
-    address: '123 Health St, Los Angeles, CA',
-    phone: '555-0101',
-  },
-  {
-    id: 'cust-2',
-    name: 'Downtown Medical Clinic',
-    contactPerson: 'David Miller',
-    contactEmail: 'david.m@example.com', // Corrected email
-    address: '456 Wellness Ave, Los Angeles, CA',
-    phone: '555-0102',
-  },
+    { id: 'cust-1', name: 'Komfo Anokye Hospital Kumasi', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Kumasi', phone: '555-0101' },
+    { id: 'cust-2', name: 'Lapay Comunity Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0102' },
+    { id: 'cust-3', name: 'Korlebu Teaching Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0103' },
+    { id: 'cust-4', name: 'Tamale Teaching Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Tamale', phone: '555-0104' },
+    { id: 'cust-5', name: '37 Millitary Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0105' },
+    { id: 'cust-6', name: 'KNUST Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Kumasi', phone: '555-0106' },
+    { id: 'cust-7', name: 'The Bank Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0107' },
+    { id: 'cust-8', name: 'Tema General Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Tema', phone: '555-0108' },
+    { id: 'cust-9', name: 'Trafaga Ho', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Ho', phone: '555-0109' },
+    { id: 'cust-10', name: 'Alma Labs', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0110' },
+    { id: 'cust-11', name: 'Mother of God Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Tarkwa', phone: '555-0111' },
+    { id: 'cust-12', name: 'Ahorgman community Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Aflao', phone: '555-0112' },
 ];
 
 export const assets: Asset[] = [
-  {
-    id: 'asset-1',
-    name: 'MRI Machine',
-    model: 'Siemens Magnetom Skyra',
-    serialNumber: 'SN-MRI-001',
-    customerId: 'cust-1',
-    location: 'Radiology Dept, Floor 2',
-  },
-  {
-    id: 'asset-2',
-    name: 'Blood Analyzer',
-    model: 'Roche Cobas 8000',
-    serialNumber: 'SN-BA-002',
-    customerId: 'cust-2',
-    location: 'Lab Room 101',
-  },
-  {
-    id: 'asset-3',
-    name: 'Ventilator',
-    model: 'Dräger Evita V500',
-    serialNumber: 'SN-VENT-003',
-    customerId: 'cust-1',
-    location: 'ICU, Bed 5',
-  },
-   {
-    id: 'asset-4',
-    name: 'Ultrasound System',
-    model: 'GE Logiq E10',
-    serialNumber: 'SN-US-004',
-    customerId: 'cust-2',
-    location: 'Imaging Suite 3',
-  },
+  // Vitros 5600
+  { id: 'asset-v5600-1', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-001', customerId: 'cust-1', location: 'Lab 1' },
+  { id: 'asset-v5600-2', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-002', customerId: 'cust-2', location: 'Main Lab' },
+  { id: 'asset-v5600-3', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-003', customerId: 'cust-3', location: 'Hematology' },
+  { id: 'asset-v5600-4', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-004', customerId: 'cust-4', location: 'Central Lab' },
+  { id: 'asset-v5600-5', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-005', customerId: 'cust-5', location: 'Emergency Lab' },
+  { id: 'asset-v5600-6', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-006', customerId: 'cust-6', location: 'University Lab' },
+  // Diapro Elisa Analyzer
+  { id: 'asset-dea-1', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-001', customerId: 'cust-7', location: 'Immunology' },
+  { id: 'asset-dea-2', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-002', customerId: 'cust-8', location: 'Serology Dept' },
+  { id: 'asset-dea-3', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-003', customerId: 'cust-9', location: 'Regional Lab' },
+  // Ismart Electrolyte Analyzer
+  { id: 'asset-iea-1', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-001', customerId: 'cust-10', location: 'Stat Lab' },
+  { id: 'asset-iea-2', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-002', customerId: 'cust-11', location: 'Main Lab' },
+  { id: 'asset-iea-3', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-003', customerId: 'cust-12', location: 'Primary Lab' },
+  // Beckman Coulter Hematology Analyzer (at all locations)
+  ...customers.map((customer, index) => ({
+      id: `asset-bcha-${index+1}`,
+      name: 'Beckman Coulter Hematology Analyzer',
+      model: 'Beckman Coulter DxH 900',
+      serialNumber: `BCHA-${String(index+1).padStart(3, '0')}`,
+      customerId: customer.id,
+      location: `Main Lab at ${customer.name}`
+  }))
 ];
 
 export const spareParts: SparePart[] = [
-    {
-        id: 'sp-1',
-        name: 'MRI Cooling Pump',
-        partNumber: 'PMP-50-23-A',
-        quantity: 3,
-        location: 'Warehouse A, Shelf 14'
-    },
-    {
-        id: 'sp-2',
-        name: 'Blood Analyzer Sample Needle',
-        partNumber: 'N-ROC-8000-S',
-        quantity: 25,
-        location: 'Warehouse B, Bin 3'
-    },
-    {
-        id: 'sp-3',
-        name: 'Ventilator Oxygen Sensor',
-        partNumber: 'SEN-O2-DR-V500',
-        quantity: 12,
-        location: 'Warehouse A, Shelf 8'
-    },
-    {
-        id: 'sp-4',
-        name: 'HEPA Filter 12x12',
-        partNumber: 'FIL-HEPA-1212',
-        quantity: 50,
-        location: 'Warehouse C, Shelf 1'
-    },
-    {
-        id: 'sp-5',
-        name: 'Main Bearing for Patient Table',
-        partNumber: 'BRG-PT-S-900',
-        quantity: 8,
-        location: 'Warehouse A, Shelf 3'
-    },
-    {
-        id: 'sp-6',
-        name: 'M8x25mm Bolt',
-        partNumber: 'BLT-M8-25',
-        quantity: 200,
-        location: 'Warehouse C, Bin 45'
-    }
-]
+    // Vitros 5600
+    { id: 'sp-v5600-1', name: 'Cuvette Tray', partNumber: 'V5600-CT-01', quantity: 15, location: 'Warehouse A', assetModel: 'Vitros 5600' },
+    { id: 'sp-v5600-2', name: 'Reagent Probe', partNumber: 'V5600-RP-02', quantity: 8, location: 'Warehouse B', assetModel: 'Vitros 5600' },
+    // Diapro Elisa Analyzer
+    { id: 'sp-dea-1', name: 'Washer Head 8-channel', partNumber: 'DEA-WH-01', quantity: 10, location: 'Warehouse A', assetModel: 'Diapro Elisa Analyzer' },
+    { id: 'sp-dea-2', name: 'Halogen Lamp', partNumber: 'DEA-HL-02', quantity: 20, location: 'Warehouse C', assetModel: 'Diapro Elisa Analyzer' },
+    // Ismart Electrolyte Analyzer
+    { id: 'sp-iea-1', name: 'Reference Electrode', partNumber: 'IEA-RE-01', quantity: 30, location: 'Warehouse B', assetModel: 'Ismart Electrolyte Analyzer' },
+    { id: 'sp-iea-2', name: 'Sodium Electrode', partNumber: 'IEA-SE-02', quantity: 25, location: 'Warehouse B', assetModel: 'Ismart Electrolyte Analyzer' },
+    // Beckman Coulter Hematology Analyzer
+    { id: 'sp-bcha-1', name: 'Sheath Reagent Filter', partNumber: 'BCHA-SRF-01', quantity: 50, location: 'Warehouse C', assetModel: 'Beckman Coulter DxH 900' },
+    { id: 'sp-bcha-2', name: 'Aspiration Probe', partNumber: 'BCHA-AP-02', quantity: 12, location: 'Warehouse A', assetModel: 'Beckman Coulter DxH 900' },
+    { id: 'sp-bcha-3', name: 'Sample Valve', partNumber: 'BCHA-SV-03', quantity: 18, location: 'Warehouse A', assetModel: 'Beckman Coulter DxH 900' },
+    // Generic parts (can be used in multiple models)
+    { id: 'sp-gen-1', name: 'HEPA Filter 12x12', partNumber: 'FIL-HEPA-1212', quantity: 50, location: 'Warehouse C', assetModel: 'Multiple' },
+    { id: 'sp-gen-2', name: 'M8x25mm Bolt', partNumber: 'BLT-M8-25', quantity: 200, location: 'Warehouse C', assetModel: 'Multiple' },
+];
+
 
 const now = new Date();
 export const workOrders: WorkOrder[] = [
   {
     id: 'WO-001',
-    title: 'MRI Machine Annual Maintenance',
-    description: 'Perform annual preventive maintenance on the Siemens Magnetom Skyra MRI. Check magnet cooling system, inspect gradients and RF coils. The patient table is reported to be making a slight grinding noise on movement. Requires helium level check.',
+    title: 'Vitros 5600 Annual Maintenance',
+    description: 'Perform annual preventive maintenance on the Vitros 5600. Check reagent probes and cuvette handling system.',
     status: 'Completed',
     priority: 'Medium',
-    assetId: 'asset-1',
+    assetId: 'asset-v5600-1',
     customerId: 'cust-1',
     technicianId: 'user-2',
     scheduledDate: formatISO(subDays(now, 10)),
     completedDate: formatISO(subDays(now, 9)),
     createdAt: formatISO(subDays(now, 15)),
-    technicianNotes: `
-### Service Report
-
-**Work Order:** MRI Machine Annual Maintenance
-**Asset Serviced:** MRI Machine
-
-**Summary of Work:**
-Completed annual preventive maintenance on the Siemens Magnetom Skyra MRI. The primary issue reported was a grinding noise from the patient table, which has been resolved. All systems are now operating within normal parameters.
-
-**Detailed Breakdown:**
-1.  **Patient Table Inspection:** Inspected the patient table movement mechanism. Identified a loose bolt on the main bearing assembly.
-2.  **Repair:** Tightened the main bearing bolt to the manufacturer's specified torque. Tested table movement; the grinding noise is no longer present.
-3.  **System Checks:** Performed standard annual checks on all major systems.
-    *   Verified magnet cooling system is stable.
-    *   Inspected gradient and RF coils; no issues found.
-    *   Checked helium level, which is currently at 95%.
-
-**Parts Used:**
-*   **M8x25mm Bolt:** Part #BLT-M8-25 (1 used)
-*   **Loctite 242:** Part #ADH-LT-242 (1 used)
-
-
-**Technician's Observations:**
-The loose bolt on the patient table appears to be due to normal operational vibrations over time. Recommend checking the torque on all table mounting bolts during the next service cycle as a preventive measure.
-
-**Conclusion:**
-The annual maintenance is complete, and the reported issue has been rectified. The asset is fully operational and ready for clinical use.
-`,
+    technicianNotes: `Completed annual maintenance. Replaced a worn reagent probe. System is now fully calibrated and operational.`,
   },
   {
     id: 'WO-002',
-    title: 'Blood Analyzer Calibration',
-    description: 'Calibrate Roche Cobas 8000. Reagent levels are low.',
+    title: 'Beckman Coulter Calibration',
+    description: 'Calibrate Beckman Coulter DxH 900 at The Bank Hospital. Customer reports inconsistent CBC results.',
     status: 'Scheduled',
     priority: 'High',
-    assetId: 'asset-2',
-    customerId: 'cust-2',
+    assetId: 'asset-bcha-7', // Corresponds to The Bank Hospital
+    customerId: 'cust-7',
     technicianId: 'user-3',
     scheduledDate: formatISO(new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000)), // 2 days from now
     createdAt: formatISO(subDays(now, 1)),
   },
   {
     id: 'WO-003',
-    title: 'Ventilator Filter Replacement',
-    description: 'Replace air and oxygen filters on Dräger Evita V500.',
+    title: 'Ismart Analyzer Electrode Replacement',
+    description: 'Replace sodium electrode on Ismart Electrolyte Analyzer at Alma Labs.',
     status: 'In-Progress',
     priority: 'High',
-    assetId: 'asset-3',
-    customerId: 'cust-1',
+    assetId: 'asset-iea-1',
+    customerId: 'cust-10',
     technicianId: 'user-2',
     scheduledDate: formatISO(now),
     createdAt: formatISO(subDays(now, 2)),
-  },
-  {
-    id: 'WO-004',
-    title: 'Emergency Repair: MRI Noise',
-    description: 'Patient table on Magnetom Skyra is making loud grinding noises.',
-    status: 'Scheduled',
-    priority: 'High',
-    assetId: 'asset-1',
-    customerId: 'cust-1',
-    technicianId: 'user-2',
-    scheduledDate: formatISO(new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000)), // Tomorrow
-    createdAt: formatISO(now),
-  },
-  {
-    id: 'WO-005',
-    title: 'Quarterly Checkup - Blood Analyzer',
-    description: 'Routine quarterly inspection and cleaning of Cobas 8000.',
-    status: 'Completed',
-    priority: 'Low',
-    assetId: 'asset-2',
-    customerId: 'cust-2',
-    technicianId: 'user-3',
-    scheduledDate: formatISO(subDays(now, 5)),
-    completedDate: formatISO(subDays(now, 4)),
-    createdAt: formatISO(subDays(now, 8)),
-    technicianNotes: 'Routine checkup completed, no issues found.',
   },
 ];

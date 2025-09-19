@@ -39,6 +39,7 @@ export type SparePart = {
     partNumber: string;
     quantity: number;
     location: string;
+    assetModel: string;
 }
 
 export type WorkOrderStatus =

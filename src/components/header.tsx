@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import {
   Breadcrumb,
@@ -46,6 +47,10 @@ export function Header() {
         )
     }
 
+    const isAdmin = user.role === 'Admin';
+    const isTechnician = user.role === 'Technician';
+    const isCustomer = user.role === 'Customer';
+
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -65,7 +70,7 @@ export function Header() {
               <Wrench className="h-5 w-5 transition-all group-hover:scale-110" />
               <span className="sr-only">FieldWise</span>
             </Link>
-            <Link
+             <Link
               href="/dashboard"
               className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
             >
@@ -79,34 +84,40 @@ export function Header() {
               <Wrench className="h-5 w-5" />
               Work Orders
             </Link>
-            <Link
-              href="/dashboard/map"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <Map className="h-5 w-5" />
-              Map
-            </Link>
-            <Link
-              href="/dashboard/customers"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <Users className="h-5 w-5" />
-              Customers
-            </Link>
-             <Link
-              href="/dashboard/assets"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <Package className="h-5 w-5" />
-              Assets
-            </Link>
-             <Link
-              href="/dashboard/spare-parts"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <List className="h-5 w-5" />
-              Spare Parts
-            </Link>
+            {(isAdmin || isTechnician) && (
+                 <Link
+                  href="/dashboard/spare-parts"
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  <List className="h-5 w-5" />
+                  Spare Parts
+                </Link>
+            )}
+            {isAdmin && (
+                <>
+                <Link
+                href="/dashboard/map"
+                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                >
+                <Map className="h-5 w-5" />
+                Map
+                </Link>
+                <Link
+                href="/dashboard/customers"
+                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                >
+                <Users className="h-5 w-5" />
+                Customers
+                </Link>
+                <Link
+                href="/dashboard/assets"
+                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                >
+                <Package className="h-5 w-5" />
+                Assets
+                </Link>
+              </>
+            )}
             <Link
               href="/dashboard/settings"
               className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"

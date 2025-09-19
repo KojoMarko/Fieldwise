@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -34,6 +35,7 @@ const adminNavItems = [
 const technicianNavItems = [
     { href: '/dashboard', icon: Home, label: 'My Dashboard' },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
+    { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
 ]
 
 const customerNavItems = [

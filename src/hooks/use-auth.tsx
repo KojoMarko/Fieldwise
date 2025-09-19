@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { useRouter } from 'next/navigation';
 import { users as mockUsers } from '@/lib/data';
 import type { User } from '@/lib/types';
-import { auth as firebaseAuth } from '@/lib/firebase';
+import { auth as firebaseAuth, db } from '@/lib/firebase';
 import { 
     onAuthStateChanged, 
     signInWithEmailAndPassword, 
@@ -14,6 +14,8 @@ import {
     updateProfile,
     type User as FirebaseUser
 } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+
 
 interface AuthContextType {
   user: User | null;
@@ -33,21 +35,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (fbUser) => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser) => {
+        setIsLoading(true);
         setFirebaseUser(fbUser);
         if (fbUser) {
-            // This is a simplified mapping. In a real app, you'd fetch user role and other details from Firestore.
-            const appUser = mockUsers.find(u => u.email === fbUser.email);
-            setUser(appUser || {
-                id: fbUser.uid,
-                name: fbUser.displayName || 'New User',
-                email: fbUser.email!,
-                // New users are Customers by default, an Admin can change this.
-                // In a real app, the first user for a company would be an admin.
-                role: 'Admin', 
-                avatarUrl: fbUser.photoURL || `https://picsum.photos/seed/${fbUser.uid}/100/100`,
-                companyId: 'new-company' // This would be properly assigned
-            });
+            const userDocRef = doc(db, 'users', fbUser.uid);
+            const userDoc = await getDoc(userDocRef);
+
+            if (userDoc.exists()) {
+                setUser(userDoc.data() as User);
+            } else {
+                // This could happen if a user exists in Auth but not in Firestore.
+                // For this app's logic, we assume a user doc is always created on signup.
+                // We'll try to find them in mock data as a fallback for the initial users.
+                const appUser = mockUsers.find(u => u.email === fbUser.email);
+                 if (appUser) {
+                    // To migrate initial mock users, let's add them to Firestore if they log in
+                    await setDoc(doc(db, "users", fbUser.uid), appUser);
+                    setUser(appUser);
+                } else {
+                    console.warn("User document not found in Firestore for UID:", fbUser.uid);
+                    setUser(null);
+                }
+            }
         } else {
             setUser(null);
         }
@@ -63,24 +73,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = useCallback(async (email: string, pass: string, name: string, companyName: string) => {
     const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, pass);
+    const fbUser = userCredential.user;
     
-    if (userCredential.user) {
-        await updateProfile(userCredential.user, {
+    if (fbUser) {
+        await updateProfile(fbUser, {
             displayName: name,
+            photoURL: `https://picsum.photos/seed/${fbUser.uid}/100/100`
         });
 
-        // In a real app, you would create a new company and user document in Firestore here.
-        console.log(`New company "${companyName}" created for user "${name}"`);
-
-        setFirebaseUser(userCredential.user);
-         setUser({
-            id: userCredential.user.uid,
+        const companyId = companyName.toLowerCase().replace(/\s+/g, '-');
+        const newUser: User = {
+            id: fbUser.uid,
             name: name,
             email: email,
-            role: 'Admin', // The first user is an Admin
-            avatarUrl: `https://picsum.photos/seed/${userCredential.user.uid}/100/100`,
-            companyId: companyName.toLowerCase().replace(/\s+/g, '-') // generate a companyId
+            role: 'Admin', // The first user of a company is an Admin
+            avatarUrl: `https://picsum.photos/seed/${fbUser.uid}/100/100`,
+            companyId: companyId
+        };
+        
+        // Create a new document in the 'users' collection
+        await setDoc(doc(db, "users", fbUser.uid), newUser);
+        
+        // Also create a company document if it's a new company
+        await setDoc(doc(db, "companies", companyId), {
+            id: companyId,
+            name: companyName
         });
+
+        setUser(newUser);
     }
   }, []);
 

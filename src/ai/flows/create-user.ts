@@ -22,13 +22,21 @@ import type { User } from '@/lib/types';
 
 // Ensure Firebase Admin is initialized
 if (!getApps().length) {
-    const serviceAccountJson = process.env.FIREBASE_ADMIN_CREDENTIAL;
-    if (!serviceAccountJson) {
-        throw new Error('FIREBASE_ADMIN_CREDENTIAL environment variable is not set.');
-    }
-  initializeApp({
-    credential: cert(JSON.parse(serviceAccountJson)),
-  });
+  const serviceAccountJson = process.env.FIREBASE_ADMIN_CREDENTIAL;
+  if (!serviceAccountJson) {
+    throw new Error(
+      'FIREBASE_ADMIN_CREDENTIAL environment variable is not set. Please add it to your .env file.'
+    );
+  }
+  try {
+    initializeApp({
+      credential: cert(JSON.parse(serviceAccountJson)),
+    });
+  } catch (error: any) {
+    throw new Error(
+      `Failed to parse FIREBASE_ADMIN_CREDENTIAL. Make sure it is a valid JSON string. Original error: ${error.message}`
+    );
+  }
 }
 
 const auth = getAuth();

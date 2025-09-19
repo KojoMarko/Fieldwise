@@ -29,8 +29,10 @@ if (!getApps().length) {
     );
   }
   try {
+    // Sometimes, the env var can have escaped newlines.
+    const sanitizedJson = serviceAccountJson.replace(/\\n/g, '');
     initializeApp({
-      credential: cert(JSON.parse(serviceAccountJson)),
+      credential: cert(JSON.parse(sanitizedJson)),
     });
   } catch (error: any) {
     throw new Error(

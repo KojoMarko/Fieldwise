@@ -64,9 +64,9 @@ export function Header() {
           <nav className="grid gap-6 text-lg font-medium">
             <Link
               href="/dashboard"
-              className="group flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground"
+              className="group flex h-16 w-16 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-14 md:w-14"
             >
-              <Image src="/Field Wise Logo.png" width={32} height={32} alt="FieldWise Logo" className="h-8 w-8 transition-all group-hover:scale-110" />
+              <Image src="/Field Wise Logo.png" width={40} height={40} alt="FieldWise Logo" className="h-10 w-10 transition-all group-hover:scale-110" />
               <span className="sr-only">FieldWise</span>
             </Link>
              <Link
@@ -94,13 +94,13 @@ export function Header() {
             )}
             {isAdmin && (
                 <>
-                <Link
+                {/* <Link
                 href="/dashboard/map"
                 className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                 >
                 <Map className="h-5 w-5" />
                 Map
-                </Link>
+                </Link> */}
                 <Link
                 href="/dashboard/customers"
                 className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"

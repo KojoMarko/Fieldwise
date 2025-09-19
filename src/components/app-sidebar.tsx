@@ -26,7 +26,7 @@ import Image from 'next/image';
 const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
   { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders', badge: '1' },
-  { href: '/dashboard/map', icon: Map, label: 'Map' },
+  // { href: '/dashboard/map', icon: Map, label: 'Map' },
   { href: '/dashboard/customers', icon: Users, label: 'Users' },
   { href: '/dashboard/assets', icon: Package, label: 'Assets' },
   { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
@@ -61,9 +61,9 @@ export function AppSidebar() {
         <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
           <Link
             href="/dashboard"
-            className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground"
+            className="group flex h-16 w-16 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-14 md:w-14"
           >
-            <Image src="/Field Wise Logo.png" width={28} height={28} alt="FieldWise Logo" className="h-7 w-7 transition-all group-hover:scale-110" />
+            <Image src="/Field Wise Logo.png" width={40} height={40} alt="FieldWise Logo" className="h-10 w-10 transition-all group-hover:scale-110" />
             <span className="sr-only">FieldWise</span>
           </Link>
           {navItems.map((item) => (

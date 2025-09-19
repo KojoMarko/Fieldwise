@@ -15,6 +15,7 @@ import {
   Users,
   Settings,
   Package,
+  List,
 } from 'lucide-react';
 import { FieldWiseLogo } from '@/components/icons';
 import { cn } from '@/lib/utils';
@@ -26,7 +27,8 @@ const adminNavItems = [
   { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders', badge: '1' },
   { href: '/dashboard/map', icon: Map, label: 'Map' },
   { href: '/dashboard/customers', icon: Users, label: 'Customers' },
-  { href: '/dashboard/inventory', icon: Package, label: 'Inventory' },
+  { href: '/dashboard/assets', icon: Package, label: 'Assets' },
+  { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
 ];
 
 const technicianNavItems = [

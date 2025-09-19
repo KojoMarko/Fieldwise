@@ -31,6 +31,7 @@ import {
   User,
   Package,
   LayoutDashboard,
+  List,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -93,11 +94,18 @@ export function Header() {
               Customers
             </Link>
              <Link
-              href="/dashboard/inventory"
+              href="/dashboard/assets"
               className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
             >
               <Package className="h-5 w-5" />
-              Inventory
+              Assets
+            </Link>
+             <Link
+              href="/dashboard/spare-parts"
+              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+            >
+              <List className="h-5 w-5" />
+              Spare Parts
             </Link>
             <Link
               href="/dashboard/settings"

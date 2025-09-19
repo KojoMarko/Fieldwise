@@ -34,11 +34,27 @@ export const users: User[] = [
   },
    {
     id: 'user-5',
-    name: 'Gilbert Degraft',
+    name: 'Gilbert',
     email: 'gilbert@example.com',
     role: 'Technician',
     avatarUrl: 'https://picsum.photos/seed/avatar5/100/100',
     location: { lat: 34.07, lng: -118.26 },
+  },
+  {
+    id: 'user-6',
+    name: 'Degraft',
+    email: 'degraft@example.com',
+    role: 'Technician',
+    avatarUrl: 'https://picsum.photos/seed/avatar6/100/100',
+    location: { lat: 34.08, lng: -118.27 },
+  },
+  {
+    id: 'user-7',
+    name: 'Emma',
+    email: 'emma@example.com',
+    role: 'Technician',
+    avatarUrl: 'https://picsum.photos/seed/avatar7/100/100',
+    location: { lat: 34.09, lng: -118.28 },
   },
   {
     id: 'user-4',
@@ -152,3 +168,5 @@ export const workOrders: WorkOrder[] = [
     createdAt: formatISO(subDays(now, 2)),
   },
 ];
+
+    

@@ -1,3 +1,5 @@
+
+'use client';
 import {
   Card,
   CardContent,
@@ -6,56 +8,52 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { customers, workOrders } from '@/lib/data';
-import { MoreVertical, CheckCircle, Clock } from 'lucide-react';
+import { users } from '@/lib/data';
+import { PlusCircle, File } from 'lucide-react';
+import { DataTable } from './components/data-table';
+import { columns } from './components/columns';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function CustomersPage() {
-  return (
-    <div>
-      <h1 className="text-3xl font-bold tracking-tight mb-6">Customers</h1>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {customers.map((customer) => {
-          const customerWorkOrders = workOrders.filter(
-            (wo) => wo.customerId === customer.id
-          );
-          const completedOrders = customerWorkOrders.filter(
-            (wo) => wo.status === 'Completed'
-          ).length;
-          const openOrders = customerWorkOrders.length - completedOrders;
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
 
-          return (
-            <Card key={customer.id}>
-              <CardHeader className="flex flex-row items-start justify-between">
-                <div>
-                  <CardTitle>{customer.name}</CardTitle>
-                  <CardDescription>{customer.address}</CardDescription>
-                </div>
-                <Button variant="ghost" size="icon">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground mb-4">
-                  Contact: {customer.contactPerson} ({customer.contactEmail})
-                </div>
-                <div className="flex space-x-4 text-sm">
-                  <div className="flex items-center">
-                    <CheckCircle className="mr-1 h-4 w-4 text-green-500" />
-                    {completedOrders} Completed
-                  </div>
-                  <div className="flex items-center">
-                    <Clock className="mr-1 h-4 w-4 text-yellow-500" />
-                    {openOrders} Open
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="mt-4">
-                  View Service History
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
+  return (
+    <>
+      <div className="flex items-center mb-4">
+        <h1 className="text-3xl font-bold tracking-tight">Users</h1>
+        <div className="ml-auto flex items-center gap-2">
+          {isAdmin && (
+            <>
+              <Button size="sm" variant="outline" className="h-8 gap-1 ml-4">
+                <File className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  Export
+                </span>
+              </Button>
+              <Button size="sm" className="h-8 gap-1">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  Add User
+                </span>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>User Management</CardTitle>
+          <CardDescription>
+            View and manage all users in the system.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataTable columns={columns} data={users} />
+        </CardContent>
+      </Card>
+    </>
   );
 }
+
+    

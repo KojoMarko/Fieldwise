@@ -122,7 +122,7 @@ export default function WorkOrdersPage() {
             <CardDescription>
               Work orders that are not yet scheduled.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
             <DataTable columns={columns} data={draftOrders} />
           </CardContent>

@@ -45,17 +45,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (userDoc.exists()) {
                 setUser(userDoc.data() as User);
             } else {
-                // This could happen if a user exists in Auth but not in Firestore.
-                // For this app's logic, we assume a user doc is always created on signup.
-                // We'll try to find them in mock data as a fallback for the initial users.
-                const appUser = mockUsers.find(u => u.email === fbUser.email);
-                 if (appUser) {
-                    // To migrate initial mock users, let's add them to Firestore if they log in
-                    await setDoc(doc(db, "users", fbUser.uid), appUser);
-                    setUser(appUser);
+                // Fallback for initial mock users
+                const mockUser = mockUsers.find(u => u.email === fbUser.email);
+                 if (mockUser) {
+                    // To migrate initial mock users, let's add them to Firestore on first login
+                    const userToSave: User = {
+                        ...mockUser,
+                        id: fbUser.uid, // Overwrite mock ID with Firebase Auth UID
+                    };
+                    await setDoc(doc(db, "users", fbUser.uid), userToSave);
+                    setUser(userToSave);
                 } else {
                     console.warn("User document not found in Firestore for UID:", fbUser.uid);
-                    setUser(null);
+                    setUser(null); // Should not happen for a logged-in user in a real scenario
                 }
             }
         } else {
@@ -95,10 +97,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await setDoc(doc(db, "users", fbUser.uid), newUser);
         
         // Also create a company document if it's a new company
-        await setDoc(doc(db, "companies", companyId), {
-            id: companyId,
-            name: companyName
-        });
+        const companyDocRef = doc(db, "companies", companyId);
+        const companyDoc = await getDoc(companyDocRef);
+        if (!companyDoc.exists()) {
+            await setDoc(companyDocRef, {
+                id: companyId,
+                name: companyName
+            });
+        }
 
         setUser(newUser);
     }

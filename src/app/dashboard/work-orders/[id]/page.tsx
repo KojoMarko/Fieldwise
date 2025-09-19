@@ -45,7 +45,7 @@ export default function WorkOrderDetailPage({
   const { user } = useAuth();
   const router = useRouter();
 
-  const workOrder = useMemo(() => workOrders.find((wo) => wo.id === params.id), [params.id]);
+  const workOrder = workOrders.find((wo) => wo.id === params.id);
 
   useEffect(() => {
     if (!user || !workOrder) return;

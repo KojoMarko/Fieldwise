@@ -61,9 +61,9 @@ export function AppSidebar() {
         <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
           <Link
             href="/dashboard"
-            className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
+            className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground"
           >
-            <Image src="/Field Wise Logo.png" width={20} height={20} alt="FieldWise Logo" className="h-5 w-5 transition-all group-hover:scale-110" />
+            <Image src="/Field Wise Logo.png" width={28} height={28} alt="FieldWise Logo" className="h-7 w-7 transition-all group-hover:scale-110" />
             <span className="sr-only">FieldWise</span>
           </Link>
           {navItems.map((item) => (

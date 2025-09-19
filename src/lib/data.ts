@@ -5,8 +5,15 @@ import {
   Asset,
   WorkOrder,
   SparePart,
+  Company,
 } from '@/lib/types';
 import { subDays, formatISO } from 'date-fns';
+
+const defaultCompanyId = 'alos-paraklet';
+
+export const companies: Company[] = [
+    { id: defaultCompanyId, name: 'Alos Paraklet Healthcare Limited' }
+]
 
 export const users: User[] = [
   {
@@ -15,6 +22,7 @@ export const users: User[] = [
     email: 'harriet@example.com',
     role: 'Admin',
     avatarUrl: 'https://picsum.photos/seed/avatar1/100/100',
+    companyId: defaultCompanyId,
   },
   {
     id: 'user-2',
@@ -23,6 +31,7 @@ export const users: User[] = [
     role: 'Technician',
     avatarUrl: 'https://picsum.photos/seed/avatar2/100/100',
     location: { lat: 34.0522, lng: -118.2437 },
+    companyId: defaultCompanyId,
   },
   {
     id: 'user-3',
@@ -31,6 +40,7 @@ export const users: User[] = [
     role: 'Technician',
     avatarUrl: 'https://picsum.photos/seed/avatar3/100/100',
     location: { lat: 34.06, lng: -118.25 },
+    companyId: defaultCompanyId,
   },
    {
     id: 'user-5',
@@ -39,6 +49,7 @@ export const users: User[] = [
     role: 'Technician',
     avatarUrl: 'https://picsum.photos/seed/avatar5/100/100',
     location: { lat: 34.07, lng: -118.26 },
+    companyId: defaultCompanyId,
   },
   {
     id: 'user-6',
@@ -47,6 +58,7 @@ export const users: User[] = [
     role: 'Technician',
     avatarUrl: 'https://picsum.photos/seed/avatar6/100/100',
     location: { lat: 34.08, lng: -118.27 },
+    companyId: defaultCompanyId,
   },
   {
     id: 'user-7',
@@ -55,6 +67,7 @@ export const users: User[] = [
     role: 'Technician',
     avatarUrl: 'https://picsum.photos/seed/avatar7/100/100',
     location: { lat: 34.09, lng: -118.28 },
+    companyId: defaultCompanyId,
   },
   {
     id: 'user-4',
@@ -62,40 +75,41 @@ export const users: User[] = [
     email: 'ben@example.com',
     role: 'Customer',
     avatarUrl: 'https://picsum.photos/seed/avatar4/100/100',
+    companyId: defaultCompanyId,
   },
 ];
 
 export const customers: Customer[] = [
-    { id: 'cust-1', name: 'Komfo Anokye Hospital Kumasi', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Kumasi', phone: '555-0101' },
-    { id: 'cust-2', name: 'Lapay Comunity Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0102' },
-    { id: 'cust-3', name: 'Korlebu Teaching Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0103' },
-    { id: 'cust-4', name: 'Tamale Teaching Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Tamale', phone: '555-0104' },
-    { id: 'cust-5', name: '37 Millitary Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0105' },
-    { id: 'cust-6', name: 'KNUST Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Kumasi', phone: '555-0106' },
-    { id: 'cust-7', name: 'The Bank Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0107' },
-    { id: 'cust-8', name: 'Tema General Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Tema', phone: '555-0108' },
-    { id: 'cust-9', name: 'Trafaga Ho', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Ho', phone: '555-0109' },
-    { id: 'cust-10', name: 'Alma Labs', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0110' },
-    { id: 'cust-11', name: 'Mother of God Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Tarkwa', phone: '555-0111' },
-    { id: 'cust-12', name: 'Ahorgman community Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Aflao', phone: '555-0112' },
+    { id: 'cust-1', name: 'Komfo Anokye Hospital Kumasi', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Kumasi', phone: '555-0101', companyId: defaultCompanyId },
+    { id: 'cust-2', name: 'Lapay Comunity Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0102', companyId: defaultCompanyId },
+    { id: 'cust-3', name: 'Korlebu Teaching Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0103', companyId: defaultCompanyId },
+    { id: 'cust-4', name: 'Tamale Teaching Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Tamale', phone: '555-0104', companyId: defaultCompanyId },
+    { id: 'cust-5', name: '37 Millitary Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0105', companyId: defaultCompanyId },
+    { id: 'cust-6', name: 'KNUST Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Kumasi', phone: '555-0106', companyId: defaultCompanyId },
+    { id: 'cust-7', name: 'The Bank Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0107', companyId: defaultCompanyId },
+    { id: 'cust-8', name: 'Tema General Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Tema', phone: '555-0108', companyId: defaultCompanyId },
+    { id: 'cust-9', name: 'Trafaga Ho', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Ho', phone: '555-0109', companyId: defaultCompanyId },
+    { id: 'cust-10', name: 'Alma Labs', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Accra', phone: '555-0110', companyId: defaultCompanyId },
+    { id: 'cust-11', name: 'Mother of God Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Tarkwa', phone: '555-0111', companyId: defaultCompanyId },
+    { id: 'cust-12', name: 'Ahorgman community Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Aflao', phone: '555-0112', companyId: defaultCompanyId },
 ];
 
 export const assets: Asset[] = [
   // Vitros 5600
-  { id: 'asset-v5600-1', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-001', customerId: 'cust-1', location: 'Lab 1' },
-  { id: 'asset-v5600-2', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-002', customerId: 'cust-2', location: 'Main Lab' },
-  { id: 'asset-v5600-3', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-003', customerId: 'cust-3', location: 'Hematology' },
-  { id: 'asset-v5600-4', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-004', customerId: 'cust-4', location: 'Central Lab' },
-  { id: 'asset-v5600-5', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-005', customerId: 'cust-5', location: 'Emergency Lab' },
-  { id: 'asset-v5600-6', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-006', customerId: 'cust-6', location: 'University Lab' },
+  { id: 'asset-v5600-1', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-001', customerId: 'cust-1', location: 'Lab 1', companyId: defaultCompanyId },
+  { id: 'asset-v5600-2', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-002', customerId: 'cust-2', location: 'Main Lab', companyId: defaultCompanyId },
+  { id: 'asset-v5600-3', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-003', customerId: 'cust-3', location: 'Hematology', companyId: defaultCompanyId },
+  { id: 'asset-v5600-4', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-004', customerId: 'cust-4', location: 'Central Lab', companyId: defaultCompanyId },
+  { id: 'asset-v5600-5', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-005', customerId: 'cust-5', location: 'Emergency Lab', companyId: defaultCompanyId },
+  { id: 'asset-v5600-6', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-006', customerId: 'cust-6', location: 'University Lab', companyId: defaultCompanyId },
   // Diapro Elisa Analyzer
-  { id: 'asset-dea-1', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-001', customerId: 'cust-7', location: 'Immunology' },
-  { id: 'asset-dea-2', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-002', customerId: 'cust-8', location: 'Serology Dept' },
-  { id: 'asset-dea-3', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-003', customerId: 'cust-9', location: 'Regional Lab' },
+  { id: 'asset-dea-1', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-001', customerId: 'cust-7', location: 'Immunology', companyId: defaultCompanyId },
+  { id: 'asset-dea-2', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-002', customerId: 'cust-8', location: 'Serology Dept', companyId: defaultCompanyId },
+  { id: 'asset-dea-3', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-003', customerId: 'cust-9', location: 'Regional Lab', companyId: defaultCompanyId },
   // Ismart Electrolyte Analyzer
-  { id: 'asset-iea-1', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-001', customerId: 'cust-10', location: 'Stat Lab' },
-  { id: 'asset-iea-2', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-002', customerId: 'cust-11', location: 'Main Lab' },
-  { id: 'asset-iea-3', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-003', customerId: 'cust-12', location: 'Primary Lab' },
+  { id: 'asset-iea-1', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-001', customerId: 'cust-10', location: 'Stat Lab', companyId: defaultCompanyId },
+  { id: 'asset-iea-2', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-002', customerId: 'cust-11', location: 'Main Lab', companyId: defaultCompanyId },
+  { id: 'asset-iea-3', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-003', customerId: 'cust-12', location: 'Primary Lab', companyId: defaultCompanyId },
   // Beckman Coulter Hematology Analyzer (at all locations)
   ...customers.map((customer, index) => ({
       id: `asset-bcha-${index+1}`,
@@ -103,7 +117,8 @@ export const assets: Asset[] = [
       model: 'Beckman Coulter DxH 900',
       serialNumber: `BCHA-${String(index+1).padStart(3, '0')}`,
       customerId: customer.id,
-      location: `Main Lab at ${customer.name}`
+      location: `Main Lab at ${customer.name}`,
+      companyId: defaultCompanyId
   }))
 ];
 
@@ -142,6 +157,7 @@ export const workOrders: WorkOrder[] = [
     completedDate: formatISO(subDays(now, 9)),
     createdAt: formatISO(subDays(now, 15)),
     technicianNotes: `Completed annual maintenance. Replaced a worn reagent probe. System is now fully calibrated and operational.`,
+    companyId: defaultCompanyId,
   },
   {
     id: 'WO-002',
@@ -154,6 +170,7 @@ export const workOrders: WorkOrder[] = [
     technicianId: 'user-3',
     scheduledDate: formatISO(new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000)), // 2 days from now
     createdAt: formatISO(subDays(now, 1)),
+    companyId: defaultCompanyId,
   },
   {
     id: 'WO-003',
@@ -166,7 +183,6 @@ export const workOrders: WorkOrder[] = [
     technicianId: 'user-2',
     scheduledDate: formatISO(now),
     createdAt: formatISO(subDays(now, 2)),
+    companyId: defaultCompanyId,
   },
 ];
-
-    

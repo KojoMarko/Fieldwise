@@ -1,3 +1,4 @@
+
 import type { z } from 'zod';
 import type { ServiceReportQuestionnaireSchema } from './schemas';
 
@@ -9,6 +10,7 @@ export type User = {
   email: string;
   role: UserRole;
   avatarUrl: string;
+  companyId: string; // New field
   location?: {
     lat: number;
     lng: number;
@@ -22,15 +24,17 @@ export type Customer = {
   contactEmail: string;
   address: string;
   phone: string;
+  companyId: string; // New field
 };
 
 export type Asset = {
-  id: string;
+  id:string;
   name: string;
   model: string;
   serialNumber: string;
   customerId: string;
-  location: string; // Address
+  location: string;
+  companyId: string; // New field
 };
 
 export type SparePart = {
@@ -40,6 +44,7 @@ export type SparePart = {
     quantity: number;
     location: string;
     assetModel: string;
+    // companyId will be inferred from the asset model's company
 }
 
 export type WorkOrderStatus =
@@ -65,8 +70,13 @@ export type WorkOrder = {
   completedDate?: string;
   createdAt: string;
   technicianNotes?: string;
+  companyId: string; // New field
 };
 
 export type ServiceReportQuestionnaire = z.infer<typeof ServiceReportQuestionnaireSchema>;
 
-    
+
+export type Company = {
+    id: string;
+    name: string;
+}

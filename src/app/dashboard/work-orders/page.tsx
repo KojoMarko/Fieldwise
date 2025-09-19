@@ -44,6 +44,8 @@ export default function WorkOrdersPage() {
   );
   const draftOrders = userWorkOrders.filter((wo) => wo.status === 'Draft');
 
+  const canCreateWorkOrder = user?.role === 'Admin' || user?.role === 'Customer';
+
   return (
     <Tabs defaultValue="all">
       <div className="flex items-center">
@@ -66,14 +68,16 @@ export default function WorkOrdersPage() {
                 </span>
             </Button>
           )}
-          <Button size="sm" className="h-8 gap-1" asChild>
-            <Link href="/dashboard/work-orders/new">
-              <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                {user?.role === 'Customer' ? 'Request Service' : 'Create Work Order'}
-              </span>
-            </Link>
-          </Button>
+          {canCreateWorkOrder && (
+            <Button size="sm" className="h-8 gap-1" asChild>
+              <Link href="/dashboard/work-orders/new">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  {user?.role === 'Customer' ? 'Request Service' : 'Create Work Order'}
+                </span>
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
       <TabsContent value="all">

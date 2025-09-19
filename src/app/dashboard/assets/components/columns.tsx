@@ -38,7 +38,8 @@ export const columns: ColumnDef<Asset>[] = [
         return (
             <div>
                 <div className="font-medium">{row.original.name}</div>
-                <div className="text-sm text-muted-foreground">{row.original.model}</div>
+                <div className="text-sm text-muted-foreground md:hidden">{row.original.serialNumber}</div>
+                <div className="hidden text-sm text-muted-foreground md:inline">{row.original.model}</div>
             </div>
         )
     }
@@ -46,6 +47,10 @@ export const columns: ColumnDef<Asset>[] = [
     {
     accessorKey: 'serialNumber',
     header: 'Serial Number',
+    // Hide this column on mobile, show on tablets and larger
+    meta: {
+        className: 'hidden md:table-cell'
+    }
   },
   {
     accessorKey: 'customerId',
@@ -56,10 +61,18 @@ export const columns: ColumnDef<Asset>[] = [
       );
       return customer ? customer.name : 'N/A';
     },
+    // Hide this column on smaller screens
+     meta: {
+        className: 'hidden lg:table-cell'
+    }
   },
   {
     accessorKey: 'location',
     header: 'Location',
+     // Hide this column on smaller screens
+     meta: {
+        className: 'hidden lg:table-cell'
+    }
   },
   {
     id: 'actions',

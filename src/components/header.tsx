@@ -29,12 +29,13 @@ import {
   Users,
   Settings,
   LogOut,
-  User,
+  User as UserIcon,
   Package,
   LayoutDashboard,
   List,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { FieldWiseLogo } from './icons';
 
 export function Header() {
     const { user, logout } = useAuth();
@@ -49,8 +50,6 @@ export function Header() {
 
     const isAdmin = user.role === 'Admin';
     const isTechnician = user.role === 'Technician';
-    const isCustomer = user.role === 'Customer';
-
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -67,7 +66,7 @@ export function Header() {
               href="/dashboard"
               className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
             >
-              <Wrench className="h-5 w-5 transition-all group-hover:scale-110" />
+              <FieldWiseLogo className="h-6 w-6 transition-all group-hover:scale-110" />
               <span className="sr-only">FieldWise</span>
             </Link>
              <Link
@@ -181,7 +180,7 @@ export function Header() {
            )}
           <DropdownMenuItem asChild>
             <Link href="/dashboard/profile">
-              <User className="mr-2 h-4 w-4" />
+              <UserIcon className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </Link>
           </DropdownMenuItem>

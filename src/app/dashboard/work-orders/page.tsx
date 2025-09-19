@@ -49,7 +49,8 @@ export default function WorkOrdersPage() {
   return (
     <Tabs defaultValue="all">
       <div className="flex items-center">
-        <TabsList>
+        <h1 className="text-lg font-semibold md:text-2xl mr-4">Work Orders</h1>
+        <TabsList className="hidden sm:flex">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="active">Active</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
@@ -80,6 +81,11 @@ export default function WorkOrdersPage() {
           )}
         </div>
       </div>
+       <TabsList className="grid w-full grid-cols-3 mt-4 sm:hidden">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+        </TabsList>
       <TabsContent value="all">
         <Card>
           <CardHeader>
@@ -119,19 +125,21 @@ export default function WorkOrdersPage() {
           </CardContent>
         </Card>
       </TabsContent>
-      <TabsContent value="draft">
-        <Card>
-          <CardHeader>
-            <CardTitle>Draft Work Orders</CardTitle>
-            <CardDescription>
-              Work orders that are not yet scheduled.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DataTable columns={columns} data={draftOrders} />
-          </CardContent>
-        </Card>
-      </TabsContent>
+      {user?.role === 'Admin' && (
+        <TabsContent value="draft">
+            <Card>
+            <CardHeader>
+                <CardTitle>Draft Work Orders</CardTitle>
+                <CardDescription>
+                Work orders that are not yet scheduled.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <DataTable columns={columns} data={draftOrders} />
+            </CardContent>
+            </Card>
+        </TabsContent>
+      )}
     </Tabs>
   );
 }

@@ -21,11 +21,11 @@ export default function CustomersPage() {
   return (
     <>
       <div className="flex items-center mb-4">
-        <h1 className="text-3xl font-bold tracking-tight">Users</h1>
+        <h1 className="text-lg font-semibold md:text-2xl">Users</h1>
         <div className="ml-auto flex items-center gap-2">
           {isAdmin && (
             <>
-              <Button size="sm" variant="outline" className="h-8 gap-1 ml-4">
+              <Button size="sm" variant="outline" className="h-8 gap-1">
                 <File className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                   Export
@@ -55,5 +55,3 @@ export default function CustomersPage() {
     </>
   );
 }
-
-    

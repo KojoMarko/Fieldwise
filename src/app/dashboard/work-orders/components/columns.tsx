@@ -13,12 +13,14 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { WorkOrder, WorkOrderStatus } from '@/lib/types';
+import type { WorkOrder, WorkOrderStatus, User } from '@/lib/types';
 import { customers, users } from '@/lib/data';
 import Link from 'next/link';
 import { AssignTechnicianDialog } from './assign-technician-dialog';
 import { GenerateInvoiceDialog } from './generate-invoice-dialog';
 import { useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+
 
 const statusStyles: Record<WorkOrderStatus, string> = {
   Draft: 'bg-gray-200 text-gray-800',
@@ -29,6 +31,63 @@ const statusStyles: Record<WorkOrderStatus, string> = {
   Invoiced: 'bg-purple-100 text-purple-800',
   Cancelled: 'bg-red-100 text-red-800',
 };
+
+// Custom cell component for actions to handle user roles
+function ActionsCell({ row }: { row: { original: WorkOrder }}) {
+  const { user } = useAuth();
+  const workOrder = row.original;
+  const [isAssignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [isInvoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+
+  const isAdmin = user?.role === 'Admin';
+  
+  return (
+    <>
+      {isAdmin && (
+        <AssignTechnicianDialog
+          open={isAssignDialogOpen}
+          onOpenChange={setAssignDialogOpen}
+          workOrder={workOrder}
+        />
+      )}
+       {isAdmin && (
+        <GenerateInvoiceDialog
+          open={isInvoiceDialogOpen}
+          onOpenChange={setInvoiceDialogOpen}
+          workOrder={workOrder}
+        />
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/work-orders/${workOrder.id}`}>
+              View Details
+            </Link>
+          </DropdownMenuItem>
+          {isAdmin && (
+            <>
+              <DropdownMenuItem onClick={() => setAssignDialogOpen(true)}>
+                Assign Technician
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setInvoiceDialogOpen(true)}>
+                Generate Invoice
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
+  );
+}
+
 
 export const columns: ColumnDef<WorkOrder>[] = [
   {
@@ -91,6 +150,9 @@ export const columns: ColumnDef<WorkOrder>[] = [
           : 'text-muted-foreground';
       return <div className={priorityClass}>{priority}</div>;
     },
+     meta: {
+      className: 'hidden sm:table-cell',
+    },
   },
   {
     accessorKey: 'technicianId',
@@ -104,6 +166,9 @@ export const columns: ColumnDef<WorkOrder>[] = [
         <span className="text-muted-foreground">Unassigned</span>
       );
     },
+     meta: {
+      className: 'hidden md:table-cell',
+    },
   },
   {
     accessorKey: 'scheduledDate',
@@ -112,51 +177,12 @@ export const columns: ColumnDef<WorkOrder>[] = [
       const date = new Date(row.getValue('scheduledDate'));
       return new Intl.DateTimeFormat('en-US').format(date);
     },
+     meta: {
+      className: 'hidden md:table-cell',
+    },
   },
   {
     id: 'actions',
-    cell: function Cell({ row }) {
-      const workOrder = row.original;
-      const [isAssignDialogOpen, setAssignDialogOpen] = useState(false);
-      const [isInvoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
-
-      return (
-        <>
-          <AssignTechnicianDialog
-            open={isAssignDialogOpen}
-            onOpenChange={setAssignDialogOpen}
-            workOrder={workOrder}
-          />
-          <GenerateInvoiceDialog
-            open={isInvoiceDialogOpen}
-            onOpenChange={setInvoiceDialogOpen}
-            workOrder={workOrder}
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/work-orders/${workOrder.id}`}>
-                  View Details
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setAssignDialogOpen(true)}>
-                Assign Technician
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setInvoiceDialogOpen(true)}>
-                Generate Invoice
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </>
-      );
-    },
+    cell: ActionsCell,
   },
 ];

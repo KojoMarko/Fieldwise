@@ -17,7 +17,6 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import type { User } from '@/lib/types';
-import { kullanıcı } from 'firebase-admin/lib/auth/auth-config';
 
 // Ensure Firebase Admin is initialized
 if (!getApps().length) {

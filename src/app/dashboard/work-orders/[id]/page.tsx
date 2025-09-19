@@ -44,8 +44,9 @@ export default function WorkOrderDetailPage({
 }) {
   const { user } = useAuth();
   const router = useRouter();
+  const { id } = params;
 
-  const workOrder = useMemo(() => workOrders.find((wo) => wo.id === params.id), [params.id]);
+  const workOrder = useMemo(() => workOrders.find((wo) => wo.id === id), [id]);
 
   useEffect(() => {
     if (!user || !workOrder) return;
@@ -62,7 +63,7 @@ export default function WorkOrderDetailPage({
         router.push('/dashboard/work-orders');
       }
     }
-  }, [user, workOrder, router, params.id]);
+  }, [user, workOrder, router, id]);
 
 
   if (!workOrder) {

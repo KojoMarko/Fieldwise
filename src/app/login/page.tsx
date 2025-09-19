@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/button';
 import { users } from '@/lib/data';
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FieldWiseLogo } from '@/components/icons';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const { login, user, isLoading } = useAuth();
@@ -45,7 +45,7 @@ export default function LoginPage() {
             <div
             className="group mb-4 flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-10 md:w-10 md:text-base"
           >
-            <FieldWiseLogo className="h-6 w-6 transition-all group-hover:scale-110" />
+            <Image src="/fieldwise-logo.svg" width={24} height={24} alt="FieldWise Logo" className="h-6 w-6 transition-all group-hover:scale-110" style={{filter: 'brightness(0) invert(1)'}} />
             <span className="sr-only">FieldWise</span>
           </div>
           <CardTitle>Welcome to FieldWise</CardTitle>

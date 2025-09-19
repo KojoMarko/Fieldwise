@@ -18,16 +18,16 @@ import {
   Package,
   List,
 } from 'lucide-react';
-import { FieldWiseLogo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { useAuth } from '@/hooks/use-auth';
+import Image from 'next/image';
 
 const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
   { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders', badge: '1' },
   { href: '/dashboard/map', icon: Map, label: 'Map' },
-  { href: '/dashboard/customers', icon: Users, label: 'Customers' },
+  { href: '/dashboard/customers', icon: Users, label: 'Users' },
   { href: '/dashboard/assets', icon: Package, label: 'Assets' },
   { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
 ];
@@ -60,10 +60,10 @@ export function AppSidebar() {
       <TooltipProvider>
         <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
           <Link
-            href="#"
+            href="/dashboard"
             className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
           >
-            <FieldWiseLogo className="h-5 w-5 transition-all group-hover:scale-110" />
+            <Image src="/fieldwise-logo.svg" width={20} height={20} alt="FieldWise Logo" className="h-5 w-5 transition-all group-hover:scale-110" style={{filter: 'brightness(0) invert(1)'}} />
             <span className="sr-only">FieldWise</span>
           </Link>
           {navItems.map((item) => (

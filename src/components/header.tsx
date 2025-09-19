@@ -35,7 +35,7 @@ import {
   List,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { FieldWiseLogo } from './icons';
+import Image from 'next/image';
 
 export function Header() {
     const { user, logout } = useAuth();
@@ -66,7 +66,7 @@ export function Header() {
               href="/dashboard"
               className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
             >
-              <FieldWiseLogo className="h-6 w-6 transition-all group-hover:scale-110" />
+              <Image src="/fieldwise-logo.svg" width={24} height={24} alt="FieldWise Logo" className="h-6 w-6 transition-all group-hover:scale-110" style={{filter: 'brightness(0) invert(1)'}} />
               <span className="sr-only">FieldWise</span>
             </Link>
              <Link
@@ -106,7 +106,7 @@ export function Header() {
                 className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                 >
                 <Users className="h-5 w-5" />
-                Customers
+                Users
                 </Link>
                 <Link
                 href="/dashboard/assets"

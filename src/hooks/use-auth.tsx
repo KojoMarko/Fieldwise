@@ -37,8 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser) => {
         setIsLoading(true);
-        setFirebaseUser(fbUser);
         if (fbUser) {
+            setFirebaseUser(fbUser);
             const userDocRef = doc(db, 'users', fbUser.uid);
             const userDoc = await getDoc(userDocRef);
 
@@ -61,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
         } else {
+            setFirebaseUser(null);
             setUser(null);
         }
         setIsLoading(false);

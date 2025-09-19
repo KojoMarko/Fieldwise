@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -107,7 +108,7 @@ export default function TechnicianDashboardPage() {
                                     </div>
                                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                 </div>
-                                <div className="flex items-center gap-4 text-sm mt-2 text-muted-foreground">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm mt-2 text-muted-foreground">
                                     <div className="flex items-center gap-1">
                                         <MapPin className="h-4 w-4" />
                                         <span>{customer?.address}</span>

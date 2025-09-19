@@ -13,13 +13,20 @@ import { PlusCircle, File } from 'lucide-react';
 import { DataTable } from './components/data-table';
 import { columns } from './components/columns';
 import { useAuth } from '@/hooks/use-auth';
+import { useState } from 'react';
+import { AddUserDialog } from './components/add-user-dialog';
 
 export default function CustomersPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'Admin';
+  const [isAddUserDialogOpen, setAddUserDialogOpen] = useState(false);
 
   return (
     <>
+      <AddUserDialog
+        open={isAddUserDialogOpen}
+        onOpenChange={setAddUserDialogOpen}
+      />
       <div className="flex items-center mb-4">
         <h1 className="text-lg font-semibold md:text-2xl">Users</h1>
         <div className="ml-auto flex items-center gap-2">
@@ -31,7 +38,11 @@ export default function CustomersPage() {
                   Export
                 </span>
               </Button>
-              <Button size="sm" className="h-8 gap-1">
+              <Button
+                size="sm"
+                className="h-8 gap-1"
+                onClick={() => setAddUserDialogOpen(true)}
+              >
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                   Add User

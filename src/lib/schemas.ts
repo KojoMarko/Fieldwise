@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const ServiceReportQuestionnaireSchema = z.object({
@@ -7,4 +8,9 @@ export const ServiceReportQuestionnaireSchema = z.object({
   customerFeedback: z.string().describe('Any feedback or comments provided by the customer on-site.'),
 });
 
-    
+export const CreateUserInputSchema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().email('Invalid email address'),
+    role: z.enum(['Technician', 'Customer', 'Admin']),
+    companyId: z.string().min(1, 'Company ID is required'),
+});

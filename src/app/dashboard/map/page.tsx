@@ -104,8 +104,8 @@ export default function MapPage() {
                             <Wrench className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <div>
-                            <p className="font-medium text-sm">{row.title}</p>
-                            <p className="text-xs text-muted-foreground">{row.status}</p>
+                            <p className="font-medium text-sm">{wo.title}</p>
+                            <p className="text-xs text-muted-foreground">{wo.status}</p>
                         </div>
                     </li>
                  ))}

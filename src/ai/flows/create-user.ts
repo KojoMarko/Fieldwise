@@ -9,6 +9,8 @@
  * - CreateUserInput - The input type for the createUser function.
  * - CreateUserOutput - The return type for the createUser function.
  */
+import { config } from 'dotenv';
+config();
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
@@ -20,8 +22,12 @@ import type { User } from '@/lib/types';
 
 // Ensure Firebase Admin is initialized
 if (!getApps().length) {
+    const serviceAccountJson = process.env.FIREBASE_ADMIN_CREDENTIAL;
+    if (!serviceAccountJson) {
+        throw new Error('FIREBASE_ADMIN_CREDENTIAL environment variable is not set.');
+    }
   initializeApp({
-    credential: cert(JSON.parse(process.env.FIREBASE_ADMIN_CREDENTIAL!)),
+    credential: cert(JSON.parse(serviceAccountJson)),
   });
 }
 

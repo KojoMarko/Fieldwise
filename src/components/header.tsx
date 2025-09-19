@@ -66,7 +66,7 @@ export function Header() {
               href="/dashboard"
               className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
             >
-              <Image src="/fieldwise-logo.svg" width={24} height={24} alt="FieldWise Logo" className="h-6 w-6 transition-all group-hover:scale-110" style={{filter: 'brightness(0) invert(1)'}} />
+              <Image src="/Field Wise Logo.png" width={24} height={24} alt="FieldWise Logo" className="h-6 w-6 transition-all group-hover:scale-110" />
               <span className="sr-only">FieldWise</span>
             </Link>
              <Link

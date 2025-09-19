@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import {
   Card,
@@ -32,7 +33,7 @@ const getPosition = (id: string) => {
 export default function MapPage() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-10rem)]">
-      <div className="lg:col-span-2 relative rounded-lg overflow-hidden shadow-lg">
+      <div className="lg:col-span-2 relative rounded-lg overflow-hidden shadow-lg h-[50vh] lg:h-full">
         {mapImage && 
             <Image
                 src={mapImage.imageUrl}
@@ -103,8 +104,8 @@ export default function MapPage() {
                             <Wrench className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <div>
-                            <p className="font-medium text-sm">{wo.title}</p>
-                            <p className="text-xs text-muted-foreground">{wo.status}</p>
+                            <p className="font-medium text-sm">{row.title}</p>
+                            <p className="text-xs text-muted-foreground">{row.status}</p>
                         </div>
                     </li>
                  ))}

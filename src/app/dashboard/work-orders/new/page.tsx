@@ -54,7 +54,7 @@ export default function NewWorkOrderPage() {
     <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-4">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" className="h-7 w-7" asChild>
-          <Link href="/dashboard">
+          <Link href="/dashboard/work-orders">
             <ChevronLeft className="h-4 w-4" />
             <span className="sr-only">Back</span>
           </Link>

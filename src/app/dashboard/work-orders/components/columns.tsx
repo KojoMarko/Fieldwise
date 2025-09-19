@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -120,7 +121,7 @@ export const columns: ColumnDef<WorkOrder>[] = [
       return (
         <div>
           <div className="font-medium">{row.original.title}</div>
-          <div className="text-sm text-muted-foreground">{customer?.name}</div>
+          <div className="text-sm text-muted-foreground md:hidden">{customer?.name}</div>
         </div>
       );
     },
@@ -135,6 +136,17 @@ export const columns: ColumnDef<WorkOrder>[] = [
           {status}
         </Badge>
       );
+    },
+  },
+    {
+    accessorKey: 'customer',
+    header: 'Customer',
+    cell: ({ row }) => {
+      const customer = customers.find((c) => c.id === row.original.customerId);
+      return customer?.name;
+    },
+     meta: {
+      className: 'hidden md:table-cell',
     },
   },
   {
@@ -167,7 +179,7 @@ export const columns: ColumnDef<WorkOrder>[] = [
       );
     },
      meta: {
-      className: 'hidden md:table-cell',
+      className: 'hidden lg:table-cell',
     },
   },
   {
@@ -178,7 +190,7 @@ export const columns: ColumnDef<WorkOrder>[] = [
       return new Intl.DateTimeFormat('en-US').format(date);
     },
      meta: {
-      className: 'hidden md:table-cell',
+      className: 'hidden lg:table-cell',
     },
   },
   {

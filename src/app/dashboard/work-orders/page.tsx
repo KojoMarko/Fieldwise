@@ -49,18 +49,8 @@ export default function WorkOrdersPage() {
   return (
     <Tabs defaultValue="all">
       <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl mr-4">Work Orders</h1>
-        <TabsList className="hidden sm:flex">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          {user?.role === 'Admin' && (
-            <TabsTrigger value="draft" className="hidden sm:flex">
-              Draft
-            </TabsTrigger>
-          )}
-        </TabsList>
-        <div className="ml-auto flex items-center gap-2">
+        <h1 className="text-lg font-semibold md:text-2xl mr-auto">Work Orders</h1>
+        <div className="hidden sm:flex items-center gap-2">
           {user?.role === 'Admin' && (
             <Button size="sm" variant="outline" className="h-8 gap-1">
                 <File className="h-3.5 w-3.5" />
@@ -81,11 +71,30 @@ export default function WorkOrdersPage() {
           )}
         </div>
       </div>
-       <TabsList className="grid w-full grid-cols-3 mt-4 sm:hidden">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
+       <div className="flex items-center gap-4 mt-4">
+        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:grid-cols-4">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+            {user?.role === 'Admin' && (
+                <TabsTrigger value="draft" className="hidden sm:flex">
+                Draft
+                </TabsTrigger>
+            )}
         </TabsList>
+         <div className="sm:hidden flex-1">
+             {canCreateWorkOrder && (
+                <Button size="sm" className="h-8 gap-1 w-full" asChild>
+                <Link href="/dashboard/work-orders/new">
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span>
+                    {user?.role === 'Customer' ? 'Request Service' : 'New'}
+                    </span>
+                </Link>
+                </Button>
+            )}
+         </div>
+       </div>
       <TabsContent value="all">
         <Card>
           <CardHeader>

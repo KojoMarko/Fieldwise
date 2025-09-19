@@ -147,7 +147,7 @@ export default function WorkOrderDetailPage({
           <TabsTrigger value="parts">Parts &amp; Inventory</TabsTrigger>
         </TabsList>
         <TabsContent value="details">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 mt-4">
+          <div className="grid gap-4 lg:grid-cols-3 lg:gap-8 mt-4">
             <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
               <Card>
                 <CardHeader>

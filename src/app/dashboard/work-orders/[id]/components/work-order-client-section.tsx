@@ -204,7 +204,7 @@ export function WorkOrderClientSection({
             <CardTitle>Technician Controls</CardTitle>
             <CardDescription>Update the work order status.</CardDescription>
         </CardHeader>
-        <CardContent className="flex gap-2">
+        <CardContent className="flex flex-wrap gap-2">
             {(currentWorkOrder.status === 'Scheduled' || currentWorkOrder.status === 'On-Hold') && (
                 <Button onClick={() => handleStatusChange('In-Progress')}>
                     <Play className="mr-2" /> Start Work
@@ -265,10 +265,10 @@ export function WorkOrderClientSection({
           </DialogContent>
       </Dialog>
     
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
       
         {isGeneratingReport && (
-            <Card className="md:col-span-2">
+            <Card className="lg:col-span-2">
                 <CardContent className="p-6 flex flex-col items-center justify-center min-h-[300px]">
                     <LoaderCircle className="h-10 w-10 animate-spin text-primary mb-4" />
                     <p className="font-medium">Generating Service Report...</p>
@@ -282,7 +282,7 @@ export function WorkOrderClientSection({
                 {isTechnicianView && currentWorkOrder.status !== 'Completed' && currentWorkOrder.status !== 'Invoiced' && <TechnicianActions />}
 
                 {(currentWorkOrder.status === 'Completed' || currentWorkOrder.status === 'On-Hold') && currentWorkOrder.technicianNotes ? (
-                    <div className="md:col-span-2"><ServiceReport /></div>
+                    <div className="lg:col-span-2"><ServiceReport /></div>
                 ) : (
                     <>
                     {/* Hide for technician if work is not completed */}
@@ -302,7 +302,7 @@ export function WorkOrderClientSection({
                     </>
                 )}
 
-                <Card className={currentWorkOrder.status === 'Completed' ? 'md:col-span-2' : ''}>
+                <Card className={(currentWorkOrder.status === 'Completed' || (currentWorkOrder.status !== 'Completed' && !isTechnicianView)) ? 'lg:col-span-2' : ''}>
                     <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                         <span>AI Spare Part Suggester</span>

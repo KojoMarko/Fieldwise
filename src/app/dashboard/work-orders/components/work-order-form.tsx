@@ -22,6 +22,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectSeparator,
 } from '@/components/ui/select';
 import {
   Popover,
@@ -29,15 +30,19 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, LoaderCircle } from 'lucide-react';
+import { CalendarIcon, LoaderCircle, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { customers, assets } from '@/lib/data';
+import { customers as staticCustomers, assets } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { createWorkOrder } from '@/ai/flows/create-work-order';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { AddCustomerDialog } from './add-customer-dialog';
+import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Customer } from '@/lib/types';
 
 const workOrderSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -57,8 +62,26 @@ export function WorkOrderForm() {
   const router = useRouter();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddCustomerDialogOpen, setAddCustomerDialogOpen] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
 
-  const customerProfile = user?.role === 'Customer' ? customers.find(c => c.contactEmail === user.email) : undefined;
+  useEffect(() => {
+    if (!user?.companyId) return;
+
+    const q = query(collection(db, "customers"), where("companyId", "==", user.companyId));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const customersData: Customer[] = [];
+      querySnapshot.forEach((doc) => {
+        customersData.push({ id: doc.id, ...doc.data() } as Customer);
+      });
+      setCustomers(customersData);
+    });
+
+    return () => unsubscribe();
+  }, [user?.companyId]);
+
+
+  const customerProfile = user?.role === 'Customer' ? staticCustomers.find(c => c.contactEmail === user.email) : undefined;
 
   const form = useForm<WorkOrderFormValues>({
     resolver: zodResolver(workOrderSchema),
@@ -97,10 +120,20 @@ export function WorkOrderForm() {
         setIsSubmitting(false);
     }
   }
+
+  const handleCustomerCreated = (newCustomerId: string, newCustomerName: string) => {
+    form.setValue('customerId', newCustomerId);
+  };
   
   const isCustomer = user?.role === 'Customer';
 
   return (
+    <>
+    <AddCustomerDialog
+        open={isAddCustomerDialogOpen}
+        onOpenChange={setAddCustomerDialogOpen}
+        onCustomerCreated={handleCustomerCreated}
+    />
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
@@ -143,8 +176,14 @@ export function WorkOrderForm() {
               <FormItem>
                 <FormLabel>Customer</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  onValueChange={(value) => {
+                      if (value === 'add_new_customer') {
+                          setAddCustomerDialogOpen(true);
+                      } else {
+                          field.onChange(value);
+                      }
+                  }}
+                  value={field.value}
                   disabled={isCustomer}
                 >
                   <FormControl>
@@ -158,6 +197,13 @@ export function WorkOrderForm() {
                         {customer.name}
                       </SelectItem>
                     ))}
+                    <SelectSeparator />
+                     <SelectItem value="add_new_customer" className="text-primary focus:text-primary-foreground focus:bg-primary">
+                          <div className='flex items-center gap-2'>
+                            <PlusCircle className="h-4 w-4" />
+                            <span>Add New Customer</span>
+                          </div>
+                      </SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -279,5 +325,6 @@ export function WorkOrderForm() {
         </div>
       </form>
     </Form>
+    </>
   );
 }

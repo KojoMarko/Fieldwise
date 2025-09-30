@@ -7,3 +7,4 @@ import '@/ai/flows/generate-service-report.ts';
 import '@/ai/flows/find-part-number.ts';
 import '@/ai/flows/create-user.ts';
 import '@/ai/flows/create-work-order.ts';
+import '@/ai/flows/create-customer.ts';

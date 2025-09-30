@@ -14,3 +14,12 @@ export const CreateUserInputSchema = z.object({
     role: z.enum(['Technician', 'Customer', 'Admin']),
     companyId: z.string().min(1, 'Company ID is required'),
 });
+
+export const CreateCustomerInputSchema = z.object({
+    name: z.string().min(1, 'Customer name is required'),
+    contactPerson: z.string().min(1, 'Contact person is required'),
+    contactEmail: z.string().email('Invalid email address'),
+    phone: z.string().min(1, 'Phone number is required'),
+    address: z.string().min(1, 'Address is required'),
+    companyId: z.string().min(1, 'Company ID is required'),
+});

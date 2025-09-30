@@ -32,3 +32,12 @@ export const UpdateCustomerInputSchema = CreateCustomerInputSchema.extend({
 export const DeleteCustomerInputSchema = z.object({
     customerId: z.string().min(1, 'Customer ID is required'),
 });
+
+export const CreateAssetInputSchema = z.object({
+  name: z.string().min(1, 'Asset name is required.'),
+  model: z.string().min(1, 'Model is required.'),
+  serialNumber: z.string().min(1, 'Serial number is required.'),
+  customerId: z.string().min(1, 'A customer must be selected.'),
+  location: z.string().min(1, 'Location is required.'),
+  companyId: z.string().min(1, 'Company ID is required.'),
+});

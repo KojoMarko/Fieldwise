@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Asset } from '@/lib/types';
+import Link from 'next/link';
 
 
 export default function AssetsPage() {
@@ -55,11 +56,13 @@ export default function AssetsPage() {
               Export
             </span>
           </Button>
-           <Button size="sm" className="h-8 gap-1">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Add Asset
-                </span>
+           <Button size="sm" className="h-8 gap-1" asChild>
+                <Link href="/dashboard/assets/new">
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Add Asset
+                    </span>
+                </Link>
             </Button>
         </div>
       </div>

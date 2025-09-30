@@ -38,7 +38,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { createWorkOrder } from '@/ai/flows/create-work-order';
 import { useEffect, useState } from 'react';
-import { AddCustomerDialog } from './add-customer-dialog';
+import { AddCustomerDialog } from '../../customers/components/add-customer-dialog';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Customer, Asset } from '@/lib/types';

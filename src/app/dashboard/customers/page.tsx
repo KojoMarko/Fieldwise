@@ -13,7 +13,7 @@ import { DataTable } from './components/data-table';
 import { columns } from './components/columns';
 import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
-import { AddCustomerDialog } from '../work-orders/components/add-customer-dialog';
+import { AddCustomerDialog } from './components/add-customer-dialog';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Customer } from '@/lib/types';
@@ -52,8 +52,8 @@ export default function CustomersPage() {
       <AddCustomerDialog
         open={isAddCustomerDialogOpen}
         onOpenChange={setAddCustomerDialogOpen}
-        onCustomerCreated={(id, name) => {
-            // Optional: You might want to refresh the list or optimistically add the new customer
+        onCustomerCreated={() => {
+            // No action needed here, onSnapshot will handle the update
         }}
       />
       <div className="flex items-center mb-4">

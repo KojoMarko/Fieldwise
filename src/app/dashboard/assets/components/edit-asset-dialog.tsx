@@ -88,7 +88,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
       serialNumber: asset.serialNumber,
       customerId: asset.customerId,
       location: asset.location,
-      installationDate: parseISO(asset.installationDate),
+      installationDate: asset.installationDate ? parseISO(asset.installationDate) : new Date(),
     },
   });
 

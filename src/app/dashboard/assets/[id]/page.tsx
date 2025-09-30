@@ -59,8 +59,7 @@ function CustomerInfo({ customerId }: { customerId: string }) {
   )
 }
 
-export default function AssetDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function AssetDetailPage({ params: { id } }: { params: { id: string } }) {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

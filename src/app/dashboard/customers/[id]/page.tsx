@@ -27,11 +27,10 @@ import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 
 export default function CustomerDetailPage({
-  params,
+  params: { id },
 }: {
   params: { id: string };
 }) {
-  const { id } = params;
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);

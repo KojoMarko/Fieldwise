@@ -2,10 +2,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Asset, Customer } from '@/lib/types';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -18,12 +18,12 @@ import {
   ChevronLeft,
   LoaderCircle,
   Package,
-  Building,
   MapPin,
   Barcode,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 function CustomerInfo({ customerId }: { customerId: string }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -58,12 +58,13 @@ function CustomerInfo({ customerId }: { customerId: string }) {
 }
 
 export default function AssetDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const [asset, setAsset] = useState<Asset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsLoading(true);
-    const docRef = doc(db, 'assets', params.id);
+    const docRef = doc(db, 'assets', id);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         setAsset({ id: docSnap.id, ...docSnap.data() } as Asset);
@@ -73,7 +74,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
       setIsLoading(false);
     });
     return () => unsubscribe();
-  }, [params.id]);
+  }, [id]);
 
   if (isLoading) {
     return (

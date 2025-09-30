@@ -3,7 +3,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { User } from '@/lib/types';
+import type { Customer } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,11 +13,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Trash2 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 
-export const columns: ColumnDef<User>[] = [
+export const columns: ColumnDef<Customer>[] = [
   {
     id: 'select',
     header: ({ table }) => (
@@ -42,49 +40,40 @@ export const columns: ColumnDef<User>[] = [
   },
   {
     accessorKey: 'name',
-    header: 'Name',
+    header: 'Customer Name',
     cell: ({ row }) => {
       return (
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            <AvatarImage
-              src={row.original.avatarUrl}
-              alt={row.original.name}
-            />
-            <AvatarFallback>{row.original.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
+        <div>
             <div className="font-medium">{row.original.name}</div>
-            <div className="text-sm text-muted-foreground">
-              {row.original.email}
-            </div>
-          </div>
+            <div className="text-sm text-muted-foreground">{row.original.address}</div>
         </div>
       );
     },
   },
   {
-    accessorKey: 'role',
-    header: 'Role',
-    cell: ({ row }) => {
-      const role = row.original.role;
-      let variant: 'default' | 'secondary' | 'outline' = 'outline';
-      if (role === 'Admin') variant = 'default';
-      if (role === 'Technician') variant = 'secondary';
-      return <Badge variant={variant}>{role}</Badge>;
+    accessorKey: 'contactPerson',
+    header: 'Contact Person',
+     cell: ({ row }) => {
+      return (
+        <div>
+            <div className="font-medium">{row.original.contactPerson}</div>
+            <div className="text-sm text-muted-foreground">{row.original.contactEmail}</div>
+        </div>
+      );
     },
+  },
+    {
+    accessorKey: 'phone',
+    header: 'Phone',
   },
   {
     id: 'actions',
     cell: function Cell({ row }) {
       const { user } = useAuth();
       const isAdmin = user?.role === 'Admin';
-      const targetUser = row.original;
+      const targetCustomer = row.original;
 
       if (!isAdmin) return null;
-
-      // Prevent admin from deleting themselves
-      if (targetUser.id === user?.id) return null;
 
       return (
         <div className="text-right">
@@ -97,13 +86,14 @@ export const columns: ColumnDef<User>[] = [
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem>Edit User</DropdownMenuItem>
+              <DropdownMenuItem>View Customer Details</DropdownMenuItem>
+              <DropdownMenuItem>Edit Customer</DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
-                onClick={() => console.log('Remove user', targetUser.id)}
+                onClick={() => console.log('Remove customer', targetCustomer.id)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Remove User
+                Remove Customer
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -112,5 +102,3 @@ export const columns: ColumnDef<User>[] = [
     },
   },
 ];
-
-    

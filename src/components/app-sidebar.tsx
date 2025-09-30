@@ -12,7 +12,7 @@ import {
 import {
   Home,
   Wrench,
-  Map,
+  CalendarCheck,
   Users,
   Settings,
   Package,
@@ -27,7 +27,7 @@ import Image from 'next/image';
 const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
   { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders', badge: '1' },
-  // { href: '/dashboard/map', icon: Map, label: 'Map' },
+  { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
   { href: '/dashboard/customers', icon: Building, label: 'Customers' },
   { href: '/dashboard/users', icon: Users, label: 'Users' },
   { href: '/dashboard/assets', icon: Package, label: 'Assets' },
@@ -37,6 +37,7 @@ const adminNavItems = [
 const technicianNavItems = [
     { href: '/dashboard', icon: Home, label: 'My Dashboard' },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
+    { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
     { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
 ]
 

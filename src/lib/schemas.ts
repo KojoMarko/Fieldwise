@@ -41,6 +41,8 @@ export const CreateAssetInputSchema = z.object({
   location: z.string().min(1, 'Location is required.'),
   installationDate: z.any().transform((val) => (val ? new Date(val) : new Date())),
   companyId: z.string().min(1, 'Company ID is required.'),
+  ppmFrequency: z.coerce.number().optional(),
+  lastPpmDate: z.any().optional(),
 });
 
 export const UpdateAssetInputSchema = CreateAssetInputSchema.extend({

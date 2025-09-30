@@ -173,7 +173,7 @@ export function AssetForm() {
                         )}
                       >
                         {field.value ? (
-                          format(field.value, 'PPP')
+                          format(new Date(field.value), 'PPP')
                         ) : (
                           <span>Pick a date</span>
                         )}
@@ -243,6 +243,69 @@ export function AssetForm() {
               </FormItem>
             )}
           />
+          <div className="space-y-4 rounded-lg border p-4">
+              <h3 className="text-md font-medium">Preventive Maintenance</h3>
+               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                <FormField
+                    control={form.control}
+                    name="ppmFrequency"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>PPM Frequency (Months)</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="e.g., 6" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                            How often should preventive maintenance be done?
+                        </FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="lastPpmDate"
+                    render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Last PPM Date</FormLabel>
+                        <Popover>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                            <Button
+                                variant={'outline'}
+                                className={cn(
+                                'pl-3 text-left font-normal',
+                                !field.value && 'text-muted-foreground'
+                                )}
+                            >
+                                {field.value ? (
+                                format(new Date(field.value), 'PPP')
+                                ) : (
+                                <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date > new Date()}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                        </Popover>
+                        <FormDescription>
+                            When was the last PPM performed?
+                        </FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+               </div>
+          </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
           <Button type="submit" disabled={isSubmitting}>

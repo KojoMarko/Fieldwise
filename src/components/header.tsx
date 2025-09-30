@@ -33,6 +33,7 @@ import {
   LayoutDashboard,
   List,
   Building,
+  CalendarCheck,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
@@ -84,6 +85,14 @@ export function Header() {
               Work Orders
             </Link>
             {(isAdmin || isTechnician) && (
+                <>
+                 <Link
+                  href="/dashboard/ppm"
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  <CalendarCheck className="h-5 w-5" />
+                  PPM
+                </Link>
                  <Link
                   href="/dashboard/spare-parts"
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
@@ -91,6 +100,7 @@ export function Header() {
                   <List className="h-5 w-5" />
                   Spare Parts
                 </Link>
+                </>
             )}
             {isAdmin && (
                 <>

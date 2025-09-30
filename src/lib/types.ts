@@ -36,6 +36,8 @@ export type Asset = {
   location: string;
   installationDate: string;
   companyId: string; // New field
+  ppmFrequency?: number; // In months
+  lastPpmDate?: string;
 };
 
 export type SparePart = {

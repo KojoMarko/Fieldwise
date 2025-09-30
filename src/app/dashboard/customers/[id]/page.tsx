@@ -31,13 +31,14 @@ export default function CustomerDetailPage({
 }: {
   params: { id: string };
 }) {
+  const { id } = params;
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsLoading(true);
-    const docRef = doc(db, 'customers', params.id);
+    const docRef = doc(db, 'customers', id);
 
     const unsubscribeCustomer = onSnapshot(
       docRef,
@@ -57,7 +58,7 @@ export default function CustomerDetailPage({
 
     const assetsQuery = query(
       collection(db, 'assets'),
-      where('customerId', '==', params.id)
+      where('customerId', '==', id)
     );
     const unsubscribeAssets = onSnapshot(assetsQuery, (snapshot) => {
       const assetsData: Asset[] = [];
@@ -72,7 +73,7 @@ export default function CustomerDetailPage({
       unsubscribeCustomer();
       unsubscribeAssets();
     };
-  }, [params.id]);
+  }, [id]);
 
   if (isLoading) {
     return (

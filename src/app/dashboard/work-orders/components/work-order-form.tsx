@@ -33,16 +33,15 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, LoaderCircle, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { customers as staticCustomers, assets } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { createWorkOrder } from '@/ai/flows/create-work-order';
 import { useEffect, useState } from 'react';
 import { AddCustomerDialog } from './add-customer-dialog';
-import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Customer } from '@/lib/types';
+import type { Customer, Asset } from '@/lib/types';
 
 const workOrderSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -64,24 +63,42 @@ export function WorkOrderForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAddCustomerDialogOpen, setAddCustomerDialogOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user?.companyId) return;
 
-    const q = query(collection(db, "customers"), where("companyId", "==", user.companyId));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    setIsLoading(true);
+    const customerQuery = query(collection(db, "customers"), where("companyId", "==", user.companyId));
+    const assetQuery = query(collection(db, "assets"), where("companyId", "==", user.companyId));
+
+    const unsubscribeCustomers = onSnapshot(customerQuery, (snapshot) => {
       const customersData: Customer[] = [];
-      querySnapshot.forEach((doc) => {
+      snapshot.forEach((doc) => {
         customersData.push({ id: doc.id, ...doc.data() } as Customer);
       });
       setCustomers(customersData);
     });
 
-    return () => unsubscribe();
+    const unsubscribeAssets = onSnapshot(assetQuery, (snapshot) => {
+        const assetsData: Asset[] = [];
+        snapshot.forEach((doc) => {
+            assetsData.push({ id: doc.id, ...doc.data() } as Asset);
+        });
+        setAssets(assetsData);
+    });
+
+    setIsLoading(false);
+
+    return () => {
+        unsubscribeCustomers();
+        unsubscribeAssets();
+    };
   }, [user?.companyId]);
 
 
-  const customerProfile = user?.role === 'Customer' ? staticCustomers.find(c => c.contactEmail === user.email) : undefined;
+  const customerProfile = user?.role === 'Customer' ? customers.find(c => c.contactEmail === user.email) : undefined;
 
   const form = useForm<WorkOrderFormValues>({
     resolver: zodResolver(workOrderSchema),
@@ -90,6 +107,12 @@ export function WorkOrderForm() {
       customerId: customerProfile?.id || '',
     },
   });
+
+  useEffect(() => {
+      if (customerProfile) {
+          form.setValue('customerId', customerProfile.id);
+      }
+  }, [customerProfile, form]);
 
   async function onSubmit(data: WorkOrderFormValues) {
     if (!user) {
@@ -102,7 +125,7 @@ export function WorkOrderForm() {
         await createWorkOrder({
             ...data,
             companyId: user.companyId,
-            status: user.role === 'Admin' ? 'Scheduled' : 'Draft',
+            status: user.role === 'Admin' || user.role === 'Technician' ? 'Scheduled' : 'Draft',
         });
         toast({
         title: user?.role === 'Customer' ? 'Service Request Submitted' : 'Work Order Created',
@@ -126,6 +149,14 @@ export function WorkOrderForm() {
   };
   
   const isCustomer = user?.role === 'Customer';
+  const canCreate = user?.role === 'Admin' || user?.role === 'Technician' || isCustomer;
+
+  if (isLoading) {
+      return <div className="flex justify-center items-center p-8"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
+  }
+  
+  if (!canCreate) return null;
+
 
   return (
     <>
@@ -181,6 +212,7 @@ export function WorkOrderForm() {
                           setAddCustomerDialogOpen(true);
                       } else {
                           field.onChange(value);
+                          form.resetField('assetId'); // Reset asset when customer changes
                       }
                   }}
                   value={field.value}
@@ -197,13 +229,17 @@ export function WorkOrderForm() {
                         {customer.name}
                       </SelectItem>
                     ))}
-                    <SelectSeparator />
-                     <SelectItem value="add_new_customer" className="text-primary focus:text-primary-foreground focus:bg-primary">
-                          <div className='flex items-center gap-2'>
-                            <PlusCircle className="h-4 w-4" />
-                            <span>Add New Customer</span>
-                          </div>
-                      </SelectItem>
+                    {!isCustomer && (
+                        <>
+                        <SelectSeparator />
+                        <SelectItem value="add_new_customer" className="text-primary focus:text-primary-foreground focus:bg-primary">
+                            <div className='flex items-center gap-2'>
+                                <PlusCircle className="h-4 w-4" />
+                                <span>Add New Customer</span>
+                            </div>
+                        </SelectItem>
+                        </>
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -218,7 +254,8 @@ export function WorkOrderForm() {
                 <FormLabel>Which equipment needs service?</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value}
+                  disabled={!form.watch('customerId')}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -229,7 +266,6 @@ export function WorkOrderForm() {
                     {assets
                       .filter(
                         (asset) =>
-                          !form.watch('customerId') ||
                           asset.customerId === form.watch('customerId')
                       )
                       .map((asset) => (
@@ -328,3 +364,5 @@ export function WorkOrderForm() {
     </>
   );
 }
+
+    

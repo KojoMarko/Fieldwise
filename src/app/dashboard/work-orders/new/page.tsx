@@ -21,13 +21,18 @@ export default function NewWorkOrderPage() {
 
   const isCustomer = user?.role === 'Customer';
   const isAdmin = user?.role === 'Admin';
-  const canCreate = isCustomer || isAdmin;
+  const isTechnician = user?.role === 'Technician';
+  const canCreate = isCustomer || isAdmin || isTechnician;
 
   useEffect(() => {
     if (!isLoading && !canCreate) {
       router.push('/dashboard');
     }
   }, [isLoading, canCreate, router]);
+
+  const pageTitle = isCustomer ? 'Request New Service' : 'Create New Work Order';
+  const cardTitle = isCustomer ? 'Service Request Details' : 'Work Order Details';
+  const cardDescription = isCustomer ? 'Please fill out the form below to submit a new service request.' : 'Fill out the form below to create a new work order.';
 
   if (isLoading || !canCreate) {
     return (
@@ -60,18 +65,16 @@ export default function NewWorkOrderPage() {
           </Link>
         </Button>
         <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-          {isCustomer ? 'Request New Service' : 'Create New Work Order'}
+          {pageTitle}
         </h1>
       </div>
       <Card>
         <CardHeader>
           <CardTitle>
-            {isCustomer ? 'Service Request Details' : 'Work Order Details'}
+            {cardTitle}
           </CardTitle>
           <CardDescription>
-            {isCustomer
-              ? 'Please fill out the form below to submit a new service request.'
-              : 'Fill out the form below to create a new work order.'}
+            {cardDescription}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -81,3 +84,5 @@ export default function NewWorkOrderPage() {
     </div>
   );
 }
+
+    

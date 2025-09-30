@@ -14,10 +14,12 @@ import { columns } from './components/columns';
 import { DataTable } from './components/data-table';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect, useMemo, useState } from 'react';
-import { getWorkOrders } from '@/lib/services/work-order-service';
+import { useEffect, useState } from 'react';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import type { WorkOrder } from '@/lib/types';
 import { customers } from '@/lib/data'; // Keep for customer role filtering
+import { LoaderCircle } from 'lucide-react';
 
 
 export default function WorkOrdersPage() {
@@ -27,29 +29,43 @@ export default function WorkOrdersPage() {
 
 
   useEffect(() => {
-    async function loadWorkOrders() {
-      if (!user?.companyId) return;
-      setIsLoading(true);
-      const fetchedWorkOrders = await getWorkOrders(user.companyId);
+    if (!user?.companyId) {
+        setIsLoading(false);
+        return;
+    };
 
-      if (user.role === 'Admin') {
-        setWorkOrders(fetchedWorkOrders);
-      } else if (user.role === 'Technician') {
-        setWorkOrders(fetchedWorkOrders.filter(wo => wo.technicianId === user.id));
-      } else if (user.role === 'Customer') {
-        const customerProfile = customers.find(c => c.contactEmail === user.email);
-        if (!customerProfile) {
+    setIsLoading(true);
+    
+    const workOrdersQuery = query(collection(db, 'work-orders'), where('companyId', '==', user.companyId));
+    
+    const unsubscribe = onSnapshot(workOrdersQuery, (snapshot) => {
+        let fetchedWorkOrders: WorkOrder[] = [];
+        snapshot.forEach((doc) => {
+            fetchedWorkOrders.push({ ...doc.data(), id: doc.id } as WorkOrder);
+        });
+
+        // Sort by creation date descending
+        fetchedWorkOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        if (user.role === 'Admin' || user.role === 'Technician') {
+            setWorkOrders(fetchedWorkOrders);
+        } else if (user.role === 'Customer') {
+            const customerProfile = customers.find(c => c.contactEmail === user.email);
+            if (!customerProfile) {
+                setWorkOrders([]);
+            } else {
+                setWorkOrders(fetchedWorkOrders.filter(wo => wo.customerId === customerProfile.id));
+            }
+        } else {
             setWorkOrders([]);
-            return;
-        };
-        setWorkOrders(fetchedWorkOrders.filter(wo => wo.customerId === customerProfile.id));
-      } else {
-        setWorkOrders([]);
-      }
-      setIsLoading(false);
-    }
+        }
+        setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching work orders: ", error);
+        setIsLoading(false);
+    });
 
-    loadWorkOrders();
+    return () => unsubscribe();
   }, [user]);
 
 
@@ -61,7 +77,8 @@ export default function WorkOrdersPage() {
   );
   const draftOrders = workOrders.filter((wo) => wo.status === 'Draft');
 
-  const canCreateWorkOrder = user?.role === 'Admin' || user?.role === 'Customer';
+  const canCreateWorkOrder = user?.role === 'Admin' || user?.role === 'Customer' || user?.role === 'Technician';
+  const createButtonText = user?.role === 'Customer' ? 'Request Service' : 'Create Work Order';
 
   const renderDataTable = (data: WorkOrder[], title: string, description: string) => (
      <Card>
@@ -70,10 +87,33 @@ export default function WorkOrdersPage() {
         <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
-            {isLoading ? <p>Loading...</p> : <DataTable columns={columns} data={data} />}
+            {isLoading ? (
+                <div className="flex items-center justify-center p-10">
+                    <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+                    <p className="ml-4 text-muted-foreground">Loading work orders...</p>
+                </div>
+            ) : <DataTable columns={columns} data={data} />}
         </CardContent>
     </Card>
   )
+
+  const adminOrTechTabs = (
+      <TabsList className="grid w-full grid-cols-4 sm:w-auto">
+        <TabsTrigger value="all">All</TabsTrigger>
+        <TabsTrigger value="active">Active</TabsTrigger>
+        <TabsTrigger value="completed">Completed</TabsTrigger>
+        <TabsTrigger value="draft" className="hidden sm:flex">Draft</TabsTrigger>
+      </TabsList>
+  )
+  
+  const customerTabs = (
+       <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+        </TabsList>
+  )
+
 
   return (
     <Tabs defaultValue="all">
@@ -93,7 +133,7 @@ export default function WorkOrdersPage() {
               <Link href="/dashboard/work-orders/new">
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  {user?.role === 'Customer' ? 'Request Service' : 'Create Work Order'}
+                  {createButtonText}
                 </span>
               </Link>
             </Button>
@@ -101,23 +141,14 @@ export default function WorkOrdersPage() {
         </div>
       </div>
        <div className="flex items-center gap-4 mt-4">
-        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:grid-cols-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-            {user?.role === 'Admin' && (
-                <TabsTrigger value="draft" className="hidden sm:flex">
-                Draft
-                </TabsTrigger>
-            )}
-        </TabsList>
+        {user?.role === 'Admin' || user?.role === 'Technician' ? adminOrTechTabs : customerTabs}
          <div className="sm:hidden flex-1">
              {canCreateWorkOrder && (
                 <Button size="sm" className="h-8 gap-1 w-full" asChild>
                 <Link href="/dashboard/work-orders/new">
-                    <PlusCircle className="h-3.5 w-3.5" />
+                    <PlusCircle className="h-3.5 w-3.s" />
                     <span>
-                    {user?.role === 'Customer' ? 'Request Service' : 'New'}
+                    {user?.role === 'Customer' ? 'Request' : 'New'}
                     </span>
                 </Link>
                 </Button>
@@ -133,7 +164,7 @@ export default function WorkOrdersPage() {
       <TabsContent value="completed">
        {renderDataTable(completedOrders, 'Completed Work Orders', 'Work orders that have been completed or invoiced.')}
       </TabsContent>
-      {user?.role === 'Admin' && (
+      {(user?.role === 'Admin' || user?.role === 'Technician') && (
         <TabsContent value="draft">
             {renderDataTable(draftOrders, 'Draft Work Orders', 'Work orders that are not yet scheduled.')}
         </TabsContent>
@@ -141,3 +172,5 @@ export default function WorkOrdersPage() {
     </Tabs>
   );
 }
+
+    

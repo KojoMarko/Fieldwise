@@ -14,13 +14,14 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { WorkOrder, WorkOrderStatus, User } from '@/lib/types';
-import { customers, users } from '@/lib/data';
+import type { WorkOrder, WorkOrderStatus, User, Customer } from '@/lib/types';
 import Link from 'next/link';
 import { AssignTechnicianDialog } from './assign-technician-dialog';
 import { GenerateInvoiceDialog } from './generate-invoice-dialog';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {
@@ -78,7 +79,7 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
                 Assign Technician
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setInvoiceDialogOpen(true)}>
+              <DropdownMenuItem onClick={() => setInvoiceDialogOpen(true)} disabled={workOrder.status !== 'Completed'}>
                 Generate Invoice
               </DropdownMenuItem>
             </>
@@ -87,6 +88,56 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
       </DropdownMenu>
     </>
   );
+}
+
+function CustomerCell({ row }: { row: { original: WorkOrder }}) {
+    const [customerName, setCustomerName] = useState('Loading...');
+    const { user } = useAuth();
+
+    useEffect(() => {
+        if (!user?.companyId) return;
+
+        const customerQuery = query(collection(db, "customers"), where("companyId", "==", user.companyId));
+        
+        const unsubscribe = onSnapshot(customerQuery, (snapshot) => {
+            snapshot.forEach((doc) => {
+                if (doc.id === row.original.customerId) {
+                    setCustomerName((doc.data() as Customer).name);
+                }
+            });
+        });
+
+        return () => unsubscribe();
+    }, [row.original.customerId, user?.companyId]);
+    
+    return <div>{customerName}</div>;
+}
+
+
+function TechnicianCell({ row }: { row: { original: WorkOrder }}) {
+    const [techName, setTechName] = useState<string | null>('Unassigned');
+     const { user } = useAuth();
+
+    useEffect(() => {
+        const techId = row.original.technicianId;
+        if (!techId || !user?.companyId) {
+            setTechName('Unassigned');
+            return;
+        };
+
+        const userQuery = query(collection(db, "users"), where("companyId", "==", user.companyId));
+        const unsubscribe = onSnapshot(userQuery, (snapshot) => {
+             snapshot.forEach((doc) => {
+                if (doc.id === techId) {
+                    setTechName((doc.data() as User).name);
+                }
+            });
+        });
+
+        return () => unsubscribe();
+    }, [row.original.technicianId, user?.companyId]);
+    
+    return techName ? <div>{techName}</div> : <div className="text-muted-foreground">Unassigned</div>;
 }
 
 
@@ -117,11 +168,12 @@ export const columns: ColumnDef<WorkOrder>[] = [
     accessorKey: 'title',
     header: 'Title',
     cell: ({ row }) => {
-      const customer = customers.find((c) => c.id === row.original.customerId);
       return (
         <div>
           <div className="font-medium">{row.original.title}</div>
-          <div className="text-sm text-muted-foreground md:hidden">{customer?.name}</div>
+           <div className="text-sm text-muted-foreground md:hidden">
+              <CustomerCell row={row} />
+            </div>
         </div>
       );
     },
@@ -139,12 +191,9 @@ export const columns: ColumnDef<WorkOrder>[] = [
     },
   },
     {
-    accessorKey: 'customer',
+    accessorKey: 'customerId',
     header: 'Customer',
-    cell: ({ row }) => {
-      const customer = customers.find((c) => c.id === row.original.customerId);
-      return customer?.name;
-    },
+    cell: CustomerCell,
      meta: {
       className: 'hidden md:table-cell',
     },
@@ -169,15 +218,7 @@ export const columns: ColumnDef<WorkOrder>[] = [
   {
     accessorKey: 'technicianId',
     header: 'Technician',
-    cell: ({ row }) => {
-      const techId = row.getValue('technicianId') as string;
-      const technician = users.find((u) => u.id === techId);
-      return technician ? (
-        technician.name
-      ) : (
-        <span className="text-muted-foreground">Unassigned</span>
-      );
-    },
+    cell: TechnicianCell,
      meta: {
       className: 'hidden lg:table-cell',
     },
@@ -198,3 +239,5 @@ export const columns: ColumnDef<WorkOrder>[] = [
     cell: ActionsCell,
   },
 ];
+
+    

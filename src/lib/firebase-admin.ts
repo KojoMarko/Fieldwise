@@ -1,9 +1,6 @@
 import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
-import { config } from 'dotenv';
-
-config(); 
 
 let adminApp: App;
 
@@ -17,7 +14,7 @@ if (!getApps().length) {
   }
 
   try {
-    // This sanitization step is crucial for multi-line env variables
+    // This sanitization step is crucial for multi-line env variables from .env files
     const sanitizedJson = serviceAccountJson.replace(/\\n/g, '\n');
     const serviceAccount = JSON.parse(sanitizedJson);
     

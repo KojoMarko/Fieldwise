@@ -34,9 +34,15 @@ const createAssetFlow = ai.defineFlow(
   },
   async (input) => {
     const assetRef = db.collection('assets').doc();
+    
+    // Ensure installationDate is a Date object before formatting
+    const installationDate = input.installationDate instanceof Date 
+      ? input.installationDate 
+      : new Date(input.installationDate);
+
     const newAsset: Omit<Asset, 'id'> = {
         ...input,
-        installationDate: formatISO(input.installationDate),
+        installationDate: formatISO(installationDate),
     };
 
     await assetRef.set({

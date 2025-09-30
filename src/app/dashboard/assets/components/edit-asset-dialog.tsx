@@ -59,6 +59,24 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
 
+  const form = useForm<AssetFormValues>({
+    resolver: zodResolver(UpdateAssetInputSchema),
+  });
+
+  useEffect(() => {
+    if (asset) {
+      form.reset({
+        id: asset.id,
+        name: asset.name,
+        model: asset.model,
+        serialNumber: asset.serialNumber,
+        customerId: asset.customerId,
+        location: asset.location,
+        installationDate: asset.installationDate ? parseISO(asset.installationDate) : new Date(),
+      });
+    }
+  }, [asset, form]);
+
   useEffect(() => {
     if (!user?.companyId) {
       setIsLoadingCustomers(false);
@@ -79,18 +97,6 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
     return () => unsubscribeCustomers();
   }, [user?.companyId]);
 
-  const form = useForm<AssetFormValues>({
-    resolver: zodResolver(UpdateAssetInputSchema),
-    values: {
-      id: asset.id,
-      name: asset.name,
-      model: asset.model,
-      serialNumber: asset.serialNumber,
-      customerId: asset.customerId,
-      location: asset.location,
-      installationDate: asset.installationDate ? parseISO(asset.installationDate) : new Date(),
-    },
-  });
 
   async function onSubmit(data: AssetFormValues) {
     if (!user) {
@@ -124,7 +130,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
         <DialogHeader>
           <DialogTitle>Edit Asset</DialogTitle>
           <DialogDescription>
-            Update the details for {asset.name}.
+            Update the details for {asset?.name}.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

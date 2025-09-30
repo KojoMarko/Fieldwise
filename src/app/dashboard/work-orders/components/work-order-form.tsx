@@ -67,7 +67,10 @@ export function WorkOrderForm() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.companyId) return;
+    if (!user?.companyId) {
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     const customerQuery = query(collection(db, "customers"), where("companyId", "==", user.companyId));
@@ -79,6 +82,7 @@ export function WorkOrderForm() {
         customersData.push({ id: doc.id, ...doc.data() } as Customer);
       });
       setCustomers(customersData);
+      setIsLoading(false);
     });
 
     const unsubscribeAssets = onSnapshot(assetQuery, (snapshot) => {
@@ -89,7 +93,6 @@ export function WorkOrderForm() {
         setAssets(assetsData);
     });
 
-    setIsLoading(false);
 
     return () => {
         unsubscribeCustomers();
@@ -151,7 +154,7 @@ export function WorkOrderForm() {
   const isCustomer = user?.role === 'Customer';
   const canCreate = user?.role === 'Admin' || user?.role === 'Technician' || isCustomer;
 
-  if (isLoading) {
+  if (isLoading && customers.length === 0) {
       return <div className="flex justify-center items-center p-8"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
   }
   
@@ -364,5 +367,3 @@ export function WorkOrderForm() {
     </>
   );
 }
-
-    

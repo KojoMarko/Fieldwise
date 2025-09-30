@@ -34,6 +34,7 @@ export type Asset = {
   serialNumber: string;
   customerId: string;
   location: string;
+  installationDate: string;
   companyId: string; // New field
 };
 

@@ -13,6 +13,7 @@ import { z } from 'zod';
 import type { Asset } from '@/lib/types';
 import { CreateAssetInputSchema } from '@/lib/schemas';
 import { db } from '@/lib/firebase-admin';
+import { formatISO } from 'date-fns';
 
 export type CreateAssetInput = z.infer<typeof CreateAssetInputSchema>;
 
@@ -33,12 +34,15 @@ const createAssetFlow = ai.defineFlow(
   },
   async (input) => {
     const assetRef = db.collection('assets').doc();
-    const newAsset: Asset = {
+    const newAsset: Omit<Asset, 'id'> = {
         ...input,
-        id: assetRef.id,
+        installationDate: formatISO(input.installationDate),
     };
 
-    await assetRef.set(newAsset);
+    await assetRef.set({
+      ...newAsset,
+      id: assetRef.id
+    });
     
     return {
       id: assetRef.id,

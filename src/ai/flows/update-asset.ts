@@ -11,6 +11,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
 import { UpdateAssetInputSchema } from '@/lib/schemas';
+import { formatISO } from 'date-fns';
 
 export type UpdateAssetInput = z.infer<typeof UpdateAssetInputSchema>;
 
@@ -29,7 +30,12 @@ const updateAssetFlow = ai.defineFlow(
 
     // The schema includes the ID, but we don't want to save it inside the document itself.
     const { id, ...assetData } = input;
+    
+    const dataToUpdate = {
+        ...assetData,
+        installationDate: formatISO(assetData.installationDate),
+    };
 
-    await assetRef.update(assetData);
+    await assetRef.update(dataToUpdate);
   }
 );

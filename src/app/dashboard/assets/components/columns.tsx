@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { deleteAsset } from '@/ai/flows/delete-asset';
+import { format } from 'date-fns';
 
 function CustomerNameCell({ customerId }: { customerId: string }) {
     const [name, setName] = useState('Loading...');
@@ -103,12 +104,15 @@ export const columns: ColumnDef<Asset>[] = [
     }
   },
   {
-    accessorKey: 'location',
-    header: 'Location',
-     // Hide this column on smaller screens
-     meta: {
-        className: 'hidden lg:table-cell'
-    }
+    accessorKey: 'installationDate',
+    header: 'Installed On',
+    cell: ({ row }) => {
+      const date = new Date(row.original.installationDate);
+      return <span>{format(date, 'MMM d, yyyy')}</span>;
+    },
+    meta: {
+      className: 'hidden lg:table-cell',
+    },
   },
   {
     id: 'actions',

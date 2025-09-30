@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
@@ -32,6 +32,10 @@ import { db } from '@/lib/firebase';
 import type { Customer } from '@/lib/types';
 import { CreateAssetInputSchema } from '@/lib/schemas';
 import { createAsset } from '@/ai/flows/create-asset';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 type AssetFormValues = z.infer<typeof CreateAssetInputSchema>;
 
@@ -152,7 +156,66 @@ export function AssetForm() {
           />
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          <FormField
+           <FormField
+            control={form.control}
+            name="installationDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Installation Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={'outline'}
+                        className={cn(
+                          'pl-3 text-left font-normal',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, 'PPP')
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                 <FormDescription>
+                  When was this asset installed?
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Location</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Lab 1, Main Wing" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Where at the customer's site is this asset located?
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
             control={form.control}
             name="customerId"
             render={({ field }) => (
@@ -180,23 +243,6 @@ export function AssetForm() {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Location</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., Lab 1, Main Wing" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Where at the customer's site is this asset located?
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
           <Button type="submit" disabled={isSubmitting}>

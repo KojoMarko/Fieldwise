@@ -20,10 +20,12 @@ import {
   Package,
   MapPin,
   Barcode,
+  Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
 function CustomerInfo({ customerId }: { customerId: string }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -124,6 +126,14 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                 <div>
                   <p className="text-muted-foreground">Serial Number</p>
                   <p className="font-medium">{asset.serialNumber}</p>
+                </div>
+              </div>
+               <Separator />
+              <div className="flex items-start gap-4 text-sm">
+                <Calendar className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                <div>
+                  <p className="text-muted-foreground">Installation Date</p>
+                  <p className="font-medium">{format(new Date(asset.installationDate), 'PPP')}</p>
                 </div>
               </div>
               <Separator />

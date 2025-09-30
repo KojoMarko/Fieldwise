@@ -39,9 +39,7 @@ export const CreateAssetInputSchema = z.object({
   serialNumber: z.string().min(1, 'Serial number is required.'),
   customerId: z.string().min(1, 'A customer must be selected.'),
   location: z.string().min(1, 'Location is required.'),
-  installationDate: z.date({
-    required_error: 'An installation date is required.',
-  }),
+  installationDate: z.union([z.string(), z.date()]).transform((val) => new Date(val)),
   companyId: z.string().min(1, 'Company ID is required.'),
 });
 

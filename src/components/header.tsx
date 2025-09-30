@@ -25,7 +25,6 @@ import {
   PanelLeft,
   Home,
   Wrench,
-  Map,
   Users,
   Settings,
   LogOut,
@@ -33,6 +32,7 @@ import {
   Package,
   LayoutDashboard,
   List,
+  Building,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
@@ -94,15 +94,15 @@ export function Header() {
             )}
             {isAdmin && (
                 <>
-                {/* <Link
-                href="/dashboard/map"
-                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
-                <Map className="h-5 w-5" />
-                Map
-                </Link> */}
                 <Link
-                href="/dashboard/customers"
+                  href="/dashboard/customers"
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  <Building className="h-5 w-5" />
+                  Customers
+                </Link>
+                <Link
+                href="/dashboard/users"
                 className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                 >
                 <Users className="h-5 w-5" />

@@ -17,6 +17,7 @@ import {
   Settings,
   Package,
   List,
+  Building,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -27,7 +28,8 @@ const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
   { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders', badge: '1' },
   // { href: '/dashboard/map', icon: Map, label: 'Map' },
-  { href: '/dashboard/customers', icon: Users, label: 'Users' },
+  { href: '/dashboard/customers', icon: Building, label: 'Customers' },
+  { href: '/dashboard/users', icon: Users, label: 'Users' },
   { href: '/dashboard/assets', icon: Package, label: 'Assets' },
   { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
 ];

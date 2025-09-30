@@ -23,3 +23,12 @@ export const CreateCustomerInputSchema = z.object({
     address: z.string().min(1, 'Address is required'),
     companyId: z.string().min(1, 'Company ID is required'),
 });
+
+export const UpdateCustomerInputSchema = CreateCustomerInputSchema.extend({
+    id: z.string().min(1, 'Customer ID is required'),
+}).omit({ companyId: true });
+
+
+export const DeleteCustomerInputSchema = z.object({
+    customerId: z.string().min(1, 'Customer ID is required'),
+});

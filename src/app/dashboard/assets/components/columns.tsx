@@ -10,12 +10,17 @@ import { MoreHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import Link from 'next/link';
 
 function CustomerNameCell({ customerId }: { customerId: string }) {
     const [name, setName] = useState('Loading...');
     
     useEffect(() => {
         const fetchCustomer = async () => {
+            if (!customerId) {
+                setName('N/A');
+                return;
+            }
             const docRef = doc(db, "customers", customerId);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
@@ -95,6 +100,7 @@ export const columns: ColumnDef<Asset>[] = [
   {
     id: 'actions',
     cell: ({ row }) => {
+      const asset = row.original;
       return (
         <div className="text-right">
           <DropdownMenu>
@@ -106,7 +112,9 @@ export const columns: ColumnDef<Asset>[] = [
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem>View Asset Details</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/assets/${asset.id}`}>View Asset Details</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>Edit Asset</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

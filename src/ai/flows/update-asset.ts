@@ -33,6 +33,7 @@ const updateAssetFlow = ai.defineFlow(
     
     const dataToUpdate = {
         ...assetData,
+        // Ensure the date is in the correct string format for Firestore
         installationDate: formatISO(assetData.installationDate),
     };
 

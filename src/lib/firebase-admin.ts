@@ -5,36 +5,44 @@ import { getAuth } from 'firebase-admin/auth';
 let adminApp: App;
 
 if (!getApps().length) {
-  const serviceAccountJson = process.env.FIREBASE_ADMIN_CREDENTIAL;
-  
-  if (!serviceAccountJson) {
+  // Construct the service account object from individual environment variables
+  const serviceAccount = {
+    type: process.env.FIREBASE_TYPE,
+    project_id: process.env.FIREBASE_PROJECT_ID,
+    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+    // The private key needs to have its newlines properly escaped when stored in an env var.
+    // We replace the \\n characters with actual \n characters.
+    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    client_id: process.env.FIREBASE_CLIENT_ID,
+    auth_uri: process.env.FIREBASE_AUTH_URI,
+    token_uri: process.env.FIREBASE_TOKEN_URI,
+    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
+    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+    universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN,
+  };
+
+  // Check if all required fields are present
+  if (
+    !serviceAccount.project_id ||
+    !serviceAccount.private_key ||
+    !serviceAccount.client_email
+  ) {
     throw new Error(
-      'FIREBASE_ADMIN_CREDENTIAL environment variable is not set. Please add it to your .env file.'
+      'Firebase Admin SDK environment variables are not fully set. Please check your .env file.'
     );
   }
 
   try {
-    // The service account JSON might be a stringified JSON with escaped newlines.
-    // Or it might be a direct copy-paste with actual newlines.
-    // Parsing it directly handles the first case.
-    // If that fails, we assume it's the second case and try to parse it after sanitizing.
-    let serviceAccount;
-    try {
-        serviceAccount = JSON.parse(serviceAccountJson);
-    } catch (e) {
-        // This handles the case where the JSON is not a single-line string.
-        const sanitizedJson = serviceAccountJson.replace(/\\n/g, '\n');
-        serviceAccount = JSON.parse(sanitizedJson);
-    }
-    
     adminApp = initializeApp({
-      credential: cert(serviceAccount),
+      // The cert function expects the service account object.
+      // We cast to any because the expected type is ServiceAccount, but our constructed object is valid.
+      credential: cert(serviceAccount as any),
     });
-
   } catch (error: any) {
-    console.error("Failed to parse or initialize Firebase Admin SDK:", error);
+    console.error("Failed to initialize Firebase Admin SDK:", error);
     throw new Error(
-      `Failed to parse FIREBASE_ADMIN_CREDENTIAL. Make sure it is a valid JSON string. Original error: ${error.message}`
+      `Firebase Admin SDK initialization failed. Error: ${error.message}`
     );
   }
 } else {

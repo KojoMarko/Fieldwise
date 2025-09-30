@@ -29,13 +29,15 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, LoaderCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { customers, assets } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { createWorkOrder } from '@/ai/flows/create-work-order';
+import { useState } from 'react';
 
 const workOrderSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -54,6 +56,7 @@ export function WorkOrderForm() {
   const { toast } = useToast();
   const router = useRouter();
   const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const customerProfile = user?.role === 'Customer' ? customers.find(c => c.contactEmail === user.email) : undefined;
 
@@ -65,13 +68,34 @@ export function WorkOrderForm() {
     },
   });
 
-  function onSubmit(data: WorkOrderFormValues) {
-    console.log('New Work Order Submitted:', data);
-    toast({
-      title: user?.role === 'Customer' ? 'Service Request Submitted' : 'Work Order Created',
-      description: `The request "${data.title}" has been successfully submitted.`,
-    });
-    router.push('/dashboard/work-orders');
+  async function onSubmit(data: WorkOrderFormValues) {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to create a work order.' });
+        return;
+    }
+
+    setIsSubmitting(true);
+    try {
+        await createWorkOrder({
+            ...data,
+            companyId: user.companyId,
+            status: user.role === 'Admin' ? 'Scheduled' : 'Draft',
+        });
+        toast({
+        title: user?.role === 'Customer' ? 'Service Request Submitted' : 'Work Order Created',
+        description: `The request "${data.title}" has been successfully submitted.`,
+        });
+        router.push('/dashboard/work-orders');
+    } catch (error) {
+        console.error('Failed to create work order:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Failed to Create Work Order',
+            description: 'An unexpected error occurred. Please try again.'
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   }
   
   const isCustomer = user?.role === 'Customer';
@@ -233,7 +257,7 @@ export function WorkOrderForm() {
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < new Date() || date < new Date('1900-01-01')}
+                      disabled={(date) => date < new Date('1900-01-01')}
                       initialFocus
                     />
                   </PopoverContent>
@@ -248,7 +272,10 @@ export function WorkOrderForm() {
         </div>
         <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
-            <Button type="submit">{isCustomer ? 'Submit Request' : 'Create Work Order'}</Button>
+            <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting ? 'Submitting...' : isCustomer ? 'Submit Request' : 'Create Work Order'}
+            </Button>
         </div>
       </form>
     </Form>

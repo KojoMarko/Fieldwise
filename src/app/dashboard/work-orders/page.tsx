@@ -12,39 +12,68 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { columns } from './components/columns';
 import { DataTable } from './components/data-table';
-import { workOrders, customers } from '@/lib/data';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { getWorkOrders } from '@/lib/services/work-order-service';
+import type { WorkOrder } from '@/lib/types';
+import { customers } from '@/lib/data'; // Keep for customer role filtering
+
 
 export default function WorkOrdersPage() {
   const { user } = useAuth();
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const userWorkOrders = useMemo(() => {
-    if (!user) return [];
-    
-    if (user.role === 'Admin') {
-      return workOrders;
-    } else if (user.role === 'Technician') {
-      return workOrders.filter(wo => wo.technicianId === user.id);
-    } else if (user.role === 'Customer') {
-      const customerProfile = customers.find(c => c.contactEmail === user.email);
-      if (!customerProfile) return [];
-      return workOrders.filter(wo => wo.customerId === customerProfile.id);
+
+  useEffect(() => {
+    async function loadWorkOrders() {
+      if (!user?.companyId) return;
+      setIsLoading(true);
+      const fetchedWorkOrders = await getWorkOrders(user.companyId);
+
+      if (user.role === 'Admin') {
+        setWorkOrders(fetchedWorkOrders);
+      } else if (user.role === 'Technician') {
+        setWorkOrders(fetchedWorkOrders.filter(wo => wo.technicianId === user.id));
+      } else if (user.role === 'Customer') {
+        const customerProfile = customers.find(c => c.contactEmail === user.email);
+        if (!customerProfile) {
+            setWorkOrders([]);
+            return;
+        };
+        setWorkOrders(fetchedWorkOrders.filter(wo => wo.customerId === customerProfile.id));
+      } else {
+        setWorkOrders([]);
+      }
+      setIsLoading(false);
     }
-    return [];
+
+    loadWorkOrders();
   }, [user]);
 
-  const allOrders = userWorkOrders;
-  const activeOrders = userWorkOrders.filter(
+
+  const activeOrders = workOrders.filter(
     (wo) => wo.status === 'Scheduled' || wo.status === 'In-Progress' || wo.status === 'On-Hold'
   );
-  const completedOrders = userWorkOrders.filter(
+  const completedOrders = workOrders.filter(
     (wo) => wo.status === 'Completed' || wo.status === 'Invoiced'
   );
-  const draftOrders = userWorkOrders.filter((wo) => wo.status === 'Draft');
+  const draftOrders = workOrders.filter((wo) => wo.status === 'Draft');
 
   const canCreateWorkOrder = user?.role === 'Admin' || user?.role === 'Customer';
+
+  const renderDataTable = (data: WorkOrder[], title: string, description: string) => (
+     <Card>
+        <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {isLoading ? <p>Loading...</p> : <DataTable columns={columns} data={data} />}
+        </CardContent>
+    </Card>
+  )
 
   return (
     <Tabs defaultValue="all">
@@ -96,57 +125,17 @@ export default function WorkOrdersPage() {
          </div>
        </div>
       <TabsContent value="all">
-        <Card>
-          <CardHeader>
-            <CardTitle>All Work Orders</CardTitle>
-            <CardDescription>
-              Manage all service jobs and assignments.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DataTable columns={columns} data={allOrders} />
-          </CardContent>
-        </Card>
+        {renderDataTable(workOrders, 'All Work Orders', 'Manage all service jobs and assignments.')}
       </TabsContent>
       <TabsContent value="active">
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Work Orders</CardTitle>
-            <CardDescription>
-              Work orders that are scheduled, in-progress, or on-hold.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DataTable columns={columns} data={activeOrders} />
-          </CardContent>
-        </Card>
+        {renderDataTable(activeOrders, 'Active Work Orders', 'Work orders that are scheduled, in-progress, or on-hold.')}
       </TabsContent>
       <TabsContent value="completed">
-        <Card>
-          <CardHeader>
-            <CardTitle>Completed Work Orders</CardTitle>
-            <CardDescription>
-              Work orders that have been completed or invoiced.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DataTable columns={columns} data={completedOrders} />
-          </CardContent>
-        </Card>
+       {renderDataTable(completedOrders, 'Completed Work Orders', 'Work orders that have been completed or invoiced.')}
       </TabsContent>
       {user?.role === 'Admin' && (
         <TabsContent value="draft">
-            <Card>
-            <CardHeader>
-                <CardTitle>Draft Work Orders</CardTitle>
-                <CardDescription>
-                Work orders that are not yet scheduled.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <DataTable columns={columns} data={draftOrders} />
-            </CardContent>
-            </Card>
+            {renderDataTable(draftOrders, 'Draft Work Orders', 'Work orders that are not yet scheduled.')}
         </TabsContent>
       )}
     </Tabs>

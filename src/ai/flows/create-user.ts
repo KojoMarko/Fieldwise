@@ -6,19 +6,18 @@
  * saves their profile to Firestore.
  *
  * - createUser - A function that handles the user creation process.
- * - CreateUserInput - The input type for the createUser function.
- * - CreateUserOutput - The return type for the createUser function.
+ * - CreateUserInput - The input type for the createUser function
  */
 import { config } from 'dotenv';
 config();
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { CreateUserInputSchema } from '@/lib/schemas';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import type { User } from '@/lib/types';
+import { CreateUserInputSchema } from '@/lib/schemas';
 
 // Ensure Firebase Admin is initialized
 if (!getApps().length) {
@@ -41,33 +40,21 @@ if (!getApps().length) {
   }
 }
 
-const auth = getAuth();
 const db = getFirestore();
+const auth = getAuth();
 
 export type CreateUserInput = z.infer<typeof CreateUserInputSchema>;
 
 const CreateUserOutputSchema = z.object({
-  uid: z.string().describe('The newly created user ID.'),
+  uid: z.string().describe('The new user ID.'),
   email: z.string().describe('The email of the new user.'),
-  tempPassword: z.string().describe('The temporary password for the new user.'),
+  tempPassword: z.string().optional().describe('A temporary password for the new user.'),
 });
 export type CreateUserOutput = z.infer<typeof CreateUserOutputSchema>;
 
 export async function createUser(input: CreateUserInput): Promise<CreateUserOutput> {
   return createUserFlow(input);
 }
-
-// A simple password generator
-function generatePassword() {
-  const length = 8;
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let retVal = "";
-  for (let i = 0, n = charset.length; i < length; ++i) {
-    retVal += charset.charAt(Math.floor(Math.random() * n));
-  }
-  return retVal;
-}
-
 
 const createUserFlow = ai.defineFlow(
   {
@@ -76,33 +63,33 @@ const createUserFlow = ai.defineFlow(
     outputSchema: CreateUserOutputSchema,
   },
   async (input) => {
-    const tempPassword = generatePassword();
+    // 1. Create a temporary password
+    const tempPassword = Math.random().toString(36).slice(-8);
 
-    // 1. Create user in Firebase Auth
+    // 2. Create the user in Firebase Auth
     const userRecord = await auth.createUser({
       email: input.email,
       password: tempPassword,
       displayName: input.name,
-      emailVerified: true,
-      disabled: false,
     });
 
-    // 2. Create user profile in Firestore
+    // 3. Create the user profile in Firestore
+    const userDocRef = db.collection('users').doc(userRecord.uid);
     const newUser: User = {
-        id: userRecord.uid,
-        name: input.name,
-        email: input.email,
-        role: input.role,
-        companyId: input.companyId,
-        avatarUrl: `https://picsum.photos/seed/${userRecord.uid}/100/100`,
+      id: userRecord.uid,
+      name: input.name,
+      email: input.email,
+      role: input.role,
+      companyId: input.companyId,
+      avatarUrl: `https://picsum.photos/seed/${userRecord.uid}/100/100`, // Generate a consistent avatar
     };
 
-    await db.collection('users').doc(userRecord.uid).set(newUser);
-    
+    await userDocRef.set(newUser);
+
     return {
       uid: userRecord.uid,
       email: userRecord.email!,
-      tempPassword,
+      tempPassword: tempPassword,
     };
   }
 );

@@ -7,8 +7,6 @@
  * - CreateCustomerInput - The input type for the createCustomer function.
  * - CreateCustomerOutput - The return type for the createCustomer function.
  */
-import { config } from 'dotenv';
-config();
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
@@ -26,10 +24,9 @@ if (!getApps().length) {
     );
   }
   try {
-    // Sometimes, the env var can have escaped newlines.
-    const sanitizedJson = serviceAccountJson.replace(/\\n/g, '\n');
+    const serviceAccount = JSON.parse(serviceAccountJson);
     initializeApp({
-      credential: cert(JSON.parse(sanitizedJson)),
+      credential: cert(serviceAccount),
     });
   } catch (error: any) {
     throw new Error(

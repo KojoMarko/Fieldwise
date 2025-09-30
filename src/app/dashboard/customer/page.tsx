@@ -11,17 +11,77 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { workOrders, assets, customers } from '@/lib/data';
-import { CheckCircle, Clock, HardDrive, PlusCircle } from 'lucide-react';
+import { CheckCircle, Clock, HardDrive, LoaderCircle, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import type { Customer, WorkOrder, Asset } from '@/lib/types';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function CustomerDashboardPage() {
   const { user } = useAuth();
+  const [customerProfile, setCustomerProfile] = useState<Customer | null>(null);
+  const [myWorkOrders, setMyWorkOrders] = useState<WorkOrder[]>([]);
+  const [myAssets, setMyAssets] = useState<Asset[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user || !user.companyId) {
+      setIsLoading(false);
+      return;
+    }
+    
+    // Find the customer profile linked to the user
+    const customerQuery = query(collection(db, 'customers'), where('contactEmail', '==', user.email), where('companyId', '==', user.companyId));
+    const unsubscribeCustomer = onSnapshot(customerQuery, (snapshot) => {
+        if (!snapshot.empty) {
+            const customerData = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Customer;
+            setCustomerProfile(customerData);
+        } else {
+            setIsLoading(false);
+        }
+    });
+
+    return () => unsubscribeCustomer();
+  }, [user]);
+
+  useEffect(() => {
+    if (!customerProfile) {
+      if (!isLoading) setIsLoading(false);
+      return;
+    };
+
+    const workOrdersQuery = query(collection(db, 'work-orders'), where('customerId', '==', customerProfile.id));
+    const assetsQuery = query(collection(db, 'assets'), where('customerId', '==', customerProfile.id));
+
+    const unsubscribeWorkOrders = onSnapshot(workOrdersQuery, (snapshot) => {
+      const orders: WorkOrder[] = [];
+      snapshot.forEach(doc => orders.push({id: doc.id, ...doc.data()} as WorkOrder));
+      setMyWorkOrders(orders);
+    });
+
+    const unsubscribeAssets = onSnapshot(assetsQuery, (snapshot) => {
+      const assets: Asset[] = [];
+      snapshot.forEach(doc => assets.push({id: doc.id, ...doc.data()} as Asset));
+      setMyAssets(assets);
+      setIsLoading(false);
+    });
+
+    return () => {
+      unsubscribeWorkOrders();
+      unsubscribeAssets();
+    }
+  }, [customerProfile, isLoading]);
+
+  if (isLoading) {
+      return (
+          <div className="flex h-screen w-full items-center justify-center">
+              <LoaderCircle className="h-8 w-8 animate-spin" />
+          </div>
+      )
+  }
 
   if (!user) return null;
-
-  // Find the customer profile linked to the user
-  const customerProfile = customers.find(c => c.contactEmail === user.email);
 
   if (!customerProfile) {
     return (
@@ -34,10 +94,6 @@ export default function CustomerDashboardPage() {
     );
   }
 
-  const myWorkOrders = workOrders.filter(
-    (wo) => wo.customerId === customerProfile.id
-  );
-  const myAssets = assets.filter((a) => a.customerId === customerProfile.id);
 
   const completedOrders = myWorkOrders.filter(
     (wo) => wo.status === 'Completed' || wo.status === 'Invoiced'

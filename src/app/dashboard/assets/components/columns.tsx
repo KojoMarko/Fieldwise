@@ -3,11 +3,33 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { Asset } from '@/lib/types';
-import { customers } from '@/lib/data';
+import type { Asset, Customer } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+function CustomerNameCell({ customerId }: { customerId: string }) {
+    const [name, setName] = useState('Loading...');
+    
+    useEffect(() => {
+        const fetchCustomer = async () => {
+            const docRef = doc(db, "customers", customerId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setName((docSnap.data() as Customer).name);
+            } else {
+                setName('N/A');
+            }
+        };
+        fetchCustomer();
+    }, [customerId]);
+
+    return <span>{name}</span>;
+}
+
 
 export const columns: ColumnDef<Asset>[] = [
   {
@@ -56,12 +78,7 @@ export const columns: ColumnDef<Asset>[] = [
   {
     accessorKey: 'customerId',
     header: 'Customer',
-    cell: ({ row }) => {
-      const customer = customers.find(
-        (c) => c.id === row.original.customerId
-      );
-      return customer ? customer.name : 'N/A';
-    },
+    cell: ({ row }) => <CustomerNameCell customerId={row.original.customerId} />,
     // Hide this column on smaller screens
      meta: {
         className: 'hidden lg:table-cell'

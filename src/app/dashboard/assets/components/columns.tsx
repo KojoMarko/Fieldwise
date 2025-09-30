@@ -107,8 +107,14 @@ export const columns: ColumnDef<Asset>[] = [
     accessorKey: 'installationDate',
     header: 'Installed On',
     cell: ({ row }) => {
-      const date = new Date(row.original.installationDate);
-      return <span>{format(date, 'MMM d, yyyy')}</span>;
+      const dateStr = row.original.installationDate;
+      if (!dateStr) return <span>N/A</span>;
+      try {
+        const date = new Date(dateStr);
+        return <span>{format(date, 'MMM d, yyyy')}</span>;
+      } catch (e) {
+        return <span>Invalid Date</span>
+      }
     },
     meta: {
       className: 'hidden lg:table-cell',

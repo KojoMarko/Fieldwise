@@ -7,38 +7,11 @@
  * - CreateWorkOrderInput - The input type for the createWorkOrder function.
  * - CreateWorkOrderOutput - The return type for the createWorkOrder function.
  */
-import { config } from 'dotenv';
-config();
-
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { formatISO } from 'date-fns';
 import type { WorkOrder } from '@/lib/types';
-import { format, formatISO } from 'date-fns';
-
-// Ensure Firebase Admin is initialized
-if (!getApps().length) {
-  const serviceAccountJson = process.env.FIREBASE_ADMIN_CREDENTIAL;
-  if (!serviceAccountJson) {
-    throw new Error(
-      'FIREBASE_ADMIN_CREDENTIAL environment variable is not set. Please add it to your .env file.'
-    );
-  }
-  try {
-    // Sometimes, the env var can have escaped newlines.
-    const sanitizedJson = serviceAccountJson.replace(/\\n/g, '\n');
-    initializeApp({
-      credential: cert(JSON.parse(sanitizedJson)),
-    });
-  } catch (error: any) {
-    throw new Error(
-      `Failed to parse FIREBASE_ADMIN_CREDENTIAL. Make sure it is a valid JSON string. Original error: ${error.message}`
-    );
-  }
-}
-
-const db = getFirestore();
+import { db } from '@/lib/firebase-admin';
 
 const CreateWorkOrderInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),

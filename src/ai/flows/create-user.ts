@@ -6,42 +6,14 @@
  * saves their profile to Firestore.
  *
  * - createUser - A function that handles the user creation process.
- * - CreateUserInput - The input type for the createUser function
+ * - CreateUserInput - The input type for the createUser function.
  */
-import { config } from 'dotenv';
-config();
-
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
 import type { User } from '@/lib/types';
 import { CreateUserInputSchema } from '@/lib/schemas';
+import { db, auth } from '@/lib/firebase-admin';
 
-// Ensure Firebase Admin is initialized
-if (!getApps().length) {
-  const serviceAccountJson = process.env.FIREBASE_ADMIN_CREDENTIAL;
-  if (!serviceAccountJson) {
-    throw new Error(
-      'FIREBASE_ADMIN_CREDENTIAL environment variable is not set. Please add it to your .env file.'
-    );
-  }
-  try {
-    // Sometimes, the env var can have escaped newlines.
-    const sanitizedJson = serviceAccountJson.replace(/\\n/g, '\n');
-    initializeApp({
-      credential: cert(JSON.parse(sanitizedJson)),
-    });
-  } catch (error: any) {
-    throw new Error(
-      `Failed to parse FIREBASE_ADMIN_CREDENTIAL. Make sure it is a valid JSON string. Original error: ${error.message}`
-    );
-  }
-}
-
-const db = getFirestore();
-const auth = getAuth();
 
 export type CreateUserInput = z.infer<typeof CreateUserInputSchema>;
 

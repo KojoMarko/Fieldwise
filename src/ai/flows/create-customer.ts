@@ -10,32 +10,9 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import type { Customer } from '@/lib/types';
 import { CreateCustomerInputSchema } from '@/lib/schemas';
-
-// Ensure Firebase Admin is initialized
-if (!getApps().length) {
-  const serviceAccountJson = process.env.FIREBASE_ADMIN_CREDENTIAL;
-  if (!serviceAccountJson) {
-    throw new Error(
-      'FIREBASE_ADMIN_CREDENTIAL environment variable is not set. Please add it to your .env file.'
-    );
-  }
-  try {
-    const serviceAccount = JSON.parse(serviceAccountJson);
-    initializeApp({
-      credential: cert(serviceAccount),
-    });
-  } catch (error: any) {
-    throw new Error(
-      `Failed to parse FIREBASE_ADMIN_CREDENTIAL. Make sure it is a valid JSON string. Original error: ${error.message}`
-    );
-  }
-}
-
-const db = getFirestore();
+import { db } from '@/lib/firebase-admin';
 
 export type CreateCustomerInput = z.infer<typeof CreateCustomerInputSchema>;
 

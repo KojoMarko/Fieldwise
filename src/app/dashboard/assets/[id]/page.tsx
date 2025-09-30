@@ -133,7 +133,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                 <Calendar className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
                 <div>
                   <p className="text-muted-foreground">Installation Date</p>
-                  <p className="font-medium">{format(new Date(asset.installationDate), 'PPP')}</p>
+                  <p className="font-medium">{asset.installationDate ? format(new Date(asset.installationDate), 'PPP') : 'N/A'}</p>
                 </div>
               </div>
               <Separator />

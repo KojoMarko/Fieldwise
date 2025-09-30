@@ -14,9 +14,18 @@ if (!getApps().length) {
   }
 
   try {
-    // This sanitization step is crucial for multi-line env variables from .env files
-    const sanitizedJson = serviceAccountJson.replace(/\\n/g, '\n');
-    const serviceAccount = JSON.parse(sanitizedJson);
+    // The service account JSON might be a stringified JSON with escaped newlines.
+    // Or it might be a direct copy-paste with actual newlines.
+    // Parsing it directly handles the first case.
+    // If that fails, we assume it's the second case and try to parse it after sanitizing.
+    let serviceAccount;
+    try {
+        serviceAccount = JSON.parse(serviceAccountJson);
+    } catch (e) {
+        // This handles the case where the JSON is not a single-line string.
+        const sanitizedJson = serviceAccountJson.replace(/\\n/g, '\n');
+        serviceAccount = JSON.parse(sanitizedJson);
+    }
     
     adminApp = initializeApp({
       credential: cert(serviceAccount),

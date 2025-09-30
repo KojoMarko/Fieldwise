@@ -6,11 +6,24 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { Asset, Customer } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
+import { EditAssetDialog } from './edit-asset-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { deleteAsset } from '@/ai/flows/delete-asset';
 
 function CustomerNameCell({ customerId }: { customerId: string }) {
     const [name, setName] = useState('Loading...');
@@ -101,24 +114,74 @@ export const columns: ColumnDef<Asset>[] = [
     id: 'actions',
     cell: ({ row }) => {
       const asset = row.original;
+      const { toast } = useToast();
+      const [isEditDialogOpen, setEditDialogOpen] = useState(false);
+      const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+      const handleRemove = async () => {
+        try {
+            await deleteAsset({ assetId: asset.id });
+            toast({
+                title: 'Asset Removed',
+                description: `Asset "${asset.name}" has been removed.`,
+            });
+        } catch (error) {
+            console.error("Failed to remove asset:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Removal Failed',
+                description: 'Could not remove the asset at this time.',
+            });
+        }
+        setDeleteDialogOpen(false);
+      }
+
       return (
-        <div className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/assets/${asset.id}`}>View Asset Details</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>Edit Asset</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <>
+            <EditAssetDialog 
+                open={isEditDialogOpen}
+                onOpenChange={setEditDialogOpen}
+                asset={asset}
+            />
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the asset.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleRemove} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <div className="text-right">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/assets/${asset.id}`}>View Asset Details</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>Edit / Transfer Asset</DropdownMenuItem>
+                <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => setDeleteDialogOpen(true)}
+                >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Asset
+                </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            </div>
+        </>
       );
     },
   },

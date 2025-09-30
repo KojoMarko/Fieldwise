@@ -41,3 +41,11 @@ export const CreateAssetInputSchema = z.object({
   location: z.string().min(1, 'Location is required.'),
   companyId: z.string().min(1, 'Company ID is required.'),
 });
+
+export const UpdateAssetInputSchema = CreateAssetInputSchema.extend({
+    id: z.string().min(1, 'Asset ID is required'),
+}).omit({ companyId: true });
+
+export const DeleteAssetInputSchema = z.object({
+    assetId: z.string().min(1, 'Asset ID is required'),
+});

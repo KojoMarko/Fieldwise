@@ -11,3 +11,5 @@ import '@/ai/flows/create-customer.ts';
 import '@/ai/flows/update-customer.ts';
 import '@/ai/flows/delete-customer.ts';
 import '@/ai/flows/create-asset.ts';
+import '@/ai/flows/update-asset.ts';
+import '@/ai/flows/delete-asset.ts';

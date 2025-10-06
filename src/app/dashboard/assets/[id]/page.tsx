@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useMemo } from 'react';
 import {
   doc,
   onSnapshot,
@@ -11,7 +11,7 @@ import {
   getDocs,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Asset, Customer, WorkOrder, WorkOrderStatus, User } from '@/lib/types';
+import type { Asset, Customer, WorkOrder, WorkOrderStatus, User, LifecycleEvent } from '@/lib/types';
 import { notFound, useRouter } from 'next/navigation';
 import {
   Card,
@@ -40,6 +40,7 @@ import {
   AlertTriangle,
   DollarSign,
   Building,
+  PenSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
@@ -111,14 +112,10 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
       snapshot.forEach((doc) =>
         orders.push({ id: doc.id, ...doc.data() } as WorkOrder)
       );
-      // Sort client-side to avoid needing a composite index
-      orders.sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
       setWorkOrders(orders);
       setIsLoading(false);
     });
 
-    // We assume users for a company don't change that often for this view.
-    // A more robust solution might listen for changes.
     const fetchUsers = async () => {
         if (!asset.companyId) return;
         const usersQuery = query(
@@ -137,6 +134,41 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
       unsubscribeWorkOrders();
     };
   }, [asset.id, asset.companyId]);
+  
+  const combinedHistory = useMemo(() => {
+    const manualEntries = (asset.lifecycleNotes || []).map((note, index) => ({
+      id: `manual-${index}`,
+      date: note.date ? new Date(note.date) : new Date(0), // Use epoch for sorting if no date
+      type: note.type,
+      description: note.note,
+      technician: 'N/A',
+      status: 'Manual Entry',
+      isManual: true,
+      originalDate: note.date,
+    }));
+
+    const woEntries = workOrders.map(wo => ({
+      id: wo.id,
+      date: parseISO(wo.scheduledDate),
+      type: wo.type,
+      description: wo.title,
+      technician: users[wo.technicianId || '']?.name || 'Unassigned',
+      status: wo.status,
+      isManual: false,
+      originalDate: wo.scheduledDate,
+    }));
+    
+    const allEntries = [...manualEntries, ...woEntries];
+    
+    // Sort by date descending, putting entries without a date last
+    allEntries.sort((a, b) => {
+        if (!a.originalDate) return 1;
+        if (!b.originalDate) return -1;
+        return b.date.getTime() - a.date.getTime();
+    });
+
+    return allEntries;
+  }, [asset.lifecycleNotes, workOrders, users]);
 
   if (isLoading) {
     return (
@@ -144,6 +176,12 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
         <LoaderCircle className="h-6 w-6 animate-spin" />
       </div>
     );
+  }
+  
+  const manualEntryTypeStyles: Record<LifecycleEvent['type'], string> = {
+    PPM: 'bg-blue-100 text-blue-800',
+    Corrective: 'bg-orange-100 text-orange-800',
+    Event: 'bg-gray-200 text-gray-800'
   }
 
   return (
@@ -182,45 +220,50 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {workOrders.length > 0 ? (
-              workOrders.map((wo) => (
-                <TableRow key={wo.id}>
+            {combinedHistory.length > 0 ? (
+              combinedHistory.map((item) => (
+                <TableRow key={item.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span>
-                        {format(parseISO(wo.scheduledDate), 'yyyy-MM-dd')}
+                        {item.originalDate ? format(item.date, 'yyyy-MM-dd') : 'Date N/A'}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={cn(workOrderTypeStyles[wo.type])}
+                      className={cn(
+                        item.isManual
+                          ? manualEntryTypeStyles[item.type as LifecycleEvent['type']]
+                          : workOrderTypeStyles[item.type as WorkOrder['type']]
+                      )}
                     >
-                      {wo.type}
+                      {item.type}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <p className="font-medium">{wo.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {wo.description}
-                    </p>
+                    <p className="font-medium">{item.description}</p>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <UserIcon className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        {users[wo.technicianId || '']?.name || 'Unassigned'}
-                      </span>
+                      {item.isManual ? (
+                        <PenSquare className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <UserIcon className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span>{item.technician}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn(statusStyles[wo.status])}
-                    >
-                      {wo.status}
+                     <Badge
+                        variant="outline"
+                        className={cn(
+                            item.isManual ? 'bg-purple-100 text-purple-800' : statusStyles[item.status as WorkOrderStatus]
+                        )}
+                        >
+                        {item.status}
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -412,5 +455,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
+
+    
 
     

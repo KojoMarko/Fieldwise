@@ -66,8 +66,7 @@ export function RecentWorkOrders() {
     const baseQuery = query(
       collection(db, 'work-orders'),
       where('companyId', '==', user.companyId),
-      orderBy('createdAt', 'desc'),
-      limit(5)
+      limit(20) // Fetch more to sort client-side
     );
 
     let ordersQuery;
@@ -95,7 +94,9 @@ export function RecentWorkOrders() {
         return onSnapshot(q, (snapshot) => {
             const orders: WorkOrder[] = [];
             snapshot.forEach(doc => orders.push({ ...doc.data(), id: doc.id } as WorkOrder));
-            setRecentOrders(orders);
+            // Sort client-side and take the latest 5
+            orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setRecentOrders(orders.slice(0, 5));
             setIsLoading(false);
         });
     }

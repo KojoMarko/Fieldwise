@@ -75,15 +75,15 @@ export function AppSidebar() {
                 <Link
                   href={item.href}
                   className={cn(
-                    'relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
+                    'relative flex h-9 w-9 items-center justify-center rounded-lg text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:h-8 md:w-8',
                     (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
-                      ? 'bg-accent text-accent-foreground'
+                      ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                       : ''
                   )}
                 >
                   <item.icon className="h-5 w-5" />
                    {item.badge && (
-                    <Badge className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent p-0 text-xs text-accent-foreground">
+                    <Badge className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-sidebar-primary p-0 text-xs text-sidebar-primary-foreground">
                       {item.badge}
                     </Badge>
                   )}
@@ -99,8 +99,8 @@ export function AppSidebar() {
             <TooltipTrigger asChild>
               <Link
                 href="/dashboard/settings"
-                className={cn('flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
-                  pathname.startsWith('/dashboard/settings') && 'bg-accent text-accent-foreground'
+                className={cn('flex h-9 w-9 items-center justify-center rounded-lg text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:h-8 md:w-8',
+                  pathname.startsWith('/dashboard/settings') && 'bg-sidebar-primary text-sidebar-primary-foreground'
                 )}
               >
                 <Settings className="h-5 w-5" />

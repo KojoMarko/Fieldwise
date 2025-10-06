@@ -47,6 +47,14 @@ const createAssetFlow = ai.defineFlow(
         })) : [],
     };
 
+    // Firestore does not accept 'undefined' values. We need to clean the object.
+    Object.keys(newAsset).forEach(key => {
+        const typedKey = key as keyof typeof newAsset;
+        if (newAsset[typedKey] === undefined) {
+            delete newAsset[typedKey];
+        }
+    });
+
     await assetRef.set({
       ...newAsset,
       id: assetRef.id

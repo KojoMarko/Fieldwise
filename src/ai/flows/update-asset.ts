@@ -44,6 +44,14 @@ const updateAssetFlow = ai.defineFlow(
         })) : [],
     };
 
+    // Firestore does not accept 'undefined' values. We need to clean the object.
+    Object.keys(dataToUpdate).forEach(key => {
+        if (dataToUpdate[key] === undefined) {
+            delete dataToUpdate[key];
+        }
+    });
+
+
     await assetRef.update(dataToUpdate);
   }
 );

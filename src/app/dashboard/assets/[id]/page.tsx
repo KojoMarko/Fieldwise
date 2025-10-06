@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, use } from 'react';
@@ -8,7 +9,6 @@ import {
   query,
   where,
   getDocs,
-  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Asset, Customer, WorkOrder, WorkOrderStatus, User } from '@/lib/types';
@@ -117,19 +117,24 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
       setIsLoading(false);
     });
 
-    const usersQuery = query(
-      collection(db, 'users'),
-      where('companyId', '==', asset.companyId)
-    );
-    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-      const usersData: Record<string, User> = {};
-      snapshot.forEach((doc) => (usersData[doc.id] = doc.data() as User));
-      setUsers(usersData);
-    });
+    // We assume users for a company don't change that often for this view.
+    // A more robust solution might listen for changes.
+    const fetchUsers = async () => {
+        if (!asset.companyId) return;
+        const usersQuery = query(
+            collection(db, 'users'),
+            where('companyId', '==', asset.companyId)
+        );
+        const snapshot = await getDocs(usersQuery);
+        const usersData: Record<string, User> = {};
+        snapshot.forEach((doc) => (usersData[doc.id] = doc.data() as User));
+        setUsers(usersData);
+    };
+    
+    fetchUsers();
 
     return () => {
       unsubscribeWorkOrders();
-      unsubscribeUsers();
     };
   }, [asset.id, asset.companyId]);
 
@@ -234,36 +239,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
   );
 }
 
-function CustomerInfo({ customerId }: { customerId: string }) {
-  const [customer, setCustomer] = useState<Customer | null>(null);
-
-  useEffect(() => {
-    if (!customerId) return;
-    const customerRef = doc(db, 'customers', customerId);
-    const unsubscribe = onSnapshot(customerRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setCustomer({ id: docSnap.id, ...docSnap.data() } as Customer);
-      }
-    });
-    return () => unsubscribe();
-  }, [customerId]);
-
-  if (!customer) {
-    return <p className="text-sm text-muted-foreground">Loading customer...</p>;
-  }
-
-  return (
-    <div className="grid gap-3">
-      <div className="font-semibold">{customer.name}</div>
-      <address className="grid gap-0.5 not-italic text-muted-foreground text-sm">
-        <span>{customer.contactPerson}</span>
-        <span>{customer.address}</span>
-      </address>
-    </div>
-  );
-}
-
-export default function AssetDetailPage({ params }: { params: { id: string } }) {
+export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [asset, setAsset] = useState<Asset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -313,6 +289,8 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
             className={cn(
               asset.status === 'Operational'
                 ? 'border-green-500 text-green-600'
+                : asset.status === 'Maintenance'
+                ? 'border-yellow-500 text-yellow-600'
                 : 'border-red-500 text-red-600'
             )}
           >
@@ -337,7 +315,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
              <KpiCard icon={TrendingUp} title="Machine Uptime" value="97.5%" footer={<><Progress value={97.5} className="h-2" /><p className="text-xs text-muted-foreground mt-2">Excellent performance this month</p></>} />
             <KpiCard icon={DollarSign} title="Total Maintenance Cost" value="$24,750" footer={<p className="text-xs text-muted-foreground">12% decrease from last month</p>} />
             <KpiCard icon={Clock} title="Maintenance Hours" value="186h" footer={<p className="text-xs text-muted-foreground">Total hours this year</p>} />
-            <KpiCard icon={Calendar} title="Last Maintenance" value="Dec 15, 2024" footer={<p className="text-xs text-muted-foreground">Preventive maintenance completed</p>} />
+            <KpiCard icon={Calendar} title="Last Maintenance" value={asset.lastPpmDate ? format(new Date(asset.lastPpmDate), 'PPP') : 'N/A'} footer={<p className="text-xs text-muted-foreground">Preventive maintenance completed</p>} />
             <KpiCard icon={Calendar} title="Next Scheduled" value="Jan 15, 2025" footer={<p className="text-xs text-muted-foreground">Routine inspection due</p>} />
             <KpiCard icon={AlertTriangle} title="Overdue Items" value="0" footer={<p className="text-xs text-muted-foreground">Requires immediate attention</p>} />
           </div>
@@ -379,11 +357,11 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                     <p className="font-medium font-mono">{asset.serialNumber}</p>
                   </div>
                 </div>
-                 {asset.lifecycleNotes?.find(n => n.note.includes("installed")) && (
+                 {asset.lifecycleNotes?.find(n => n.note.toLowerCase().includes("install")) && (
                     <div className="pt-4">
                         <h4 className="font-medium mb-2 text-sm">Installation Notes</h4>
                         <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground">
-                            {asset.lifecycleNotes?.find(n => n.note.includes("installed"))?.note}
+                            {asset.lifecycleNotes?.find(n => n.note.toLowerCase().includes("install"))?.note}
                         </div>
                     </div>
                 )}
@@ -395,29 +373,18 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center text-sm">
-                            <div>
-                                <p className="font-medium">Monthly preventive maintenance</p>
-                                <p className="text-xs text-muted-foreground">2024-12-15 • John Smith</p>
+                       {asset.lifecycleNotes && asset.lifecycleNotes.length > 0 ? (
+                        asset.lifecycleNotes.slice(0,3).map((note, index) => (
+                             <div key={index} className="flex justify-between items-center text-sm">
+                                <div>
+                                    <p className="font-medium">{note.note}</p>
+                                    <p className="text-xs text-muted-foreground">{format(new Date(note.date), 'yyyy-MM-dd')}</p>
+                                </div>
                             </div>
-                            <p className="font-medium">$750</p>
-                        </div>
-                        <Separator/>
-                         <div className="flex justify-between items-center text-sm">
-                            <div>
-                                <p className="font-medium">Spindle bearing replacement</p>
-                                <p className="text-xs text-muted-foreground">2024-11-20 • Mike Johnson</p>
-                            </div>
-                            <p className="font-medium">$2450</p>
-                        </div>
-                        <Separator/>
-                         <div className="flex justify-between items-center text-sm">
-                            <div>
-                                <p className="font-medium">Tool changer calibration</p>
-                                <p className="text-xs text-muted-foreground">2024-11-05 • Sarah Davis</p>
-                            </div>
-                            <p className="font-medium">$320</p>
-                        </div>
+                        ))
+                       ) : (
+                           <div className="text-sm text-muted-foreground">No manual history logged.</div>
+                       )}
                     </div>
                 </CardContent>
              </Card>
@@ -443,3 +410,5 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
+
+    

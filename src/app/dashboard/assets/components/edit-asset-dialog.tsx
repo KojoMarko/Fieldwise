@@ -78,7 +78,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
         serialNumber: asset.serialNumber,
         customerId: asset.customerId,
         location: asset.location,
-        installationDate: asset.installationDate ? parseISO(asset.installationDate) : new Date(),
+        installationDate: asset.installationDate ? parseISO(asset.installationDate) : undefined,
         purchaseDate: asset.purchaseDate ? parseISO(asset.purchaseDate) : undefined,
         vendor: asset.vendor,
         warrantyExpiry: asset.warrantyExpiry ? parseISO(asset.warrantyExpiry) : undefined,
@@ -503,7 +503,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                                 <PopoverContent className="w-auto p-0" align="start">
                                     <Calendar
                                     mode="single"
-                                    selected={field.value instanceof Date ? field.value : new Date(field.value)}
+                                    selected={field.value instanceof Date ? field.value : (field.value ? new Date(field.value) : undefined)}
                                     onSelect={field.onChange}
                                     disabled={(date) => date > new Date()}
                                     initialFocus
@@ -555,3 +555,5 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
     </Dialog>
   );
 }
+
+    

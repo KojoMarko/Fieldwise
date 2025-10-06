@@ -287,6 +287,14 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
   const [asset, setAsset] = useState<Asset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const nextPpmDate = useMemo(() => {
+    if (asset?.lastPpmDate && asset?.ppmFrequency) {
+      const lastPpm = new Date(asset.lastPpmDate);
+      return addMonths(lastPpm, asset.ppmFrequency);
+    }
+    return null;
+  }, [asset]);
+
   useEffect(() => {
     setIsLoading(true);
     const docRef = doc(db, 'assets', id);
@@ -312,15 +320,6 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
   if (!asset) {
     return notFound();
   }
-  
-  const nextPpmDate = useMemo(() => {
-    if (asset.lastPpmDate && asset.ppmFrequency) {
-      const lastPpm = new Date(asset.lastPpmDate);
-      return addMonths(lastPpm, asset.ppmFrequency);
-    }
-    return null;
-  }, [asset.lastPpmDate, asset.ppmFrequency]);
-
 
   return (
     <div className="mx-auto grid w-full flex-1 auto-rows-max gap-4">
@@ -464,9 +463,5 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
-
-    
-
-    
 
     

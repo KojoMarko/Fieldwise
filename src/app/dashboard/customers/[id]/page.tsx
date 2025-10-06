@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Asset, Customer } from '@/lib/types';
@@ -29,15 +29,16 @@ import { Separator } from '@/components/ui/separator';
 export default function CustomerDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsLoading(true);
-    const docRef = doc(db, 'customers', params.id);
+    const docRef = doc(db, 'customers', id);
 
     const unsubscribeCustomer = onSnapshot(
       docRef,
@@ -57,7 +58,7 @@ export default function CustomerDetailPage({
 
     const assetsQuery = query(
       collection(db, 'assets'),
-      where('customerId', '==', params.id)
+      where('customerId', '==', id)
     );
     const unsubscribeAssets = onSnapshot(assetsQuery, (snapshot) => {
       const assetsData: Asset[] = [];
@@ -72,7 +73,7 @@ export default function CustomerDetailPage({
       unsubscribeCustomer();
       unsubscribeAssets();
     };
-  }, [params.id]);
+  }, [id]);
 
   if (isLoading) {
     return (

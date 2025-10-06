@@ -23,7 +23,7 @@ import { WorkOrderClientSection } from './components/work-order-client-section';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WorkOrderPartsTab } from './components/work-order-parts-tab';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { collection, doc, onSnapshot, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { LoaderCircle } from 'lucide-react';
@@ -42,11 +42,11 @@ const statusStyles: Record<WorkOrderStatus, string> = {
 export default function WorkOrderDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
-  const { id } = params;
   
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Asset, Customer, WorkOrder, WorkOrderStatus } from '@/lib/types';
@@ -130,13 +130,14 @@ function AssetServiceHistory({ assetId }: { assetId: string }) {
 }
 
 
-export default function AssetDetailPage({ params }: { params: { id: string } }) {
+export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [asset, setAsset] = useState<Asset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsLoading(true);
-    const docRef = doc(db, 'assets', params.id);
+    const docRef = doc(db, 'assets', id);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         setAsset({ id: docSnap.id, ...docSnap.data() } as Asset);
@@ -146,7 +147,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
       setIsLoading(false);
     });
     return () => unsubscribe();
-  }, [params.id]);
+  }, [id]);
 
   if (isLoading) {
     return (

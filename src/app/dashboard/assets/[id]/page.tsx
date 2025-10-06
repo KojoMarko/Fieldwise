@@ -2,9 +2,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Asset, Customer } from '@/lib/types';
+import type { Asset, Customer, WorkOrder, WorkOrderStatus } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -21,11 +21,24 @@ import {
   MapPin,
   Barcode,
   Calendar,
+  Wrench,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+
+const statusStyles: Record<WorkOrderStatus, string> = {
+  Draft: 'bg-gray-200 text-gray-800',
+  Scheduled: 'bg-blue-100 text-blue-800',
+  'In-Progress': 'bg-yellow-100 text-yellow-800',
+  'On-Hold': 'bg-orange-100 text-orange-800',
+  Completed: 'bg-green-100 text-green-800',
+  Invoiced: 'bg-purple-100 text-purple-800',
+  Cancelled: 'bg-red-100 text-red-800',
+};
+
 
 function CustomerInfo({ customerId }: { customerId: string }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -58,6 +71,64 @@ function CustomerInfo({ customerId }: { customerId: string }) {
     </div>
   )
 }
+
+function AssetServiceHistory({ assetId }: { assetId: string }) {
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!assetId) return;
+    const q = query(collection(db, 'work-orders'), where('assetId', '==', assetId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const orders: WorkOrder[] = [];
+      snapshot.forEach(doc => orders.push({ id: doc.id, ...doc.data()} as WorkOrder));
+      orders.sort((a,b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
+      setWorkOrders(orders);
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [assetId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <LoaderCircle className="h-6 w-6 animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {workOrders.length > 0 ? (
+        <ul className="space-y-4">
+          {workOrders.map(wo => (
+            <li key={wo.id}>
+              <Link href={`/dashboard/work-orders/${wo.id}`} className="block p-4 border rounded-lg hover:bg-muted transition-colors">
+                  <div className="flex justify-between items-start">
+                      <div>
+                          <p className="font-medium">{wo.title}</p>
+                          <p className="text-sm text-muted-foreground">{format(new Date(wo.scheduledDate), 'PPP')}</p>
+                      </div>
+                       <Badge variant="outline" className={statusStyles[wo.status]}>{wo.status}</Badge>
+                  </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-md border-2 border-dashed py-10 text-center">
+            <Wrench className="h-10 w-10 text-muted-foreground" />
+            <p className="mt-4 font-semibold">No Service History</p>
+            <p className="text-sm text-muted-foreground">
+                There are no work orders logged for this asset yet.
+            </p>
+        </div>
+      )}
+    </div>
+  )
+
+}
+
 
 export default function AssetDetailPage({ params: { id } }: { params: { id: string } }) {
   const [asset, setAsset] = useState<Asset | null>(null);
@@ -155,6 +226,17 @@ export default function AssetDetailPage({ params: { id } }: { params: { id: stri
           </CardHeader>
           <CardContent>
             <CustomerInfo customerId={asset.customerId} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Asset Lifecycle &amp; Service History</CardTitle>
+            <CardDescription>
+              A complete history of all work orders for this asset.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AssetServiceHistory assetId={asset.id} />
           </CardContent>
         </Card>
       </div>

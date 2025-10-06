@@ -1,5 +1,6 @@
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -37,9 +38,66 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
+import React from 'react';
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function generateBreadcrumbs(pathname: string) {
+    const pathSegments = pathname.split('/').filter(segment => segment);
+
+    // If we are at the root of the dashboard, only show 'Dashboard'
+    if (pathSegments.length <= 1) {
+        return (
+            <BreadcrumbItem>
+                <BreadcrumbPage>Dashboard</BreadcrumbPage>
+            </BreadcrumbItem>
+        );
+    }
+    
+    // Always start with a link to the dashboard
+    const breadcrumbs = [
+        <BreadcrumbItem key="dashboard">
+            <BreadcrumbLink asChild>
+              <Link href="/dashboard">Dashboard</Link>
+            </BreadcrumbLink>
+        </BreadcrumbItem>
+    ];
+
+    let currentPath = '';
+    pathSegments.slice(1).forEach((segment, index) => {
+        currentPath += `/${segment}`;
+        const isLast = index === pathSegments.length - 2;
+        const segmentName = segment.split('-').map(capitalize).join(' ');
+
+        breadcrumbs.push(<BreadcrumbSeparator key={`sep-${index}`} />);
+
+        if (isLast) {
+             // The last segment is the current page, so it's not a link
+             breadcrumbs.push(
+                <BreadcrumbItem key={segment}>
+                    <BreadcrumbPage>{segmentName}</BreadcrumbPage>
+                </BreadcrumbItem>
+            );
+        } else {
+            // Intermediate segments are links
+             breadcrumbs.push(
+                <BreadcrumbItem key={segment}>
+                    <BreadcrumbLink asChild>
+                    <Link href={`/dashboard${currentPath}`}>{segmentName}</Link>
+                    </BreadcrumbLink>
+                </BreadcrumbItem>
+            );
+        }
+    });
+
+    return breadcrumbs;
+}
 
 export function Header() {
     const { user, logout } = useAuth();
+    const pathname = usePathname();
 
     if (!user) {
         return (
@@ -51,6 +109,9 @@ export function Header() {
 
     const isAdmin = user.role === 'Admin';
     const isEngineer = user.role === 'Engineer';
+    
+    const breadcrumbs = generateBreadcrumbs(pathname);
+
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -67,7 +128,7 @@ export function Header() {
               href="/dashboard"
               className="group flex h-20 w-20 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground"
             >
-              <Image src="/White Logo FW.png" width={64} height={64} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
+              <Image src="/White Logo FW.png" width={80} height={80} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
               <span className="sr-only">FieldWise</span>
             </Link>
              <Link
@@ -139,15 +200,7 @@ export function Header() {
       </Sheet>
       <Breadcrumb className="hidden md:flex">
         <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>All Work Orders</BreadcrumbPage>
-          </BreadcrumbItem>
+          {breadcrumbs}
         </BreadcrumbList>
       </Breadcrumb>
       <div className="relative ml-auto flex-1 md:grow-0">

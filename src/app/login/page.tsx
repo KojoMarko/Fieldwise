@@ -60,18 +60,15 @@ export default function LoginPage() {
         <CardHeader className="text-center items-center">
           <Link
             href="/"
-            className="flex items-center gap-2 font-semibold mb-4"
+            className="flex items-center justify-center gap-2 font-semibold mb-4"
           >
-            <div className="group flex h-16 w-16 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-14 md:w-14">
-              <Image
-                src="/Field Wise Logo.png"
-                width={40}
-                height={40}
-                alt="FieldWise Logo"
-                className="h-10 w-10 transition-all group-hover:scale-110"
-              />
-              <span className="sr-only">FieldWise</span>
-            </div>
+             <Image
+              src="/Field Wise Logo.png"
+              width={80}
+              height={80}
+              alt="FieldWise Logo"
+              className="transition-all group-hover:scale-110"
+            />
           </Link>
 
           <CardTitle className="text-2xl">Login to your account</CardTitle>

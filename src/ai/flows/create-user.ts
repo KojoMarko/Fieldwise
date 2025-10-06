@@ -35,30 +35,38 @@ const createUserFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-        // 1. Create a temporary password
+        // 1. Check if user already exists in Firestore
+        const usersRef = db.collection('users');
+        const existingUserQuery = await usersRef.where('email', '==', input.email).limit(1).get();
+
+        if (!existingUserQuery.empty) {
+            throw new Error(`A user with the email address "${input.email}" already exists in the database.`);
+        }
+
+        // 2. Create a temporary password
         const tempPassword = Math.random().toString(36).slice(-8);
 
-        // 2. Create the user in Firebase Auth
+        // 3. Create the user in Firebase Auth
         const userRecord = await auth.createUser({
-        email: input.email,
-        password: tempPassword,
-        displayName: input.name,
+            email: input.email,
+            password: tempPassword,
+            displayName: input.name,
         });
 
-        // 3. Create the user profile in Firestore
+        // 4. Create the user profile in Firestore
         const userDocRef = db.collection('users').doc(userRecord.uid);
         const newUser: User = {
-        id: userRecord.uid,
-        name: input.name,
-        email: input.email,
-        role: input.role,
-        companyId: input.companyId,
-        avatarUrl: `https://picsum.photos/seed/${userRecord.uid}/100/100`, // Generate a consistent avatar
+            id: userRecord.uid,
+            name: input.name,
+            email: input.email,
+            role: input.role,
+            companyId: input.companyId,
+            avatarUrl: `https://picsum.photos/seed/${userRecord.uid}/100/100`, // Generate a consistent avatar
         };
 
         await userDocRef.set(newUser);
         
-        // 4. Send welcome email with credentials
+        // 5. Send welcome email with credentials
         await sendEmail(
             newUser.email,
             "Welcome to FieldWise - Your Account is Ready",
@@ -67,14 +75,14 @@ const createUserFlow = ai.defineFlow(
         );
 
         return {
-        uid: userRecord.uid,
-        email: userRecord.email!,
+            uid: userRecord.uid,
+            email: userRecord.email!,
         };
     } catch (error: any) {
         if (error.code === 'auth/email-already-exists') {
             throw new Error(`A user with the email address "${input.email}" already exists.`);
         }
-        // Re-throw other errors
+        // Re-throw other errors, including our custom one
         throw error;
     }
   }

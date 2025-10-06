@@ -35,13 +35,15 @@ import {
   List,
   Building,
   CalendarCheck,
+  BookText,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
 import React from 'react';
 
 function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1).replace(/-/g, ' ');
 }
 
 function generateBreadcrumbs(pathname: string) {
@@ -65,12 +67,12 @@ function generateBreadcrumbs(pathname: string) {
         </BreadcrumbItem>
     ];
 
-    let currentPath = '';
+    let currentPath = '/dashboard';
     pathSegments.slice(1).forEach((segment, index) => {
         currentPath += `/${segment}`;
         const isLast = index === pathSegments.length - 2;
-        const segmentName = segment.split('-').map(capitalize).join(' ');
-
+        const segmentName = capitalize(segment);
+        
         breadcrumbs.push(<BreadcrumbSeparator key={`sep-${index}`} />);
 
         if (isLast) {
@@ -85,7 +87,7 @@ function generateBreadcrumbs(pathname: string) {
              breadcrumbs.push(
                 <BreadcrumbItem key={segment}>
                     <BreadcrumbLink asChild>
-                    <Link href={`/dashboard${currentPath}`}>{segmentName}</Link>
+                    <Link href={currentPath}>{segmentName}</Link>
                     </BreadcrumbLink>
                 </BreadcrumbItem>
             );
@@ -160,6 +162,13 @@ export function Header() {
                 >
                   <List className="h-5 w-5" />
                   Spare Parts
+                </Link>
+                 <Link
+                  href="/dashboard/resources"
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  <BookText className="h-5 w-5" />
+                  Resource Center
                 </Link>
                 </>
             )}

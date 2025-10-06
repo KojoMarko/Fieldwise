@@ -6,6 +6,7 @@ import {
   WorkOrder,
   SparePart,
   Company,
+  Resource
 } from '@/lib/types';
 import { subDays, formatISO } from 'date-fns';
 
@@ -69,3 +70,78 @@ export const spareParts: SparePart[] = [
     { id: 'sp-gen-1', name: 'HEPA Filter 12x12', partNumber: 'FIL-HEPA-1212', quantity: 50, location: 'Warehouse C', assetModel: 'Multiple' },
     { id: 'sp-gen-2', name: 'M8x25mm Bolt', partNumber: 'BLT-M8-25', quantity: 200, location: 'Warehouse C', assetModel: 'Multiple' },
 ];
+
+export const resources: Resource[] = [
+    {
+      id: 'res-1',
+      title: 'Vitros 5600 Service Manual',
+      equipment: 'Vitros 5600',
+      description: 'Complete service and maintenance procedures for Vitros 5600 series integrated systems.',
+      category: 'Chemistry',
+      type: 'Manual',
+      pages: 248,
+      version: 'Rev. 4.2',
+      updatedDate: '2024-01-15',
+      fileUrl: '#'
+    },
+    {
+      id: 'res-2',
+      title: 'DxH 900 Programming Guide',
+      equipment: 'Beckman Coulter DxH 900',
+      description: 'Programming reference and troubleshooting guide for the DxH 900 hematology analyzer.',
+      category: 'Hematology',
+      type: 'Guide',
+      pages: 156,
+      version: 'v3.1',
+      updatedDate: '2024-02-20',
+      fileUrl: '#'
+    },
+    {
+      id: 'res-3',
+      title: 'Diapro Elisa Analyzer Maintenance Handbook',
+      equipment: 'Diapro Elisa Analyzer',
+      description: 'Preventive maintenance schedules and repair procedures for industrial compressors.',
+      category: 'Immunology',
+      type: 'Manual',
+      pages: 92,
+      version: 'Rev. 2.0',
+      updatedDate: '2023-11-08',
+      fileUrl: '#'
+    },
+    {
+      id: 'res-4',
+      title: 'Electrical Safety Standards for Medical Equipment',
+      equipment: 'All Equipment',
+      description: 'OSHA-compliant electrical safety procedures and lockout/tagout protocols for medical devices.',
+      category: 'Safety',
+      type: 'Standard',
+      pages: 64,
+      version: 'v5.0',
+      updatedDate: '2024-03-01',
+      fileUrl: '#'
+    },
+    {
+      id: 'res-5',
+      title: 'Ismart Electrolyte Analyzer Installation Guide',
+      equipment: 'Ismart Electrolyte Analyzer',
+      description: 'Step-by-step installation and alignment procedures for Ismart electrolyte analyzer systems.',
+      category: 'Chemistry',
+      type: 'Guide',
+      pages: 128,
+      version: 'Rev. 3.5',
+      updatedDate: '2024-01-30',
+      fileUrl: '#'
+    },
+    {
+      id: 'res-6',
+      title: 'PLC Troubleshooting Reference',
+      equipment: 'PLC Controllers',
+      description: 'Diagnostic procedures and error code reference for programmable logic controllers in medical equipment.',
+      category: 'Automation',
+      type: 'Reference',
+      pages: 184,
+      version: 'v4.0',
+      updatedDate: '2024-02-15',
+      fileUrl: '#'
+    }
+  ];

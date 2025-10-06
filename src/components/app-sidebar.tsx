@@ -18,6 +18,7 @@ import {
   Package,
   List,
   Building,
+  BookText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -32,6 +33,7 @@ const adminNavItems = [
   { href: '/dashboard/users', icon: Users, label: 'Users' },
   { href: '/dashboard/assets', icon: Package, label: 'Assets' },
   { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
+  { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
 ];
 
 const engineerNavItems = [
@@ -39,6 +41,7 @@ const engineerNavItems = [
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
     { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
     { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
+    { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
 ]
 
 const customerNavItems = [
@@ -66,7 +69,7 @@ export function AppSidebar() {
             href="/dashboard"
             className="group flex h-20 w-20 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground"
           >
-            <Image src="/White Logo FW.png" width={64} height={64} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
+            <Image src="/White Logo FW.png" width={80} height={80} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
             <span className="sr-only">FieldWise</span>
           </Link>
           {navItems.map((item) => (

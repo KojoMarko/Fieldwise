@@ -102,3 +102,16 @@ export type Company = {
     phone?: string;
     email?: string;
 }
+
+export type Resource = {
+  id: string;
+  title: string;
+  equipment: string;
+  description: string;
+  category: string;
+  type: 'Manual' | 'Guide' | 'Procedure' | 'Reference' | 'Standard';
+  pages: number;
+  version: string;
+  updatedDate: string;
+  fileUrl: string;
+}

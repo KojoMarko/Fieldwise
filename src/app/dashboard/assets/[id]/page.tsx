@@ -378,7 +378,9 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                              <div key={index} className="flex justify-between items-center text-sm">
                                 <div>
                                     <p className="font-medium">{note.note}</p>
-                                    <p className="text-xs text-muted-foreground">{format(new Date(note.date), 'yyyy-MM-dd')}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {note.date ? format(new Date(note.date), 'yyyy-MM-dd') : 'Date not specified'}
+                                    </p>
                                 </div>
                             </div>
                         ))
@@ -410,5 +412,3 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     </div>
   );
 }
-
-    

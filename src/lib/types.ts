@@ -28,8 +28,9 @@ export type Customer = {
 };
 
 export type LifecycleEvent = {
-  date: string;
+  date?: string;
   note: string;
+  type: 'PPM' | 'Corrective' | 'Event';
 };
 
 export type Asset = {

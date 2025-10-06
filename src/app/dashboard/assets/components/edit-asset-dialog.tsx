@@ -86,7 +86,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
         lastPpmDate: asset.lastPpmDate ? parseISO(asset.lastPpmDate) : undefined,
         lifecycleNotes: asset.lifecycleNotes?.map(note => ({
             ...note,
-            date: parseISO(note.date),
+            date: note.date ? parseISO(note.date) : undefined,
         })) || [],
         status: asset.status,
       });
@@ -474,59 +474,81 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                     Add historical service records or other important lifecycle events.
                   </FormDescription>
                  {fields.map((field, index) => (
-                    <div key={field.id} className="flex items-start gap-2 rounded-md bg-muted p-3">
-                       <FormField
-                            control={form.control}
-                            name={`lifecycleNotes.${index}.date`}
-                            render={({ field }) => (
-                            <FormItem className="flex-shrink-0">
-                                <Popover>
-                                <PopoverTrigger asChild>
-                                    <FormControl>
-                                    <Button
-                                        variant={'outline'}
-                                        size="sm"
-                                        className={cn(
-                                        'w-[150px] pl-3 text-left font-normal',
-                                        !field.value && 'text-muted-foreground'
-                                        )}
-                                    >
-                                        {field.value ? (
-                                        format(new Date(field.value), 'PPP')
-                                        ) : (
-                                        <span>Pick a date</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                    mode="single"
-                                    selected={field.value instanceof Date ? field.value : (field.value ? new Date(field.value) : undefined)}
-                                    onSelect={field.onChange}
-                                    disabled={(date) => date > new Date()}
-                                    initialFocus
-                                    />
-                                </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
+                    <div key={field.id} className="flex flex-col sm:flex-row items-start gap-2 rounded-md bg-muted p-3">
+                        <div className='flex flex-row sm:flex-col gap-2 w-full sm:w-auto'>
+                            <FormField
+                                    control={form.control}
+                                    name={`lifecycleNotes.${index}.date`}
+                                    render={({ field }) => (
+                                    <FormItem className="flex-shrink-0 w-full">
+                                        <Popover>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                            <Button
+                                                variant={'outline'}
+                                                size="sm"
+                                                className={cn(
+                                                'w-full justify-start pl-3 text-left font-normal',
+                                                !field.value && 'text-muted-foreground'
+                                                )}
+                                            >
+                                                {field.value ? (
+                                                format(new Date(field.value), 'PPP')
+                                                ) : (
+                                                <span>Pick a date</span>
+                                                )}
+                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                            mode="single"
+                                            selected={field.value instanceof Date ? field.value : (field.value ? new Date(field.value) : undefined)}
+                                            onSelect={field.onChange}
+                                            disabled={(date) => date > new Date()}
+                                            initialFocus
+                                            />
+                                        </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name={`lifecycleNotes.${index}.type`}
+                                    render={({ field }) => (
+                                        <FormItem className="flex-shrink-0 w-full">
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="h-9">
+                                                        <SelectValue placeholder="Type" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="PPM">PPM</SelectItem>
+                                                    <SelectItem value="Corrective">Corrective</SelectItem>
+                                                    <SelectItem value="Event">Event</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </FormItem>
+                                    )}
+                                />
+                        </div>
                          <FormField
                             control={form.control}
                             name={`lifecycleNotes.${index}.note`}
                             render={({ field }) => (
-                                <FormItem className="flex-grow">
+                                <FormItem className="flex-grow w-full">
                                     <FormControl>
-                                        <Textarea placeholder="Describe the event or service..." {...field} className="h-10 bg-background"/>
+                                        <Textarea placeholder="Describe the event or service..." {...field} className="h-[76px] bg-background"/>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="self-center">
                             <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                     </div>
@@ -535,7 +557,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => append({ date: new Date(), note: '' })}
+                    onClick={() => append({ date: new Date(), note: '', type: 'Event' })}
                     className="mt-2"
                     >
                     <PlusCircle className="mr-2 h-4 w-4" />
@@ -555,5 +577,3 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
     </Dialog>
   );
 }
-
-    

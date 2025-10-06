@@ -21,8 +21,8 @@ export default function NewWorkOrderPage() {
 
   const isCustomer = user?.role === 'Customer';
   const isAdmin = user?.role === 'Admin';
-  const isTechnician = user?.role === 'Technician';
-  const canCreate = isCustomer || isAdmin || isTechnician;
+  const isEngineer = user?.role === 'Engineer';
+  const canCreate = isCustomer || isAdmin || isEngineer;
 
   useEffect(() => {
     if (!isLoading && !canCreate) {
@@ -84,5 +84,3 @@ export default function NewWorkOrderPage() {
     </div>
   );
 }
-
-    

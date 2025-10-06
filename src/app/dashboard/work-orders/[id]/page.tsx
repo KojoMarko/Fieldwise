@@ -53,7 +53,7 @@ export default function WorkOrderDetailPage({
 
     if (user.role === 'Admin') return; // Admins can see everything
 
-    if (user.role === 'Technician' && workOrder.technicianId !== user.id) {
+    if (user.role === 'Engineer' && workOrder.technicianId !== user.id) {
       router.push('/dashboard/work-orders');
     }
 
@@ -82,7 +82,7 @@ export default function WorkOrderDetailPage({
   const isAuthorized = useMemo(() => {
     if (!user || !workOrder) return false;
     if (user.role === 'Admin') return true;
-    if (user.role === 'Technician') return workOrder.technicianId === user.id;
+    if (user.role === 'Engineer') return workOrder.technicianId === user.id;
     if (user.role === 'Customer') {
        const customerProfile = customers.find(c => c.contactEmail === user.email);
        return workOrder.customerId === customerProfile?.id;
@@ -228,7 +228,7 @@ export default function WorkOrderDetailPage({
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle>Assigned Technician</CardTitle>
+                  <CardTitle>Assigned Engineer</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {technician ? (

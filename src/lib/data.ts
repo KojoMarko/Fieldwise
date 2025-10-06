@@ -28,7 +28,7 @@ export const users: User[] = [
     id: 'user-2',
     name: 'Caleb',
     email: 'caleb@example.com',
-    role: 'Technician',
+    role: 'Engineer',
     avatarUrl: 'https://picsum.photos/seed/avatar2/100/100',
     location: { lat: 34.0522, lng: -118.2437 },
     companyId: defaultCompanyId,
@@ -37,7 +37,7 @@ export const users: User[] = [
     id: 'user-3',
     name: 'David',
     email: 'david@example.com',
-    role: 'Technician',
+    role: 'Engineer',
     avatarUrl: 'https://picsum.photos/seed/avatar3/100/100',
     location: { lat: 34.06, lng: -118.25 },
     companyId: defaultCompanyId,
@@ -46,7 +46,7 @@ export const users: User[] = [
     id: 'user-5',
     name: 'Gilbert',
     email: 'gilbert@example.com',
-    role: 'Technician',
+    role: 'Engineer',
     avatarUrl: 'https://picsum.photos/seed/avatar5/100/100',
     location: { lat: 34.07, lng: -118.26 },
     companyId: defaultCompanyId,
@@ -55,7 +55,7 @@ export const users: User[] = [
     id: 'user-6',
     name: 'Degraft',
     email: 'degraft@example.com',
-    role: 'Technician',
+    role: 'Engineer',
     avatarUrl: 'https://picsum.photos/seed/avatar6/100/100',
     location: { lat: 34.08, lng: -118.27 },
     companyId: defaultCompanyId,
@@ -64,7 +64,7 @@ export const users: User[] = [
     id: 'user-7',
     name: 'Emma',
     email: 'emma@example.com',
-    role: 'Technician',
+    role: 'Engineer',
     avatarUrl: 'https://picsum.photos/seed/avatar7/100/100',
     location: { lat: 34.09, lng: -118.28 },
     companyId: defaultCompanyId,
@@ -96,20 +96,20 @@ export const customers: Customer[] = [
 
 export const assets: Asset[] = [
   // Vitros 5600
-  { id: 'asset-v5600-1', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-001', customerId: 'cust-1', location: 'Lab 1', companyId: defaultCompanyId },
-  { id: 'asset-v5600-2', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-002', customerId: 'cust-2', location: 'Main Lab', companyId: defaultCompanyId },
-  { id: 'asset-v5600-3', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-003', customerId: 'cust-3', location: 'Hematology', companyId: defaultCompanyId },
-  { id: 'asset-v5600-4', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-004', customerId: 'cust-4', location: 'Central Lab', companyId: defaultCompanyId },
-  { id: 'asset-v5600-5', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-005', customerId: 'cust-5', location: 'Emergency Lab', companyId: defaultCompanyId },
-  { id: 'asset-v5600-6', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-006', customerId: 'cust-6', location: 'University Lab', companyId: defaultCompanyId },
+  { id: 'asset-v5600-1', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-001', customerId: 'cust-1', location: 'Lab 1', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 365)) },
+  { id: 'asset-v5600-2', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-002', customerId: 'cust-2', location: 'Main Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 400)) },
+  { id: 'asset-v5600-3', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-003', customerId: 'cust-3', location: 'Hematology', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 500)) },
+  { id: 'asset-v5600-4', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-004', customerId: 'cust-4', location: 'Central Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 600)) },
+  { id: 'asset-v5600-5', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-005', customerId: 'cust-5', location: 'Emergency Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 700)) },
+  { id: 'asset-v5600-6', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-006', customerId: 'cust-6', location: 'University Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 800)) },
   // Diapro Elisa Analyzer
-  { id: 'asset-dea-1', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-001', customerId: 'cust-7', location: 'Immunology', companyId: defaultCompanyId },
-  { id: 'asset-dea-2', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-002', customerId: 'cust-8', location: 'Serology Dept', companyId: defaultCompanyId },
-  { id: 'asset-dea-3', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-003', customerId: 'cust-9', location: 'Regional Lab', companyId: defaultCompanyId },
+  { id: 'asset-dea-1', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-001', customerId: 'cust-7', location: 'Immunology', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 200)) },
+  { id: 'asset-dea-2', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-002', customerId: 'cust-8', location: 'Serology Dept', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 250)) },
+  { id: 'asset-dea-3', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-003', customerId: 'cust-9', location: 'Regional Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 300)) },
   // Ismart Electrolyte Analyzer
-  { id: 'asset-iea-1', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-001', customerId: 'cust-10', location: 'Stat Lab', companyId: defaultCompanyId },
-  { id: 'asset-iea-2', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-002', customerId: 'cust-11', location: 'Main Lab', companyId: defaultCompanyId },
-  { id: 'asset-iea-3', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-003', customerId: 'cust-12', location: 'Primary Lab', companyId: defaultCompanyId },
+  { id: 'asset-iea-1', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-001', customerId: 'cust-10', location: 'Stat Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 100)) },
+  { id: 'asset-iea-2', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-002', customerId: 'cust-11', location: 'Main Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 120)) },
+  { id: 'asset-iea-3', name: 'Ismart Electrolyte Analyzer', model: 'Ismart Electrolyte Analyzer', serialNumber: 'IEA-003', customerId: 'cust-12', location: 'Primary Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 150)) },
   // Beckman Coulter Hematology Analyzer (at all locations)
   ...customers.map((customer, index) => ({
       id: `asset-bcha-${index+1}`,
@@ -118,7 +118,8 @@ export const assets: Asset[] = [
       serialNumber: `BCHA-${String(index+1).padStart(3, '0')}`,
       customerId: customer.id,
       location: `Main Lab at ${customer.name}`,
-      companyId: defaultCompanyId
+      companyId: defaultCompanyId,
+      installationDate: formatISO(subDays(now, 180 + index * 10))
   }))
 ];
 

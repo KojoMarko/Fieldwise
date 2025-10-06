@@ -55,7 +55,7 @@ export default function TechnicianDashboardPage() {
         <h1 className="text-3xl font-bold tracking-tight">
           Welcome, {user.name.split(' ')[0]}
         </h1>
-        <Badge variant="outline" className="text-sm">Technician View</Badge>
+        <Badge variant="outline" className="text-sm">Engineer View</Badge>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

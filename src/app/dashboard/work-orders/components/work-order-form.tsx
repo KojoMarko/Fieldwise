@@ -128,7 +128,7 @@ export function WorkOrderForm() {
         await createWorkOrder({
             ...data,
             companyId: user.companyId,
-            status: user.role === 'Admin' || user.role === 'Technician' ? 'Scheduled' : 'Draft',
+            status: user.role === 'Admin' || user.role === 'Engineer' ? 'Scheduled' : 'Draft',
         });
         toast({
         title: user?.role === 'Customer' ? 'Service Request Submitted' : 'Work Order Created',
@@ -152,7 +152,7 @@ export function WorkOrderForm() {
   };
   
   const isCustomer = user?.role === 'Customer';
-  const canCreate = user?.role === 'Admin' || user?.role === 'Technician' || isCustomer;
+  const canCreate = user?.role === 'Admin' || user?.role === 'Engineer' || isCustomer;
 
   if (isLoading && customers.length === 0) {
       return <div className="flex justify-center items-center p-8"><LoaderCircle className="h-8 w-8 animate-spin" /></div>

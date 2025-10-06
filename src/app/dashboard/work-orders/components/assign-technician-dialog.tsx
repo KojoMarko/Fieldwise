@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -27,7 +28,7 @@ interface AssignTechnicianDialogProps {
   workOrder: WorkOrder;
 }
 
-const technicians = users.filter((u) => u.role === 'Technician');
+const engineers = users.filter((u) => u.role === 'Engineer');
 
 export function AssignTechnicianDialog({
   open,
@@ -39,11 +40,11 @@ export function AssignTechnicianDialog({
 
   const handleAssign = () => {
     if (!selectedTech) return;
-    const technician = technicians.find(t => t.id === selectedTech);
-    console.log(`Assigning ${technician?.name} to ${workOrder.title}`);
+    const engineer = engineers.find(t => t.id === selectedTech);
+    console.log(`Assigning ${engineer?.name} to ${workOrder.title}`);
     toast({
-        title: "Technician Assigned",
-        description: `${technician?.name} has been assigned to work order ${workOrder.id}.`
+        title: "Engineer Assigned",
+        description: `${engineer?.name} has been assigned to work order ${workOrder.id}.`
     });
     onOpenChange(false);
   };
@@ -52,18 +53,18 @@ export function AssignTechnicianDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Assign Technician</DialogTitle>
+          <DialogTitle>Assign Engineer</DialogTitle>
           <DialogDescription>
-            Assign a technician to work order: {workOrder.id}
+            Assign an engineer to work order: {workOrder.id}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <Select value={selectedTech} onValueChange={setSelectedTech}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a technician" />
+              <SelectValue placeholder="Select an engineer" />
             </SelectTrigger>
             <SelectContent>
-              {technicians.map((tech) => (
+              {engineers.map((tech) => (
                 <SelectItem key={tech.id} value={tech.id}>
                   {tech.name}
                 </SelectItem>

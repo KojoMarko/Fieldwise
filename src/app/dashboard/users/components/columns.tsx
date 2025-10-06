@@ -83,7 +83,7 @@ export const columns: ColumnDef<User>[] = [
       const role = row.original.role;
       let variant: 'default' | 'secondary' | 'outline' = 'outline';
       if (role === 'Admin') variant = 'default';
-      if (role === 'Technician') variant = 'secondary';
+      if (role === 'Engineer') variant = 'secondary';
       return <Badge variant={variant}>{role}</Badge>;
     },
   },

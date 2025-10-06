@@ -13,14 +13,13 @@ import { z } from 'zod';
 import type { User } from '@/lib/types';
 import { CreateUserInputSchema } from '@/lib/schemas';
 import { db, auth } from '@/lib/firebase-admin';
-
+import { sendEmail } from '@/lib/email/send-email';
 
 export type CreateUserInput = z.infer<typeof CreateUserInputSchema>;
 
 const CreateUserOutputSchema = z.object({
   uid: z.string().describe('The new user ID.'),
   email: z.string().describe('The email of the new user.'),
-  tempPassword: z.string().optional().describe('A temporary password for the new user.'),
 });
 export type CreateUserOutput = z.infer<typeof CreateUserOutputSchema>;
 
@@ -57,11 +56,18 @@ const createUserFlow = ai.defineFlow(
     };
 
     await userDocRef.set(newUser);
+    
+    // 4. Send welcome email with credentials
+    await sendEmail(
+        newUser.email,
+        "Welcome to FieldWise - Your Account is Ready",
+        newUser.name,
+        tempPassword
+    );
 
     return {
       uid: userRecord.uid,
       email: userRecord.email!,
-      tempPassword: tempPassword,
     };
   }
 );

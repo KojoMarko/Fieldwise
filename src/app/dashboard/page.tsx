@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Wrench,
@@ -17,7 +18,7 @@ import CustomerDashboardPage from './customer/page';
 export default function DashboardPage() {
     const { user } = useAuth();
 
-    if (user?.role === 'Technician') {
+    if (user?.role === 'Engineer') {
         return <TechnicianDashboardPage />
     }
     

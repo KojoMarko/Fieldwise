@@ -53,7 +53,7 @@ export function RecentWorkOrders() {
     
     if (user.role === 'Admin') {
       return workOrders;
-    } else if (user.role === 'Technician') {
+    } else if (user.role === 'Engineer') {
       return workOrders.filter(wo => wo.technicianId === user.id);
     } else if (user.role === 'Customer') {
       const customerProfile = customers.find(c => c.contactEmail === user.email);
@@ -92,7 +92,7 @@ export function RecentWorkOrders() {
             <TableRow>
               <TableHead>Customer</TableHead>
               <TableHead className="hidden sm:table-cell">Status</TableHead>
-              <TableHead className="hidden md:table-cell">Technician</TableHead>
+              <TableHead className="hidden md:table-cell">Engineer</TableHead>
               <TableHead className="text-right">Date</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -134,7 +134,7 @@ export function RecentWorkOrders() {
                         <DropdownMenuItem asChild>
                            <Link href={`/dashboard/work-orders/${order.id}`}>View Details</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAssignClick(order)}>Assign Technician</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAssignClick(order)}>Assign Engineer</DropdownMenuItem>
                         <DropdownMenuItem>Mark as Completed</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

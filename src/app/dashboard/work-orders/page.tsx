@@ -47,7 +47,7 @@ export default function WorkOrdersPage() {
         // Sort by creation date descending
         fetchedWorkOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-        if (user.role === 'Admin' || user.role === 'Technician') {
+        if (user.role === 'Admin' || user.role === 'Engineer') {
             setWorkOrders(fetchedWorkOrders);
         } else if (user.role === 'Customer') {
             const customerProfile = customers.find(c => c.contactEmail === user.email);
@@ -77,7 +77,7 @@ export default function WorkOrdersPage() {
   );
   const draftOrders = workOrders.filter((wo) => wo.status === 'Draft');
 
-  const canCreateWorkOrder = user?.role === 'Admin' || user?.role === 'Customer' || user?.role === 'Technician';
+  const canCreateWorkOrder = user?.role === 'Admin' || user?.role === 'Customer' || user?.role === 'Engineer';
   const createButtonText = user?.role === 'Customer' ? 'Request Service' : 'Create Work Order';
 
   const renderDataTable = (data: WorkOrder[], title: string, description: string) => (
@@ -141,7 +141,7 @@ export default function WorkOrdersPage() {
         </div>
       </div>
        <div className="flex items-center gap-4 mt-4">
-        {user?.role === 'Admin' || user?.role === 'Technician' ? adminOrTechTabs : customerTabs}
+        {user?.role === 'Admin' || user?.role === 'Engineer' ? adminOrTechTabs : customerTabs}
          <div className="sm:hidden flex-1">
              {canCreateWorkOrder && (
                 <Button size="sm" className="h-8 gap-1 w-full" asChild>
@@ -164,7 +164,7 @@ export default function WorkOrdersPage() {
       <TabsContent value="completed">
        {renderDataTable(completedOrders, 'Completed Work Orders', 'Work orders that have been completed or invoiced.')}
       </TabsContent>
-      {(user?.role === 'Admin' || user?.role === 'Technician') && (
+      {(user?.role === 'Admin' || user?.role === 'Engineer') && (
         <TabsContent value="draft">
             {renderDataTable(draftOrders, 'Draft Work Orders', 'Work orders that are not yet scheduled.')}
         </TabsContent>
@@ -172,5 +172,3 @@ export default function WorkOrdersPage() {
     </Tabs>
   );
 }
-
-    

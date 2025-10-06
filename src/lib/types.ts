@@ -2,7 +2,7 @@
 import type { z } from 'zod';
 import type { ServiceReportQuestionnaireSchema } from './schemas';
 
-export type UserRole = 'Admin' | 'Technician' | 'Customer';
+export type UserRole = 'Admin' | 'Engineer' | 'Customer';
 
 export type User = {
   id: string;

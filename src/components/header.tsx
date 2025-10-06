@@ -50,7 +50,7 @@ export function Header() {
     }
 
     const isAdmin = user.role === 'Admin';
-    const isTechnician = user.role === 'Technician';
+    const isEngineer = user.role === 'Engineer';
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -84,7 +84,7 @@ export function Header() {
               <Wrench className="h-5 w-5" />
               Work Orders
             </Link>
-            {(isAdmin || isTechnician) && (
+            {(isAdmin || isEngineer) && (
                 <>
                  <Link
                   href="/dashboard/ppm"
@@ -180,7 +180,7 @@ export function Header() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-           {user.role === 'Technician' && (
+           {user.role === 'Engineer' && (
              <DropdownMenuItem asChild>
                 <Link href="/dashboard">
                   <LayoutDashboard className="mr-2 h-4 w-4" />

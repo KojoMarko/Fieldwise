@@ -34,7 +34,7 @@ const adminNavItems = [
   { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
 ];
 
-const technicianNavItems = [
+const engineerNavItems = [
     { href: '/dashboard', icon: Home, label: 'My Dashboard' },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
     { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
@@ -51,8 +51,8 @@ export function AppSidebar() {
   const { user } = useAuth();
 
   let navItems = adminNavItems;
-  if (user?.role === 'Technician') {
-    navItems = technicianNavItems;
+  if (user?.role === 'Engineer') {
+    navItems = engineerNavItems;
   } else if (user?.role === 'Customer') {
       navItems = customerNavItems;
   }

@@ -76,7 +76,7 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
           {isAdmin && (
             <>
               <DropdownMenuItem onClick={() => setAssignDialogOpen(true)}>
-                Assign Technician
+                Assign Engineer
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setInvoiceDialogOpen(true)} disabled={workOrder.status !== 'Completed'}>
@@ -217,7 +217,7 @@ export const columns: ColumnDef<WorkOrder>[] = [
   },
   {
     accessorKey: 'technicianId',
-    header: 'Technician',
+    header: 'Engineer',
     cell: TechnicianCell,
      meta: {
       className: 'hidden lg:table-cell',
@@ -239,5 +239,3 @@ export const columns: ColumnDef<WorkOrder>[] = [
     cell: ActionsCell,
   },
 ];
-
-    

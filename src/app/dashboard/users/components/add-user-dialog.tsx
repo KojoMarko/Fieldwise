@@ -34,7 +34,7 @@ import { CreateUserInputSchema } from '@/lib/schemas';
 import type { z } from 'zod';
 import { createUser } from '@/ai/flows/create-user';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Copy, Server } from 'lucide-react';
+import { Server, CheckCircle } from 'lucide-react';
 
 type AddUserFormValues = z.infer<typeof CreateUserInputSchema>;
 
@@ -47,14 +47,14 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
   const { toast } = useToast();
   const { user: adminUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newUser, setNewUser] = useState<{ email: string; tempPassword?: string } | null>(null);
+  const [newUser, setNewUser] = useState<{ email: string } | null>(null);
 
   const form = useForm<AddUserFormValues>({
     resolver: zodResolver(CreateUserInputSchema),
     defaultValues: {
       name: '',
       email: '',
-      role: 'Technician',
+      role: 'Engineer',
       companyId: adminUser?.companyId,
     },
   });
@@ -74,12 +74,11 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 
         toast({
             title: 'User Created Successfully',
-            description: `An account for ${result.email} has been created.`,
+            description: `An account for ${result.email} has been created and their credentials have been emailed to them.`,
         });
 
         setNewUser({
             email: result.email,
-            tempPassword: result.tempPassword
         });
         form.reset();
 
@@ -104,37 +103,23 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
     }, 300);
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: 'Copied to clipboard' });
-  }
-
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{newUser ? 'User Created Successfully' : 'Add a New User'}</DialogTitle>
            <DialogDescription>
-            {newUser ? 'Please share the temporary password with the new user securely.' : 'Enter the details for the new user account.'}
+            {newUser ? `An email with login credentials has been sent to ${newUser.email}.` : 'Enter the details for the new user account.'}
           </DialogDescription>
         </DialogHeader>
 
         {newUser ? (
-            <div className='py-4 space-y-4'>
-                <Alert>
-                    <Server className="h-4 w-4" />
-                    <AlertTitle>Login Credentials</AlertTitle>
-                    <AlertDescription className="space-y-2">
-                       <p>Email: <strong>{newUser.email}</strong></p>
-                       <div className="flex items-center gap-2">
-                           <p>Password: <strong>{newUser.tempPassword}</strong></p>
-                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(newUser.tempPassword!)}>
-                               <Copy className="h-4 w-4"/>
-                           </Button>
-                       </div>
-                    </AlertDescription>
-                </Alert>
-                 <p className="text-sm text-muted-foreground">The user will be prompted to change this password on their first login.</p>
+            <div className='py-4 space-y-4 text-center'>
+                <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+                <p>The new user will receive an email shortly with instructions on how to log in.</p>
+                <DialogFooter>
+                    <Button onClick={handleClose}>Done</Button>
+                </DialogFooter>
             </div>
         ) : (
              <Form {...form}>
@@ -178,7 +163,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            <SelectItem value="Technician">Technician</SelectItem>
+                            <SelectItem value="Engineer">Engineer</SelectItem>
                             <SelectItem value="Customer">Customer</SelectItem>
                              <SelectItem value="Admin">Admin</SelectItem>
                             </SelectContent>

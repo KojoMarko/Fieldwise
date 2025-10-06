@@ -144,7 +144,7 @@ export function WorkOrderClientSection({
     }
   }
 
-  const isTechnicianView = user?.role === 'Technician';
+  const isEngineerView = user?.role === 'Engineer';
 
   const ServiceReport = () => (
     <Card>
@@ -179,7 +179,7 @@ export function WorkOrderClientSection({
         </div>
         <Separator />
         <div className="p-6 prose prose-sm max-w-none">
-          <h4 className="font-medium mb-2">Technician Report</h4>
+          <h4 className="font-medium mb-2">Engineer's Report</h4>
           {/* Using dangerouslySetInnerHTML is okay here if we trust the AI output is safe markdown */}
           <div dangerouslySetInnerHTML={{ __html: currentWorkOrder.technicianNotes?.replace(/\n/g, '<br />') || '' }} />
         </div>
@@ -198,10 +198,10 @@ export function WorkOrderClientSection({
     </Card>
   );
 
-  const TechnicianActions = () => (
+  const EngineerActions = () => (
     <Card>
         <CardHeader>
-            <CardTitle>Technician Controls</CardTitle>
+            <CardTitle>Engineer Controls</CardTitle>
             <CardDescription>Update the work order status.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
@@ -279,22 +279,22 @@ export function WorkOrderClientSection({
 
         {!isGeneratingReport && (
             <>
-                {isTechnicianView && currentWorkOrder.status !== 'Completed' && currentWorkOrder.status !== 'Invoiced' && <TechnicianActions />}
+                {isEngineerView && currentWorkOrder.status !== 'Completed' && currentWorkOrder.status !== 'Invoiced' && <EngineerActions />}
 
                 {(currentWorkOrder.status === 'Completed' || currentWorkOrder.status === 'On-Hold') && currentWorkOrder.technicianNotes ? (
                     <div className="xl:col-span-2"><ServiceReport /></div>
                 ) : (
                     <>
-                    {/* Hide for technician if work is not completed */}
-                    { !isTechnicianView &&
+                    {/* Hide for engineer if work is not completed */}
+                    { !isEngineerView &&
                         <Card>
                         <CardHeader>
-                            <CardTitle>Technician Report</CardTitle>
+                            <CardTitle>Engineer's Report</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
                                 <AlertCircle className="h-4 w-4 mr-2" />
-                                A service report will be available once the technician completes the work.
+                                A service report will be available once the engineer completes the work.
                             </div>
                         </CardContent>
                         </Card>
@@ -302,7 +302,7 @@ export function WorkOrderClientSection({
                     </>
                 )}
 
-                <Card className={(currentWorkOrder.status === 'Completed' || (currentWorkOrder.status !== 'Completed' && !isTechnicianView)) ? 'xl:col-span-2' : ''}>
+                <Card className={(currentWorkOrder.status === 'Completed' || (currentWorkOrder.status !== 'Completed' && !isEngineerView)) ? 'xl:col-span-2' : ''}>
                     <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                         <span>AI Spare Part Suggester</span>

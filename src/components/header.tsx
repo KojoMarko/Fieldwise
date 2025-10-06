@@ -65,9 +65,9 @@ export function Header() {
           <nav className="grid gap-6 text-lg font-medium">
             <Link
               href="/dashboard"
-              className="group flex h-14 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground"
+              className="group flex h-20 w-20 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground"
             >
-              <Image src="/White Logo FW.png" width={48} height={48} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
+              <Image src="/White Logo FW.png" width={64} height={64} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
               <span className="sr-only">FieldWise</span>
             </Link>
              <Link

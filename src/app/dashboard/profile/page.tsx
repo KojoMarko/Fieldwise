@@ -1,16 +1,31 @@
+
+'use client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ProfileForm } from "./components/profile-form";
+import { useAuth } from "@/hooks/use-auth";
+import { LoaderCircle } from "lucide-react";
 
 export default function ProfilePage() {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading || !user) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <LoaderCircle className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div>
       <h1 className="text-3xl font-bold tracking-tight mb-6">Profile</h1>
       <Card>
         <CardHeader>
           <CardTitle>User Profile</CardTitle>
-          <CardDescription>This is your profile page. You can edit your details here.</CardDescription>
+          <CardDescription>Update your personal information and avatar.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p>Profile editing functionality will be implemented soon.</p>
+          <ProfileForm user={user} />
         </CardContent>
       </Card>
     </div>

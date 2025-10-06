@@ -22,6 +22,11 @@ export const CreateUserInputSchema = z.object({
     companyId: z.string().min(1, 'Company ID is required'),
 });
 
+export const UpdateUserInputSchema = z.object({
+    id: z.string().min(1, 'User ID is required'),
+    name: z.string().min(1, 'Name is required'),
+});
+
 export const CreateCustomerInputSchema = z.object({
     name: z.string().min(1, 'Customer name is required'),
     contactPerson: z.string().min(1, 'Contact person is required'),
@@ -69,4 +74,12 @@ export const UpdateAssetInputSchema = CreateAssetInputSchema.extend({
 
 export const DeleteAssetInputSchema = z.object({
     assetId: z.string().min(1, 'Asset ID is required'),
+});
+
+export const UpdateCompanyInputSchema = z.object({
+    id: z.string().min(1, 'Company ID is required'),
+    name: z.string().min(1, 'Company name is required'),
+    address: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().email('Invalid email address').optional(),
 });

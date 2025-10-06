@@ -239,7 +239,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
   );
 }
 
-export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function AssetDetailPage({ params }: { params: { id: string } }) {
   const { id } = use(params);
   const [asset, setAsset] = useState<Asset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -303,7 +303,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue="history">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="installation">Installation</TabsTrigger>
@@ -412,3 +412,5 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     </div>
   );
 }
+
+    

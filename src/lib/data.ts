@@ -94,6 +94,8 @@ export const customers: Customer[] = [
     { id: 'cust-12', name: 'Ahorgman community Hospital', contactPerson: 'Ben', contactEmail: 'ben@example.com', address: 'Aflao', phone: '555-0112', companyId: defaultCompanyId },
 ];
 
+const now = new Date();
+
 export const assets: Asset[] = [
   // Vitros 5600
   { id: 'asset-v5600-1', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-001', customerId: 'cust-1', location: 'Lab 1', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 365)) },
@@ -142,8 +144,6 @@ export const spareParts: SparePart[] = [
     { id: 'sp-gen-2', name: 'M8x25mm Bolt', partNumber: 'BLT-M8-25', quantity: 200, location: 'Warehouse C', assetModel: 'Multiple' },
 ];
 
-
-const now = new Date();
 export const workOrders: WorkOrder[] = [
   {
     id: 'WO-001',

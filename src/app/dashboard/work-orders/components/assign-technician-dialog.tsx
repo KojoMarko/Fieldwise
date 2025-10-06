@@ -23,6 +23,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { updateWorkOrder } from '@/ai/flows/update-work-order';
+import { LoaderCircle } from 'lucide-react';
 
 interface AssignTechnicianDialogProps {
   open: boolean;
@@ -39,6 +41,13 @@ export function AssignTechnicianDialog({
   const [engineers, setEngineers] = useState<User[]>([]);
   const [selectedTech, setSelectedTech] = useState<string | undefined>(workOrder.technicianId);
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (workOrder) {
+      setSelectedTech(workOrder.technicianId);
+    }
+  }, [workOrder]);
 
   useEffect(() => {
     if (!user?.companyId) return;
@@ -55,15 +64,34 @@ export function AssignTechnicianDialog({
   }, [user?.companyId]);
 
 
-  const handleAssign = () => {
-    if (!selectedTech) return;
-    const engineer = engineers.find(t => t.id === selectedTech);
-    console.log(`Assigning ${engineer?.name} to ${workOrder.title}`);
-    toast({
-        title: "Engineer Assigned",
-        description: `${engineer?.name} has been assigned to work order ${workOrder.id}.`
-    });
-    onOpenChange(false);
+  const handleAssign = async () => {
+    if (!selectedTech) {
+        toast({
+            variant: 'destructive',
+            title: 'No Engineer Selected',
+            description: 'Please select an engineer to assign.'
+        })
+        return;
+    };
+    setIsSubmitting(true);
+    try {
+        await updateWorkOrder({ id: workOrder.id, technicianId: selectedTech });
+        const engineer = engineers.find(t => t.id === selectedTech);
+        toast({
+            title: "Engineer Assigned",
+            description: `${engineer?.name} has been assigned to work order ${workOrder.id}.`
+        });
+        onOpenChange(false);
+    } catch (error) {
+        console.error('Failed to assign engineer:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Assignment Failed',
+            description: 'Could not assign the engineer at this time. Please try again.'
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -93,7 +121,10 @@ export function AssignTechnicianDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleAssign} disabled={!selectedTech}>Assign</Button>
+          <Button onClick={handleAssign} disabled={!selectedTech || isSubmitting}>
+            {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting ? 'Assigning...' : 'Assign'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

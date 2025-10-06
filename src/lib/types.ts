@@ -61,6 +61,8 @@ export type SparePart = {
     // companyId will be inferred from the asset model's company
 }
 
+export type AllocatedPart = SparePart & { status: 'Allocated' | 'Used' | 'Returned' };
+
 export type WorkOrderStatus =
   | 'Draft'
   | 'Scheduled'
@@ -96,4 +98,7 @@ export type ServiceReportQuestionnaire = z.infer<typeof ServiceReportQuestionnai
 export type Company = {
     id: string;
     name: string;
+    address?: string;
+    phone?: string;
+    email?: string;
 }

@@ -1,3 +1,4 @@
+
 'use client';
 import {
   ChevronLeft,
@@ -24,7 +25,7 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { notFound, useRouter } from 'next/navigation';
-import type { WorkOrder, WorkOrderStatus, Customer, Asset, User, WorkOrderPriority } from '@/lib/types';
+import type { WorkOrder, WorkOrderStatus, Customer, Asset, User, WorkOrderPriority, AllocatedPart, Company } from '@/lib/types';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, use } from 'react';
@@ -74,6 +75,9 @@ export default function WorkOrderDetailPage({
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [asset, setAsset] = useState<Asset | null>(null);
   const [technician, setTechnician] = useState<User | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [allocatedParts, setAllocatedParts] = useState<AllocatedPart[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -113,6 +117,12 @@ export default function WorkOrderDetailPage({
         const techRef = doc(db, 'users', workOrder.technicianId);
         onSnapshot(techRef, (docSnap) => setTechnician(docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as User : null));
     }
+    
+    if(user.companyId) {
+        const companyRef = doc(db, 'companies', user.companyId);
+        onSnapshot(companyRef, (docSnap) => setCompany(docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as Company : null));
+    }
+
 
     // Authorization logic
     let authorized = false;
@@ -333,10 +343,10 @@ export default function WorkOrderDetailPage({
             
           </TabsContent>
           <TabsContent value="parts">
-            <WorkOrderPartsTab workOrder={workOrder} />
+            <WorkOrderPartsTab workOrder={workOrder} allocatedParts={allocatedParts} setAllocatedParts={setAllocatedParts} />
           </TabsContent>
            <TabsContent value="report">
-                <WorkOrderClientSection workOrder={workOrder} customer={customer ?? undefined} technician={technician ?? undefined} asset={asset ?? undefined} />
+                <WorkOrderClientSection workOrder={workOrder} customer={customer ?? undefined} technician={technician ?? undefined} asset={asset ?? undefined} allocatedParts={allocatedParts} company={company ?? undefined} />
            </TabsContent>
         </Tabs>
     </div>

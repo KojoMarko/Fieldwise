@@ -16,7 +16,7 @@ import {
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import type { WorkOrder, SparePart } from '@/lib/types';
+import type { WorkOrder, SparePart, AllocatedPart } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   DropdownMenu,
@@ -28,12 +28,9 @@ import { MoreHorizontal } from 'lucide-react';
 import { AddPartsDialog } from './add-parts-dialog';
 
 
-type AllocatedPart = SparePart & { status: 'Allocated' | 'Used' | 'Returned' };
-
-export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
+export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts }: { workOrder: WorkOrder, allocatedParts: AllocatedPart[], setAllocatedParts: (parts: AllocatedPart[] | ((prev: AllocatedPart[]) => AllocatedPart[])) => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [allocatedParts, setAllocatedParts] = useState<AllocatedPart[]>([]);
   const [isAddPartsDialogOpen, setAddPartsDialogOpen] = useState(false);
   const { toast } = useToast();
 

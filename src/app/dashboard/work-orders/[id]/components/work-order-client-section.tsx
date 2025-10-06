@@ -18,14 +18,16 @@ import {
   Play,
   Check,
   Pause,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  PlusCircle,
+  Trash2
 } from 'lucide-react';
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
-import type { ServiceReportQuestionnaire } from '@/lib/types';
+import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import type { WorkOrder, Customer, User, Asset } from '@/lib/types';
+import type { WorkOrder, Customer, User, Asset, Company } from '@/lib/types';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -48,11 +50,15 @@ export function WorkOrderClientSection({
   customer,
   technician,
   asset,
+  allocatedParts,
+  company,
 }: {
   workOrder: WorkOrder;
   customer?: Customer;
   technician?: User;
   asset?: Asset;
+  allocatedParts: AllocatedPart[],
+  company?: Company,
 }) {
   const { user } = useAuth();
   const [currentWorkOrder, setCurrentWorkOrder] = useState<WorkOrder>(workOrder);
@@ -71,6 +77,8 @@ export function WorkOrderClientSection({
       followUpNeeded: false
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [consumedParts, setConsumedParts] = useState<string[]>([]);
+  const [customPart, setCustomPart] = useState('');
 
   const handleSuggestParts = async () => {
     setIsLoading(true);
@@ -126,10 +134,26 @@ export function WorkOrderClientSection({
     setQuestionnaireOpen(false);
     setIsGeneratingReport(true);
     try {
+        const partsList = [...consumedParts];
+        if (customPart) {
+            partsList.push(customPart);
+        }
+        
         const result = await generateServiceReport({
             ...(questionnaireData as ServiceReportQuestionnaire),
+            partsUsed: partsList.join(', '),
             workOrderTitle: currentWorkOrder.title,
             assetName: asset?.name || 'N/A',
+            companyName: company?.name || 'FieldWise Inc.',
+            companyAddress: company?.address || '123 Service Lane, Tech City',
+            companyEmail: company?.email || 'contact@fieldwise.com',
+            companyPhone: company?.phone || '555-010-3452',
+            clientName: customer?.name || 'N/A',
+            clientContact: customer?.contactPerson || 'N/A',
+            clientAddress: customer?.address || 'N/A',
+            preparedBy: technician?.name || user?.name || 'N/A',
+            workOrderId: currentWorkOrder.id,
+            type: currentWorkOrder.type,
         });
         setCurrentWorkOrder(prev => ({
             ...prev,
@@ -169,32 +193,13 @@ export function WorkOrderClientSection({
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="p-6 border-t">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="font-medium">Customer</p>
-              <p className="text-muted-foreground">{customer?.name}</p>
-              <p className="text-muted-foreground">{customer?.address}</p>
-            </div>
-            <div className="text-right">
-              <p className="font-medium">Completed Date</p>
-              <p className="text-muted-foreground">
-                {currentWorkOrder.completedDate
-                  ? format(new Date(currentWorkOrder.completedDate), 'PPP')
-                  : 'N/A'}
-              </p>
-            </div>
-          </div>
-        </div>
-        <Separator />
-        <div className="p-6 prose prose-sm max-w-none">
-          <h4 className="font-medium mb-2">Engineer's Report</h4>
+        <div className="p-6 prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-card-foreground prose-p:text-muted-foreground prose-strong:text-card-foreground">
           {/* Using dangerouslySetInnerHTML is okay here if we trust the AI output is safe markdown */}
           <div dangerouslySetInnerHTML={{ __html: currentWorkOrder.technicianNotes?.replace(/\n/g, '<br />') || '' }} />
         </div>
         <Separator />
         <div className="p-6">
-           <h4 className="font-medium mb-2">Customer Approval</h4>
+           <h4 className="font-medium mb-2 text-card-foreground">Customer Approval</h4>
            <div className="mt-4 border bg-muted rounded-lg h-32 flex items-center justify-center">
                 <p className="text-sm text-muted-foreground italic">Customer Signature</p>
            </div>
@@ -331,9 +336,38 @@ export function WorkOrderClientSection({
                             <Input value={questionnaireData.failureCode} onChange={e => setQuestionnaireData({...questionnaireData, failureCode: e.target.value})} placeholder="e.g., C-403"/>
                         </div>
                    </div>
-                   <div className="space-y-2">
+                    <div className="space-y-2">
                       <Label htmlFor="q-parts-used">Parts Consumed</Label>
-                      <Textarea id="q-parts-used" value={questionnaireData.partsUsed} onChange={e => setQuestionnaireData({...questionnaireData, partsUsed: e.target.value})} placeholder="List all parts used, including those purchased on-field..." />
+                      <div className="p-3 border rounded-md space-y-3">
+                        {allocatedParts.map(part => (
+                            <div key={part.id} className="flex items-center space-x-2">
+                                <Checkbox 
+                                    id={`part-${part.id}`} 
+                                    checked={consumedParts.includes(`${part.name} (x${part.quantity})`)}
+                                    onCheckedChange={(checked) => {
+                                        const partString = `${part.name} (x${part.quantity})`;
+                                        if(checked) {
+                                            setConsumedParts(prev => [...prev, partString]);
+                                        } else {
+                                            setConsumedParts(prev => prev.filter(p => p !== partString));
+                                        }
+                                    }}
+                                />
+                                <Label htmlFor={`part-${part.id}`}>{part.name} ({part.partNumber}) - {part.quantity} unit(s)</Label>
+                            </div>
+                        ))}
+                        <Separator />
+                        <div className="flex items-center gap-2">
+                           <PlusCircle className="h-4 w-4"/>
+                           <Input 
+                            placeholder="Add part purchased on-field..."
+                            value={customPart}
+                            onChange={(e) => setCustomPart(e.target.value)}
+                            className="h-8"
+                           />
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Select from allocated parts or add one purchased on the field.</p>
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="q-observations">Final Observations & Recommendations</Label>
@@ -371,7 +405,7 @@ export function WorkOrderClientSection({
             <>
                 {isEngineerView && currentWorkOrder.status !== 'Completed' && currentWorkOrder.status !== 'Invoiced' && <EngineerActions />}
 
-                {(currentWorkOrder.status === 'Completed' || currentWorkOrder.status === 'On-Hold') && currentWorkOrder.technicianNotes ? (
+                {(currentWorkOrder.status === 'Completed' || currentWorkOrder.status === 'On-Hold' || currentWorkOrder.status === 'Invoiced') && currentWorkOrder.technicianNotes ? (
                     <div className="xl:col-span-2"><ServiceReport /></div>
                 ) : (
                     <>

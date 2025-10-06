@@ -45,7 +45,7 @@ import {
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -312,6 +312,15 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
   if (!asset) {
     return notFound();
   }
+  
+  const nextPpmDate = useMemo(() => {
+    if (asset.lastPpmDate && asset.ppmFrequency) {
+      const lastPpm = new Date(asset.lastPpmDate);
+      return addMonths(lastPpm, asset.ppmFrequency);
+    }
+    return null;
+  }, [asset.lastPpmDate, asset.ppmFrequency]);
+
 
   return (
     <div className="mx-auto grid w-full flex-1 auto-rows-max gap-4">
@@ -359,7 +368,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
             <KpiCard icon={DollarSign} title="Total Maintenance Cost" value="$24,750" footer={<p className="text-xs text-muted-foreground">12% decrease from last month</p>} />
             <KpiCard icon={Clock} title="Maintenance Hours" value="186h" footer={<p className="text-xs text-muted-foreground">Total hours this year</p>} />
             <KpiCard icon={Calendar} title="Last Maintenance" value={asset.lastPpmDate ? format(new Date(asset.lastPpmDate), 'PPP') : 'N/A'} footer={<p className="text-xs text-muted-foreground">Preventive maintenance completed</p>} />
-            <KpiCard icon={Calendar} title="Next Scheduled" value="Jan 15, 2025" footer={<p className="text-xs text-muted-foreground">Routine inspection due</p>} />
+            <KpiCard icon={Calendar} title="Next Scheduled" value={nextPpmDate ? format(nextPpmDate, 'PPP') : 'N/A'} footer={<p className="text-xs text-muted-foreground">Routine inspection due</p>} />
             <KpiCard icon={AlertTriangle} title="Overdue Items" value="0" footer={<p className="text-xs text-muted-foreground">Requires immediate attention</p>} />
           </div>
         </TabsContent>
@@ -455,6 +464,8 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
+
+    
 
     
 

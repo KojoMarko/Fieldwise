@@ -39,6 +39,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { WorkOrderPartsTab } from './components/work-order-parts-tab';
+import { WorkOrderClientSection } from './components/work-order-client-section';
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {
@@ -178,317 +181,164 @@ export default function WorkOrderDetailPage({
   }
 
   return (
-    <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-4 p-4 md:p-0">
-        <div className="space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                Engineer's Work Order Details Page: {workOrder.id}
-            </h1>
-            <p className="text-muted-foreground">
-                Comprehensive maintenance work order management system for field engineers.
-            </p>
+    <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 p-4 md:p-0">
+       <div className="flex items-center gap-4">
+        <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+          <Link href="/dashboard/work-orders">
+            <ChevronLeft className="h-4 w-4" />
+            <span className="sr-only">Back</span>
+          </Link>
+        </Button>
+        <div className="flex-1">
+            <h1 className="font-semibold text-xl md:text-2xl">{workOrder.title}</h1>
+            <p className="text-sm text-muted-foreground">Work Order #{workOrder.id}</p>
         </div>
-
-        {/* --- Status & Priority --- */}
-        <Card>
-            <CardContent className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className='space-y-1'>
-                    <p className="text-sm font-medium text-muted-foreground">Status</p>
-                    <Badge className={cn('w-fit', statusStyles[workOrder.status])} variant="outline">{workOrder.status}</Badge>
-                </div>
-                <div className='space-y-1'>
-                    <p className="text-sm font-medium text-muted-foreground">Priority</p>
-                    <Badge className={cn('w-fit', priorityStyles[workOrder.priority])} variant="destructive">{workOrder.priority}</Badge>
-                </div>
-                <div className='space-y-1'>
-                    <p className="text-sm font-medium text-muted-foreground">Work Order No.</p>
-                    <p className="font-semibold">{workOrder.id}</p>
-                </div>
-                 <div className='space-y-1'>
-                    <p className="text-sm font-medium text-muted-foreground">Work Order Type</p>
-                    <p className="font-semibold">{workOrder.type}</p>
-                </div>
-                <div className='space-y-1'>
-                    <p className="text-sm font-medium text-muted-foreground">Order Issued</p>
-                    <p className="font-semibold">{format(parseISO(workOrder.createdAt), 'yyyy-MM-dd hh:mm a')}</p>
-                </div>
-                <div className='space-y-1'>
-                    <p className="text-sm font-medium text-muted-foreground">Target Completion</p>
-                    <p className="font-semibold">{format(parseISO(workOrder.scheduledDate), 'yyyy-MM-dd hh:mm a')}</p>
-                </div>
-            </CardContent>
-        </Card>
-
-        {/* --- Asset & Location Info --- */}
-        <Card>
-             <CardHeader>
-                <CardTitle className="text-lg">Asset & Location Information</CardTitle>
-            </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Asset Name</p>
-                        <p className="font-semibold">{asset?.name} ({asset?.model})</p>
-                        <p className="text-xs text-muted-foreground">Asset ID: {asset?.serialNumber}</p>
-                    </div>
-                     <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Location</p>
-                        <p className="font-semibold">{asset?.location}</p>
-                    </div>
-                     <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Physical Location</p>
-                        <p className="font-semibold">{customer?.address}</p>
-                    </div>
-                    <div>
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/assets/${asset?.id}`}>
-                                <HardDrive className="mr-2 h-4 w-4" /> View Asset History
-                            </Link>
-                        </Button>
-                         <p className="text-xs text-muted-foreground mt-2">
-                            <Link href="#" className="underline">Last 5 work orders</Link>, <Link href="#" className="underline">PM schedule</Link>, and <Link href="#" className="underline">sensor readings</Link>.
-                        </p>
-                    </div>
-                </div>
-                 <div className="space-y-4">
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Requester</p>
-                        <p className="font-semibold">{customer?.contactPerson}</p>
-                         <p className="text-xs text-muted-foreground">Contact: {customer?.phone} | {customer?.contactEmail}</p>
-                    </div>
-                     <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Date of Report</p>
-                        <p className="font-semibold">{format(parseISO(workOrder.createdAt), 'yyyy-MM-dd hh:mm a')}</p>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-
-        {/* --- Problem & Scope --- */}
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg">Problem & Scope of Work</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div>
-                    <h3 className="font-semibold mb-2">Problem Description (Reported Issue)</h3>
-                    <p className="text-sm text-muted-foreground bg-slate-50 p-3 rounded-md border">
-                        {workOrder.description || "No description provided."}
-                    </p>
-                </div>
-                 <div>
-                    <h3 className="font-semibold mb-2">Scope of Work (Required Action)</h3>
-                    <div className="text-sm text-muted-foreground bg-slate-50 p-3 rounded-md border">
-                        {workOrder.technicianNotes ? (
-                             <div dangerouslySetInnerHTML={{ __html: workOrder.technicianNotes?.replace(/\\n/g, '<br />') || '' }} />
-                        ) : (
-                            <ol className="list-decimal list-inside space-y-1">
-                                <li>Diagnose the root cause of the issue.</li>
-                                <li>Perform necessary repairs or replacements.</li>
-                                <li>Test the equipment to ensure it is fully operational.</li>
-                                <li>Document all actions taken and parts used.</li>
-                            </ol>
-                        )}
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-        
-        {/* --- Assignment & Safety --- */}
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg">Assignment & Safety</CardTitle>
-            </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                     <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Assigned Engineer</p>
-                        <p className="font-semibold">{technician?.name || "Unassigned"}</p>
-                        {technician && <p className="text-xs text-muted-foreground">Dispatched: {format(parseISO(workOrder.createdAt), 'yyyy-MM-dd hh:mm a')}</p>}
-                    </div>
-                     <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Skill/Crew Required</p>
-                        <p className="font-semibold">Electrical/Instrumentation Technician</p>
-                    </div>
-                     <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Estimated Labor</p>
-                        <p className="font-semibold">{workOrder.duration ? `${workOrder.duration} hours` : "4 hours"}</p>
-                    </div>
-                </div>
-                <div className="space-y-4">
-                     <div className="border border-destructive/50 rounded-lg p-3 bg-red-50 text-destructive">
-                        <h4 className="font-semibold flex items-center gap-2"><ShieldAlert className="h-5 w-5" /> Safety Notes</h4>
-                        <Separator className="my-2 bg-destructive/20" />
-                        <ul className="text-sm space-y-1 list-disc list-inside">
-                           <li>Mandatory LOTO required before opening any electrical cabinet.</li>
-                           <li>Use insulated tools.</li>
-                        </ul>
-                         <div className="mt-2">
-                            <Button size="sm" variant="link" className="p-0 h-auto text-destructive">
-                                <ClipboardList className="mr-1 h-3 w-3" /> LOTO Procedure 8.4.1
-                            </Button>
-                         </div>
-                     </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-2">Required PPE</p>
-                        <div className="flex flex-wrap gap-2">
-                            <Badge variant="outline">Hard hat</Badge>
-                            <Badge variant="outline">Safety glasses</Badge>
-                            <Badge variant="outline">Gloves</Badge>
-                            <Badge variant="outline">Arc Flash Suit (Level E)</Badge>
-                        </div>
-                     </div>
-                </div>
-            </CardContent>
-        </Card>
-        
-        {/* --- Parts & Tools --- */}
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg">Parts & Tools Required</CardTitle>
-            </CardHeader>
-            <CardContent>
-                 <div>
-                    <h3 className="font-semibold mb-2">Required Parts (Pre-Staged or Requested)</h3>
-                    <div className="rounded-md border p-2">
-                         <p className="text-sm text-muted-foreground text-center p-4">Parts management will be available in a future update.</p>
-                    </div>
-                 </div>
-                 <div className="mt-4">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2"><Wrench className="h-4 w-4" />Special Tools / Equipment</h3>
-                     <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground">
-                        <li>Digital Multimeter (Fluke 87V)</li>
-                        <li>Board Extraction Tool Kit</li>
-                        <li>Service Laptop with Diagnostic Software (v4.5)</li>
-                    </ul>
-                 </div>
-            </CardContent>
-        </Card>
-
-        {/* --- Engineer Completion & Sign-Off --- */}
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg">Engineer Completion & Sign-Off</CardTitle>
-                <CardDescription>To be filled by the Engineer.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                     <div className="space-y-2">
-                        <Label>Time On-Site</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    <span>dd/mm/yyyy --:--</span>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" />
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Time Work Started</Label>
-                         <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    <span>dd/mm/yyyy --:--</span>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" />
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Time Work Completed</Label>
-                         <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    <span>dd/mm/yyyy --:--</span>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" />
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                </div>
-                 <div>
-                    <Label htmlFor="actual-work">Actual Work Performed</Label>
-                    <Textarea id="actual-work" placeholder="Detail diagnosis, steps taken, and troubleshooting path..." />
-                 </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <Label>Root Cause of Failure</Label>
-                        <Select>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select root cause..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="electrical">Electrical Failure</SelectItem>
-                                <SelectItem value="mechanical">Mechanical Failure</SelectItem>
-                                <SelectItem value="software">Software Issue</SelectItem>
-                                <SelectItem value="user-error">User Error</SelectItem>
-                            </SelectContent>
-                        </Select>
-                     </div>
-                     <div className="space-y-2">
-                        <Label>Failure Code</Label>
-                        <Input disabled value="C-403 confirmed (Cause: Voltage Spike on Channel 5)" />
-                     </div>
-                  </div>
-                   <div>
-                    <Label>Parts Consumed</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        <Badge variant="secondary">Channel Control Board/SD01... (1 unit)</Badge>
-                    </div>
-                   </div>
-                    <div className="flex items-center space-x-2">
-                        <Checkbox id="follow-up" />
-                        <label
-                        htmlFor="follow-up"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                        Follow Up Needed?
-                        </label>
-                    </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Label>Customer/Requester Sign-Off</Label>
-                            <div className="mt-2 h-20 rounded-md border-2 border-dashed flex items-center justify-center">
-                                <p className="text-sm text-muted-foreground">Signature Field (Digital Signature)</p>
+        <div>
+            <Badge className={cn('w-fit text-base', statusStyles[workOrder.status])} variant="outline">{workOrder.status}</Badge>
+        </div>
+      </div>
+      
+       <Tabs defaultValue="details">
+          <TabsList>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="parts">Parts & Tools</TabsTrigger>
+            <TabsTrigger value="report">Service Report</TabsTrigger>
+          </TabsList>
+          <TabsContent value="details">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
+                <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Problem & Scope</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                             <div>
+                                <h3 className="font-semibold mb-2 text-sm">Problem Description (Reported Issue)</h3>
+                                <p className="text-sm text-muted-foreground bg-slate-50 p-3 rounded-md border">
+                                    {workOrder.description || "No description provided."}
+                                </p>
                             </div>
-                        </div>
-                         <div>
-                            <Label>Engineer Sign-Off</Label>
-                            <div className="mt-2 h-20 rounded-md border-2 border-dashed flex items-center justify-center">
-                                <p className="text-sm text-muted-foreground">Signature Field (Digital Signature)</p>
+                              <div>
+                                <h3 className="font-semibold mb-2 text-sm">Scope of Work (Required Action)</h3>
+                                <div className="text-sm text-muted-foreground bg-slate-50 p-3 rounded-md border">
+                                    {workOrder.technicianNotes ? (
+                                        <div dangerouslySetInnerHTML={{ __html: workOrder.technicianNotes?.replace(/\\n/g, '<br />') || '' }} />
+                                    ) : (
+                                        <ol className="list-decimal list-inside space-y-1">
+                                            <li>Diagnose the root cause of the issue.</li>
+                                            <li>Perform necessary repairs or replacements.</li>
+                                            <li>Test the equipment to ensure it is fully operational.</li>
+                                            <li>Document all actions taken and parts used.</li>
+                                        </ol>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                     </div>
-                     <div className="space-y-2">
-                        <Label>Work Order Final Status</Label>
-                        <Select defaultValue="closed">
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select final status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="closed">CLOSED</SelectItem>
-                                <SelectItem value="requires-follow-up">Requires Follow-Up</SelectItem>
-                            </SelectContent>
-                        </Select>
-                     </div>
-            </CardContent>
-            <CardFooter className="border-t pt-6 flex-col items-stretch gap-4 md:flex-row md:justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <ClipboardCheck className="h-4 w-4 text-green-500" />
-                    <span>Done! How does this look?</span>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Assignment & Safety</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-muted-foreground">Assigned Engineer</p>
+                                    <p className="font-semibold">{technician?.name || "Unassigned"}</p>
+                                    {technician && <p className="text-xs text-muted-foreground">Dispatched: {format(parseISO(workOrder.createdAt), 'yyyy-MM-dd hh:mm a')}</p>}
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-muted-foreground">Skill/Crew Required</p>
+                                    <p className="font-semibold">Electrical/Instrumentation Technician</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-muted-foreground">Estimated Labor</p>
+                                    <p className="font-semibold">{workOrder.duration ? `${workOrder.duration} hours` : "4 hours"}</p>
+                                </div>
+                            </div>
+                             <div className="space-y-4">
+                                <div className="border border-destructive/50 rounded-lg p-3 bg-red-50 text-destructive">
+                                    <h4 className="font-semibold flex items-center gap-2 text-sm"><ShieldAlert className="h-5 w-5" /> Safety Notes</h4>
+                                    <Separator className="my-2 bg-destructive/20" />
+                                    <ul className="text-xs space-y-1 list-disc list-inside">
+                                    <li>Mandatory LOTO required before opening any electrical cabinet.</li>
+                                    <li>Use insulated tools.</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground mb-2">Required PPE</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        <Badge variant="outline">Hard hat</Badge>
+                                        <Badge variant="outline">Safety glasses</Badge>
+                                        <Badge variant="outline">Gloves</Badge>
+                                        <Badge variant="outline">Arc Flash Suit (Level E)</Badge>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
-                 <Button className="w-full md:w-auto">Complete Work Order</Button>
-            </CardFooter>
-        </Card>
+                <div className="grid auto-rows-max items-start gap-4">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Asset & Customer</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                             <div className="space-y-1 text-sm">
+                                <p className="font-medium text-muted-foreground">Asset</p>
+                                <Button variant="link" className="p-0 h-auto font-semibold" asChild><Link href={`/dashboard/assets/${asset?.id}`}>{asset?.name} ({asset?.model})</Link></Button>
+                                <p className="text-xs text-muted-foreground">S/N: {asset?.serialNumber}</p>
+                            </div>
+                             <div className="space-y-1 text-sm">
+                                <p className="font-medium text-muted-foreground">Location</p>
+                                <p className="font-semibold">{asset?.location}</p>
+                            </div>
+                             <Separator />
+                            <div className="space-y-1 text-sm">
+                                <p className="font-medium text-muted-foreground">Customer</p>
+                                <Button variant="link" className="p-0 h-auto font-semibold" asChild><Link href={`/dashboard/customers/${customer?.id}`}>{customer?.name}</Link></Button>
+                                <p className="text-xs text-muted-foreground">{customer?.address}</p>
+                            </div>
+                             <div className="space-y-1 text-sm">
+                                <p className="font-medium text-muted-foreground">Contact</p>
+                                <p className="font-semibold">{customer?.contactPerson}</p>
+                                <p className="text-xs text-muted-foreground">{customer?.contactEmail}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Schedule</CardTitle>
+                        </CardHeader>
+                         <CardContent className="space-y-4 text-sm">
+                             <div className="space-y-1">
+                                <p className="font-medium text-muted-foreground">Priority</p>
+                                <Badge className={cn('w-fit', priorityStyles[workOrder.priority])} variant="destructive">{workOrder.priority}</Badge>
+                            </div>
+                             <div className="space-y-1">
+                                <p className="font-medium text-muted-foreground">Work Order Type</p>
+                                <p className="font-semibold">{workOrder.type}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="font-medium text-muted-foreground">Issued</p>
+                                <p className="font-semibold">{format(parseISO(workOrder.createdAt), 'PPP, hh:mm a')}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="font-medium text-muted-foreground">Scheduled</p>
+                                <p className="font-semibold">{format(parseISO(workOrder.scheduledDate), 'PPP, hh:mm a')}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+            
+          </TabsContent>
+          <TabsContent value="parts">
+            <WorkOrderPartsTab workOrder={workOrder} />
+          </TabsContent>
+           <TabsContent value="report">
+                <WorkOrderClientSection workOrder={workOrder} customer={customer ?? undefined} technician={technician ?? undefined} asset={asset ?? undefined} />
+           </TabsContent>
+        </Tabs>
     </div>
   );
 }

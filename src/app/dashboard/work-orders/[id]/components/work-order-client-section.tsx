@@ -301,63 +301,6 @@ export function WorkOrderClientSection({
                     }
                     </>
                 )}
-
-                <Card className={(currentWorkOrder.status === 'Completed' || (currentWorkOrder.status !== 'Completed' && !isEngineerView)) ? 'xl:col-span-2' : ''}>
-                    <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                        <span>AI Spare Part Suggester</span>
-                        <Sparkles className="h-5 w-5 text-primary" />
-                    </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        Get AI-powered suggestions for spare parts based on the work order
-                        description.
-                    </p>
-                    <Button
-                        onClick={handleSuggestParts}
-                        disabled={isLoading}
-                        variant="outline"
-                    >
-                        {isLoading ? (
-                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                        <Wrench className="mr-2 h-4 w-4" />
-                        )}
-                        Suggest Spare Parts
-                    </Button>
-
-                    {isLoading && (
-                        <div className="flex items-center text-sm text-muted-foreground">
-                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing work order...
-                        </div>
-                    )}
-
-                    {suggestions.length > 0 && (
-                        <div className="space-y-2">
-                        <h4 className="font-medium text-sm flex items-center">
-                            <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                            Suggested Parts:
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                            {suggestions.map((part, index) => (
-                            <Badge key={index} variant="secondary">
-                                {part}
-                            </Badge>
-                            ))}
-                        </div>
-                        </div>
-                    )}
-
-                    {!isLoading && suggestions.length === 0 && (
-                        <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                        <AlertCircle className="h-4 w-4 mr-2" />
-                        Click the button to generate suggestions.
-                        </div>
-                    )}
-                    </CardContent>
-                </Card>
             </>
         )}
       </div>

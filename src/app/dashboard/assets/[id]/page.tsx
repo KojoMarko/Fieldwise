@@ -104,14 +104,15 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
     if (!asset.id) return;
     const q = query(
       collection(db, 'work-orders'),
-      where('assetId', '==', asset.id),
-      orderBy('scheduledDate', 'desc')
+      where('assetId', '==', asset.id)
     );
     const unsubscribeWorkOrders = onSnapshot(q, (snapshot) => {
       const orders: WorkOrder[] = [];
       snapshot.forEach((doc) =>
         orders.push({ id: doc.id, ...doc.data() } as WorkOrder)
       );
+      // Sort client-side to avoid needing a composite index
+      orders.sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
       setWorkOrders(orders);
       setIsLoading(false);
     });

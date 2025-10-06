@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -47,18 +48,26 @@ Use the following information from the technician's questionnaire to generate th
 **Asset Serviced:** {{{assetName}}}
 
 **Technician's Responses:**
+- **Time On-Site:** {{{timeOnSite}}}
+- **Time Work Started:** {{{timeWorkStarted}}}
+- **Time Work Completed:** {{{timeWorkCompleted}}}
 - **Work Performed:** {{{workPerformed}}}
 - **Parts Used:** {{{partsUsed}}}
+- **Root Cause:** {{{rootCause}}} (Failure Code: {{{failureCode}}})
+- **Follow-up Needed:** {{{followUpNeeded}}}
 - **Final Observations/Recommendations:** {{{finalObservations}}}
 - **Customer On-Site Feedback:** {{{customerFeedback}}}
 
 
 **Instructions:**
 1.  **Summary of Work:** Start with a clear and concise summary of the work performed.
-2.  **Detailed Breakdown:** Elaborate on the steps taken during the service.
-3.  **Parts:** If parts were used, use the 'findPartNumber' tool to look up the part number for each part mentioned. List the part name and its corresponding part number. If no parts were mentioned, state "No parts were required for this service."
-4.  **Technician's Observations:** Detail any important observations or recommendations for future maintenance.
-5.  **Conclusion:** Conclude the report professionally.
+2.  **Detailed Breakdown:** Elaborate on the steps taken during the service. Include details about the diagnosis and troubleshooting path.
+3.  **Timings:** Clearly state the "Time On-Site", "Time Work Started", and "Time Work Completed". Calculate and display the total duration of the work.
+4.  **Root Cause Analysis:** State the identified Root Cause of Failure and the associated Failure Code.
+5.  **Parts:** If parts were used, use the 'findPartNumber' tool to look up the part number for each part mentioned. List the part name and its corresponding part number. If no parts were mentioned, state "No parts were required for this service."
+6.  **Technician's Observations:** Detail any important observations or recommendations for future maintenance.
+7.  **Follow-Up Actions:** If a follow-up is needed, clearly state what actions are required next.
+8.  **Conclusion:** Conclude the report professionally.
 
 Generate the final report text based on these instructions.`,
 });

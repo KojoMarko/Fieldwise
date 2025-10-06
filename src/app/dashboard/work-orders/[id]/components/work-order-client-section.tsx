@@ -18,6 +18,7 @@ import {
   Play,
   Check,
   Pause,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
@@ -36,6 +37,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { HoldWorkOrderDialog } from './hold-work-order-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function WorkOrderClientSection({
   workOrder,
@@ -55,11 +61,14 @@ export function WorkOrderClientSection({
   const { toast } = useToast();
   const [isQuestionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
-  const [questionnaireData, setQuestionnaireData] = useState<ServiceReportQuestionnaire>({
+  const [questionnaireData, setQuestionnaireData] = useState<Partial<ServiceReportQuestionnaire>>({
       workPerformed: '',
       partsUsed: '',
       finalObservations: '',
-      customerFeedback: ''
+      customerFeedback: '',
+      rootCause: 'Other',
+      failureCode: '',
+      followUpNeeded: false
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
@@ -118,7 +127,7 @@ export function WorkOrderClientSection({
     setIsGeneratingReport(true);
     try {
         const result = await generateServiceReport({
-            ...questionnaireData,
+            ...(questionnaireData as ServiceReportQuestionnaire),
             workOrderTitle: currentWorkOrder.title,
             assetName: asset?.name || 'N/A',
         });
@@ -227,6 +236,47 @@ export function WorkOrderClientSection({
     </Card>
   )
 
+  const DateTimePicker = ({ value, onChange }: { value: any, onChange: (date: Date) => void }) => (
+    <Popover>
+        <PopoverTrigger asChild>
+            <Button
+            variant={'outline'}
+            className={cn(
+                'w-full justify-start text-left font-normal',
+                !value && 'text-muted-foreground'
+            )}
+            >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {value ? format(new Date(value), 'PPP p') : <span>Pick a date</span>}
+            </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0">
+            <Calendar
+                mode="single"
+                selected={value}
+                onSelect={(day) => {
+                    const newDate = new Date(day || '');
+                    const oldTime = value ? new Date(value) : new Date();
+                    newDate.setHours(oldTime.getHours(), oldTime.getMinutes());
+                    onChange(newDate);
+                }}
+            />
+            <div className="p-3 border-t border-border">
+                <Input
+                    type="time"
+                    value={value ? format(new Date(value), 'HH:mm') : ''}
+                    onChange={(e) => {
+                        const [hours, minutes] = e.target.value.split(':');
+                        const newDate = value ? new Date(value) : new Date();
+                        newDate.setHours(parseInt(hours), parseInt(minutes));
+                        onChange(newDate);
+                    }}
+                />
+            </div>
+        </PopoverContent>
+    </Popover>
+  );
+
   return (
     <>
       <HoldWorkOrderDialog 
@@ -235,21 +285,57 @@ export function WorkOrderClientSection({
         onSubmit={handlePutOnHold}
       />
       <Dialog open={isQuestionnaireOpen} onOpenChange={setQuestionnaireOpen}>
-          <DialogContent className="sm:max-w-2xl">
+          <DialogContent className="sm:max-w-3xl">
               <DialogHeader>
-                  <DialogTitle>Service Completion Questionnaire</DialogTitle>
-                  <DialogDescription>Please fill out the details of the work performed.</DialogDescription>
+                  <DialogTitle>Engineer Completion & Sign-Off</DialogTitle>
+                  <DialogDescription>To be filled by the Engineer</DialogDescription>
               </DialogHeader>
-              <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto px-1">
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                           <Label>Time On-Site</Label>
+                           <DateTimePicker value={questionnaireData.timeOnSite} onChange={date => setQuestionnaireData({...questionnaireData, timeOnSite: date})} />
+                        </div>
+                        <div className="space-y-2">
+                           <Label>Time Work Started</Label>
+                           <DateTimePicker value={questionnaireData.timeWorkStarted} onChange={date => setQuestionnaireData({...questionnaireData, timeWorkStarted: date})} />
+                        </div>
+                        <div className="space-y-2">
+                           <Label>Time Work Completed</Label>
+                           <DateTimePicker value={questionnaireData.timeWorkCompleted} onChange={date => setQuestionnaireData({...questionnaireData, timeWorkCompleted: date})} />
+                        </div>
+                   </div>
                    <div className="space-y-2">
-                      <Label htmlFor="q-work-performed">Summary of Work Performed</Label>
-                      <Textarea id="q-work-performed" value={questionnaireData.workPerformed} onChange={e => setQuestionnaireData({...questionnaireData, workPerformed: e.target.value})} placeholder="Describe the service, repairs, and checks you completed..." />
+                      <Label htmlFor="q-work-performed">Actual Work Performed</Label>
+                      <Textarea id="q-work-performed" value={questionnaireData.workPerformed} onChange={e => setQuestionnaireData({...questionnaireData, workPerformed: e.target.value})} placeholder="Detail diagnosis, steps taken, and troubleshooting path..." />
                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Root Cause of Failure</Label>
+                             <Select value={questionnaireData.rootCause} onValueChange={(value) => setQuestionnaireData({...questionnaireData, rootCause: value})}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select cause" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Electrical Fault">Electrical Fault</SelectItem>
+                                    <SelectItem value="Mechanical Wear">Mechanical Wear</SelectItem>
+                                    <SelectItem value="Operator Error">Operator Error</SelectItem>
+                                    <SelectItem value="Software Issue">Software Issue</SelectItem>
+                                    <SelectItem value="Environmental">Environmental</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Failure Code</Label>
+                            <Input value={questionnaireData.failureCode} onChange={e => setQuestionnaireData({...questionnaireData, failureCode: e.target.value})} placeholder="e.g., C-403"/>
+                        </div>
+                   </div>
                    <div className="space-y-2">
-                      <Label htmlFor="q-parts-used">Parts Used (comma-separated)</Label>
-                      <Input id="q-parts-used" value={questionnaireData.partsUsed} onChange={e => setQuestionnaireData({...questionnaireData, partsUsed: e.target.value})} placeholder="e.g., FIL-HEPA-1212, BLT-M8-25" />
+                      <Label htmlFor="q-parts-used">Parts Consumed</Label>
+                      <Textarea id="q-parts-used" value={questionnaireData.partsUsed} onChange={e => setQuestionnaireData({...questionnaireData, partsUsed: e.target.value})} placeholder="List all parts used, including those purchased on-field..." />
                   </div>
-                   <div className="space-y-2">
+                  <div className="space-y-2">
                       <Label htmlFor="q-observations">Final Observations & Recommendations</Label>
                       <Textarea id="q-observations" value={questionnaireData.finalObservations} onChange={e => setQuestionnaireData({...questionnaireData, finalObservations: e.target.value})} placeholder="Any notes for the customer or for future service?" />
                   </div>
@@ -257,6 +343,10 @@ export function WorkOrderClientSection({
                       <Label htmlFor="q-customer-feedback">Customer On-Site Feedback</Label>
                       <Textarea id="q-customer-feedback" value={questionnaireData.customerFeedback} onChange={e => setQuestionnaireData({...questionnaireData, customerFeedback: e.target.value})} placeholder="Any comments or feedback from the customer?" />
                   </div>
+                   <div className="flex items-center space-x-2">
+                        <Checkbox id="follow-up" checked={questionnaireData.followUpNeeded} onCheckedChange={(checked) => setQuestionnaireData({...questionnaireData, followUpNeeded: !!checked})} />
+                        <Label htmlFor="follow-up">Follow-Up Needed?</Label>
+                    </div>
               </div>
               <DialogFooter>
                   <Button variant="outline" onClick={() => setQuestionnaireOpen(false)}>Cancel</Button>

@@ -6,7 +6,14 @@ export const ServiceReportQuestionnaireSchema = z.object({
   partsUsed: z.string().describe('A comma-separated list of parts that were used during the service.'),
   finalObservations: z.string().describe('Any final observations or recommendations the technician has.'),
   customerFeedback: z.string().describe('Any feedback or comments provided by the customer on-site.'),
+  timeOnSite: z.any().describe("The date and time the engineer arrived on site."),
+  timeWorkStarted: z.any().describe("The date and time the engineer started the work."),
+  timeWorkCompleted: z.any().describe("The date and time the engineer completed the work."),
+  rootCause: z.string().describe("The identified root cause of the equipment failure."),
+  failureCode: z.string().describe("The specific failure code associated with the root cause."),
+  followUpNeeded: z.boolean().describe("Whether any follow-up action is required."),
 });
+
 
 export const CreateUserInputSchema = z.object({
     name: z.string().min(1, 'Name is required'),

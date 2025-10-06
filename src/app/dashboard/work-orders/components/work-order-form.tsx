@@ -49,6 +49,7 @@ const workOrderSchema = z.object({
   customerId: z.string().min(1, 'Customer is required'),
   assetId: z.string().min(1, 'Asset is required'),
   priority: z.enum(['Low', 'Medium', 'High']),
+  type: z.enum(['Preventive', 'Corrective', 'Emergency', 'Installation', 'Other']),
   scheduledDate: z.date({
     required_error: 'A scheduled date is required.',
   }),
@@ -107,6 +108,7 @@ export function WorkOrderForm() {
     resolver: zodResolver(workOrderSchema),
     defaultValues: {
       priority: 'Medium',
+      type: 'Corrective',
       customerId: customerProfile?.id || '',
     },
   });
@@ -286,7 +288,7 @@ export function WorkOrderForm() {
             )}
           />
         </div>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <FormField
             control={form.control}
             name="priority"
@@ -306,6 +308,33 @@ export function WorkOrderForm() {
                     <SelectItem value="Low">Low - Routine check-up</SelectItem>
                     <SelectItem value="Medium">Medium - Affecting performance</SelectItem>
                     <SelectItem value="High">High - Out of service</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Work Order Type</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Preventive">Preventive</SelectItem>
+                    <SelectItem value="Corrective">Corrective</SelectItem>
+                    <SelectItem value="Emergency">Emergency</SelectItem>
+                    <SelectItem value="Installation">Installation</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

@@ -44,6 +44,7 @@ export type Asset = {
   ppmFrequency?: number; // In months
   lastPpmDate?: string;
   lifecycleNotes?: LifecycleEvent[];
+  status: 'Operational' | 'Down' | 'Maintenance';
 };
 
 export type SparePart = {
@@ -72,6 +73,7 @@ export type WorkOrder = {
   description: string;
   status: WorkOrderStatus;
   priority: WorkOrderPriority;
+  type: 'Preventive' | 'Corrective' | 'Emergency' | 'Installation' | 'Other';
   assetId: string;
   customerId: string;
   technicianId?: string;

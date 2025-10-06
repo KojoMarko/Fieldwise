@@ -49,6 +49,7 @@ export const CreateAssetInputSchema = z.object({
   ppmFrequency: z.coerce.number().optional(),
   lastPpmDate: z.any().optional(),
   lifecycleNotes: z.array(LifecycleEventSchema).optional(),
+  status: z.enum(['Operational', 'Down', 'Maintenance']),
 });
 
 export const UpdateAssetInputSchema = CreateAssetInputSchema.extend({

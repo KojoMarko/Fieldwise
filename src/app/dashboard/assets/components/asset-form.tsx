@@ -78,6 +78,7 @@ export function AssetForm() {
       location: '',
       companyId: user?.companyId,
       lifecycleNotes: [],
+      status: 'Operational',
     },
   });
 
@@ -217,34 +218,58 @@ export function AssetForm() {
             )}
           />
         </div>
-        <FormField
-            control={form.control}
-            name="customerId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Customer</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  disabled={isLoadingCustomers}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a customer" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <FormField
+                control={form.control}
+                name="customerId"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Customer</FormLabel>
+                    <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={isLoadingCustomers}
+                    >
+                    <FormControl>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Select a customer" />
+                        </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {customers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                            {customer.name}
+                        </SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select asset status" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Operational">Operational</SelectItem>
+                                <SelectItem value="Maintenance">Maintenance</SelectItem>
+                                <SelectItem value="Down">Down</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
           <div className="space-y-4 rounded-lg border p-4">
               <h3 className="text-md font-medium">Preventive Maintenance</h3>
                <div className="grid grid-cols-1 gap-8 md:grid-cols-2">

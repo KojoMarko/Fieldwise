@@ -19,6 +19,7 @@ const CreateWorkOrderInputSchema = z.object({
   customerId: z.string().min(1, 'Customer is required'),
   assetId: z.string().min(1, 'Asset is required'),
   priority: z.enum(['Low', 'Medium', 'High']),
+  type: z.enum(['Preventive', 'Corrective', 'Emergency', 'Installation', 'Other']),
   scheduledDate: z.date(),
   companyId: z.string().min(1, 'Company ID is required'),
   status: z.enum(['Scheduled', 'Draft']),

@@ -67,7 +67,7 @@ export function Header() {
               href="/dashboard"
               className="group flex h-14 w-14 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground"
             >
-              <Image src="/Field Wise Logo.png" width={48} height={48} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
+              <Image src="/White Logo FW.png" width={48} height={48} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
               <span className="sr-only">FieldWise</span>
             </Link>
              <Link

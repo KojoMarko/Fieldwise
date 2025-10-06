@@ -294,8 +294,8 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
   );
 }
 
-export default function AssetDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [asset, setAsset] = useState<Asset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -475,3 +475,5 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
+
+    

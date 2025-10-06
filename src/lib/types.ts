@@ -87,6 +87,7 @@ export type WorkOrder = {
   technicianNotes?: string;
   companyId: string; // New field
   cost?: number;
+  duration?: number; // Duration in hours
 };
 
 export type ServiceReportQuestionnaire = z.infer<typeof ServiceReportQuestionnaireSchema>;

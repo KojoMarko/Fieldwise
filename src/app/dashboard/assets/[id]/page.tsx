@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, use, useMemo } from 'react';
+import { useEffect, useState, useMemo, use } from 'react';
 import {
   doc,
   onSnapshot,
@@ -145,6 +145,8 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
       status: 'Manual Entry',
       isManual: true,
       originalDate: note.date,
+      duration: undefined,
+      cost: undefined,
     }));
 
     const woEntries = workOrders.map(wo => ({
@@ -156,6 +158,8 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
       status: wo.status,
       isManual: false,
       originalDate: wo.scheduledDate,
+      duration: wo.duration,
+      cost: wo.cost,
     }));
     
     const allEntries = [...manualEntries, ...woEntries];
@@ -164,7 +168,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
     allEntries.sort((a, b) => {
         if (!a.originalDate) return 1;
         if (!b.originalDate) return -1;
-        return b.date.getTime() - a.date.getTime();
+        return new Date(b.originalDate).getTime() - new Date(a.originalDate).getTime();
     });
 
     return allEntries;
@@ -216,6 +220,8 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
               <TableHead>Type</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Technician</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead>Cost</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -227,7 +233,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span>
-                        {item.originalDate ? format(item.date, 'yyyy-MM-dd') : 'Date N/A'}
+                        {item.originalDate ? format(new Date(item.originalDate), 'yyyy-MM-dd') : 'Date N/A'}
                       </span>
                     </div>
                   </TableCell>
@@ -257,6 +263,12 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                     </div>
                   </TableCell>
                   <TableCell>
+                      {item.duration ? `${item.duration} hours` : 'N/A'}
+                  </TableCell>
+                   <TableCell>
+                      {item.cost ? `$${item.cost.toLocaleString()}` : 'N/A'}
+                  </TableCell>
+                  <TableCell>
                      <Badge
                         variant="outline"
                         className={cn(
@@ -270,7 +282,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   No maintenance history found for this asset.
                 </TableCell>
               </TableRow>
@@ -283,7 +295,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
 }
 
 export default function AssetDetailPage({ params }: { params: { id: string } }) {
-  const { id } = use(params);
+  const { id } = params;
   const [asset, setAsset] = useState<Asset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -354,7 +366,7 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
         </div>
       </div>
 
-      <Tabs defaultValue="history">
+      <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="installation">Installation</TabsTrigger>
@@ -463,5 +475,3 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
-
-    

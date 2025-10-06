@@ -82,12 +82,12 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         });
         form.reset();
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating user:', error);
         toast({
             variant: 'destructive',
             title: 'Failed to Create User',
-            description: 'An error occurred while creating the user. Please try again.',
+            description: error.message || 'An error occurred while creating the user. Please try again.',
         });
     } finally {
         setIsSubmitting(false);

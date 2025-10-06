@@ -25,6 +25,7 @@ export const CreateUserInputSchema = z.object({
 export const UpdateUserInputSchema = z.object({
     id: z.string().min(1, 'User ID is required'),
     name: z.string().min(1, 'Name is required'),
+    avatarUrl: z.string().url('Invalid URL for avatar').optional(),
 });
 
 export const CreateCustomerInputSchema = z.object({

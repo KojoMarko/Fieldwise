@@ -25,6 +25,14 @@ const updateUserFlow = ai.defineFlow(
     const { id, ...dataToUpdate } = input;
     const userRef = db.collection('users').doc(id);
 
+    // Firestore does not accept 'undefined' values. We need to clean the object.
+    Object.keys(dataToUpdate).forEach(key => {
+        const typedKey = key as keyof typeof dataToUpdate;
+        if (dataToUpdate[typedKey] === undefined) {
+            delete dataToUpdate[typedKey];
+        }
+    });
+
     await userRef.update(dataToUpdate);
   }
 );

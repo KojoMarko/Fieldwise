@@ -28,14 +28,29 @@ type ProfileFormValues = z.infer<typeof UpdateUserInputSchema>;
 export function ProfileForm({ user }: { user: User }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(UpdateUserInputSchema),
     defaultValues: {
       id: user.id,
       name: user.name,
+      avatarUrl: user.avatarUrl,
     },
   });
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setAvatarPreview(dataUrl);
+        form.setValue('avatarUrl', dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   async function onSubmit(data: ProfileFormValues) {
     setIsSubmitting(true);
@@ -45,6 +60,7 @@ export function ProfileForm({ user }: { user: User }) {
         title: 'Profile Updated',
         description: 'Your profile has been successfully updated.',
       });
+      setAvatarPreview(null); // Clear preview after successful submission
     } catch (error) {
       console.error('Failed to update profile:', error);
       toast({
@@ -57,19 +73,28 @@ export function ProfileForm({ user }: { user: User }) {
     }
   }
 
+  const currentAvatar = avatarPreview || user.avatarUrl;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
-                <AvatarImage src={user.avatarUrl} alt={user.name} />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div className="grid gap-1.5">
-                <FormLabel>Avatar</FormLabel>
-                <Input type="file" className="max-w-xs" />
-                <FormDescription>Select a new image to update your avatar.</FormDescription>
-            </div>
+          <Avatar className="h-20 w-20">
+            <AvatarImage src={currentAvatar} alt={user.name} />
+            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="grid gap-1.5">
+            <FormLabel>Avatar</FormLabel>
+            <Input
+              type="file"
+              accept="image/*"
+              className="max-w-xs"
+              onChange={handleAvatarChange}
+            />
+            <FormDescription>
+              Select a new image to update your avatar.
+            </FormDescription>
+          </div>
         </div>
 
         <FormField
@@ -85,13 +110,13 @@ export function ProfileForm({ user }: { user: User }) {
             </FormItem>
           )}
         />
-        
+
         <FormItem>
-            <FormLabel>Email</FormLabel>
-            <FormControl>
-                <Input type="email" value={user.email} disabled />
-            </FormControl>
-            <FormDescription>Your email address cannot be changed.</FormDescription>
+          <FormLabel>Email</FormLabel>
+          <FormControl>
+            <Input type="email" value={user.email} disabled />
+          </FormControl>
+          <FormDescription>Your email address cannot be changed.</FormDescription>
         </FormItem>
 
         <div className="flex justify-end gap-2">

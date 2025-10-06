@@ -80,6 +80,7 @@ export function AssetForm() {
       lifecycleNotes: [],
       status: 'Operational',
       vendor: '',
+      ppmFrequency: undefined,
     },
   });
 
@@ -376,7 +377,7 @@ export function AssetForm() {
                     <FormItem>
                         <FormLabel>PPM Frequency (Months)</FormLabel>
                         <FormControl>
-                            <Input type="number" placeholder="e.g., 6" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} />
+                            <Input type="number" placeholder="e.g., 6" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} value={field.value ?? ''} />
                         </FormControl>
                         <FormDescription>
                             How often should preventive maintenance be done?

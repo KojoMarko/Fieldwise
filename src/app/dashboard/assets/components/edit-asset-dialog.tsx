@@ -82,7 +82,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
         purchaseDate: asset.purchaseDate ? parseISO(asset.purchaseDate) : undefined,
         vendor: asset.vendor || '',
         warrantyExpiry: asset.warrantyExpiry ? parseISO(asset.warrantyExpiry) : undefined,
-        ppmFrequency: asset.ppmFrequency,
+        ppmFrequency: asset.ppmFrequency || undefined,
         lastPpmDate: asset.lastPpmDate ? parseISO(asset.lastPpmDate) : undefined,
         lifecycleNotes: asset.lifecycleNotes?.map(note => ({
             ...note,
@@ -415,7 +415,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                     <FormItem>
                         <FormLabel>PPM Frequency (Months)</FormLabel>
                         <FormControl>
-                            <Input type="number" placeholder="e.g., 6" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.valueAsNumber)} />
+                            <Input type="number" placeholder="e.g., 6" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
                         </FormControl>
                         <FormDescription>
                             How often should preventive maintenance be done?

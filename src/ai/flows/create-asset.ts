@@ -43,7 +43,7 @@ const createAssetFlow = ai.defineFlow(
         lastPpmDate: input.lastPpmDate ? formatISO(new Date(input.lastPpmDate)) : undefined,
         lifecycleNotes: input.lifecycleNotes ? input.lifecycleNotes.map(note => ({
             ...note,
-            date: note.date ? formatISO(note.date) : undefined,
+            date: note.date ? formatISO(new Date(note.date)) : undefined,
         })) : [],
     };
 

@@ -34,7 +34,7 @@ export const DeleteCustomerInputSchema = z.object({
 });
 
 const LifecycleEventSchema = z.object({
-    date: z.date().optional(),
+    date: z.any().optional(),
     note: z.string().min(1, "Note cannot be empty."),
     type: z.enum(['PPM', 'Corrective', 'Event']),
 });

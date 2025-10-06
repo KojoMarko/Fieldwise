@@ -31,12 +31,16 @@ const updateAssetFlow = ai.defineFlow(
     // The schema includes the ID, but we don't want to save it inside the document itself.
     const { id, ...assetData } = input;
     
-    const dataToUpdate = {
+    const dataToUpdate: any = {
         ...assetData,
         // Ensure the date is in the correct string format for Firestore
         installationDate: formatISO(assetData.installationDate ? new Date(assetData.installationDate) : new Date()),
         lastPpmDate: assetData.lastPpmDate ? formatISO(new Date(assetData.lastPpmDate)) : undefined,
     };
+
+    if (assetData.lifecycleNotes === undefined) {
+      dataToUpdate.lifecycleNotes = '';
+    }
 
     await assetRef.update(dataToUpdate);
   }

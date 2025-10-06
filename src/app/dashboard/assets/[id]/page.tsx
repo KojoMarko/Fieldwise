@@ -24,6 +24,7 @@ import {
   Wrench,
   CheckCircle,
   Flag,
+  Info,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
@@ -210,57 +211,71 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
         </Badge>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
-        <Card>
-          <CardHeader>
-            <CardTitle>Asset Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start gap-4 text-sm">
-                <Package className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
-                <div>
-                  <p className="text-muted-foreground">Model</p>
-                  <p className="font-medium">{asset.model}</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Asset Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-start gap-4 text-sm">
+                  <Package className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                  <div>
+                    <p className="text-muted-foreground">Model</p>
+                    <p className="font-medium">{asset.model}</p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex items-start gap-4 text-sm">
+                  <Barcode className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                  <div>
+                    <p className="text-muted-foreground">Serial Number</p>
+                    <p className="font-medium">{asset.serialNumber}</p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex items-start gap-4 text-sm">
+                  <Calendar className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                  <div>
+                    <p className="text-muted-foreground">Installation Date</p>
+                    <p className="font-medium">{asset.installationDate ? format(new Date(asset.installationDate), 'PPP') : 'N/A'}</p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex items-start gap-4 text-sm">
+                  <MapPin className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                  <div>
+                    <p className="text-muted-foreground">Location</p>
+                    <p className="font-medium">{asset.location}</p>
+                  </div>
                 </div>
               </div>
-              <Separator />
-              <div className="flex items-start gap-4 text-sm">
-                <Barcode className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
-                <div>
-                  <p className="text-muted-foreground">Serial Number</p>
-                  <p className="font-medium">{asset.serialNumber}</p>
-                </div>
-              </div>
-               <Separator />
-              <div className="flex items-start gap-4 text-sm">
-                <Calendar className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
-                <div>
-                  <p className="text-muted-foreground">Installation Date</p>
-                  <p className="font-medium">{asset.installationDate ? format(new Date(asset.installationDate), 'PPP') : 'N/A'}</p>
-                </div>
-              </div>
-              <Separator />
-              <div className="flex items-start gap-4 text-sm">
-                <MapPin className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
-                <div>
-                  <p className="text-muted-foreground">Location</p>
-                  <p className="font-medium">{asset.location}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer</CardTitle>
-             <CardDescription>
-                This asset is assigned to the following customer.
-              </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CustomerInfo customerId={asset.customerId} />
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Customer</CardTitle>
+              <CardDescription>
+                  This asset is assigned to the following customer.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CustomerInfo customerId={asset.customerId} />
+            </CardContent>
+          </Card>
+        </div>
+        
+        {asset.lifecycleNotes && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Lifecycle Notes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{asset.lifecycleNotes}</p>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Asset Lifecycle &amp; Service History</CardTitle>
@@ -276,5 +291,3 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     </div>
   );
 }
-
-    

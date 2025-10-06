@@ -43,6 +43,7 @@ export const CreateAssetInputSchema = z.object({
   companyId: z.string().min(1, 'Company ID is required.'),
   ppmFrequency: z.coerce.number().optional(),
   lastPpmDate: z.any().optional(),
+  lifecycleNotes: z.string().optional(),
 });
 
 export const UpdateAssetInputSchema = CreateAssetInputSchema.extend({

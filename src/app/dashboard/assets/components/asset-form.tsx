@@ -36,6 +36,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { Textarea } from '@/components/ui/textarea';
 
 type AssetFormValues = z.infer<typeof CreateAssetInputSchema>;
 
@@ -76,6 +77,7 @@ export function AssetForm() {
       customerId: '',
       location: '',
       companyId: user?.companyId,
+      lifecycleNotes: '',
     },
   });
 
@@ -306,6 +308,26 @@ export function AssetForm() {
                 />
                </div>
           </div>
+           <FormField
+              control={form.control}
+              name="lifecycleNotes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lifecycle Notes</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Add any notes about the asset's lifecycle, such as warranty info, EOL date, etc."
+                      className="resize-y"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    These notes are for internal reference.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
           <Button type="submit" disabled={isSubmitting}>

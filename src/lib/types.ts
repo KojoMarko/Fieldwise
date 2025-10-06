@@ -38,6 +38,7 @@ export type Asset = {
   companyId: string; // New field
   ppmFrequency?: number; // In months
   lastPpmDate?: string;
+  lifecycleNotes?: string;
 };
 
 export type SparePart = {

@@ -43,6 +43,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
+import { Textarea } from '@/components/ui/textarea';
 
 type AssetFormValues = z.infer<typeof UpdateAssetInputSchema>;
 
@@ -75,6 +76,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
         installationDate: asset.installationDate ? parseISO(asset.installationDate) : new Date(),
         ppmFrequency: asset.ppmFrequency,
         lastPpmDate: asset.lastPpmDate ? parseISO(asset.lastPpmDate) : undefined,
+        lifecycleNotes: asset.lifecycleNotes || '',
       });
     }
   }, [asset, form]);
@@ -136,7 +138,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-h-[80vh] overflow-y-auto p-2">
             <FormField
             control={form.control}
             name="name"
@@ -332,7 +334,27 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                 />
                </div>
           </div>
-            <DialogFooter className="flex justify-end gap-2">
+            <FormField
+              control={form.control}
+              name="lifecycleNotes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lifecycle Notes</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Add any notes about the asset's lifecycle, such as warranty info, EOL date, etc."
+                      className="resize-y"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    These notes are for internal reference.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}

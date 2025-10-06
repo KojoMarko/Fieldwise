@@ -27,7 +27,7 @@ import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 
 export default function CustomerDetailPage({
-  params: { id },
+  params,
 }: {
   params: { id: string };
 }) {
@@ -37,7 +37,7 @@ export default function CustomerDetailPage({
 
   useEffect(() => {
     setIsLoading(true);
-    const docRef = doc(db, 'customers', id);
+    const docRef = doc(db, 'customers', params.id);
 
     const unsubscribeCustomer = onSnapshot(
       docRef,
@@ -57,7 +57,7 @@ export default function CustomerDetailPage({
 
     const assetsQuery = query(
       collection(db, 'assets'),
-      where('customerId', '==', id)
+      where('customerId', '==', params.id)
     );
     const unsubscribeAssets = onSnapshot(assetsQuery, (snapshot) => {
       const assetsData: Asset[] = [];
@@ -72,7 +72,7 @@ export default function CustomerDetailPage({
       unsubscribeCustomer();
       unsubscribeAssets();
     };
-  }, [id]);
+  }, [params.id]);
 
   if (isLoading) {
     return (

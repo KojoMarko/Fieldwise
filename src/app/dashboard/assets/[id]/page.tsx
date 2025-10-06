@@ -130,13 +130,13 @@ function AssetServiceHistory({ assetId }: { assetId: string }) {
 }
 
 
-export default function AssetDetailPage({ params: { id } }: { params: { id: string } }) {
+export default function AssetDetailPage({ params }: { params: { id: string } }) {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsLoading(true);
-    const docRef = doc(db, 'assets', id);
+    const docRef = doc(db, 'assets', params.id);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         setAsset({ id: docSnap.id, ...docSnap.data() } as Asset);
@@ -146,7 +146,7 @@ export default function AssetDetailPage({ params: { id } }: { params: { id: stri
       setIsLoading(false);
     });
     return () => unsubscribe();
-  }, [id]);
+  }, [params.id]);
 
   if (isLoading) {
     return (

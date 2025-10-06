@@ -107,9 +107,12 @@ export function WorkOrderForm() {
   const form = useForm<WorkOrderFormValues>({
     resolver: zodResolver(workOrderSchema),
     defaultValues: {
+      title: '',
+      description: '',
       priority: 'Medium',
       type: 'Corrective',
       customerId: customerProfile?.id || '',
+      assetId: '',
     },
   });
 
@@ -396,3 +399,5 @@ export function WorkOrderForm() {
     </>
   );
 }
+
+    

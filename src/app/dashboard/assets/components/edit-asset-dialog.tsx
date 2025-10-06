@@ -80,7 +80,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
         location: asset.location,
         installationDate: asset.installationDate ? parseISO(asset.installationDate) : undefined,
         purchaseDate: asset.purchaseDate ? parseISO(asset.purchaseDate) : undefined,
-        vendor: asset.vendor,
+        vendor: asset.vendor || '',
         warrantyExpiry: asset.warrantyExpiry ? parseISO(asset.warrantyExpiry) : undefined,
         ppmFrequency: asset.ppmFrequency,
         lastPpmDate: asset.lastPpmDate ? parseISO(asset.lastPpmDate) : undefined,
@@ -577,3 +577,5 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
     </Dialog>
   );
 }
+
+    

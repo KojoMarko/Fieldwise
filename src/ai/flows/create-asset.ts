@@ -39,6 +39,10 @@ const createAssetFlow = ai.defineFlow(
         ...input,
         installationDate: formatISO(input.installationDate ? new Date(input.installationDate) : new Date()),
         lastPpmDate: input.lastPpmDate ? formatISO(new Date(input.lastPpmDate)) : undefined,
+        lifecycleNotes: input.lifecycleNotes ? input.lifecycleNotes.map(note => ({
+            ...note,
+            date: formatISO(note.date),
+        })) : [],
     };
 
     await assetRef.set({

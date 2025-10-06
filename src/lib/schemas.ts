@@ -33,6 +33,11 @@ export const DeleteCustomerInputSchema = z.object({
     customerId: z.string().min(1, 'Customer ID is required'),
 });
 
+const LifecycleEventSchema = z.object({
+    date: z.date(),
+    note: z.string().min(1, "Note cannot be empty."),
+});
+
 export const CreateAssetInputSchema = z.object({
   name: z.string().min(1, 'Asset name is required.'),
   model: z.string().min(1, 'Model is required.'),
@@ -43,7 +48,7 @@ export const CreateAssetInputSchema = z.object({
   companyId: z.string().min(1, 'Company ID is required.'),
   ppmFrequency: z.coerce.number().optional(),
   lastPpmDate: z.any().optional(),
-  lifecycleNotes: z.string().optional(),
+  lifecycleNotes: z.array(LifecycleEventSchema).optional(),
 });
 
 export const UpdateAssetInputSchema = CreateAssetInputSchema.extend({

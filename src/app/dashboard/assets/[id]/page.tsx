@@ -4,7 +4,7 @@
 import { useEffect, useState, use } from 'react';
 import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Asset, Customer, WorkOrder, WorkOrderStatus } from '@/lib/types';
+import type { Asset, Customer, WorkOrder, WorkOrderStatus, LifecycleEvent } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -25,11 +25,12 @@ import {
   CheckCircle,
   Flag,
   Info,
+  History,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const statusStyles: Record<WorkOrderStatus, string> = {
@@ -94,13 +95,19 @@ function AssetServiceHistory({ asset }: { asset: Asset }) {
   const timelineEvents = [
       {
           type: 'installation',
-          date: new Date(asset.installationDate),
+          date: parseISO(asset.installationDate),
           title: 'Asset Installed',
           description: `Asset was installed at ${asset.location}.`
       },
+      ...(asset.lifecycleNotes || []).map((event: LifecycleEvent) => ({
+          type: 'manual_log',
+          date: parseISO(event.date),
+          title: 'Manual Log Entry',
+          description: event.note,
+      })),
       ...workOrders.map(wo => ({
           type: 'work-order',
-          date: new Date(wo.scheduledDate),
+          date: parseISO(wo.scheduledDate),
           title: wo.title,
           status: wo.status,
           id: wo.id
@@ -115,34 +122,41 @@ function AssetServiceHistory({ asset }: { asset: Asset }) {
       </div>
     )
   }
+  
+  const eventIcons: Record<string, React.ReactNode> = {
+      installation: <CheckCircle className="h-4 w-4 text-green-500" />,
+      'work-order': <Wrench className="h-4 w-4 text-blue-500" />,
+      manual_log: <History className="h-4 w-4 text-gray-500" />,
+  }
+
 
   return (
     <div>
       {timelineEvents.length > 0 ? (
-        <div className="relative pl-6">
-            <div className="absolute left-6 top-0 bottom-0 w-px bg-border -translate-x-1/2"></div>
+        <div className="relative pl-8">
+            <div className="absolute left-4 top-0 bottom-0 w-px bg-border -translate-x-1/2"></div>
             <ul className="space-y-8">
             {timelineEvents.map((event, index) => (
                 <li key={index} className="relative">
-                    <div className="absolute -left-3 top-1.5 h-6 w-6 bg-background rounded-full flex items-center justify-center">
-                        <div className={cn("h-3 w-3 rounded-full", event.type === 'installation' ? 'bg-green-500' : 'bg-blue-500')}></div>
+                    <div className="absolute -left-0.5 top-1 h-9 w-9 bg-background rounded-full flex items-center justify-center border-2">
+                        {eventIcons[event.type] || <Info className="h-4 w-4 text-muted-foreground"/>}
                     </div>
-                    {event.type === 'installation' ? (
-                        <div>
-                            <p className="font-medium">{event.title}</p>
-                            <p className="text-sm text-muted-foreground">{event.description}</p>
-                            <time className="text-xs text-muted-foreground">{format(event.date, 'PPP')}</time>
-                        </div>
-                    ) : (
-                        <Link href={`/dashboard/work-orders/${event.id}`} className="block p-4 border rounded-lg hover:bg-muted transition-colors">
+                    {event.type === 'work-order' ? (
+                        <Link href={`/dashboard/work-orders/${event.id}`} className="block p-4 border rounded-lg hover:bg-muted transition-colors ml-4">
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="font-medium">{event.title}</p>
-                                    <p className="text-sm text-muted-foreground">{format(event.date, 'PPP')}</p>
+                                    <time className="text-xs text-muted-foreground">{format(event.date, 'PPP')}</time>
                                 </div>
                                 <Badge variant="outline" className={statusStyles[event.status!]}>{event.status}</Badge>
                             </div>
                         </Link>
+                    ) : (
+                         <div className="p-4 border rounded-lg bg-muted/50 ml-4">
+                            <p className="font-medium">{event.title}</p>
+                            <p className="text-sm text-muted-foreground">{event.description}</p>
+                            <time className="text-xs text-muted-foreground">{format(event.date, 'PPP')}</time>
+                        </div>
                     )}
                 </li>
             ))}
@@ -163,7 +177,7 @@ function AssetServiceHistory({ asset }: { asset: Asset }) {
 }
 
 
-export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function AssetDetailPage({ params }: { params: { id: string } }) {
   const { id } = use(params);
   const [asset, setAsset] = useState<Asset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -264,23 +278,12 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
             </CardContent>
           </Card>
         </div>
-        
-        {asset.lifecycleNotes && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Lifecycle Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{asset.lifecycleNotes}</p>
-            </CardContent>
-          </Card>
-        )}
 
         <Card>
           <CardHeader>
             <CardTitle>Asset Lifecycle &amp; Service History</CardTitle>
             <CardDescription>
-              A complete history of all work orders for this asset.
+              A complete history of all service events for this asset.
             </CardDescription>
           </CardHeader>
           <CardContent>

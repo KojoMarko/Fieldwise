@@ -77,7 +77,7 @@ export function AssetForm() {
       customerId: '',
       location: '',
       companyId: user?.companyId,
-      lifecycleNotes: '',
+      lifecycleNotes: [],
     },
   });
 
@@ -255,7 +255,7 @@ export function AssetForm() {
                     <FormItem>
                         <FormLabel>PPM Frequency (Months)</FormLabel>
                         <FormControl>
-                            <Input type="number" placeholder="e.g., 6" {...field} />
+                            <Input type="number" placeholder="e.g., 6" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} />
                         </FormControl>
                         <FormDescription>
                             How often should preventive maintenance be done?
@@ -308,26 +308,7 @@ export function AssetForm() {
                 />
                </div>
           </div>
-           <FormField
-              control={form.control}
-              name="lifecycleNotes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lifecycle Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Add any notes about the asset's lifecycle, such as warranty info, EOL date, etc."
-                      className="resize-y"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    These notes are for internal reference.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+           
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
           <Button type="submit" disabled={isSubmitting}>

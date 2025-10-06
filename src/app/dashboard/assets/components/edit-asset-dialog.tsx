@@ -2,7 +2,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import type { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { LoaderCircle, CalendarIcon } from 'lucide-react';
+import { LoaderCircle, CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
@@ -64,6 +64,11 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
     resolver: zodResolver(UpdateAssetInputSchema),
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'lifecycleNotes',
+  });
+
   useEffect(() => {
     if (asset) {
       form.reset({
@@ -76,7 +81,10 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
         installationDate: asset.installationDate ? parseISO(asset.installationDate) : new Date(),
         ppmFrequency: asset.ppmFrequency,
         lastPpmDate: asset.lastPpmDate ? parseISO(asset.lastPpmDate) : undefined,
-        lifecycleNotes: asset.lifecycleNotes || '',
+        lifecycleNotes: asset.lifecycleNotes?.map(note => ({
+            ...note,
+            date: parseISO(note.date),
+        })) || [],
       });
     }
   }, [asset, form]);
@@ -281,7 +289,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                     <FormItem>
                         <FormLabel>PPM Frequency (Months)</FormLabel>
                         <FormControl>
-                            <Input type="number" placeholder="e.g., 6" {...field} value={field.value ?? ''} />
+                            <Input type="number" placeholder="e.g., 6" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.valueAsNumber)} />
                         </FormControl>
                         <FormDescription>
                             How often should preventive maintenance be done?
@@ -334,26 +342,80 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                 />
                </div>
           </div>
-            <FormField
-              control={form.control}
-              name="lifecycleNotes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lifecycle Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Add any notes about the asset's lifecycle, such as warranty info, EOL date, etc."
-                      className="resize-y"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    These notes are for internal reference.
+            <div className="space-y-4 rounded-lg border p-4">
+                 <h3 className="text-md font-medium">Manual Lifecycle Log</h3>
+                 <FormDescription>
+                    Add historical service records or other important lifecycle events.
                   </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                 {fields.map((field, index) => (
+                    <div key={field.id} className="flex items-start gap-2 rounded-md bg-muted p-3">
+                       <FormField
+                            control={form.control}
+                            name={`lifecycleNotes.${index}.date`}
+                            render={({ field }) => (
+                            <FormItem className="flex-shrink-0">
+                                <Popover>
+                                <PopoverTrigger asChild>
+                                    <FormControl>
+                                    <Button
+                                        variant={'outline'}
+                                        size="sm"
+                                        className={cn(
+                                        'w-[150px] pl-3 text-left font-normal',
+                                        !field.value && 'text-muted-foreground'
+                                        )}
+                                    >
+                                        {field.value ? (
+                                        format(new Date(field.value), 'PPP')
+                                        ) : (
+                                        <span>Pick a date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                    </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                    mode="single"
+                                    selected={field.value instanceof Date ? field.value : new Date(field.value)}
+                                    onSelect={field.onChange}
+                                    disabled={(date) => date > new Date()}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name={`lifecycleNotes.${index}.note`}
+                            render={({ field }) => (
+                                <FormItem className="flex-grow">
+                                    <FormControl>
+                                        <Textarea placeholder="Describe the event or service..." {...field} className="h-10 bg-background"/>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                    </div>
+                ))}
+                 <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => append({ date: new Date(), note: '' })}
+                    className="mt-2"
+                    >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Log Entry
+                </Button>
+            </div>
             <DialogFooter className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={isSubmitting}>

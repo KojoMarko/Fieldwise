@@ -27,6 +27,11 @@ export type Customer = {
   companyId: string; // New field
 };
 
+export type LifecycleEvent = {
+  date: string;
+  note: string;
+};
+
 export type Asset = {
   id:string;
   name: string;
@@ -38,7 +43,7 @@ export type Asset = {
   companyId: string; // New field
   ppmFrequency?: number; // In months
   lastPpmDate?: string;
-  lifecycleNotes?: string;
+  lifecycleNotes?: LifecycleEvent[];
 };
 
 export type SparePart = {

@@ -67,8 +67,8 @@ export function ProfileForm({ user }: { user: User }) {
             </Avatar>
             <div className="grid gap-1.5">
                 <FormLabel>Avatar</FormLabel>
-                <Input type="file" className="max-w-xs" disabled/>
-                <FormDescription>Avatar updates are not yet available.</FormDescription>
+                <Input type="file" className="max-w-xs" />
+                <FormDescription>Select a new image to update your avatar.</FormDescription>
             </div>
         </div>
 

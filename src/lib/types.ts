@@ -45,6 +45,9 @@ export type Asset = {
   lastPpmDate?: string;
   lifecycleNotes?: LifecycleEvent[];
   status: 'Operational' | 'Down' | 'Maintenance';
+  purchaseDate?: string;
+  vendor?: string;
+  warrantyExpiry?: string;
 };
 
 export type SparePart = {
@@ -82,6 +85,7 @@ export type WorkOrder = {
   createdAt: string;
   technicianNotes?: string;
   companyId: string; // New field
+  cost?: number;
 };
 
 export type ServiceReportQuestionnaire = z.infer<typeof ServiceReportQuestionnaireSchema>;

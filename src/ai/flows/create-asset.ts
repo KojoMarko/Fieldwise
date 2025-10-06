@@ -38,6 +38,8 @@ const createAssetFlow = ai.defineFlow(
     const newAsset: Omit<Asset, 'id'> = {
         ...input,
         installationDate: formatISO(input.installationDate ? new Date(input.installationDate) : new Date()),
+        purchaseDate: input.purchaseDate ? formatISO(new Date(input.purchaseDate)) : undefined,
+        warrantyExpiry: input.warrantyExpiry ? formatISO(new Date(input.warrantyExpiry)) : undefined,
         lastPpmDate: input.lastPpmDate ? formatISO(new Date(input.lastPpmDate)) : undefined,
         lifecycleNotes: input.lifecycleNotes ? input.lifecycleNotes.map(note => ({
             ...note,

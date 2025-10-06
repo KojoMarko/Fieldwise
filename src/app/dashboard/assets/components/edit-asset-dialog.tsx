@@ -79,6 +79,9 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
         customerId: asset.customerId,
         location: asset.location,
         installationDate: asset.installationDate ? parseISO(asset.installationDate) : new Date(),
+        purchaseDate: asset.purchaseDate ? parseISO(asset.purchaseDate) : undefined,
+        vendor: asset.vendor,
+        warrantyExpiry: asset.warrantyExpiry ? parseISO(asset.warrantyExpiry) : undefined,
         ppmFrequency: asset.ppmFrequency,
         lastPpmDate: asset.lastPpmDate ? parseISO(asset.lastPpmDate) : undefined,
         lifecycleNotes: asset.lifecycleNotes?.map(note => ({
@@ -306,6 +309,101 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                         </FormItem>
                     )}
                 />
+            </div>
+            <div className="space-y-4 rounded-lg border p-4">
+            <h3 className="text-md font-medium">Installation & Warranty</h3>
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                    <FormField
+                        control={form.control}
+                        name="purchaseDate"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Purchase Date</FormLabel>
+                            <Popover>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                <Button
+                                    variant={'outline'}
+                                    className={cn(
+                                    'pl-3 text-left font-normal',
+                                    !field.value && 'text-muted-foreground'
+                                    )}
+                                >
+                                    {field.value ? (
+                                    format(new Date(field.value), 'PPP')
+                                    ) : (
+                                    <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                mode="single"
+                                selected={field.value instanceof Date ? field.value : (field.value ? new Date(field.value) : undefined)}
+                                onSelect={field.onChange}
+                                disabled={(date) => date > new Date()}
+                                initialFocus
+                                />
+                            </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="warrantyExpiry"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Warranty Expiry Date</FormLabel>
+                            <Popover>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                <Button
+                                    variant={'outline'}
+                                    className={cn(
+                                    'pl-3 text-left font-normal',
+                                    !field.value && 'text-muted-foreground'
+                                    )}
+                                >
+                                    {field.value ? (
+                                    format(new Date(field.value), 'PPP')
+                                    ) : (
+                                    <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                mode="single"
+                                selected={field.value instanceof Date ? field.value : (field.value ? new Date(field.value) : undefined)}
+                                onSelect={field.onChange}
+                                initialFocus
+                                />
+                            </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="vendor"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Vendor</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., Haas Automation" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
             </div>
             <div className="space-y-4 rounded-lg border p-4">
               <h3 className="text-md font-medium">Preventive Maintenance</h3>

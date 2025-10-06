@@ -50,6 +50,9 @@ export const CreateAssetInputSchema = z.object({
   lastPpmDate: z.any().optional(),
   lifecycleNotes: z.array(LifecycleEventSchema).optional(),
   status: z.enum(['Operational', 'Down', 'Maintenance']),
+  purchaseDate: z.any().optional(),
+  vendor: z.string().optional(),
+  warrantyExpiry: z.any().optional(),
 });
 
 export const UpdateAssetInputSchema = CreateAssetInputSchema.extend({

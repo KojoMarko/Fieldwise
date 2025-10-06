@@ -35,6 +35,8 @@ const updateAssetFlow = ai.defineFlow(
         ...assetData,
         // Ensure dates are in the correct string format for Firestore
         installationDate: formatISO(assetData.installationDate ? new Date(assetData.installationDate) : new Date()),
+        purchaseDate: assetData.purchaseDate ? formatISO(new Date(assetData.purchaseDate)) : undefined,
+        warrantyExpiry: assetData.warrantyExpiry ? formatISO(new Date(assetData.warrantyExpiry)) : undefined,
         lastPpmDate: assetData.lastPpmDate ? formatISO(new Date(assetData.lastPpmDate)) : undefined,
         lifecycleNotes: assetData.lifecycleNotes ? assetData.lifecycleNotes.map(note => ({
             ...note,

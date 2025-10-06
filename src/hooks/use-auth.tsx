@@ -3,7 +3,6 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { users as mockUsers } from '@/lib/data';
 import type { User } from '@/lib/types';
 import { auth as firebaseAuth, db } from '@/lib/firebase';
 import { 
@@ -45,15 +44,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userDoc.exists()) {
           setUser(userDoc.data() as User);
         } else {
-          // This block is for migrating mock users who don't exist in Firestore yet.
-          const mockUser = mockUsers.find(u => u.email === fbUser.email);
-          if (mockUser) {
-            const userToSave: User = { ...mockUser, id: fbUser.uid };
-            await setDoc(userDocRef, userToSave);
-            setUser(userToSave);
-          } else {
-            setUser(null); // Should not happen for a logged-in user unless DB is cleared.
-          }
+            // If user exists in Auth but not Firestore, they can't use the app.
+            // This could be a new user signing up, which is handled by the signup flow.
+            // For an existing auth user missing a firestore doc, we log them out.
+            console.warn(`User ${fbUser.uid} exists in Auth but not in Firestore. Logging out.`);
+            await signOut(firebaseAuth);
+            setUser(null);
+            setFirebaseUser(null);
         }
       } else {
         setFirebaseUser(null);

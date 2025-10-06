@@ -5,18 +5,51 @@ import {
   CheckCircle,
   TrendingUp,
   Clock,
+  LoaderCircle,
 } from 'lucide-react';
 import { KpiCard } from '@/components/kpi-card';
 import { WorkOrderStatusChart } from '@/components/work-order-status-chart';
 import { RecentWorkOrders } from '@/components/recent-work-orders';
-import { workOrders } from '@/lib/data';
 import { useAuth } from '@/hooks/use-auth';
 import TechnicianDashboardPage from './technician/page';
 import CustomerDashboardPage from './customer/page';
+import { useEffect, useState } from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { WorkOrder } from '@/lib/types';
 
 
 export default function DashboardPage() {
-    const { user } = useAuth();
+    const { user, isLoading } = useAuth();
+    const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
+    const [isDataLoading, setIsDataLoading] = useState(true);
+
+    useEffect(() => {
+      if (!user?.companyId || user.role !== 'Admin') {
+        setIsDataLoading(false);
+        return;
+      };
+      
+      const fetchWorkOrders = async () => {
+        setIsDataLoading(true);
+        const q = query(collection(db, 'work-orders'), where('companyId', '==', user.companyId));
+        const snapshot = await getDocs(q);
+        const orders = snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as WorkOrder));
+        setWorkOrders(orders);
+        setIsDataLoading(false);
+      }
+      fetchWorkOrders();
+
+    }, [user])
+
+
+    if (isLoading || isDataLoading) {
+      return (
+        <div className="flex h-[80vh] w-full items-center justify-center">
+            <LoaderCircle className="h-10 w-10 animate-spin" />
+        </div>
+      )
+    }
 
     if (user?.role === 'Engineer') {
         return <TechnicianDashboardPage />

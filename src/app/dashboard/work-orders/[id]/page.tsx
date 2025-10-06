@@ -2,7 +2,6 @@
 'use client';
 import {
   ChevronLeft,
-  MoreVertical,
   Wrench,
   ShieldAlert,
 } from 'lucide-react';
@@ -17,15 +16,18 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { notFound, useRouter, useParams } from 'next/navigation';
-import { workOrders, customers, assets, users } from '@/lib/data';
-import type { WorkOrderStatus } from '@/lib/types';
+import { notFound, useRouter } from 'next/navigation';
+import type { WorkOrder, WorkOrderStatus, Customer, Asset, User } from '@/lib/types';
 import Link from 'next/link';
 import { WorkOrderClientSection } from './components/work-order-client-section';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WorkOrderPartsTab } from './components/work-order-parts-tab';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { LoaderCircle } from 'lucide-react';
+
 
 const statusStyles: Record<WorkOrderStatus, string> = {
   Draft: 'bg-gray-200 text-gray-800',
@@ -42,57 +44,99 @@ export default function WorkOrderDetailPage({
 }: {
   params: { id: string };
 }) {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const { id } = params;
-
-  const workOrder = useMemo(() => workOrders.find((wo) => wo.id === id), [id]);
+  
+  const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [asset, setAsset] = useState<Asset | null>(null);
+  const [technician, setTechnician] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    if (!user || !workOrder) return;
+    if (!id) return;
+    const workOrderRef = doc(db, 'work-orders', id);
 
-    if (user.role === 'Admin') return; // Admins can see everything
+    const unsubWorkOrder = onSnapshot(workOrderRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const wo = { ...docSnap.data(), id: docSnap.id } as WorkOrder;
+            setWorkOrder(wo);
+        } else {
+            setWorkOrder(null);
+        }
+        setIsLoading(false);
+    });
 
-    if (user.role === 'Engineer' && workOrder.technicianId !== user.id) {
+    return () => unsubWorkOrder();
+
+  }, [id]);
+
+
+  useEffect(() => {
+    if (!workOrder || !user) return;
+    
+    if (workOrder.customerId) {
+        const customerRef = doc(db, 'customers', workOrder.customerId);
+        onSnapshot(customerRef, (docSnap) => setCustomer(docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as Customer : null));
+    }
+
+    if (workOrder.assetId) {
+        const assetRef = doc(db, 'assets', workOrder.assetId);
+        onSnapshot(assetRef, (docSnap) => setAsset(docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as Asset : null));
+    }
+
+    if (workOrder.technicianId) {
+        const techRef = doc(db, 'users', workOrder.technicianId);
+        onSnapshot(techRef, (docSnap) => setTechnician(docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as User : null));
+    }
+
+    // Authorization logic
+    let authorized = false;
+    if (user.role === 'Admin') {
+        authorized = true;
+    } else if (user.role === 'Engineer' && workOrder.technicianId === user.id) {
+        authorized = true;
+    } else if (user.role === 'Customer') {
+        // Need to check if the user is linked to the customer account
+        const customerQuery = query(collection(db, 'customers'), where('contactEmail', '==', user.email), where('companyId', '==', user.companyId));
+        getDocs(customerQuery).then(customerSnapshot => {
+            if (!customerSnapshot.empty) {
+                const customerProfileId = customerSnapshot.docs[0].id;
+                if(workOrder.customerId === customerProfileId) {
+                    setIsAuthorized(true);
+                } else {
+                    router.push('/dashboard/work-orders');
+                }
+            } else {
+                 router.push('/dashboard/work-orders');
+            }
+        });
+        return; // Early return because auth is async
+    } else {
+         router.push('/dashboard/work-orders');
+    }
+
+    setIsAuthorized(authorized);
+    if (!authorized) {
       router.push('/dashboard/work-orders');
     }
 
-    if (user.role === 'Customer') {
-      const customerProfile = customers.find(c => c.contactEmail === user.email);
-      if (workOrder.customerId !== customerProfile?.id) {
-        router.push('/dashboard/work-orders');
-      }
-    }
-  }, [user, workOrder, router, id]);
+  }, [workOrder, user, router]);
 
+
+  if (isLoading || isAuthLoading) {
+    return <div className="flex h-screen w-full items-center justify-center"><LoaderCircle className="h-10 w-10 animate-spin" /></div>
+  }
 
   if (!workOrder) {
     return notFound();
   }
-
-  const customer = customers.find((c) => c.id === workOrder.customerId);
-  const asset = assets.find((a) => a.id === workOrder.assetId);
-  const technician = users.find((u) => u.id === workOrder.technicianId);
   
-  if (!user) {
-    return null; // or a loading state
-  }
-  
-  // Final check to prevent rendering for unauthorized users before redirect kicks in
-  const isAuthorized = useMemo(() => {
-    if (!user || !workOrder) return false;
-    if (user.role === 'Admin') return true;
-    if (user.role === 'Engineer') return workOrder.technicianId === user.id;
-    if (user.role === 'Customer') {
-       const customerProfile = customers.find(c => c.contactEmail === user.email);
-       return workOrder.customerId === customerProfile?.id;
-    }
-    return false;
-  }, [user, workOrder]);
-
   if (!isAuthorized) {
        return (
-        <div className="flex flex-col items-center justify-center h-full text-center gap-4 p-4">
+        <div className="flex flex-col items-center justify-center h-[80vh] text-center gap-4 p-4">
             <Card className='max-w-md'>
                 <CardHeader>
                     <CardTitle className='flex items-center gap-2'>
@@ -132,7 +176,7 @@ export default function WorkOrderDetailPage({
         <Badge variant="outline" className={statusStyles[workOrder.status]}>
           {workOrder.status}
         </Badge>
-        {user.role === 'Admin' && (
+        {user?.role === 'Admin' && (
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
                 <Button variant="outline" size="sm">
                     Discard
@@ -162,9 +206,9 @@ export default function WorkOrderDetailPage({
               </Card>
               <WorkOrderClientSection
                 workOrder={workOrder}
-                customer={customer}
-                technician={technician}
-                asset={asset}
+                customer={customer || undefined}
+                technician={technician || undefined}
+                asset={asset || undefined}
               />
             </div>
             <div className="grid auto-rows-max items-start gap-4 xl:gap-8">
@@ -195,12 +239,14 @@ export default function WorkOrderDetailPage({
                 <CardContent className="grid gap-4">
                   <div className="flex items-center justify-between">
                     <div className="font-semibold">{customer?.name}</div>
+                    {customer && (
                     <Link
-                      href="#"
+                      href={`/dashboard/customers/${customer.id}`}
                       className="text-sm text-primary hover:underline"
                     >
                       View Profile
                     </Link>
+                    )}
                   </div>
                   <address className="grid gap-0.5 not-italic text-muted-foreground">
                     <span>{customer?.contactPerson}</span>

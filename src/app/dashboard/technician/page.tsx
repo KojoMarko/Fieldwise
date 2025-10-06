@@ -8,6 +8,7 @@ import {
   Calendar,
   MapPin,
   ChevronRight,
+  LoaderCircle,
 } from 'lucide-react';
 import { KpiCard } from '@/components/kpi-card';
 import {
@@ -18,26 +19,66 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { workOrders, customers } from '@/lib/data';
 import Link from 'next/link';
 import { format, isToday, isFuture, parseISO, startOfWeek, isWithinInterval } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
+import { useEffect, useState } from 'react';
+import type { WorkOrder, Customer } from '@/lib/types';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 
 export default function TechnicianDashboardPage() {
     const { user } = useAuth();
+    const [myWorkOrders, setMyWorkOrders] = useState<WorkOrder[]>([]);
+    const [customers, setCustomers] = useState<Record<string, Customer>>({});
+    const [isLoading, setIsLoading] = useState(true);
+    
+    useEffect(() => {
+        if (!user || !user.companyId) {
+            setIsLoading(false);
+            return;
+        }
+
+        const workOrdersQuery = query(collection(db, 'work-orders'), where('companyId', '==', user.companyId), where('technicianId', '==', user.id));
+        const customersQuery = query(collection(db, 'customers'), where('companyId', '==', user.companyId));
+        
+        const unsubOrders = onSnapshot(workOrdersQuery, (snapshot) => {
+            const orders: WorkOrder[] = [];
+            snapshot.forEach(doc => orders.push({ id: doc.id, ...doc.data()} as WorkOrder));
+            setMyWorkOrders(orders);
+            setIsLoading(false);
+        });
+
+        const unsubCustomers = onSnapshot(customersQuery, (snapshot) => {
+            const custs: Record<string, Customer> = {};
+            snapshot.forEach(doc => custs[doc.id] = { id: doc.id, ...doc.data() } as Customer);
+            setCustomers(custs);
+        });
+
+        return () => {
+            unsubOrders();
+            unsubCustomers();
+        }
+
+    }, [user]);
+
     
     if (!user) return null;
-
-    const myWorkOrders = workOrders.filter(
-    wo => wo.technicianId === user.id
-    );
+    
+    if (isLoading) {
+      return (
+        <div className="flex h-[80vh] w-full items-center justify-center">
+            <LoaderCircle className="h-10 w-10 animate-spin" />
+        </div>
+      )
+    }
 
     const todaysJobs = myWorkOrders.filter(wo =>
-    isToday(parseISO(wo.scheduledDate))
+      wo.scheduledDate && isToday(parseISO(wo.scheduledDate))
     );
     const upcomingJobs = myWorkOrders.filter(wo =>
-    isFuture(parseISO(wo.scheduledDate)) && !isToday(parseISO(wo.scheduledDate))
+      wo.scheduledDate && isFuture(parseISO(wo.scheduledDate)) && !isToday(parseISO(wo.scheduledDate))
     );
 
     const completedThisWeek = myWorkOrders.filter(wo => {
@@ -97,7 +138,7 @@ export default function TechnicianDashboardPage() {
             {todaysJobs.length > 0 ? (
               <ul className="space-y-4">
                 {todaysJobs.map(wo => {
-                    const customer = customers.find(c => c.id === wo.customerId);
+                    const customer = customers[wo.customerId];
                     return (
                         <li key={wo.id}>
                             <Link href={`/dashboard/work-orders/${wo.id}`} className="block p-4 rounded-lg border hover:bg-muted transition-colors">
@@ -142,7 +183,7 @@ export default function TechnicianDashboardPage() {
             {upcomingJobs.length > 0 ? (
                  <ul className="space-y-4">
                 {upcomingJobs.map(wo => {
-                    const customer = customers.find(c => c.id === wo.customerId);
+                    const customer = customers[wo.customerId];
                     return (
                         <li key={wo.id}>
                             <Link href={`/dashboard/work-orders/${wo.id}`} className="block p-4 rounded-lg border hover:bg-muted transition-colors">
@@ -150,7 +191,7 @@ export default function TechnicianDashboardPage() {
                                     <div>
                                         <p className="font-medium">{wo.title}</p>
                                         <p className="text-sm text-muted-foreground">{customer?.name}</p>
-                                        <p className="text-xs font-semibold text-primary mt-1">{format(parseISO(wo.scheduledDate), 'eeee, MMM d')}</p>
+                                        <p className="text-xs font-semibold text-primary mt-1">{wo.scheduledDate ? format(parseISO(wo.scheduledDate), 'eeee, MMM d') : ''}</p>
                                     </div>
                                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                 </div>

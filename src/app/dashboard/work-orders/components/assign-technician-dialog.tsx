@@ -17,10 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { users } from '@/lib/data';
-import type { WorkOrder } from '@/lib/types';
-import { useState } from 'react';
+import type { WorkOrder, User } from '@/lib/types';
+import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface AssignTechnicianDialogProps {
   open: boolean;
@@ -28,15 +30,30 @@ interface AssignTechnicianDialogProps {
   workOrder: WorkOrder;
 }
 
-const engineers = users.filter((u) => u.role === 'Engineer');
-
 export function AssignTechnicianDialog({
   open,
   onOpenChange,
   workOrder,
 }: AssignTechnicianDialogProps) {
+  const { user } = useAuth();
+  const [engineers, setEngineers] = useState<User[]>([]);
   const [selectedTech, setSelectedTech] = useState<string | undefined>(workOrder.technicianId);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!user?.companyId) return;
+    
+    const engineersQuery = query(collection(db, 'users'), where('companyId', '==', user.companyId), where('role', '==', 'Engineer'));
+    
+    const unsubscribe = onSnapshot(engineersQuery, (snapshot) => {
+        const engs: User[] = [];
+        snapshot.forEach(doc => engs.push({ ...doc.data(), id: doc.id } as User));
+        setEngineers(engs);
+    });
+
+    return () => unsubscribe();
+  }, [user?.companyId]);
+
 
   const handleAssign = () => {
     if (!selectedTech) return;

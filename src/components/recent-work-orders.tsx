@@ -17,7 +17,6 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { workOrders, users, customers } from '@/lib/data';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,10 +27,12 @@ import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import type { WorkOrder, WorkOrderStatus } from '@/lib/types';
-import { useState } from 'react';
+import type { WorkOrder, WorkOrderStatus, Customer, User } from '@/lib/types';
+import { useEffect, useState } from 'react';
 import { AssignTechnicianDialog } from '@/app/dashboard/work-orders/components/assign-technician-dialog';
 import { useAuth } from '@/hooks/use-auth';
+import { collection, onSnapshot, query, where, limit, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {
@@ -47,25 +48,86 @@ const statusStyles: Record<WorkOrderStatus, string> = {
 
 export function RecentWorkOrders() {
   const { user } = useAuth();
+  const [recentOrders, setRecentOrders] = useState<WorkOrder[]>([]);
+  const [customers, setCustomers] = useState<Record<string, Customer>>({});
+  const [users, setUsers] = useState<Record<string, User>>({});
+  const [isLoading, setIsLoading] = useState(true);
 
-  const getFilteredWorkOrders = () => {
-    if (!user) return [];
-    
-    if (user.role === 'Admin') {
-      return workOrders;
-    } else if (user.role === 'Engineer') {
-      return workOrders.filter(wo => wo.technicianId === user.id);
-    } else if (user.role === 'Customer') {
-      const customerProfile = customers.find(c => c.contactEmail === user.email);
-      if (!customerProfile) return [];
-      return workOrders.filter(wo => wo.customerId === customerProfile.id);
-    }
-    return [];
-  };
-
-  const recentOrders = getFilteredWorkOrders().slice(0, 5);
   const [isAssignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
+
+  useEffect(() => {
+    if (!user?.companyId) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+
+    const baseQuery = query(
+      collection(db, 'work-orders'),
+      where('companyId', '==', user.companyId),
+      orderBy('createdAt', 'desc'),
+      limit(5)
+    );
+
+    let ordersQuery;
+    if (user.role === 'Admin') {
+      ordersQuery = baseQuery;
+    } else if (user.role === 'Engineer') {
+      ordersQuery = query(baseQuery, where('technicianId', '==', user.id));
+    } else if (user.role === 'Customer') {
+      // We need to fetch customer profile first to get their ID for filtering
+      const customerQuery = query(collection(db, 'customers'), where('contactEmail', '==', user.email), where('companyId', '==', user.companyId), limit(1));
+      onSnapshot(customerQuery, (customerSnapshot) => {
+        if (!customerSnapshot.empty) {
+          const customerId = customerSnapshot.docs[0].id;
+          const customerOrdersQuery = query(baseQuery, where('customerId', '==', customerId));
+          subscribeToOrders(customerOrdersQuery);
+        } else {
+          setIsLoading(false);
+        }
+      });
+    } else {
+        ordersQuery = baseQuery;
+    }
+
+    const subscribeToOrders = (q: any) => {
+        return onSnapshot(q, (snapshot) => {
+            const orders: WorkOrder[] = [];
+            snapshot.forEach(doc => orders.push({ ...doc.data(), id: doc.id } as WorkOrder));
+            setRecentOrders(orders);
+            setIsLoading(false);
+        });
+    }
+    
+    let unsubscribeOrders: () => void = () => {};
+    if (ordersQuery) {
+        unsubscribeOrders = subscribeToOrders(ordersQuery);
+    }
+    
+    // Subscriptions for customers and users to resolve names
+    const customersQuery = query(collection(db, 'customers'), where('companyId', '==', user.companyId));
+    const usersQuery = query(collection(db, 'users'), where('companyId', '==', user.companyId));
+
+    const unsubscribeCustomers = onSnapshot(customersQuery, (snapshot) => {
+        const custs: Record<string, Customer> = {};
+        snapshot.forEach(doc => custs[doc.id] = { ...doc.data(), id: doc.id } as Customer);
+        setCustomers(custs);
+    });
+
+    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+        const usrs: Record<string, User> = {};
+        snapshot.forEach(doc => usrs[doc.id] = { ...doc.data(), id: doc.id } as User);
+        setUsers(usrs);
+    });
+
+
+    return () => {
+        unsubscribeOrders();
+        unsubscribeCustomers();
+        unsubscribeUsers();
+    };
+  }, [user]);
 
   const handleAssignClick = (order: WorkOrder) => {
     setSelectedOrder(order);
@@ -100,48 +162,60 @@ export function RecentWorkOrders() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recentOrders.map((order) => {
-              const customer = customers.find((c) => c.id === order.customerId);
-              const technician = users.find((u) => u.id === order.technicianId);
-              return (
-                <TableRow key={order.id}>
-                  <TableCell>
-                    <div className="font-medium">{customer?.name}</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      {order.title}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <Badge className={cn("hover:bg-none", statusStyles[order.status])} variant="outline">
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {technician?.name || 'Unassigned'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {new Date(order.scheduledDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                           <Link href={`/dashboard/work-orders/${order.id}`}>View Details</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAssignClick(order)}>Assign Engineer</DropdownMenuItem>
-                        <DropdownMenuItem>Mark as Completed</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+            {isLoading ? (
+                <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">Loading recent orders...</TableCell>
                 </TableRow>
-              );
-            })}
+            ) : recentOrders.length > 0 ? (
+                recentOrders.map((order) => {
+                    const customer = customers[order.customerId];
+                    const technician = users[order.technicianId || ''];
+                    return (
+                        <TableRow key={order.id}>
+                        <TableCell>
+                            <div className="font-medium">{customer?.name || 'N/A'}</div>
+                            <div className="hidden text-sm text-muted-foreground md:inline">
+                            {order.title}
+                            </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                            <Badge className={cn("hover:bg-none", statusStyles[order.status])} variant="outline">
+                            {order.status}
+                            </Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                            {technician?.name || 'Unassigned'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                            {new Date(order.scheduledDate).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                <Link href={`/dashboard/work-orders/${order.id}`}>View Details</Link>
+                                </DropdownMenuItem>
+                                {user?.role === 'Admin' && 
+                                    <DropdownMenuItem onClick={() => handleAssignClick(order)}>Assign Engineer</DropdownMenuItem>
+                                }
+                                <DropdownMenuItem>Mark as Completed</DropdownMenuItem>
+                            </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                        </TableRow>
+                    );
+                })
+            ) : (
+                <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">No recent work orders found.</TableCell>
+                </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

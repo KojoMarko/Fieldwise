@@ -36,6 +36,9 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {
@@ -346,8 +349,8 @@ export default function WorkOrderDetailPage({
             <CardContent>
                  <div>
                     <h3 className="font-semibold mb-2">Required Parts (Pre-Staged or Requested)</h3>
-                    <div className="rounded-md border">
-                        {/* Table would go here */}
+                    <div className="rounded-md border p-2">
+                         <p className="text-sm text-muted-foreground text-center p-4">Parts management will be available in a future update.</p>
                     </div>
                  </div>
                  <div className="mt-4">
@@ -369,14 +372,72 @@ export default function WorkOrderDetailPage({
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Time inputs would go here */}
+                     <div className="space-y-2">
+                        <Label>Time On-Site</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                    <Calendar className="mr-2 h-4 w-4" />
+                                    <span>dd/mm/yyyy --:--</span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar mode="single" />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Time Work Started</Label>
+                         <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                    <Calendar className="mr-2 h-4 w-4" />
+                                    <span>dd/mm/yyyy --:--</span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar mode="single" />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Time Work Completed</Label>
+                         <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                    <Calendar className="mr-2 h-4 w-4" />
+                                    <span>dd/mm/yyyy --:--</span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar mode="single" />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
                 </div>
                  <div>
                     <Label htmlFor="actual-work">Actual Work Performed</Label>
                     <Textarea id="actual-work" placeholder="Detail diagnosis, steps taken, and troubleshooting path..." />
                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Cause of failure select would go here */}
+                     <div className="space-y-2">
+                        <Label>Root Cause of Failure</Label>
+                        <Select>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select root cause..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="electrical">Electrical Failure</SelectItem>
+                                <SelectItem value="mechanical">Mechanical Failure</SelectItem>
+                                <SelectItem value="software">Software Issue</SelectItem>
+                                <SelectItem value="user-error">User Error</SelectItem>
+                            </SelectContent>
+                        </Select>
+                     </div>
+                     <div className="space-y-2">
+                        <Label>Failure Code</Label>
+                        <Input disabled value="C-403 confirmed (Cause: Voltage Spike on Channel 5)" />
+                     </div>
                   </div>
                    <div>
                     <Label>Parts Consumed</Label>
@@ -395,26 +456,35 @@ export default function WorkOrderDetailPage({
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <Label>Technician/Requester Sign-Off</Label>
-                            <div className="mt-2 h-20 rounded-md border border-dashed flex items-center justify-center">
+                            <Label>Customer/Requester Sign-Off</Label>
+                            <div className="mt-2 h-20 rounded-md border-2 border-dashed flex items-center justify-center">
                                 <p className="text-sm text-muted-foreground">Signature Field (Digital Signature)</p>
                             </div>
                         </div>
                          <div>
-                            <Label>Program Sign-Off</Label>
-                            <div className="mt-2 h-20 rounded-md border border-dashed flex items-center justify-center">
+                            <Label>Engineer Sign-Off</Label>
+                            <div className="mt-2 h-20 rounded-md border-2 border-dashed flex items-center justify-center">
                                 <p className="text-sm text-muted-foreground">Signature Field (Digital Signature)</p>
                             </div>
                         </div>
                      </div>
-                     <div>
-                        {/* Final status select would go here */}
+                     <div className="space-y-2">
+                        <Label>Work Order Final Status</Label>
+                        <Select defaultValue="closed">
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select final status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="closed">CLOSED</SelectItem>
+                                <SelectItem value="requires-follow-up">Requires Follow-Up</SelectItem>
+                            </SelectContent>
+                        </Select>
                      </div>
             </CardContent>
             <CardFooter className="border-t pt-6 flex-col items-stretch gap-4 md:flex-row md:justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <ClipboardCheck className="h-4 w-4 text-green-500" />
-                    Review time: approx 5 min
+                    <span>Done! How does this look?</span>
                 </div>
                  <Button className="w-full md:w-auto">Complete Work Order</Button>
             </CardFooter>

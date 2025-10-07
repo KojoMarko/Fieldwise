@@ -90,7 +90,7 @@ export const CreateResourceInputSchema = z.object({
   equipment: z.string().min(1, 'Equipment name is required'),
   description: z.string().min(1, 'Description is required'),
   category: z.string().min(1, 'Category is required'),
-  type: z.enum(['Manual', 'Guide', 'Procedure', 'Reference', 'Standard']),
+  type: z.enum(['Manual', 'Guide', 'Procedure', 'Reference', 'Standard']).optional(),
   pages: z.coerce.number().min(1, 'Number of pages is required'),
   version: z.string().min(1, 'Version is required'),
   uploaderName: z.string().min(1, "Uploader's name is required"),

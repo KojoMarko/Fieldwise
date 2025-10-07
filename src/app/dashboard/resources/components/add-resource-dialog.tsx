@@ -63,7 +63,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
       equipment: '',
       description: '',
       category: '',
-      type: undefined, // Changed to undefined
+      type: undefined,
       pages: undefined,
       version: ''
     },
@@ -92,7 +92,17 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
             form.setValue('equipment', analysisResult.equipment);
             form.setValue('description', analysisResult.description);
             form.setValue('category', analysisResult.category);
-            form.setValue('type', analysisResult.type);
+            
+            // Check if the analyzed type is one of the valid enum values
+            const isValidType = types.includes(analysisResult.type);
+            if (isValidType) {
+              form.setValue('type', analysisResult.type);
+            } else {
+              // Handle cases where AI returns a type not in the enum
+              console.warn(`AI returned an invalid document type: "${analysisResult.type}". User needs to select one manually.`);
+              form.setValue('type', undefined); // Clear the field so user must select
+            }
+
             form.setValue('pages', analysisResult.pages);
             form.setValue('version', analysisResult.version);
             
@@ -280,7 +290,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
                     <FormItem>
                       <FormLabel>Number of Pages</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="e.g., 150" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.valueAsNumber)} />
+                        <Input type="number" placeholder="e.g., 150" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -34,7 +34,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { LoaderCircle, Sparkles } from 'lucide-react';
-import type { Resource } from '@/lib/types';
 import { analyzeDocument } from '@/ai/flows/analyze-document';
 import { useAuth } from '@/hooks/use-auth';
 import { CreateResourceInputSchema } from '@/lib/schemas';
@@ -64,7 +63,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
       equipment: '',
       description: '',
       category: '',
-      type: '',
+      type: undefined, // Changed to undefined
       pages: undefined,
       version: ''
     },

@@ -50,6 +50,8 @@ interface AddResourceDialogProps {
   types: ('Manual' | 'Guide' | 'Procedure' | 'Reference' | 'Standard')[];
 }
 
+const samplePdfUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+
 export function AddResourceDialog({ open, onOpenChange, categories, types }: AddResourceDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -138,7 +140,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
         uploaderName: user.name,
         companyId: user.companyId,
         updatedDate: formatISO(new Date()),
-        fileUrl: 'javascript:void(0);', // Placeholder URL
+        fileUrl: samplePdfUrl, // Using sample PDF for now
       };
 
       // Validate with a more complete schema before sending to Firestore

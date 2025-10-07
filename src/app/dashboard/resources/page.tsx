@@ -24,12 +24,14 @@ import {
   PlusCircle,
   LoaderCircle,
 } from 'lucide-react';
-import { resources as initialResources, addResource } from '@/lib/data';
+import { resources as initialResources } from '@/lib/data';
 import type { Resource } from '@/lib/types';
 import { AddResourceDialog } from './components/add-resource-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+
+const samplePdfUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
 
 function ResourceCard({ resource }: { resource: Resource }) {
   return (
@@ -63,10 +65,10 @@ function ResourceCard({ resource }: { resource: Resource }) {
         </div>
         <div className="flex items-center gap-2">
           <Button className="w-full" asChild>
-            <Link href={resource.fileUrl} target="_blank">View Document</Link>
+            <Link href={samplePdfUrl} target="_blank">View Document</Link>
           </Button>
           <Button variant="outline" className="w-full" asChild>
-             <Link href={resource.fileUrl} download>
+             <Link href={samplePdfUrl} download="sample-document.pdf">
                 <Download className="mr-2 h-4 w-4" />
                 Download
              </Link>

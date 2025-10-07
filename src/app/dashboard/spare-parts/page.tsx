@@ -21,9 +21,11 @@ import {
 import type { SparePart } from '@/lib/types';
 import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { AddPartDialog } from './components/add-part-dialog';
 
 export default function SparePartsPage() {
   const [filter, setFilter] = useState('');
+  const [isAddPartDialogOpen, setAddPartDialogOpen] = useState(false);
 
   const groupedParts = useMemo(() => {
     let partsToGroup = spareParts;
@@ -56,6 +58,7 @@ export default function SparePartsPage() {
 
   return (
     <>
+      <AddPartDialog open={isAddPartDialogOpen} onOpenChange={setAddPartDialogOpen} />
       <div className="flex items-center mb-4">
         <h1 className="text-3xl font-bold tracking-tight">Spare Parts</h1>
         <div className="ml-auto flex items-center gap-2">
@@ -65,7 +68,7 @@ export default function SparePartsPage() {
               Export
             </span>
           </Button>
-          <Button size="sm" className="h-8 gap-1">
+          <Button size="sm" className="h-8 gap-1" onClick={() => setAddPartDialogOpen(true)}>
             <PlusCircle className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
               Add Part

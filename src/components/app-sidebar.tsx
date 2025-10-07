@@ -20,6 +20,7 @@ import {
   Building,
   BookText,
   History,
+  Bell,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -28,7 +29,8 @@ import Image from 'next/image';
 
 const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
-  { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders', badge: '1' },
+  { href: '/dashboard/notifications', icon: Bell, label: 'Notifications', badge: '2' },
+  { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
   { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
   { href: '/dashboard/customers', icon: Building, label: 'Customers' },
   { href: '/dashboard/users', icon: Users, label: 'Users' },
@@ -40,6 +42,7 @@ const adminNavItems = [
 
 const engineerNavItems = [
     { href: '/dashboard', icon: Home, label: 'My Dashboard' },
+    { href: '/dashboard/notifications', icon: Bell, label: 'Notifications', badge: '2' },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
     { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
     { href: '/dashboard/assets', icon: Package, label: 'Assets' },
@@ -89,7 +92,7 @@ export function AppSidebar() {
                 >
                   <item.icon className="h-5 w-5" />
                    {item.badge && (
-                    <Badge className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-sidebar-primary p-0 text-xs text-sidebar-primary-foreground">
+                    <Badge className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive p-0 text-xs text-destructive-foreground">
                       {item.badge}
                     </Badge>
                   )}

@@ -153,6 +153,14 @@ export function Header() {
               <Home className="h-5 w-5" />
               Dashboard
             </Link>
+             <Link
+              href="/dashboard/notifications"
+              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+               onClick={() => setSheetOpen(false)}
+            >
+              <Bell className="h-5 w-5" />
+              Notifications
+            </Link>
             <Link
               href="/dashboard/work-orders"
               className="flex items-center gap-4 px-2.5 text-foreground"
@@ -253,7 +261,7 @@ export function Header() {
         <DropdownMenuTrigger asChild>
            <Button variant="outline" size="icon" className="relative rounded-full">
             <Bell className="h-5 w-5" />
-            <Badge className="absolute -right-1 -top-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary p-0 text-xs text-primary-foreground">2</Badge>
+            <Badge className="absolute -right-1 -top-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-destructive p-0 text-xs text-destructive-foreground">2</Badge>
             <span className="sr-only">Notifications</span>
           </Button>
         </DropdownMenuTrigger>
@@ -263,11 +271,10 @@ export function Header() {
            <DropdownMenuItem className="p-0">
              <div className="p-2 grid gap-1">
                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary"></div>
                     <p className="font-semibold text-primary">Verification Required</p>
                 </div>
-                <p className="text-sm text-muted-foreground pl-4">Sojourner Truth has requested handover of "HEPA Filter" for WO-001. Your verification is needed.</p>
-                <Button variant="secondary" size="sm" className="ml-4 mt-1 h-7 w-fit" asChild>
+                <p className="text-sm text-muted-foreground">Sojourner Truth has requested handover of "HEPA Filter" for WO-001. Your verification is needed.</p>
+                <Button variant="secondary" size="sm" className="mt-1 h-7 w-fit" asChild>
                     <Link href="/dashboard/work-orders/hQjZ5LIbZ1g9xS2nC7vA">Verify Now</Link>
                 </Button>
              </div>
@@ -276,25 +283,21 @@ export function Header() {
            <DropdownMenuItem className="p-0">
              <div className="p-2 grid gap-1">
                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary"></div>
                     <p className="font-semibold">New Work Order</p>
                 </div>
-                <p className="text-sm text-muted-foreground pl-4">You have been assigned to WO-003: Emergency repair on DxH 900.</p>
+                <p className="text-sm text-muted-foreground">You have been assigned to WO-003: Emergency repair on DxH 900.</p>
               </div>
           </DropdownMenuItem>
            <DropdownMenuSeparator />
             <DropdownMenuItem className="p-0">
               <div className="p-2 grid gap-1">
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-slate-400"></div>
-                    <p className="font-semibold">System Update</p>
-                </div>
-                <p className="text-sm text-muted-foreground pl-4">The spare parts inventory has been updated with new items.</p>
+                <p className="font-semibold">System Update</p>
+                <p className="text-sm text-muted-foreground">The spare parts inventory has been updated with new items.</p>
               </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
             <DropdownMenuItem className="text-center text-primary font-medium p-0">
-                <Link href="#" className='py-1.5 w-full'>View all notifications</Link>
+                <Link href="/dashboard/notifications" className='py-1.5 w-full'>View all notifications</Link>
             </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

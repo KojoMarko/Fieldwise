@@ -18,22 +18,33 @@ import {
   Wrench,
   PackageCheck,
   Info,
+  PlusCircle,
+  Send,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+
 
 type Notification = {
   id: string;
-  type: 'Verification' | 'Assignment' | 'System';
+  type: 'Verification' | 'Assignment' | 'System' | 'Message';
   title: string;
   description: string;
   timestamp: string;
   isRead: boolean;
   link?: string;
+  author?: string;
 };
 
-const mockNotifications: Notification[] = [
+const initialNotifications: Notification[] = [
   {
     id: 'notif-1',
     type: 'Verification',
@@ -76,6 +87,7 @@ const typeIcons: Record<Notification['type'], React.ElementType> = {
   Verification: PackageCheck,
   Assignment: Wrench,
   System: Info,
+  Message: Send,
 };
 
 function NotificationItem({ notification }: { notification: Notification }) {
@@ -89,7 +101,10 @@ function NotificationItem({ notification }: { notification: Notification }) {
             <div className="flex-grow grid gap-1">
                 <p className={`font-semibold ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>{notification.title}</p>
                 <p className="text-sm text-muted-foreground">{notification.description}</p>
-                <p className="text-xs text-muted-foreground/80">{formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}</p>
+                 <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground/80">{formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}</p>
+                    {notification.author && <p className="text-xs text-muted-foreground/80">From: {notification.author}</p>}
+                </div>
                 {notification.link && (
                     <div className='mt-2'>
                         <Button size="sm" asChild>
@@ -105,13 +120,98 @@ function NotificationItem({ notification }: { notification: Notification }) {
 }
 
 export default function NotificationsPage() {
-  const unreadNotifications = mockNotifications.filter(n => !n.isRead);
-  const readNotifications = mockNotifications.filter(n => n.isRead);
+  const [isComposeOpen, setComposeOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [messageSubject, setMessageSubject] = useState('');
+  const [messageBody, setMessageBody] = useState('');
+  const [messageRecipient, setMessageRecipient] = useState('all');
+  const { toast } = useToast();
+
+  const handleSendMessage = () => {
+    if (!messageSubject || !messageBody) {
+        toast({
+            variant: 'destructive',
+            title: 'Missing Information',
+            description: 'Please fill out both subject and message fields.'
+        });
+        return;
+    }
+
+    const newMessage: Notification = {
+        id: `msg-${Date.now()}`,
+        type: 'Message',
+        title: messageSubject,
+        description: messageBody,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        author: 'Admin', // In a real app, this would be the current user's name
+    };
+    
+    // Add the new message to the top of the list
+    setNotifications([newMessage, ...notifications]);
+
+    toast({
+        title: 'Message Sent!',
+        description: `Your message has been broadcast to ${messageRecipient === 'all' ? 'All Users' : 'All Engineers'}.`
+    });
+    
+    // Reset form and close dialog
+    setComposeOpen(false);
+    setMessageSubject('');
+    setMessageBody('');
+    setMessageRecipient('all');
+  }
+
+
+  const unreadNotifications = notifications.filter(n => !n.isRead);
 
   return (
     <>
-      <div className="flex items-center mb-4">
+    <Dialog open={isComposeOpen} onOpenChange={setComposeOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Compose Message</DialogTitle>
+                <DialogDescription>
+                    Broadcast a message to users in the system.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="recipient">Recipient</Label>
+                    <Select value={messageRecipient} onValueChange={setMessageRecipient}>
+                        <SelectTrigger id="recipient">
+                            <SelectValue placeholder="Select recipients" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Users</SelectItem>
+                            <SelectItem value="engineers">All Engineers</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="subject">Subject</Label>
+                    <Input id="subject" value={messageSubject} onChange={(e) => setMessageSubject(e.target.value)} placeholder="e.g., Scheduled Maintenance Downtime" />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="message">Message</Label>
+                    <Textarea id="message" value={messageBody} onChange={(e) => setMessageBody(e.target.value)} placeholder="Write your message here..." />
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setComposeOpen(false)}>Cancel</Button>
+                <Button onClick={handleSendMessage}>Send Message</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <div className="flex items-center mb-4">
         <h1 className="text-lg font-semibold md:text-2xl">Inbox</h1>
+        <div className="ml-auto">
+            <Button onClick={() => setComposeOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Compose
+            </Button>
+        </div>
       </div>
       <Tabs defaultValue="unread">
         <TabsList>
@@ -148,7 +248,7 @@ export default function NotificationsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className='p-0'>
-                     {mockNotifications.map(n => <NotificationItem key={n.id} notification={n} />)}
+                     {notifications.map(n => <NotificationItem key={n.id} notification={n} />)}
                 </CardContent>
             </Card>
         </TabsContent>

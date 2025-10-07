@@ -7,9 +7,7 @@ export interface EmailTemplateProps {
   tempPassword?: string;
 }
 
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : 'http://localhost:9002';
+const baseUrl = 'https://fieldwise-nine.vercel.app';
 
 export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
   name,
@@ -54,7 +52,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
           For security reasons, you will be required to change this password
           upon your first login.
         </p>
-        <a href={baseUrl} className="button">
+        <a href={`${baseUrl}/login`} className="button">
           Login to Your Account
         </a>
         <p className="footer">

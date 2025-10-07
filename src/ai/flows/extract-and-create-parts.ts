@@ -9,7 +9,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { createSparePart } from './create-spare-part';
+import { db } from '@/lib/firebase-admin';
+import type { SparePart } from '@/lib/types';
 
 const SparePartFromDocSchema = z.object({
   name: z.string().describe('The descriptive name of the spare part.'),
@@ -52,7 +53,7 @@ const extractAndCreatePartsFlow = ai.defineFlow(
   {
     name: 'extractAndCreatePartsFlow',
     inputSchema: ExtractAndCreatePartsInputSchema,
-    outputSchema: z.any(),
+    outputSchema: z.object({ count: z.number() }),
   },
   async ({ fileDataUri, companyId, assetModel }) => {
     // Step 1: Extract parts from the document using the LLM
@@ -62,18 +63,23 @@ const extractAndCreatePartsFlow = ai.defineFlow(
       return { count: 0 };
     }
 
-    // Step 2: Iterate and create each part in Firestore
+    // Step 2: Iterate and create each part directly in Firestore
     let createdCount = 0;
+    const sparePartsCollection = db.collection('spare-parts');
+    
     for (const part of output.parts) {
       try {
-        await createSparePart({
-          name: part.name,
-          partNumber: part.partNumber,
-          assetModel: assetModel,
-          companyId: companyId,
-          quantity: 0, // Default to 0, can be adjusted later
-          location: 'Unspecified', // Default location
-        });
+        const sparePartRef = sparePartsCollection.doc();
+        const newSparePart: SparePart = {
+            id: sparePartRef.id,
+            name: part.name,
+            partNumber: part.partNumber,
+            assetModel: assetModel,
+            companyId: companyId,
+            quantity: 0, // Default to 0, can be adjusted later
+            location: 'Unspecified', // Default location
+        };
+        await sparePartRef.set(newSparePart);
         createdCount++;
       } catch (error) {
         console.error(`Failed to create part ${part.partNumber}:`, error);

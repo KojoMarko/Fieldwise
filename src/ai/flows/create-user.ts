@@ -45,9 +45,7 @@ const createUserFlow = ai.defineFlow(
 
         // 2. Create a temporary password
         const tempPassword = Math.random().toString(36).slice(-8);
-        console.log(`Temporary password for ${input.email}: ${tempPassword}`);
-
-
+        
         // 3. Create the user in Firebase Auth
         const userRecord = await auth.createUser({
             email: input.email,
@@ -69,12 +67,12 @@ const createUserFlow = ai.defineFlow(
         await userDocRef.set(newUser);
         
         // 5. Send welcome email with credentials
-        // await sendEmail(
-        //     newUser.email,
-        //     "Welcome to FieldWise - Your Account is Ready",
-        //     newUser.name,
-        //     tempPassword
-        // );
+        await sendEmail(
+            newUser.email,
+            "Welcome to FieldWise - Your Account is Ready",
+            newUser.name,
+            tempPassword
+        );
 
 
         return {

@@ -30,6 +30,7 @@ import { MoreHorizontal } from 'lucide-react';
 import { AddPartsDialog } from './add-parts-dialog';
 import { VerifyPartUsageDialog } from './verify-part-usage-dialog';
 import { useAuth } from '@/hooks/use-auth';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts }: { workOrder: WorkOrder, allocatedParts: AllocatedPart[], setAllocatedParts: (parts: AllocatedPart[] | ((prev: AllocatedPart[]) => AllocatedPart[])) => void }) {

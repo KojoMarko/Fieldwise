@@ -137,7 +137,7 @@ export function Header() {
               className="group flex h-20 w-20 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground"
                onClick={() => setSheetOpen(false)}
             >
-              <Image src="/White Logo FW.png" width={80} height={80} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
+              <Image src="/Field Wise Logo.png" width={80} height={80} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
               <span className="sr-only">FieldWise</span>
             </Link>
              <Link
@@ -288,5 +288,3 @@ export function Header() {
     </header>
   );
 }
-
-    

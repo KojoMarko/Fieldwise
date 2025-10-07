@@ -254,10 +254,10 @@ export function Header() {
           <Button
             variant="outline"
             size="icon"
-            className="relative overflow-hidden rounded-full"
+            className="relative rounded-full"
           >
             <Bell className="h-5 w-5" />
-            <Badge className="absolute -right-1 -top-1 h-4 w-4 justify-center p-0 text-xs">2</Badge>
+            <Badge className="absolute -right-1 -top-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary p-0 text-xs text-primary-foreground">2</Badge>
             <span className="sr-only">Notifications</span>
           </Button>
         </DropdownMenuTrigger>

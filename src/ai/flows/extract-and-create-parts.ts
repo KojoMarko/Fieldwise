@@ -52,7 +52,7 @@ const extractAndCreatePartsFlow = ai.defineFlow(
   {
     name: 'extractAndCreatePartsFlow',
     inputSchema: ExtractAndCreatePartsInputSchema,
-    outputSchema: z.object({ count: z.number() }),
+    outputSchema: z.any(),
   },
   async ({ fileDataUri, companyId, assetModel }) => {
     // Step 1: Extract parts from the document using the LLM

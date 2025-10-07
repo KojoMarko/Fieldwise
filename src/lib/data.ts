@@ -151,11 +151,13 @@ export let resources: Resource[] = [
       uploaderName: 'Sojourner Truth',
     }
   ];
+  
+  let resourceIdCounter = resources.length + 1;
 
   export function addResource(resource: Omit<Resource, 'id' | 'updatedDate'>) {
     const newResource: Resource = {
       ...resource,
-      id: `res-${Math.random().toString(36).substr(2, 9)}`,
+      id: `res-${resourceIdCounter++}`,
       updatedDate: new Date().toISOString().split('T')[0],
     };
     resources.unshift(newResource);

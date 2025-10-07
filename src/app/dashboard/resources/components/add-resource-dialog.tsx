@@ -281,7 +281,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
                     <FormItem>
                       <FormLabel>Number of Pages</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="e.g., 150" {...field} value={field.value ?? ''} />
+                        <Input type="number" placeholder="e.g., 150" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.valueAsNumber)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -1,6 +1,7 @@
 
 'use client';
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -58,10 +59,14 @@ function ResourceCard({ resource }: { resource: Resource }) {
            </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button className="w-full">View Document</Button>
-          <Button variant="outline" className="w-full">
-            <Download className="mr-2 h-4 w-4" />
-            Download
+          <Button className="w-full" asChild>
+            <Link href={resource.fileUrl} target="_blank">View Document</Link>
+          </Button>
+          <Button variant="outline" className="w-full" asChild>
+             <Link href={resource.fileUrl} download>
+                <Download className="mr-2 h-4 w-4" />
+                Download
+             </Link>
           </Button>
         </div>
       </CardContent>

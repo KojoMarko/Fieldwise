@@ -67,13 +67,12 @@ const createUserFlow = ai.defineFlow(
         await userDocRef.set(newUser);
         
         // 5. Send welcome email with credentials
-        // await sendEmail(
-        //     newUser.email,
-        //     "Welcome to FieldWise - Your Account is Ready",
-        //     newUser.name,
-        //     tempPassword
-        // );
-        console.log(`User created. Email: ${newUser.email}, Temp Password: ${tempPassword}`);
+        await sendEmail(
+            newUser.email,
+            "Welcome to FieldWise - Your Account is Ready",
+            newUser.name,
+            tempPassword
+        );
 
 
         return {

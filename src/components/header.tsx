@@ -38,6 +38,7 @@ import {
   Building,
   CalendarCheck,
   BookText,
+  History,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
@@ -209,6 +210,14 @@ export function Header() {
                 >
                 <Package className="h-5 w-5" />
                 Assets
+                </Link>
+                <Link
+                href="/dashboard/audit-log"
+                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                 onClick={() => setSheetOpen(false)}
+                >
+                <History className="h-5 w-5" />
+                Audit Log
                 </Link>
               </>
             )}

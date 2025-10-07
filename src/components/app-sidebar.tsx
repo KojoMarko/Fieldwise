@@ -19,6 +19,7 @@ import {
   List,
   Building,
   BookText,
+  History,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -34,6 +35,7 @@ const adminNavItems = [
   { href: '/dashboard/assets', icon: Package, label: 'Assets' },
   { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
   { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
+  { href: '/dashboard/audit-log', icon: History, label: 'Audit Log' },
 ];
 
 const engineerNavItems = [

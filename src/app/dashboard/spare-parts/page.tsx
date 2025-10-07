@@ -92,14 +92,10 @@ function AiPartExtractor() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <Button onClick={() => fileInputRef.current?.click()} disabled={isExtracting} variant="outline">
-            {isExtracting ? (
-              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
               <UploadCloud className="mr-2 h-4 w-4" />
-            )}
-            {isExtracting ? 'Analyzing...' : 'Upload Document'}
+            Upload Document
           </Button>
           <Input 
             type="file" 
@@ -107,8 +103,14 @@ function AiPartExtractor() {
             className="hidden" 
             onChange={handleFileChange}
             accept=".pdf,.doc,.docx,.txt"
+            disabled={isExtracting}
           />
-          {fileName && <p className="text-sm text-muted-foreground">Uploading: {fileName}</p>}
+          {isExtracting && (
+            <div className="flex items-center text-sm text-muted-foreground">
+              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+              <span>Analyzing document: {fileName}...</span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

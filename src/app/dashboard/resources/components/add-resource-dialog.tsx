@@ -33,8 +33,9 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, Sparkles } from 'lucide-react';
 import type { Resource } from '@/lib/types';
+import { analyzeDocument } from '@/ai/flows/analyze-document';
 
 const addResourceSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -53,12 +54,15 @@ interface AddResourceDialogProps {
   onOpenChange: (open: boolean) => void;
   onAddResource: (data: Omit<Resource, 'id' | 'updatedDate' | 'uploaderName' | 'fileUrl'>) => void;
   categories: string[];
-  types: string[];
+  types: ('Manual' | 'Guide' | 'Procedure' | 'Reference' | 'Standard')[];
 }
 
 export function AddResourceDialog({ open, onOpenChange, onAddResource, categories, types }: AddResourceDialogProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [fileName, setFileName] = useState('');
+
 
   const form = useForm<AddResourceFormValues>({
     resolver: zodResolver(addResourceSchema),
@@ -68,10 +72,55 @@ export function AddResourceDialog({ open, onOpenChange, onAddResource, categorie
       description: '',
       category: '',
       type: '',
-      pages: 1,
-      version: '1.0'
+      pages: undefined,
+      version: ''
     },
   });
+  
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setFileName(file.name);
+    setIsAnalyzing(true);
+    toast({
+      title: 'AI is analyzing your document...',
+      description: 'The form will be auto-filled shortly.',
+    });
+    
+    try {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            const fileDataUri = reader.result as string;
+            const analysisResult = await analyzeDocument({ fileDataUri });
+
+            // Populate form with AI results
+            form.setValue('title', analysisResult.title);
+            form.setValue('equipment', analysisResult.equipment);
+            form.setValue('description', analysisResult.description);
+            form.setValue('category', analysisResult.category);
+            form.setValue('type', analysisResult.type);
+            form.setValue('pages', analysisResult.pages);
+            form.setValue('version', analysisResult.version);
+            
+            toast({
+              title: 'Analysis Complete!',
+              description: 'Please review the auto-filled information.',
+            });
+        };
+    } catch (error) {
+        console.error("Error analyzing document:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Analysis Failed',
+            description: 'Could not analyze the document automatically. Please fill the form manually.'
+        });
+    } finally {
+        setIsAnalyzing(false);
+    }
+  }
+
 
   function onSubmit(data: AddResourceFormValues) {
     setIsSubmitting(true);
@@ -82,6 +131,7 @@ export function AddResourceDialog({ open, onOpenChange, onAddResource, categorie
         description: `"${data.title}" has been successfully added to the resource center.`,
       });
       form.reset();
+      setFileName('');
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to add resource:', error);
@@ -101,11 +151,32 @@ export function AddResourceDialog({ open, onOpenChange, onAddResource, categorie
         <DialogHeader>
           <DialogTitle>Add New Resource</DialogTitle>
           <DialogDescription>
-            Fill out the form below to upload a new document to the resource center.
+            Upload a document and let AI fill in the details, or enter them manually.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-h-[70vh] overflow-y-auto p-1">
+             <FormItem>
+                <FormLabel>Upload File</FormLabel>
+                 <FormControl>
+                  <div className="relative">
+                    <Input id="file-upload" type="file" onChange={handleFileChange} className="pr-12" disabled={isAnalyzing}/>
+                    <div className="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
+                       {isAnalyzing ? (
+                        <LoaderCircle className="my-auto h-5 w-5 animate-spin text-primary" />
+                       ) : (
+                        <Sparkles className="my-auto h-5 w-5 text-muted-foreground" />
+                       )}
+                    </div>
+                  </div>
+                </FormControl>
+                {fileName && !isAnalyzing ? (
+                  <FormDescription>File selected: {fileName}</FormDescription>
+                ) : (
+                  <FormDescription>Select a PDF or document file to have AI analyze it.</FormDescription>
+                )}
+             </FormItem>
+            
             <FormField
               control={form.control}
               name="title"
@@ -128,7 +199,6 @@ export function AddResourceDialog({ open, onOpenChange, onAddResource, categorie
                   <FormControl>
                     <Input placeholder="e.g., Vitros 5600" {...field} />
                   </FormControl>
-                  <FormDescription>Which machine or model is this document for?</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -153,7 +223,7 @@ export function AddResourceDialog({ open, onOpenChange, onAddResource, categorie
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />
@@ -173,7 +243,7 @@ export function AddResourceDialog({ open, onOpenChange, onAddResource, categorie
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Document Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a type" />
@@ -209,23 +279,16 @@ export function AddResourceDialog({ open, onOpenChange, onAddResource, categorie
                     <FormItem>
                       <FormLabel>Number of Pages</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="e.g., 150" {...field} />
+                        <Input type="number" placeholder="e.g., 150" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
              </div>
-             <FormItem>
-                <FormLabel>Upload File</FormLabel>
-                <FormControl>
-                    <Input type="file" />
-                </FormControl>
-                <FormDescription>Select the PDF or document file to upload.</FormDescription>
-             </FormItem>
             <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isAnalyzing}>
                 {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                 {isSubmitting ? 'Uploading...' : 'Add to Resources'}
               </Button>

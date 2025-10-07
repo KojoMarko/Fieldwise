@@ -17,5 +17,3 @@ import '@/ai/flows/update-asset.ts';
 import '@/ai/flows/delete-asset.ts';
 import '@/ai/flows/update-user.ts';
 import '@/ai/flows/update-company.ts';
-import '@/ai/flows/analyze-document.ts';
-import '@/ai/flows/create-resource.ts';

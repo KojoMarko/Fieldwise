@@ -34,10 +34,12 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { LoaderCircle, Sparkles } from 'lucide-react';
-import { analyzeDocument } from '@/ai/flows/analyze-document';
 import { useAuth } from '@/hooks/use-auth';
-import { CreateResourceInputSchema } from '@/lib/schemas';
-import { createResource } from '@/ai/flows/create-resource';
+import { CreateResourceInputSchema, ResourceSchema } from '@/lib/schemas';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { formatISO } from 'date-fns';
+import { ai } from '@/ai/genkit';
 
 type AddResourceFormValues = z.infer<typeof CreateResourceInputSchema>;
 
@@ -47,6 +49,36 @@ interface AddResourceDialogProps {
   categories: string[];
   types: ('Manual' | 'Guide' | 'Procedure' | 'Reference' | 'Standard')[];
 }
+
+
+const AnalyzeDocumentOutputSchema = z.object({
+  title: z.string().describe('The clear and concise title of the document.'),
+  equipment: z.string().describe('The specific equipment model or name this document pertains to. If it applies to all, use "All Equipment".'),
+  description: z.string().describe('A brief, one-sentence summary of the document\'s content.'),
+  category: z.string().describe('A relevant category for the document (e.g., Chemistry, Hematology, Safety, Automation).'),
+  type: z.enum(['Manual', 'Guide', 'Procedure', 'Reference', 'Standard']).describe('The type of document.'),
+  pages: z.number().describe('The total number of pages in the document.'),
+  version: z.string().describe('The version number or revision of the document (e.g., "Rev. 4.2", "v3.1").'),
+});
+
+const analyzeDocumentPrompt = ai.definePrompt({
+    name: 'analyzeDocumentPrompt',
+    input: { schema: z.object({ fileDataUri: z.string() }) },
+    output: { schema: AnalyzeDocumentOutputSchema },
+    prompt: `You are an expert technical librarian. Analyze the following document and extract the required metadata.
+
+Document: {{media url=fileDataUri}}
+
+Based on the content of the document, provide the following information:
+- Title: A clear and concise title.
+- Equipment: The specific equipment model or name this document is for.
+- Description: A brief summary of what the document contains.
+- Category: The most relevant category for the document from options like Chemistry, Hematology, Safety, etc.
+- Type: The type of document (Manual, Guide, etc.).
+- Pages: The total number of pages.
+- Version: The version number or revision.`,
+});
+
 
 export function AddResourceDialog({ open, onOpenChange, categories, types }: AddResourceDialogProps) {
   const { toast } = useToast();
@@ -63,8 +95,6 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
       equipment: '',
       description: '',
       category: '',
-      type: undefined,
-      pages: undefined,
       version: ''
     },
   });
@@ -85,7 +115,12 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
         reader.readAsDataURL(file);
         reader.onload = async () => {
             const fileDataUri = reader.result as string;
-            const analysisResult = await analyzeDocument({ fileDataUri });
+            const { output } = await analyzeDocumentPrompt({ fileDataUri });
+            const analysisResult = output;
+
+            if (!analysisResult) {
+                throw new Error("AI analysis returned no result.");
+            }
 
             // Populate form with AI results
             form.setValue('title', analysisResult.title);
@@ -93,14 +128,12 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
             form.setValue('description', analysisResult.description);
             form.setValue('category', analysisResult.category);
             
-            // Check if the analyzed type is one of the valid enum values
             const isValidType = types.includes(analysisResult.type);
             if (isValidType) {
               form.setValue('type', analysisResult.type);
             } else {
-              // Handle cases where AI returns a type not in the enum
               console.warn(`AI returned an invalid document type: "${analysisResult.type}". User needs to select one manually.`);
-              form.setValue('type', undefined); // Clear the field so user must select
+              form.setValue('type', undefined);
             }
 
             form.setValue('pages', analysisResult.pages);
@@ -131,11 +164,18 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
     }
     setIsSubmitting(true);
     try {
-      await createResource({
-          ...data,
-          uploaderName: user.name,
-          companyId: user.companyId,
-      });
+      const newResource = {
+        ...data,
+        uploaderName: user.name,
+        companyId: user.companyId,
+        updatedDate: formatISO(new Date()),
+        fileUrl: '#', // Placeholder URL
+      };
+
+      // Validate with a more complete schema before sending to Firestore
+      const fullResource = ResourceSchema.parse(newResource);
+      
+      await addDoc(collection(db, 'resources'), fullResource);
 
       toast({
         title: 'Resource Added',
@@ -146,10 +186,13 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to add resource:', error);
+      const description = error instanceof z.ZodError 
+        ? error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+        : 'An unexpected error occurred. Please try again.';
       toast({
         variant: 'destructive',
-        title: 'Failed to Add',
-        description: 'An unexpected error occurred. Please try again.',
+        title: 'Failed to Add Resource',
+        description,
       });
     } finally {
       setIsSubmitting(false);

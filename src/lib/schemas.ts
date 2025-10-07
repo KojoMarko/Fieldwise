@@ -102,3 +102,17 @@ export const ResourceSchema = CreateResourceInputSchema.extend({
   updatedDate: z.string().min(1, 'Updated date is required'),
   fileUrl: z.string().url().or(z.string().startsWith('#')), // Placeholder or URL
 });
+
+export const CreateSparePartInputSchema = z.object({
+  name: z.string().min(1, 'Part name is required'),
+  partNumber: z.string().min(1, 'Part number is required'),
+  quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
+  location: z.string().min(1, 'Location is required'),
+  assetModel: z.string().min(1, 'Asset model is required'),
+  companyId: z.string().min(1, 'Company ID is required'),
+});
+
+export const UpdateSparePartInputSchema = z.object({
+  id: z.string().min(1, 'Part ID is required'),
+  quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
+});

@@ -58,7 +58,7 @@ export type SparePart = {
     quantity: number;
     location: string;
     assetModel: string;
-    // companyId will be inferred from the asset model's company
+    companyId: string;
 }
 
 export type AllocatedPart = SparePart & { 

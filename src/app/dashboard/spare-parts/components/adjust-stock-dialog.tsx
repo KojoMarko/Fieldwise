@@ -16,7 +16,7 @@ import type { SparePart } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { LoaderCircle } from 'lucide-react';
-import { spareParts } from '@/lib/data';
+import { updateSparePart } from '@/ai/flows/update-spare-part';
 
 interface AdjustStockDialogProps {
   open: boolean;
@@ -33,24 +33,20 @@ export function AdjustStockDialog({
   const [adjustment, setAdjustment] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAdjustStock = () => {
+  const handleAdjustStock = async () => {
     setIsSubmitting(true);
+    const newQuantity = part.quantity + adjustment;
+    if (newQuantity < 0) {
+        toast({ variant: 'destructive', title: 'Invalid Quantity', description: 'Stock cannot go below zero.' });
+        setIsSubmitting(false);
+        return;
+    }
+
     try {
-      // In a real app, you'd call an API here.
-      // For now, we'll just simulate updating the local data.
-      const partIndex = spareParts.findIndex(p => p.id === part.id);
-      if (partIndex > -1) {
-          const newQuantity = spareParts[partIndex].quantity + adjustment;
-          if (newQuantity < 0) {
-              toast({ variant: 'destructive', title: 'Invalid Quantity', description: 'Stock cannot go below zero.' });
-              return;
-          }
-          spareParts[partIndex].quantity = newQuantity;
-      }
-      
+      await updateSparePart({ id: part.id, quantity: newQuantity });
       toast({
         title: 'Stock Adjusted',
-        description: `Quantity for ${part.name} is now ${part.quantity + adjustment}.`,
+        description: `Quantity for ${part.name} is now ${newQuantity}.`,
       });
       setAdjustment(0);
       onOpenChange(false);

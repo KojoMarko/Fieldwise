@@ -26,17 +26,12 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { LoaderCircle } from 'lucide-react';
-import { spareParts } from '@/lib/data';
+import { useAuth } from '@/hooks/use-auth';
+import { createSparePart } from '@/ai/flows/create-spare-part';
+import { CreateSparePartInputSchema } from '@/lib/schemas';
 
-const AddPartFormSchema = z.object({
-  name: z.string().min(1, 'Part name is required'),
-  partNumber: z.string().min(1, 'Part number is required'),
-  quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
-  location: z.string().min(1, 'Location is required'),
-  assetModel: z.string().min(1, 'Asset model is required'),
-});
 
-type AddPartFormValues = z.infer<typeof AddPartFormSchema>;
+type AddPartFormValues = z.infer<typeof CreateSparePartInputSchema>;
 
 interface AddPartDialogProps {
   open: boolean;
@@ -45,27 +40,30 @@ interface AddPartDialogProps {
 
 export function AddPartDialog({ open, onOpenChange }: AddPartDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AddPartFormValues>({
-    resolver: zodResolver(AddPartFormSchema),
+    resolver: zodResolver(CreateSparePartInputSchema),
     defaultValues: {
       name: '',
       partNumber: '',
       quantity: 0,
       location: '',
       assetModel: '',
+      companyId: user?.companyId,
     },
   });
 
   async function onSubmit(data: AddPartFormValues) {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
+        return;
+    }
+
     setIsSubmitting(true);
     try {
-      // This is where you would call an API to save the new part.
-      // For now, we'll just log it and show a toast.
-      console.log('New part data:', data);
-      spareParts.push({ ...data, id: `sp-gen-${Math.random()}`});
-      
+      await createSparePart({ ...data, companyId: user.companyId });
       toast({
         title: 'Part Added',
         description: `Part "${data.name}" has been added to the inventory.`,

@@ -1,6 +1,6 @@
 
 'use client';
-import { File, PlusCircle } from 'lucide-react';
+import { File, PlusCircle, LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/card';
 import { sparePartsColumns } from './components/spare-parts-columns';
 import { DataTable } from './components/data-table';
-import { spareParts } from '@/lib/data';
 import {
   Accordion,
   AccordionContent,
@@ -19,13 +18,40 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import type { SparePart } from '@/lib/types';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { AddPartDialog } from './components/add-part-dialog';
+import { useAuth } from '@/hooks/use-auth';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function SparePartsPage() {
+  const { user } = useAuth();
+  const [spareParts, setSpareParts] = useState<SparePart[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [isAddPartDialogOpen, setAddPartDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user?.companyId) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    const partsQuery = query(collection(db, "spare-parts"), where("companyId", "==", user.companyId));
+    
+    const unsubscribe = onSnapshot(partsQuery, (snapshot) => {
+      const partsData: SparePart[] = [];
+      snapshot.forEach((doc) => {
+        partsData.push({ id: doc.id, ...doc.data() } as SparePart);
+      });
+      setSpareParts(partsData);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user?.companyId]);
+
 
   const groupedParts = useMemo(() => {
     let partsToGroup = spareParts;
@@ -46,7 +72,7 @@ export default function SparePartsPage() {
       acc[assetModel].push(part);
       return acc;
     }, {} as Record<string, SparePart[]>);
-  }, [filter]);
+  }, [filter, spareParts]);
 
   const defaultOpenValue = useMemo(() => {
       if (filter && Object.keys(groupedParts).length > 0) {
@@ -84,38 +110,47 @@ export default function SparePartsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <Input
-              placeholder="Filter by part name, number, or machine model..."
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-          <Accordion
-            type="single"
-            collapsible
-            className="w-full"
-            key={defaultOpenValue} // Force re-render to open accordion on filter
-            defaultValue={defaultOpenValue}
-          >
-            {Object.entries(groupedParts).length > 0 ? (
-              Object.entries(groupedParts).map(([model, parts]) => (
-                <AccordionItem key={model} value={`item-${model}`}>
-                  <AccordionTrigger className="text-lg font-medium">
-                    {model} ({parts.length} parts)
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <DataTable columns={sparePartsColumns} data={parts} />
-                  </AccordionContent>
-                </AccordionItem>
-              ))
-            ) : (
-              <div className="text-center py-10 text-muted-foreground">
-                No spare parts found matching your filter.
+           {isLoading ? (
+             <div className="flex items-center justify-center p-10">
+                <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+                <p className="ml-4 text-muted-foreground">Loading inventory...</p>
+            </div>
+           ) : (
+            <>
+              <div className="mb-4">
+                <Input
+                  placeholder="Filter by part name, number, or machine model..."
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  className="max-w-sm"
+                />
               </div>
-            )}
-          </Accordion>
+              <Accordion
+                type="single"
+                collapsible
+                className="w-full"
+                key={defaultOpenValue} // Force re-render to open accordion on filter
+                defaultValue={defaultOpenValue}
+              >
+                {Object.entries(groupedParts).length > 0 ? (
+                  Object.entries(groupedParts).map(([model, parts]) => (
+                    <AccordionItem key={model} value={`item-${model}`}>
+                      <AccordionTrigger className="text-lg font-medium">
+                        {model} ({parts.length} parts)
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <DataTable columns={sparePartsColumns} data={parts} />
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))
+                ) : (
+                  <div className="text-center py-10 text-muted-foreground">
+                    No spare parts found.
+                  </div>
+                )}
+              </Accordion>
+            </>
+           )}
         </CardContent>
       </Card>
     </>

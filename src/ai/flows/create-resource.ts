@@ -40,6 +40,14 @@ const createResourceFlow = ai.defineFlow(
       fileUrl: '#', // Placeholder for now
     };
 
+    // Firestore does not accept 'undefined' values. We need to clean the object.
+    Object.keys(newResource).forEach(key => {
+        const typedKey = key as keyof typeof newResource;
+        if (newResource[typedKey] === undefined) {
+            delete newResource[typedKey];
+        }
+    });
+
     await resourceRef.set({
       ...newResource,
       id: resourceRef.id,

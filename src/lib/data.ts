@@ -84,6 +84,7 @@ export let resources: Resource[] = [
       updatedDate: '2024-01-15',
       fileUrl: '#',
       uploaderName: 'Admin',
+      companyId: defaultCompanyId,
     },
     {
       id: 'res-2',
@@ -97,6 +98,7 @@ export let resources: Resource[] = [
       updatedDate: '2024-02-20',
       fileUrl: '#',
       uploaderName: 'Harriet Tubman',
+      companyId: defaultCompanyId,
     },
     {
       id: 'res-3',
@@ -110,6 +112,7 @@ export let resources: Resource[] = [
       updatedDate: '2023-11-08',
       fileUrl: '#',
       uploaderName: 'Admin',
+      companyId: defaultCompanyId,
     },
     {
       id: 'res-4',
@@ -123,6 +126,7 @@ export let resources: Resource[] = [
       updatedDate: '2024-03-01',
       fileUrl: '#',
       uploaderName: 'Sojourner Truth',
+      companyId: defaultCompanyId,
     },
     {
       id: 'res-5',
@@ -136,6 +140,7 @@ export let resources: Resource[] = [
       updatedDate: '2024-01-30',
       fileUrl: '#',
       uploaderName: 'Harriet Tubman',
+      companyId: defaultCompanyId,
     },
     {
       id: 'res-6',
@@ -149,16 +154,18 @@ export let resources: Resource[] = [
       updatedDate: '2024-02-15',
       fileUrl: '#',
       uploaderName: 'Sojourner Truth',
+      companyId: defaultCompanyId,
     }
   ];
   
   let resourceIdCounter = resources.length + 1;
 
-  export function addResource(resource: Omit<Resource, 'id' | 'updatedDate'>) {
+  export function addResource(resource: Omit<Resource, 'id' | 'updatedDate' | 'companyId'>) {
     const newResource: Resource = {
       ...resource,
       id: `res-${resourceIdCounter++}`,
       updatedDate: new Date().toISOString().split('T')[0],
+      companyId: defaultCompanyId,
     };
     resources.unshift(newResource);
     return newResource;

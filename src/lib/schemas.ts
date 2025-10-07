@@ -84,3 +84,15 @@ export const UpdateCompanyInputSchema = z.object({
     phone: z.string().optional(),
     email: z.string().email('Invalid email address').optional(),
 });
+
+export const CreateResourceInputSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  equipment: z.string().min(1, 'Equipment name is required'),
+  description: z.string().min(1, 'Description is required'),
+  category: z.string().min(1, 'Category is required'),
+  type: z.string().min(1, 'Type is required'),
+  pages: z.coerce.number().min(1, 'Number of pages is required'),
+  version: z.string().min(1, 'Version is required'),
+  uploaderName: z.string().min(1, "Uploader's name is required"),
+  companyId: z.string().min(1, 'Company ID is required'),
+});

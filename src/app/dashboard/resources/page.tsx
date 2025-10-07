@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
@@ -22,11 +22,14 @@ import {
   Download,
   User,
   PlusCircle,
+  LoaderCircle,
 } from 'lucide-react';
 import { resources as initialResources, addResource } from '@/lib/data';
 import type { Resource } from '@/lib/types';
 import { AddResourceDialog } from './components/add-resource-dialog';
 import { useAuth } from '@/hooks/use-auth';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 function ResourceCard({ resource }: { resource: Resource }) {
   return (
@@ -76,11 +79,32 @@ function ResourceCard({ resource }: { resource: Resource }) {
 
 export default function ResourcesPage() {
   const { user } = useAuth();
-  const [resources, setResources] = useState(initialResources);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user?.companyId) {
+        setIsLoading(false);
+        return;
+    }
+    setIsLoading(true);
+    const resourcesQuery = query(collection(db, "resources"), where("companyId", "==", user.companyId));
+    
+    const unsubscribe = onSnapshot(resourcesQuery, (snapshot) => {
+        const resourcesData: Resource[] = [];
+        snapshot.forEach((doc) => {
+            resourcesData.push({ id: doc.id, ...doc.data() } as Resource);
+        });
+        setResources(resourcesData);
+        setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user?.companyId]);
 
   const categories = useMemo(
     () => [...new Set(resources.map((r) => r.category))],
@@ -107,24 +131,16 @@ export default function ResourcesPage() {
     });
   }, [searchTerm, categoryFilter, typeFilter, resources]);
 
-  const handleAddResource = (data: Omit<Resource, 'id' | 'updatedDate' | 'uploaderName' | 'fileUrl'>) => {
-    if (!user) return;
-    const newResource = addResource({
-        ...data,
-        uploaderName: user.name,
-        fileUrl: '#',
-    });
-    setResources(prev => [newResource, ...prev]);
-  }
+  const uniqueCategories = useMemo(() => [...new Set(initialResources.map(r => r.category))], []);
+  const uniqueTypes = useMemo(() => [...new Set(initialResources.map(r => r.type))], []);
 
   return (
     <>
     <AddResourceDialog
         open={isAddDialogOpen}
         onOpenChange={setAddDialogOpen}
-        onAddResource={handleAddResource}
-        categories={[...new Set(initialResources.map(r => r.category))]}
-        types={[...new Set(initialResources.map(r => r.type))]}
+        categories={uniqueCategories}
+        types={uniqueTypes}
     />
     <div className="space-y-6">
       <div className="flex items-center">
@@ -186,7 +202,12 @@ export default function ResourcesPage() {
         </CardContent>
       </Card>
       
-      {filteredResources.length > 0 ? (
+      {isLoading ? (
+         <div className="flex items-center justify-center p-10">
+            <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-4 text-muted-foreground">Loading resources...</p>
+        </div>
+      ) : filteredResources.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredResources.map((resource) => (
             <ResourceCard key={resource.id} resource={resource} />

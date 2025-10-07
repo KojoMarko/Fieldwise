@@ -115,4 +115,5 @@ export type Resource = {
   updatedDate: string;
   fileUrl: string;
   uploaderName: string;
+  companyId: string;
 }

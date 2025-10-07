@@ -36,36 +36,29 @@ import { useState } from 'react';
 import { LoaderCircle, Sparkles } from 'lucide-react';
 import type { Resource } from '@/lib/types';
 import { analyzeDocument } from '@/ai/flows/analyze-document';
+import { useAuth } from '@/hooks/use-auth';
+import { CreateResourceInputSchema } from '@/lib/schemas';
+import { createResource } from '@/ai/flows/create-resource';
 
-const addResourceSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  equipment: z.string().min(1, 'Equipment name is required'),
-  description: z.string().min(1, 'Description is required'),
-  category: z.string().min(1, 'Category is required'),
-  type: z.string().min(1, 'Type is required'),
-  pages: z.coerce.number().min(1, 'Number of pages is required'),
-  version: z.string().min(1, 'Version is required'),
-});
-
-type AddResourceFormValues = z.infer<typeof addResourceSchema>;
+type AddResourceFormValues = z.infer<typeof CreateResourceInputSchema>;
 
 interface AddResourceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddResource: (data: Omit<Resource, 'id' | 'updatedDate' | 'uploaderName' | 'fileUrl'>) => void;
   categories: string[];
   types: ('Manual' | 'Guide' | 'Procedure' | 'Reference' | 'Standard')[];
 }
 
-export function AddResourceDialog({ open, onOpenChange, onAddResource, categories, types }: AddResourceDialogProps) {
+export function AddResourceDialog({ open, onOpenChange, categories, types }: AddResourceDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [fileName, setFileName] = useState('');
 
 
   const form = useForm<AddResourceFormValues>({
-    resolver: zodResolver(addResourceSchema),
+    resolver: zodResolver(CreateResourceInputSchema),
     defaultValues: {
       title: '',
       equipment: '',
@@ -122,10 +115,19 @@ export function AddResourceDialog({ open, onOpenChange, onAddResource, categorie
   }
 
 
-  function onSubmit(data: AddResourceFormValues) {
+  async function onSubmit(data: AddResourceFormValues) {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
+        return;
+    }
     setIsSubmitting(true);
     try {
-      onAddResource(data);
+      await createResource({
+          ...data,
+          uploaderName: user.name,
+          companyId: user.companyId,
+      });
+
       toast({
         title: 'Resource Added',
         description: `"${data.title}" has been successfully added to the resource center.`,

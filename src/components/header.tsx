@@ -39,10 +39,14 @@ import {
   CalendarCheck,
   BookText,
   History,
+  Bell,
+  CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
 import React, { useState } from 'react';
+import { Badge } from './ui/badge';
+import { Separator } from './ui/separator';
 
 function capitalize(s: string) {
   if (!s) return '';
@@ -245,6 +249,51 @@ export function Header() {
           className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
         />
       </div>
+       <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="relative overflow-hidden rounded-full"
+          >
+            <Bell className="h-5 w-5" />
+            <Badge className="absolute -right-1 -top-1 h-4 w-4 justify-center p-0 text-xs">2</Badge>
+            <span className="sr-only">Notifications</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+           <DropdownMenuItem className="flex flex-col items-start gap-1">
+             <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
+                <p className="font-semibold text-primary">Verification Required</p>
+             </div>
+             <p className="text-sm text-muted-foreground pl-4">Sojourner Truth has marked "HEPA Filter" as used on WO-001. Your verification is needed.</p>
+             <Button variant="secondary" size="sm" className="ml-4 mt-1 h-7">Verify Now</Button>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+           <DropdownMenuItem className="flex flex-col items-start gap-1">
+             <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
+                <p className="font-semibold">New Work Order</p>
+             </div>
+             <p className="text-sm text-muted-foreground pl-4">You have been assigned to WO-003: Emergency repair on DxH 900.</p>
+          </DropdownMenuItem>
+           <DropdownMenuSeparator />
+            <DropdownMenuItem className="flex flex-col items-start gap-1">
+             <div className="flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                <p className="font-semibold">System Update</p>
+             </div>
+             <p className="text-sm text-muted-foreground pl-4">The spare parts inventory has been updated with new items.</p>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-center text-primary font-medium">
+                <Link href="#">View all notifications</Link>
+            </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button

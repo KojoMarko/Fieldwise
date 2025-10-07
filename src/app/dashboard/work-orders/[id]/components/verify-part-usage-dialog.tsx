@@ -46,14 +46,14 @@ export function VerifyPartUsageDialog({
     // For this demo, we check if the verifier is the same as the user who presumably used it.
     // This is a placeholder for a real check.
     if (user.id === assignedTechnicianId) {
-        toast({ variant: 'destructive', title: 'Peer Verification Required', description: 'Another user must verify the part usage.'});
+        toast({ variant: 'destructive', title: 'Peer Verification Required', description: 'Another user must verify the part handover.'});
         return;
     }
 
     setIsSubmitting(true);
     try {
         onVerify(part.id, user.name);
-        toast({ title: 'Usage Verified', description: `${part.name} usage has been confirmed by ${user.name}.`});
+        toast({ title: 'Action Verified', description: `Part action has been confirmed by ${user.name}.`});
         onOpenChange(false);
     } catch(e) {
         toast({ variant: 'destructive', title: 'Verification Failed', description: 'An error occurred.'});
@@ -62,12 +62,14 @@ export function VerifyPartUsageDialog({
     }
   };
 
-  const isReturnVerification = part.status === 'Pending Return Verification';
-  const title = isReturnVerification ? 'Verify Spare Part Return' : 'Verify Spare Part Usage';
+  const isReturnVerification = part.status === 'Pending Return';
+  const isHandoverVerification = part.status === 'Pending Handover';
+
+  const title = isReturnVerification ? 'Verify Spare Part Return' : 'Verify Part Handover';
   const description = isReturnVerification
-    ? 'A second user must confirm that this part was returned to inventory.'
-    : 'A second user must confirm that this part was used for the service.';
-  const buttonText = isReturnVerification ? 'Confirm Return' : 'Confirm Usage';
+    ? "A second user must confirm that this part was returned to inventory."
+    : "To ensure accountability, a second user must confirm that this spare part has been handed over to the field engineer.";
+  const buttonText = isReturnVerification ? 'Confirm Return' : 'Confirm Handover';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

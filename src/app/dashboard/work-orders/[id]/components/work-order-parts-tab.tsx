@@ -14,7 +14,8 @@ import {
   PackageCheck,
   ShieldCheck,
   UserCheck,
-  ArchiveRestore
+  ArchiveRestore,
+  HandHelping,
 } from 'lucide-react';
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { useToast } from '@/hooks/use-toast';
@@ -78,8 +79,8 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     });
   }
 
-  const handleVerificationRequest = (part: AllocatedPart, type: 'usage' | 'return') => {
-    const newStatus = type === 'usage' ? 'Pending Usage Verification' : 'Pending Return Verification';
+  const handleVerificationRequest = (part: AllocatedPart, type: 'take' | 'return') => {
+    const newStatus = type === 'take' ? 'Pending Handover' : 'Pending Return';
     handlePartStatusChange(part.id, newStatus);
     toast({
         title: 'Verification Required',
@@ -95,7 +96,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
   const handleVerification = (partId: string, verifierName: string) => {
     setAllocatedParts(prev => prev.map(p => {
         if (p.id === partId) {
-            const finalStatus = p.status === 'Pending Usage Verification' ? 'Used' : 'Returned';
+            const finalStatus = p.status === 'Pending Handover' ? 'With Engineer' : 'Returned';
             return { ...p, status: finalStatus, verifiedBy: verifierName };
         }
         return p;
@@ -106,10 +107,11 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
 
   const statusBadge: Record<AllocatedPart['status'], React.ReactNode> = {
     Allocated: <Badge variant="secondary">Allocated</Badge>,
-    'Pending Usage Verification': <Badge variant="outline" className="border-orange-500 text-orange-600">Pending Usage</Badge>,
-    'Pending Return Verification': <Badge variant="outline" className="border-blue-500 text-blue-600">Pending Return</Badge>,
-    Used: <Badge variant="default" className="bg-green-600">Used</Badge>,
+    'Pending Handover': <Badge variant="outline" className="border-orange-500 text-orange-600">Pending Handover</Badge>,
+    'Pending Return': <Badge variant="outline" className="border-blue-500 text-blue-600">Pending Return</Badge>,
+    'With Engineer': <Badge variant="default" className="bg-green-600">With Engineer</Badge>,
     Returned: <Badge variant="outline" className="bg-gray-200 text-gray-800">Returned</Badge>,
+    Used: <Badge variant="default" className="bg-green-600">Used</Badge>,
   }
 
 
@@ -152,7 +154,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                         <TableCell>
                             <div className="flex items-center gap-2">
                                 {statusBadge[part.status]}
-                                {(part.status === 'Used' || part.status === 'Returned') && part.verifiedBy && (
+                                {(part.status === 'With Engineer' || part.status === 'Returned') && part.verifiedBy && (
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
@@ -175,16 +177,27 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuItem onClick={() => handleVerificationRequest(part, 'usage')}>
-                                        <PackageCheck className="mr-2" /> Mark as Used
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleVerificationRequest(part, 'return')}>
-                                        <ArchiveRestore className="mr-2" /> Mark as Returned
+                                    <DropdownMenuItem onClick={() => handleVerificationRequest(part, 'take')}>
+                                        <HandHelping className="mr-2" /> Take Part
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                            )}
-                           {(part.status === 'Pending Usage Verification' || part.status === 'Pending Return Verification') && (
+                           {part.status === 'With Engineer' && (
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                     <DropdownMenuItem onClick={() => handleVerificationRequest(part, 'return')}>
+                                        <ArchiveRestore className="mr-2" /> Return Part
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                           )}
+                           {(part.status === 'Pending Handover' || part.status === 'Pending Return') && (
                                <Button variant="outline" size="sm" onClick={() => openVerifyDialog(part)}>
                                    <ShieldCheck className="mr-2 h-4 w-4" />
                                    Verify

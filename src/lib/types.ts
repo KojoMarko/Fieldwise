@@ -62,7 +62,7 @@ export type SparePart = {
 }
 
 export type AllocatedPart = SparePart & { 
-  status: 'Allocated' | 'Used' | 'Returned' | 'Pending Usage Verification' | 'Pending Return Verification';
+  status: 'Allocated' | 'Pending Handover' | 'With Engineer' | 'Pending Return' | 'Returned' | 'Used';
   verifiedBy?: string;
 };
 

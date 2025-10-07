@@ -269,7 +269,7 @@ export function Header() {
                 <div className="w-2 h-2 rounded-full bg-primary"></div>
                 <p className="font-semibold text-primary">Verification Required</p>
              </div>
-             <p className="text-sm text-muted-foreground pl-4">Sojourner Truth has marked "HEPA Filter" as used on WO-001. Your verification is needed.</p>
+             <p className="text-sm text-muted-foreground pl-4">Sojourner Truth has requested handover of "HEPA Filter" for WO-001. Your verification is needed.</p>
              <Button variant="secondary" size="sm" className="ml-4 mt-1 h-7 w-fit">Verify Now</Button>
           </DropdownMenuItem>
           <DropdownMenuSeparator />

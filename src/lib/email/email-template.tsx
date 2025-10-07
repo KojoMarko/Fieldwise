@@ -13,7 +13,14 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
   name,
   email,
   tempPassword,
-}) => (
+}) => {
+    const loginUrl = new URL(`${baseUrl}/login`);
+    loginUrl.searchParams.set('email', email);
+    if (tempPassword) {
+        loginUrl.searchParams.set('password', tempPassword);
+    }
+  
+    return (
   <html lang="en">
     <head>
         <style dangerouslySetInnerHTML={{ __html: `
@@ -52,7 +59,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
           For security reasons, you will be required to change this password
           upon your first login.
         </p>
-        <a href={`${baseUrl}/login`} className="button">
+        <a href={loginUrl.toString()} className="button">
           Login to Your Account
         </a>
         <p className="footer">
@@ -61,6 +68,6 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
       </div>
     </body>
   </html>
-);
+)};
 
 export default EmailTemplate;

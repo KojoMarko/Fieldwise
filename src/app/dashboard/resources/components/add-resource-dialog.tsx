@@ -50,14 +50,13 @@ interface AddResourceDialogProps {
   types: ('Manual' | 'Guide' | 'Procedure' | 'Reference' | 'Standard')[];
 }
 
-const samplePdfUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
-
 export function AddResourceDialog({ open, onOpenChange, categories, types }: AddResourceDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [fileDataUri, setFileDataUri] = useState('');
 
 
   const form = useForm<AddResourceFormValues>({
@@ -86,8 +85,9 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = async () => {
-            const fileDataUri = reader.result as string;
-            const analysisResult = await analyzeDocument({ fileDataUri });
+            const dataUri = reader.result as string;
+            setFileDataUri(dataUri); // Save the data URI
+            const analysisResult = await analyzeDocument({ fileDataUri: dataUri });
 
             if (!analysisResult) {
                 throw new Error("AI analysis returned no result.");
@@ -133,6 +133,14 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
         toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
         return;
     }
+     if (!fileDataUri) {
+      toast({
+        variant: 'destructive',
+        title: 'File Required',
+        description: 'Please select a file to upload.',
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const newResource = {
@@ -140,7 +148,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
         uploaderName: user.name,
         companyId: user.companyId,
         updatedDate: formatISO(new Date()),
-        fileUrl: samplePdfUrl, // Using sample PDF for now
+        fileUrl: fileDataUri, // Use the stored data URI
       };
 
       // Validate with a more complete schema before sending to Firestore
@@ -154,6 +162,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
       });
       form.reset();
       setFileName('');
+      setFileDataUri('');
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to add resource:', error);
@@ -324,3 +333,5 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
     </Dialog>
   );
 }
+
+    

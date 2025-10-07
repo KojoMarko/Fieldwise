@@ -66,7 +66,7 @@ function ResourceCard({ resource }: { resource: Resource }) {
             <Link href={resource.fileUrl} target="_blank">View Document</Link>
           </Button>
           <Button variant="outline" className="w-full" asChild>
-             <Link href={resource.fileUrl} download>
+             <Link href={resource.fileUrl} download={`${resource.title.replace(/\s/g, '_')}.pdf`}>
                 <Download className="mr-2 h-4 w-4" />
                 Download
              </Link>
@@ -132,7 +132,7 @@ export default function ResourcesPage() {
   }, [searchTerm, categoryFilter, typeFilter, resources]);
 
   const uniqueCategories = useMemo(() => [...new Set(initialResources.map(r => r.category))], []);
-  const uniqueTypes = useMemo(() => [...new Set(initialResources.map(r => r.type))], []);
+  const uniqueTypes = useMemo(() => [...new Set(initialResources.map(r => r.type))] as Resource['type'][], []);
 
   return (
     <>
@@ -227,3 +227,5 @@ export default function ResourcesPage() {
     </>
   );
 }
+
+    

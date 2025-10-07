@@ -172,6 +172,14 @@ export function Header() {
                   PPM
                 </Link>
                  <Link
+                  href="/dashboard/assets"
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => setSheetOpen(false)}
+                >
+                    <Package className="h-5 w-5" />
+                    Assets
+                </Link>
+                 <Link
                   href="/dashboard/spare-parts"
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                    onClick={() => setSheetOpen(false)}
@@ -206,14 +214,6 @@ export function Header() {
                 >
                 <Users className="h-5 w-5" />
                 Users
-                </Link>
-                <Link
-                href="/dashboard/assets"
-                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                 onClick={() => setSheetOpen(false)}
-                >
-                <Package className="h-5 w-5" />
-                Assets
                 </Link>
                 <Link
                 href="/dashboard/audit-log"
@@ -251,11 +251,7 @@ export function Header() {
       </div>
        <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="relative rounded-full"
-          >
+           <Button variant="outline" size="icon" className="relative rounded-full">
             <Bell className="h-5 w-5" />
             <Badge className="absolute -right-1 -top-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary p-0 text-xs text-primary-foreground">2</Badge>
             <span className="sr-only">Notifications</span>
@@ -264,33 +260,41 @@ export function Header() {
         <DropdownMenuContent align="end" className="w-80">
           <DropdownMenuLabel>Notifications</DropdownMenuLabel>
           <DropdownMenuSeparator />
-           <DropdownMenuItem className="grid gap-1">
-             <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary"></div>
-                <p className="font-semibold text-primary">Verification Required</p>
+           <DropdownMenuItem className="p-0">
+             <div className="p-2 grid gap-1">
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary"></div>
+                    <p className="font-semibold text-primary">Verification Required</p>
+                </div>
+                <p className="text-sm text-muted-foreground pl-4">Sojourner Truth has requested handover of "HEPA Filter" for WO-001. Your verification is needed.</p>
+                <Button variant="secondary" size="sm" className="ml-4 mt-1 h-7 w-fit" asChild>
+                    <Link href="/dashboard/work-orders/hQjZ5LIbZ1g9xS2nC7vA">Verify Now</Link>
+                </Button>
              </div>
-             <p className="text-sm text-muted-foreground pl-4">Sojourner Truth has requested handover of "HEPA Filter" for WO-001. Your verification is needed.</p>
-             <Button variant="secondary" size="sm" className="ml-4 mt-1 h-7 w-fit">Verify Now</Button>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-           <DropdownMenuItem className="grid gap-1">
-             <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary"></div>
-                <p className="font-semibold">New Work Order</p>
-             </div>
-             <p className="text-sm text-muted-foreground pl-4">You have been assigned to WO-003: Emergency repair on DxH 900.</p>
+           <DropdownMenuItem className="p-0">
+             <div className="p-2 grid gap-1">
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary"></div>
+                    <p className="font-semibold">New Work Order</p>
+                </div>
+                <p className="text-sm text-muted-foreground pl-4">You have been assigned to WO-003: Emergency repair on DxH 900.</p>
+              </div>
           </DropdownMenuItem>
            <DropdownMenuSeparator />
-            <DropdownMenuItem className="grid gap-1">
-             <div className="flex items-center gap-2">
-                 <div className="w-2 h-2 rounded-full bg-slate-400"></div>
-                <p className="font-semibold">System Update</p>
-             </div>
-             <p className="text-sm text-muted-foreground pl-4">The spare parts inventory has been updated with new items.</p>
+            <DropdownMenuItem className="p-0">
+              <div className="p-2 grid gap-1">
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                    <p className="font-semibold">System Update</p>
+                </div>
+                <p className="text-sm text-muted-foreground pl-4">The spare parts inventory has been updated with new items.</p>
+              </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-center text-primary font-medium">
-                <Link href="#">View all notifications</Link>
+            <DropdownMenuItem className="text-center text-primary font-medium p-0">
+                <Link href="#" className='py-1.5 w-full'>View all notifications</Link>
             </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

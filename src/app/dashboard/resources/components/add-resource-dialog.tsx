@@ -39,7 +39,7 @@ import { CreateResourceInputSchema, ResourceSchema } from '@/lib/schemas';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { formatISO } from 'date-fns';
-import { ai } from '@/ai/genkit';
+import { analyzeDocument } from '@/ai/flows/analyze-document';
 
 type AddResourceFormValues = z.infer<typeof CreateResourceInputSchema>;
 
@@ -49,36 +49,6 @@ interface AddResourceDialogProps {
   categories: string[];
   types: ('Manual' | 'Guide' | 'Procedure' | 'Reference' | 'Standard')[];
 }
-
-
-const AnalyzeDocumentOutputSchema = z.object({
-  title: z.string().describe('The clear and concise title of the document.'),
-  equipment: z.string().describe('The specific equipment model or name this document pertains to. If it applies to all, use "All Equipment".'),
-  description: z.string().describe('A brief, one-sentence summary of the document\'s content.'),
-  category: z.string().describe('A relevant category for the document (e.g., Chemistry, Hematology, Safety, Automation).'),
-  type: z.enum(['Manual', 'Guide', 'Procedure', 'Reference', 'Standard']).describe('The type of document.'),
-  pages: z.number().describe('The total number of pages in the document.'),
-  version: z.string().describe('The version number or revision of the document (e.g., "Rev. 4.2", "v3.1").'),
-});
-
-const analyzeDocumentPrompt = ai.definePrompt({
-    name: 'analyzeDocumentPrompt',
-    input: { schema: z.object({ fileDataUri: z.string() }) },
-    output: { schema: AnalyzeDocumentOutputSchema },
-    prompt: `You are an expert technical librarian. Analyze the following document and extract the required metadata.
-
-Document: {{media url=fileDataUri}}
-
-Based on the content of the document, provide the following information:
-- Title: A clear and concise title.
-- Equipment: The specific equipment model or name this document is for.
-- Description: A brief summary of what the document contains.
-- Category: The most relevant category for the document from options like Chemistry, Hematology, Safety, etc.
-- Type: The type of document (Manual, Guide, etc.).
-- Pages: The total number of pages.
-- Version: The version number or revision.`,
-});
-
 
 export function AddResourceDialog({ open, onOpenChange, categories, types }: AddResourceDialogProps) {
   const { toast } = useToast();
@@ -115,8 +85,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
         reader.readAsDataURL(file);
         reader.onload = async () => {
             const fileDataUri = reader.result as string;
-            const { output } = await analyzeDocumentPrompt({ fileDataUri });
-            const analysisResult = output;
+            const analysisResult = await analyzeDocument({ fileDataUri });
 
             if (!analysisResult) {
                 throw new Error("AI analysis returned no result.");
@@ -128,9 +97,9 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
             form.setValue('description', analysisResult.description);
             form.setValue('category', analysisResult.category);
             
-            const isValidType = types.includes(analysisResult.type);
+            const isValidType = types.includes(analysisResult.type as any);
             if (isValidType) {
-              form.setValue('type', analysisResult.type);
+              form.setValue('type', analysisResult.type as any);
             } else {
               console.warn(`AI returned an invalid document type: "${analysisResult.type}". User needs to select one manually.`);
               form.setValue('type', undefined);

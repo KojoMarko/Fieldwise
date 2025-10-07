@@ -114,4 +114,5 @@ export type Resource = {
   version: string;
   updatedDate: string;
   fileUrl: string;
+  uploaderName: string;
 }

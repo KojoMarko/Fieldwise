@@ -71,7 +71,7 @@ export const spareParts: SparePart[] = [
     { id: 'sp-gen-2', name: 'M8x25mm Bolt', partNumber: 'BLT-M8-25', quantity: 200, location: 'Warehouse C', assetModel: 'Multiple' },
 ];
 
-export const resources: Resource[] = [
+export let resources: Resource[] = [
     {
       id: 'res-1',
       title: 'Vitros 5600 Service Manual',
@@ -82,7 +82,8 @@ export const resources: Resource[] = [
       pages: 248,
       version: 'Rev. 4.2',
       updatedDate: '2024-01-15',
-      fileUrl: '#'
+      fileUrl: '#',
+      uploaderName: 'Admin',
     },
     {
       id: 'res-2',
@@ -94,7 +95,8 @@ export const resources: Resource[] = [
       pages: 156,
       version: 'v3.1',
       updatedDate: '2024-02-20',
-      fileUrl: '#'
+      fileUrl: '#',
+      uploaderName: 'Harriet Tubman',
     },
     {
       id: 'res-3',
@@ -106,7 +108,8 @@ export const resources: Resource[] = [
       pages: 92,
       version: 'Rev. 2.0',
       updatedDate: '2023-11-08',
-      fileUrl: '#'
+      fileUrl: '#',
+      uploaderName: 'Admin',
     },
     {
       id: 'res-4',
@@ -118,7 +121,8 @@ export const resources: Resource[] = [
       pages: 64,
       version: 'v5.0',
       updatedDate: '2024-03-01',
-      fileUrl: '#'
+      fileUrl: '#',
+      uploaderName: 'Sojourner Truth',
     },
     {
       id: 'res-5',
@@ -130,7 +134,8 @@ export const resources: Resource[] = [
       pages: 128,
       version: 'Rev. 3.5',
       updatedDate: '2024-01-30',
-      fileUrl: '#'
+      fileUrl: '#',
+      uploaderName: 'Harriet Tubman',
     },
     {
       id: 'res-6',
@@ -142,6 +147,17 @@ export const resources: Resource[] = [
       pages: 184,
       version: 'v4.0',
       updatedDate: '2024-02-15',
-      fileUrl: '#'
+      fileUrl: '#',
+      uploaderName: 'Sojourner Truth',
     }
   ];
+
+  export function addResource(resource: Omit<Resource, 'id' | 'updatedDate'>) {
+    const newResource: Resource = {
+      ...resource,
+      id: `res-${Math.random().toString(36).substr(2, 9)}`,
+      updatedDate: new Date().toISOString().split('T')[0],
+    };
+    resources.unshift(newResource);
+    return newResource;
+  }

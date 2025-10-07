@@ -19,9 +19,13 @@ import {
   FileText,
   BookOpen,
   Download,
+  User,
+  PlusCircle,
 } from 'lucide-react';
-import { resources } from '@/lib/data';
+import { resources as initialResources, addResource } from '@/lib/data';
 import type { Resource } from '@/lib/types';
+import { AddResourceDialog } from './components/add-resource-dialog';
+import { useAuth } from '@/hooks/use-auth';
 
 function ResourceCard({ resource }: { resource: Resource }) {
   return (
@@ -40,13 +44,18 @@ function ResourceCard({ resource }: { resource: Resource }) {
             {resource.description}
           </p>
         </div>
-        <div className="text-xs text-muted-foreground flex items-center gap-4 mb-6">
-          <div className="flex items-center gap-1">
-            <FileText className="h-3 w-3" />
-            <span>{resource.pages} pages</span>
+        <div className="text-xs text-muted-foreground space-y-2 mb-6">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <FileText className="h-3 w-3" />
+              <span>{resource.pages} pages</span>
+            </div>
+            <span>{resource.version}</span>
           </div>
-          <span>{resource.version}</span>
-          <span>Updated {new Date(resource.updatedDate).toLocaleDateString()}</span>
+           <div className="flex items-center gap-2">
+             <User className="h-3 w-3" />
+             <span>Uploaded by {resource.uploaderName} on {new Date(resource.updatedDate).toLocaleDateString()}</span>
+           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button className="w-full">View Document</Button>
@@ -61,17 +70,20 @@ function ResourceCard({ resource }: { resource: Resource }) {
 }
 
 export default function ResourcesPage() {
+  const { user } = useAuth();
+  const [resources, setResources] = useState(initialResources);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [isAddDialogOpen, setAddDialogOpen] = useState(false);
 
   const categories = useMemo(
     () => [...new Set(resources.map((r) => r.category))],
-    []
+    [resources]
   );
   const types = useMemo(
     () => [...new Set(resources.map((r) => r.type))],
-    []
+    [resources]
   );
 
   const filteredResources = useMemo(() => {
@@ -88,15 +100,40 @@ export default function ResourcesPage() {
 
       return matchesSearch && matchesCategory && matchesType;
     });
-  }, [searchTerm, categoryFilter, typeFilter]);
+  }, [searchTerm, categoryFilter, typeFilter, resources]);
+
+  const handleAddResource = (data: Omit<Resource, 'id' | 'updatedDate' | 'uploaderName' | 'fileUrl'>) => {
+    if (!user) return;
+    const newResource = addResource({
+        ...data,
+        uploaderName: user.name,
+        fileUrl: '#',
+    });
+    setResources(prev => [newResource, ...prev]);
+  }
 
   return (
+    <>
+    <AddResourceDialog
+        open={isAddDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        onAddResource={handleAddResource}
+        categories={[...new Set(initialResources.map(r => r.category))]}
+        types={[...new Set(initialResources.map(r => r.type))]}
+    />
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Resource Center</h1>
-        <p className="text-muted-foreground">
-          Find technical manuals, guides, and documentation.
-        </p>
+      <div className="flex items-center">
+        <div>
+            <h1 className="text-3xl font-bold tracking-tight">Resource Center</h1>
+            <p className="text-muted-foreground">
+            Find technical manuals, guides, and documentation.
+            </p>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+            <Button size="sm" onClick={() => setAddDialogOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Resource
+            </Button>
+        </div>
       </div>
 
       <Card>
@@ -161,5 +198,6 @@ export default function ResourcesPage() {
       )}
 
     </div>
+    </>
   );
 }

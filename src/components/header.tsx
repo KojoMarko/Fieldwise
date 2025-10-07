@@ -40,7 +40,7 @@ import {
   BookText,
   History,
   Inbox,
-  CheckCircle,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
@@ -260,19 +260,17 @@ export function Header() {
        <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" className="relative rounded-full">
-            <Inbox className="h-5 w-5" />
+            <Bell className="h-5 w-5" />
             <Badge className="absolute -right-1 -top-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-destructive p-0 text-xs text-destructive-foreground">2</Badge>
-            <span className="sr-only">Inbox</span>
+            <span className="sr-only">Notifications</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
-          <DropdownMenuLabel>Inbox</DropdownMenuLabel>
+          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
           <DropdownMenuSeparator />
            <DropdownMenuItem className="p-0">
              <div className="p-2 grid gap-1">
-                <div className="flex items-center gap-2">
-                    <p className="font-semibold text-primary">Verification Required</p>
-                </div>
+                <p className="font-semibold text-primary">Verification Required</p>
                 <p className="text-sm text-muted-foreground">Sojourner Truth has requested handover of "HEPA Filter" for WO-001. Your verification is needed.</p>
                 <Button variant="secondary" size="sm" className="mt-1 h-7 w-fit" asChild>
                     <Link href="/dashboard/work-orders/hQjZ5LIbZ1g9xS2nC7vA">Verify Now</Link>
@@ -282,9 +280,7 @@ export function Header() {
           <DropdownMenuSeparator />
            <DropdownMenuItem className="p-0">
              <div className="p-2 grid gap-1">
-                <div className="flex items-center gap-2">
-                    <p className="font-semibold">New Work Order</p>
-                </div>
+                <p className="font-semibold">New Work Order</p>
                 <p className="text-sm text-muted-foreground">You have been assigned to WO-003: Emergency repair on DxH 900.</p>
               </div>
           </DropdownMenuItem>

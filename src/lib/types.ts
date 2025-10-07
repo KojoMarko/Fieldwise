@@ -61,7 +61,11 @@ export type SparePart = {
     // companyId will be inferred from the asset model's company
 }
 
-export type AllocatedPart = SparePart & { status: 'Allocated' | 'Used' | 'Returned' };
+export type AllocatedPart = SparePart & { 
+  status: 'Allocated' | 'Used' | 'Returned' | 'Pending Verification';
+  verifiedBy?: string;
+};
+
 
 export type WorkOrderStatus =
   | 'Draft'

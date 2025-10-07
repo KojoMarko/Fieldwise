@@ -11,7 +11,9 @@ import {
   CheckCircle,
   PlusCircle,
   Undo2,
-  PackageCheck
+  PackageCheck,
+  ShieldCheck,
+  UserCheck
 } from 'lucide-react';
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { useToast } from '@/hooks/use-toast';
@@ -26,12 +28,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 import { AddPartsDialog } from './add-parts-dialog';
+import { VerifyPartUsageDialog } from './verify-part-usage-dialog';
+import { useAuth } from '@/hooks/use-auth';
 
 
 export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts }: { workOrder: WorkOrder, allocatedParts: AllocatedPart[], setAllocatedParts: (parts: AllocatedPart[] | ((prev: AllocatedPart[]) => AllocatedPart[])) => void }) {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isAddPartsDialogOpen, setAddPartsDialogOpen] = useState(false);
+  const [isVerifyDialogOpen, setVerifyDialogOpen] = useState(false);
+  const [partToVerify, setPartToVerify] = useState<AllocatedPart | null>(null);
   const { toast } = useToast();
 
   const handleSuggestParts = async () => {
@@ -61,7 +68,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     setAllocatedParts(prev => [...prev, ...newAllocatedParts]);
   }
 
-  const handlePartStatusChange = (partId: string, status: 'Used' | 'Returned') => {
+  const handlePartStatusChange = (partId: string, status: AllocatedPart['status']) => {
     setAllocatedParts(prev => prev.map(p => p.id === partId ? {...p, status} : p));
      toast({
         title: 'Part Status Updated',
@@ -69,8 +76,29 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     });
   }
 
+  const handleVerificationRequest = (part: AllocatedPart) => {
+    handlePartStatusChange(part.id, 'Pending Verification');
+    toast({
+        title: 'Verification Required',
+        description: `Usage of ${part.name} needs to be verified by another team member.`
+    })
+  }
+
+  const openVerifyDialog = (part: AllocatedPart) => {
+      setPartToVerify(part);
+      setVerifyDialogOpen(true);
+  }
+
+  const handleVerification = (partId: string) => {
+    if(!user) return;
+    setAllocatedParts(prev => prev.map(p => p.id === partId ? {...p, status: 'Used', verifiedBy: user.name } : p));
+    setVerifyDialogOpen(false);
+    setPartToVerify(null);
+  }
+
   const statusBadge: Record<AllocatedPart['status'], React.ReactNode> = {
     Allocated: <Badge variant="secondary">Allocated</Badge>,
+    'Pending Verification': <Badge variant="outline" className="border-orange-500 text-orange-600">Pending Verification</Badge>,
     Used: <Badge variant="default" className="bg-green-600">Used</Badge>,
     Returned: <Badge variant="outline">Returned</Badge>,
   }
@@ -79,6 +107,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
   return (
     <>
     <AddPartsDialog open={isAddPartsDialogOpen} onOpenChange={setAddPartsDialogOpen} onAddParts={handleAddParts}/>
+    {partToVerify && <VerifyPartUsageDialog open={isVerifyDialogOpen} onOpenChange={setVerifyDialogOpen} part={partToVerify} onVerify={handleVerification} />}
     <div className="grid gap-4 xl:grid-cols-3 xl:gap-8 mt-4">
       <div className="xl:col-span-2 grid auto-rows-max items-start gap-4">
         <Card>
@@ -111,7 +140,23 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                             <div className="text-sm text-muted-foreground">{part.partNumber}</div>
                         </TableCell>
                         <TableCell>{part.quantity}</TableCell>
-                        <TableCell>{statusBadge[part.status]}</TableCell>
+                        <TableCell>
+                            <div className="flex items-center gap-2">
+                                {statusBadge[part.status]}
+                                {part.status === 'Used' && part.verifiedBy && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <UserCheck className="h-4 w-4 text-green-600"/>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Verified by {part.verifiedBy}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                            </div>
+                        </TableCell>
                         <TableCell className="text-right">
                            {part.status === 'Allocated' && (
                              <DropdownMenu>
@@ -121,7 +166,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuItem onClick={() => handlePartStatusChange(part.id, 'Used')}>
+                                    <DropdownMenuItem onClick={() => handleVerificationRequest(part)}>
                                         <PackageCheck className="mr-2" /> Mark as Used
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => handlePartStatusChange(part.id, 'Returned')}>
@@ -129,6 +174,12 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
+                           )}
+                           {part.status === 'Pending Verification' && (
+                               <Button variant="outline" size="sm" onClick={() => openVerifyDialog(part)}>
+                                   <ShieldCheck className="mr-2 h-4 w-4" />
+                                   Verify
+                               </Button>
                            )}
                         </TableCell>
                     </TableRow>

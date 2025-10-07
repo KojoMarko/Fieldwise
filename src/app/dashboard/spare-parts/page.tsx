@@ -1,6 +1,6 @@
 
 'use client';
-import { File, PlusCircle, LoaderCircle } from 'lucide-react';
+import { File, PlusCircle, LoaderCircle, UploadCloud, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -18,12 +18,103 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import type { SparePart } from '@/lib/types';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { AddPartDialog } from './components/add-part-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { extractAndCreateParts } from '@/ai/flows/extract-and-create-parts';
+import { useToast } from '@/hooks/use-toast';
+
+function AiPartExtractor() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [fileName, setFileName] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.companyId) return;
+
+    setFileName(file.name);
+    setIsExtracting(true);
+    toast({
+      title: 'AI Extraction Started',
+      description: 'The AI is analyzing your document to find spare parts. This may take a moment.',
+    });
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const dataUri = reader.result as string;
+        const result = await extractAndCreateParts({
+          fileDataUri: dataUri,
+          companyId: user.companyId,
+          assetModel: 'Vitros 5600', // Hardcoded for now as per user request
+        });
+        
+        toast({
+          title: 'Extraction Complete!',
+          description: `Successfully extracted and created ${result.count} new spare parts.`,
+        });
+      };
+      reader.onerror = () => {
+        throw new Error('Could not read the file.');
+      }
+    } catch (error) {
+      console.error("Error extracting parts:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Extraction Failed',
+        description: 'The AI could not extract parts from the document. Please try again or add them manually.',
+      });
+    } finally {
+      setIsExtracting(false);
+      setFileName('');
+      if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  return (
+    <Card className="bg-accent/50 border-primary/20 border-dashed">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="text-primary" />
+          AI-Powered Part Importer
+        </CardTitle>
+        <CardDescription>
+          Upload a service manual or parts list for the Vitros 5600, and the AI will automatically add the parts to your inventory.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => fileInputRef.current?.click()} disabled={isExtracting} variant="outline">
+            {isExtracting ? (
+              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <UploadCloud className="mr-2 h-4 w-4" />
+            )}
+            {isExtracting ? 'Analyzing...' : 'Upload Document'}
+          </Button>
+          <Input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            onChange={handleFileChange}
+            accept=".pdf,.doc,.docx,.txt"
+          />
+          {fileName && <p className="text-sm text-muted-foreground">Uploading: {fileName}</p>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 export default function SparePartsPage() {
   const { user } = useAuth();
@@ -97,11 +188,16 @@ export default function SparePartsPage() {
           <Button size="sm" className="h-8 gap-1" onClick={() => setAddPartDialogOpen(true)}>
             <PlusCircle className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Add Part
+              Add Part Manually
             </span>
           </Button>
         </div>
       </div>
+
+      <div className='mb-6'>
+        <AiPartExtractor />
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Spare Parts Inventory</CardTitle>

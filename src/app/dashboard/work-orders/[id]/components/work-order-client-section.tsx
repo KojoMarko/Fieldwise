@@ -28,7 +28,7 @@ import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import type { WorkOrder, Customer, User, Asset, Company } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Dialog,
@@ -44,6 +44,8 @@ import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { updateDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export function WorkOrderClientSection({
   workOrder,
@@ -62,8 +64,6 @@ export function WorkOrderClientSection({
 }) {
   const { user } = useAuth();
   const [currentWorkOrder, setCurrentWorkOrder] = useState<WorkOrder>(workOrder);
-  const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
   const { toast } = useToast();
   const [isQuestionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
@@ -80,54 +80,32 @@ export function WorkOrderClientSection({
   const [consumedParts, setConsumedParts] = useState<string[]>([]);
   const [customPart, setCustomPart] = useState('');
 
-  const handleSuggestParts = async () => {
-    setIsLoading(true);
-    setSuggestions([]);
+  // Open questionnaire when status changes to 'Completed'
+  useState(() => {
+    if (workOrder.status === 'Completed' && user?.role === 'Engineer' && !workOrder.technicianNotes) {
+      setQuestionnaireOpen(true);
+    }
+  }, [workOrder.status, user]);
+
+
+  const handlePutOnHold = async (reason: string) => {
     try {
-      const result = await suggestSpareParts({
-        workOrderDescription: currentWorkOrder.description,
-      });
-      if (result.suggestedSpareParts) {
-        setSuggestions(result.suggestedSpareParts);
-      }
-    } catch (error) {
-      console.error('Error suggesting spare parts:', error);
+      const workOrderRef = doc(db, 'work-orders', currentWorkOrder.id);
+      const newNotes = `${currentWorkOrder.technicianNotes || ''}\n\nWork put on hold. Reason: ${reason}`;
+      await updateDoc(workOrderRef, { status: 'On-Hold', technicianNotes: newNotes });
       toast({
-        variant: 'destructive',
-        title: 'AI Suggestion Failed',
-        description: 'Could not fetch spare part suggestions at this time.',
+        variant: 'default',
+        title: 'Work Order On Hold',
+        description: 'The work order status has been updated.',
       });
-    } finally {
-      setIsLoading(false);
+      setHoldDialogOpen(false);
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Could not update the work order status.',
+      });
     }
-  };
-
-  const handleStatusChange = (status: WorkOrder['status']) => {
-    if (status === 'Completed') {
-        setQuestionnaireOpen(true);
-    } else if (status === 'On-Hold') {
-        setHoldDialogOpen(true);
-    } else {
-        setCurrentWorkOrder(prev => ({...prev, status}));
-        toast({
-            title: 'Work Order Updated',
-            description: `Status changed to "${status}"`,
-        });
-    }
-  };
-
-  const handlePutOnHold = (reason: string) => {
-    setCurrentWorkOrder(prev => ({
-      ...prev,
-      status: 'On-Hold',
-      technicianNotes: `Work put on hold. Reason: ${reason}`,
-    }));
-    toast({
-      variant: 'default',
-      title: 'Work Order On Hold',
-      description: 'The work order status has been updated.',
-    });
-    setHoldDialogOpen(false);
   };
 
   const handleQuestionnaireSubmit = async () => {
@@ -155,12 +133,14 @@ export function WorkOrderClientSection({
             workOrderId: currentWorkOrder.id,
             type: currentWorkOrder.type,
         });
-        setCurrentWorkOrder(prev => ({
-            ...prev,
+
+        const workOrderRef = doc(db, 'work-orders', currentWorkOrder.id);
+        await updateDoc(workOrderRef, {
             status: 'Completed',
             technicianNotes: result.report,
             completedDate: new Date().toISOString(),
-        }));
+        });
+        
         toast({
             title: 'Service Report Generated',
             description: 'The AI-powered service report has been successfully created.',
@@ -195,7 +175,7 @@ export function WorkOrderClientSection({
       <CardContent className="p-0">
         <div className="p-6 prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-card-foreground prose-p:text-muted-foreground prose-strong:text-card-foreground">
           {/* Using dangerouslySetInnerHTML is okay here if we trust the AI output is safe markdown */}
-          <div dangerouslySetInnerHTML={{ __html: currentWorkOrder.technicianNotes?.replace(/\n/g, '<br />') || '' }} />
+          <div dangerouslySetInnerHTML={{ __html: workOrder.technicianNotes?.replace(/\n/g, '<br />') || '' }} />
         </div>
         <Separator />
         <div className="p-6">
@@ -205,7 +185,7 @@ export function WorkOrderClientSection({
            </div>
            <div className="mt-2 text-sm">
                 <p>Signed by: {customer?.contactPerson}</p>
-                <p className="text-muted-foreground">Date: {currentWorkOrder.completedDate ? format(new Date(currentWorkOrder.completedDate), 'PPP') : 'N/A'}</p>
+                <p className="text-muted-foreground">Date: {workOrder.completedDate ? format(new Date(workOrder.completedDate), 'PPP') : 'N/A'}</p>
            </div>
         </div>
       </CardContent>
@@ -219,23 +199,18 @@ export function WorkOrderClientSection({
             <CardDescription>Update the work order status.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-            {(currentWorkOrder.status === 'Scheduled' || currentWorkOrder.status === 'On-Hold') && (
-                <Button onClick={() => handleStatusChange('In-Progress')}>
-                    <Play className="mr-2" /> Start Work
+            {(workOrder.status === 'On-Hold') && (
+                <Button onClick={() => {
+                  const workOrderRef = doc(db, 'work-orders', workOrder.id);
+                  updateDoc(workOrderRef, { status: 'In-Progress' });
+                }}>
+                    <Play className="mr-2" /> Resume Work
                 </Button>
             )}
-             {currentWorkOrder.status === 'In-Progress' && (
-                <>
-                <Button onClick={() => handleStatusChange('Completed')}>
-                    <Check className="mr-2" /> Complete Work
-                </Button>
-                <Button variant="outline" onClick={() => handleStatusChange('On-Hold')}>
+             {workOrder.status === 'In-Progress' && (
+                <Button variant="outline" onClick={() => setHoldDialogOpen(true)}>
                     <Pause className="mr-2" /> Put on Hold
                 </Button>
-                </>
-            )}
-            { (currentWorkOrder.status === 'Completed' || currentWorkOrder.status === 'Invoiced') && (
-                 <p className="text-sm text-muted-foreground flex items-center"><CheckCircle className="h-4 w-4 mr-2 text-green-500" /> Work completed.</p>
             )}
         </CardContent>
     </Card>
@@ -403,15 +378,14 @@ export function WorkOrderClientSection({
 
         {!isGeneratingReport && (
             <>
-                {isEngineerView && currentWorkOrder.status !== 'Completed' && currentWorkOrder.status !== 'Invoiced' && <EngineerActions />}
+                {isEngineerView && <EngineerActions />}
 
-                {(currentWorkOrder.status === 'Completed' || currentWorkOrder.status === 'On-Hold' || currentWorkOrder.status === 'Invoiced') && currentWorkOrder.technicianNotes ? (
+                {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
                     <div className="xl:col-span-2"><ServiceReport /></div>
                 ) : (
-                    <>
-                    {/* Hide for engineer if work is not completed */}
-                    { !isEngineerView &&
-                        <Card>
+                  <>
+                    { (workOrder.status !== 'In-Progress' || !isEngineerView) &&
+                      <Card className={isEngineerView ? 'xl:col-span-1' : 'xl:col-span-2'}>
                         <CardHeader>
                             <CardTitle>Engineer's Report</CardTitle>
                         </CardHeader>
@@ -421,9 +395,9 @@ export function WorkOrderClientSection({
                                 A service report will be available once the engineer completes the work.
                             </div>
                         </CardContent>
-                        </Card>
+                      </Card>
                     }
-                    </>
+                  </>
                 )}
             </>
         )}

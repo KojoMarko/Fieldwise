@@ -5,12 +5,11 @@ import {
   Wrench,
   ShieldAlert,
   Calendar,
-  Clock,
-  User as UserIcon,
-  HardDrive,
-  MapPin,
+  Truck,
+  UserCheck,
+  Play,
+  Check,
   ClipboardList,
-  ClipboardCheck,
   Package,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -29,25 +28,22 @@ import type { WorkOrder, WorkOrderStatus, Customer, Asset, User, WorkOrderPriori
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, use } from 'react';
-import { collection, doc, onSnapshot, query, where, getDocs } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { LoaderCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WorkOrderPartsTab } from './components/work-order-parts-tab';
 import { WorkOrderClientSection } from './components/work-order-client-section';
+import { useToast } from '@/hooks/use-toast';
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {
   Draft: 'bg-gray-200 text-gray-800',
   Scheduled: 'bg-blue-100 text-blue-800',
+  Dispatched: 'bg-cyan-100 text-cyan-800',
+  'On-Site': 'bg-teal-100 text-teal-800',
   'In-Progress': 'bg-yellow-100 text-yellow-800',
   'On-Hold': 'bg-orange-100 text-orange-800',
   Completed: 'bg-green-100 text-green-800',
@@ -70,6 +66,7 @@ export default function WorkOrderDetailPage({
   const { id } = use(params);
   const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -129,7 +126,6 @@ export default function WorkOrderDetailPage({
     if (user.role === 'Admin' || user.role === 'Engineer') {
         authorized = true;
     } else if (user.role === 'Customer') {
-        // Need to check if the user is linked to the customer account
         const customerQuery = query(collection(db, 'customers'), where('contactEmail', '==', user.email), where('companyId', '==', user.companyId));
         getDocs(customerQuery).then(customerSnapshot => {
             if (!customerSnapshot.empty) {
@@ -155,6 +151,26 @@ export default function WorkOrderDetailPage({
 
   }, [workOrder, user, router]);
 
+  const handleStatusChange = async (newStatus: WorkOrderStatus) => {
+    if (!workOrder) return;
+    try {
+      const workOrderRef = doc(db, 'work-orders', workOrder.id);
+      await updateDoc(workOrderRef, { status: newStatus });
+      toast({
+        title: 'Status Updated',
+        description: `Work order status changed to "${newStatus}".`,
+      });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Could not update the work order status.',
+      });
+    }
+  };
+
+  const isEngineerView = user?.role === 'Engineer';
 
   if (isLoading || isAuthLoading) {
     return <div className="flex h-screen w-full items-center justify-center"><LoaderCircle className="h-10 w-10 animate-spin" /></div>
@@ -190,6 +206,42 @@ export default function WorkOrderDetailPage({
     )
   }
 
+  const EngineerWorkflowActions = () => {
+    if (!isEngineerView || !workOrder || workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled') {
+      return null;
+    }
+  
+    const actions: { [key in WorkOrderStatus]?: { label: string; icon: React.ElementType; nextStatus: WorkOrderStatus; } } = {
+      'Scheduled': { label: 'Start Travel', icon: Truck, nextStatus: 'Dispatched' },
+      'Dispatched': { label: 'Arrive on Site', icon: UserCheck, nextStatus: 'On-Site' },
+      'On-Site': { label: 'Start Work', icon: Play, nextStatus: 'In-Progress' },
+      'In-Progress': { label: 'Complete Work', icon: Check, nextStatus: 'Completed' },
+    };
+  
+    const currentAction = actions[workOrder.status];
+  
+    if (!currentAction) {
+      return null;
+    }
+  
+    const { label, icon: Icon, nextStatus } = currentAction;
+  
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Next Step</CardTitle>
+          <CardDescription>Update your progress on this work order.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button className="w-full" onClick={() => handleStatusChange(nextStatus)}>
+            <Icon className="mr-2" />
+            {label}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 p-4 md:p-0">
        <div className="flex items-center gap-4">
@@ -211,8 +263,8 @@ export default function WorkOrderDetailPage({
        <Tabs defaultValue="details">
           <TabsList>
             <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="parts">Parts & Tools</TabsTrigger>
-            <TabsTrigger value="report">Service Report</TabsTrigger>
+            <TabsTrigger value="parts" disabled={isEngineerView && workOrder.status === 'Scheduled'}>Parts & Tools</TabsTrigger>
+            <TabsTrigger value="report" disabled={isEngineerView && workOrder.status !== 'In-Progress'}>Service Report</TabsTrigger>
           </TabsList>
           <TabsContent value="details">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
@@ -288,6 +340,7 @@ export default function WorkOrderDetailPage({
                     </Card>
                 </div>
                 <div className="grid auto-rows-max items-start gap-4">
+                     <EngineerWorkflowActions />
                      <Card>
                         <CardHeader>
                             <CardTitle>Asset & Customer</CardTitle>

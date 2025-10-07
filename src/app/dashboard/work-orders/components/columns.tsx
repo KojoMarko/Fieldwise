@@ -20,13 +20,16 @@ import { AssignTechnicianDialog } from './assign-technician-dialog';
 import { GenerateInvoiceDialog } from './generate-invoice-dialog';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {
   Draft: 'bg-gray-200 text-gray-800',
   Scheduled: 'bg-blue-100 text-blue-800',
+  Dispatched: 'bg-cyan-100 text-cyan-800',
+  'On-Site': 'bg-teal-100 text-teal-800',
   'In-Progress': 'bg-yellow-100 text-yellow-800',
   'On-Hold': 'bg-orange-100 text-orange-800',
   Completed: 'bg-green-100 text-green-800',
@@ -40,8 +43,26 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
   const workOrder = row.original;
   const [isAssignDialogOpen, setAssignDialogOpen] = useState(false);
   const [isInvoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const isAdmin = user?.role === 'Admin';
+
+  const handleStatusUpdate = async (status: WorkOrderStatus) => {
+    try {
+      const workOrderRef = doc(db, 'work-orders', workOrder.id);
+      await updateDoc(workOrderRef, { status });
+      toast({
+        title: 'Status Updated',
+        description: `Work order status changed to "${status}".`
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Could not update status.'
+      });
+    }
+  }
   
   return (
     <>
@@ -75,9 +96,14 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
           </DropdownMenuItem>
           {isAdmin && (
             <>
-              <DropdownMenuItem onClick={() => setAssignDialogOpen(true)}>
-                Assign Engineer
+              <DropdownMenuItem onClick={() => setAssignDialogOpen(true)} disabled={!workOrder.technicianId}>
+                {workOrder.technicianId ? 'Re-assign Engineer' : 'Assign Engineer'}
               </DropdownMenuItem>
+              {workOrder.status === 'Draft' && (
+                 <DropdownMenuItem onClick={() => handleStatusUpdate('Scheduled')}>
+                    Schedule Work
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setInvoiceDialogOpen(true)} disabled={workOrder.status !== 'Completed'}>
                 Generate Invoice
@@ -95,17 +121,20 @@ function CustomerCell({ row }: { row: { original: WorkOrder }}) {
     const { user } = useAuth();
 
     useEffect(() => {
-        if (!user?.companyId) return;
+        if (!user?.companyId || !row.original.customerId) {
+            setCustomerName('N/A');
+            return;
+        }
 
-        const customerQuery = query(collection(db, "customers"), where("companyId", "==", user.companyId));
+        const customerRef = doc(db, "customers", row.original.customerId);
         
-        const unsubscribe = onSnapshot(customerQuery, (snapshot) => {
-            snapshot.forEach((doc) => {
-                if (doc.id === row.original.customerId) {
-                    setCustomerName((doc.data() as Customer).name);
-                }
-            });
-        });
+        const unsubscribe = onSnapshot(customerRef, (doc) => {
+            if (doc.exists()) {
+                setCustomerName((doc.data() as Customer).name);
+            } else {
+                setCustomerName('N/A');
+            }
+        }, () => setCustomerName('Error'));
 
         return () => unsubscribe();
     }, [row.original.customerId, user?.companyId]);
@@ -125,14 +154,14 @@ function TechnicianCell({ row }: { row: { original: WorkOrder }}) {
             return;
         };
 
-        const userQuery = query(collection(db, "users"), where("companyId", "==", user.companyId));
-        const unsubscribe = onSnapshot(userQuery, (snapshot) => {
-             snapshot.forEach((doc) => {
-                if (doc.id === techId) {
-                    setTechName((doc.data() as User).name);
-                }
-            });
-        });
+        const userRef = doc(db, "users", techId);
+        const unsubscribe = onSnapshot(userRef, (doc) => {
+             if (doc.exists()) {
+                setTechName((doc.data() as User).name);
+             } else {
+                setTechName('Unassigned');
+             }
+        }, () => setTechName('Error'));
 
         return () => unsubscribe();
     }, [row.original.technicianId, user?.companyId]);

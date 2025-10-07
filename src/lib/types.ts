@@ -18,7 +18,7 @@ export type User = {
 };
 
 export type Customer = {
-  id: string;
+  id:string;
   name: string;
   contactPerson: string;
   contactEmail: string;
@@ -70,6 +70,8 @@ export type AllocatedPart = SparePart & {
 export type WorkOrderStatus =
   | 'Draft'
   | 'Scheduled'
+  | 'Dispatched'
+  | 'On-Site'
   | 'In-Progress'
   | 'On-Hold'
   | 'Completed'

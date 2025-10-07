@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -7,6 +8,47 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+import { AdjustStockDialog } from './adjust-stock-dialog';
+import { ViewPartDetailsDialog } from './view-part-details-dialog';
+
+function ActionsCell({ part }: { part: SparePart }) {
+  const [isAdjustStockOpen, setAdjustStockOpen] = useState(false);
+  const [isViewDetailsOpen, setViewDetailsOpen] = useState(false);
+
+  return (
+    <>
+      <AdjustStockDialog
+        open={isAdjustStockOpen}
+        onOpenChange={setAdjustStockOpen}
+        part={part}
+      />
+      <ViewPartDetailsDialog
+        open={isViewDetailsOpen}
+        onOpenChange={setViewDetailsOpen}
+        part={part}
+      />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => setAdjustStockOpen(true)}>
+            Adjust Stock
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setViewDetailsOpen(true)}>
+            View Details
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
+  );
+}
+
 
 export const sparePartsColumns: ColumnDef<SparePart>[] = [
   {
@@ -62,21 +104,7 @@ export const sparePartsColumns: ColumnDef<SparePart>[] = [
   {
     id: 'actions',
     cell: ({ row }) => {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>Adjust Stock</DropdownMenuItem>
-            <DropdownMenuItem>View Details</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+      return <ActionsCell part={row.original} />;
     },
   },
 ];

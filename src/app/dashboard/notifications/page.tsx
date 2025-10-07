@@ -14,7 +14,7 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import {
-  Bell,
+  Inbox,
   Wrench,
   PackageCheck,
   Info,
@@ -231,7 +231,7 @@ export default function NotificationsPage() {
                         unreadNotifications.map(n => <NotificationItem key={n.id} notification={n} />)
                     ) : (
                         <div className="text-center py-20">
-                            <Bell className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <Inbox className="mx-auto h-12 w-12 text-muted-foreground" />
                             <p className="mt-4 text-sm font-medium">You're all caught up!</p>
                             <p className="text-sm text-muted-foreground">No new notifications.</p>
                         </div>

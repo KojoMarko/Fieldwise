@@ -20,7 +20,7 @@ import {
   Building,
   BookText,
   History,
-  Bell,
+  Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -29,7 +29,7 @@ import Image from 'next/image';
 
 const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
-  { href: '/dashboard/notifications', icon: Bell, label: 'Notifications', badge: '2' },
+  { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', badge: '2' },
   { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
   { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
   { href: '/dashboard/customers', icon: Building, label: 'Customers' },
@@ -42,7 +42,7 @@ const adminNavItems = [
 
 const engineerNavItems = [
     { href: '/dashboard', icon: Home, label: 'My Dashboard' },
-    { href: '/dashboard/notifications', icon: Bell, label: 'Notifications', badge: '2' },
+    { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', badge: '2' },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
     { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
     { href: '/dashboard/assets', icon: Package, label: 'Assets' },

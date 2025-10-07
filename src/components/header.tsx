@@ -39,7 +39,7 @@ import {
   CalendarCheck,
   BookText,
   History,
-  Bell,
+  Inbox,
   CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
@@ -158,8 +158,8 @@ export function Header() {
               className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                onClick={() => setSheetOpen(false)}
             >
-              <Bell className="h-5 w-5" />
-              Notifications
+              <Inbox className="h-5 w-5" />
+              Inbox
             </Link>
             <Link
               href="/dashboard/work-orders"
@@ -259,14 +259,14 @@ export function Header() {
       </div>
        <DropdownMenu>
         <DropdownMenuTrigger asChild>
-           <Button variant="outline" size="icon" className="relative rounded-full">
-            <Bell className="h-5 w-5" />
+          <Button variant="outline" size="icon" className="relative rounded-full">
+            <Inbox className="h-5 w-5" />
             <Badge className="absolute -right-1 -top-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-destructive p-0 text-xs text-destructive-foreground">2</Badge>
-            <span className="sr-only">Notifications</span>
+            <span className="sr-only">Inbox</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
-          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+          <DropdownMenuLabel>Inbox</DropdownMenuLabel>
           <DropdownMenuSeparator />
            <DropdownMenuItem className="p-0">
              <div className="p-2 grid gap-1">

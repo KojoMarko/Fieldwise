@@ -13,17 +13,16 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { AllocatedPart } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { LoaderCircle } from 'lucide-react';
+import { useState } from 'react';
 
 interface VerifyPartUsageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   part: AllocatedPart;
-  onVerify: (partId: string) => void;
+  onVerify: (partId: string, verifierName: string) => void;
 }
 
 export function VerifyPartUsageDialog({
@@ -33,31 +32,50 @@ export function VerifyPartUsageDialog({
   onVerify,
 }: VerifyPartUsageDialogProps) {
   const { user } = useAuth();
-  const [approver, setApprover] = useState('');
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const assignedTechnicianId = (part as any).technicianId; // Assuming this is passed with part info in a real app
 
   const handleVerify = () => {
-    // In a real app, you would have a more secure way to check the approver.
-    // For this demo, we'll just check if a name is entered and it's not the current user.
-    if (!approver.trim()) {
-        toast({ variant: 'destructive', title: 'Approver Name Required', description: 'Please enter your name to verify.'});
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in to verify.'});
         return;
     }
-     if (approver.trim().toLowerCase() === user?.name.toLowerCase()) {
+    // In a real app, you might check against the assigned technician ID.
+    // For this demo, we check if the verifier is the same as the user who presumably used it.
+    // This is a placeholder for a real check.
+    if (user.id === assignedTechnicianId) {
         toast({ variant: 'destructive', title: 'Peer Verification Required', description: 'Another user must verify the part usage.'});
         return;
     }
-    onVerify(part.id);
-    toast({ title: 'Usage Verified', description: `${part.name} usage has been confirmed.`});
+
+    setIsSubmitting(true);
+    try {
+        onVerify(part.id, user.name);
+        toast({ title: 'Usage Verified', description: `${part.name} usage has been confirmed by ${user.name}.`});
+        onOpenChange(false);
+    } catch(e) {
+        toast({ variant: 'destructive', title: 'Verification Failed', description: 'An error occurred.'});
+    } finally {
+        setIsSubmitting(false);
+    }
   };
+
+  const isReturnVerification = part.status === 'Pending Return Verification';
+  const title = isReturnVerification ? 'Verify Spare Part Return' : 'Verify Spare Part Usage';
+  const description = isReturnVerification
+    ? 'A second user must confirm that this part was returned to inventory.'
+    : 'A second user must confirm that this part was used for the service.';
+  const buttonText = isReturnVerification ? 'Confirm Return' : 'Confirm Usage';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Verify Spare Part Usage</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            A second user must confirm that this part was used.
+            {description}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
@@ -70,22 +88,21 @@ export function VerifyPartUsageDialog({
                     <p><strong>Quantity:</strong> 1</p>
                 </AlertDescription>
             </Alert>
-             <div className="space-y-2">
-                <Label htmlFor="approver-name">Approver Name</Label>
-                <Input 
-                    id="approver-name"
-                    placeholder="Enter your name to confirm"
-                    value={approver}
-                    onChange={(e) => setApprover(e.target.value)}
-                />
-             </div>
+             <Alert variant="destructive">
+                <ShieldCheck className="h-4 w-4" />
+                <AlertTitle>Verification Action</AlertTitle>
+                <AlertDescription>
+                   By clicking {buttonText}, you, <strong>{user?.name}</strong>, are confirming this action. This is logged in the audit trail.
+                </AlertDescription>
+            </Alert>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleVerify}>
-            Confirm Usage
+          <Button onClick={handleVerify} disabled={isSubmitting}>
+             {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+            {buttonText}
           </Button>
         </DialogFooter>
       </DialogContent>

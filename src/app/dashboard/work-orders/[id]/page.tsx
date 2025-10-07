@@ -242,6 +242,10 @@ export default function WorkOrderDetailPage({
     );
   };
 
+  const isPartsTabDisabled = isEngineerView && workOrder.status === 'Draft';
+  const isReportTabDisabled = isEngineerView && !['In-Progress', 'On-Hold', 'Completed', 'Invoiced'].includes(workOrder.status);
+
+
   return (
     <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 p-4 md:p-0">
        <div className="flex items-center gap-4">
@@ -263,8 +267,8 @@ export default function WorkOrderDetailPage({
        <Tabs defaultValue="details">
           <TabsList>
             <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="parts" disabled={isEngineerView && workOrder.status === 'Scheduled'}>Parts & Tools</TabsTrigger>
-            <TabsTrigger value="report" disabled={isEngineerView && workOrder.status !== 'In-Progress'}>Service Report</TabsTrigger>
+            <TabsTrigger value="parts" disabled={isPartsTabDisabled}>Parts & Tools</TabsTrigger>
+            <TabsTrigger value="report" disabled={isReportTabDisabled}>Service Report</TabsTrigger>
           </TabsList>
           <TabsContent value="details">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">

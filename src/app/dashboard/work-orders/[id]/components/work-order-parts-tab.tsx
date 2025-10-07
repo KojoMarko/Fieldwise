@@ -13,7 +13,8 @@ import {
   Undo2,
   PackageCheck,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  ArchiveRestore
 } from 'lucide-react';
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { useToast } from '@/hooks/use-toast';
@@ -68,7 +69,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     const newAllocatedParts = newParts.map(p => ({...p, status: 'Allocated' as const, quantity: 1}));
     setAllocatedParts(prev => [...prev, ...newAllocatedParts]);
   }
-
+  
   const handlePartStatusChange = (partId: string, status: AllocatedPart['status']) => {
     setAllocatedParts(prev => prev.map(p => p.id === partId ? {...p, status} : p));
      toast({
@@ -77,11 +78,12 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     });
   }
 
-  const handleVerificationRequest = (part: AllocatedPart) => {
-    handlePartStatusChange(part.id, 'Pending Verification');
+  const handleVerificationRequest = (part: AllocatedPart, type: 'usage' | 'return') => {
+    const newStatus = type === 'usage' ? 'Pending Usage Verification' : 'Pending Return Verification';
+    handlePartStatusChange(part.id, newStatus);
     toast({
         title: 'Verification Required',
-        description: `Usage of ${part.name} needs to be verified by another team member.`
+        description: `Action for ${part.name} needs to be verified by another team member.`
     })
   }
 
@@ -90,18 +92,24 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
       setVerifyDialogOpen(true);
   }
 
-  const handleVerification = (partId: string) => {
-    if(!user) return;
-    setAllocatedParts(prev => prev.map(p => p.id === partId ? {...p, status: 'Used', verifiedBy: user.name } : p));
+  const handleVerification = (partId: string, verifierName: string) => {
+    setAllocatedParts(prev => prev.map(p => {
+        if (p.id === partId) {
+            const finalStatus = p.status === 'Pending Usage Verification' ? 'Used' : 'Returned';
+            return { ...p, status: finalStatus, verifiedBy: verifierName };
+        }
+        return p;
+    }));
     setVerifyDialogOpen(false);
     setPartToVerify(null);
   }
 
   const statusBadge: Record<AllocatedPart['status'], React.ReactNode> = {
     Allocated: <Badge variant="secondary">Allocated</Badge>,
-    'Pending Verification': <Badge variant="outline" className="border-orange-500 text-orange-600">Pending Verification</Badge>,
+    'Pending Usage Verification': <Badge variant="outline" className="border-orange-500 text-orange-600">Pending Usage</Badge>,
+    'Pending Return Verification': <Badge variant="outline" className="border-blue-500 text-blue-600">Pending Return</Badge>,
     Used: <Badge variant="default" className="bg-green-600">Used</Badge>,
-    Returned: <Badge variant="outline">Returned</Badge>,
+    Returned: <Badge variant="outline" className="bg-gray-200 text-gray-800">Returned</Badge>,
   }
 
 
@@ -144,7 +152,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                         <TableCell>
                             <div className="flex items-center gap-2">
                                 {statusBadge[part.status]}
-                                {part.status === 'Used' && part.verifiedBy && (
+                                {(part.status === 'Used' || part.status === 'Returned') && part.verifiedBy && (
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
@@ -167,16 +175,16 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuItem onClick={() => handleVerificationRequest(part)}>
+                                    <DropdownMenuItem onClick={() => handleVerificationRequest(part, 'usage')}>
                                         <PackageCheck className="mr-2" /> Mark as Used
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handlePartStatusChange(part.id, 'Returned')}>
-                                        <Undo2 className="mr-2" /> Mark as Returned
+                                    <DropdownMenuItem onClick={() => handleVerificationRequest(part, 'return')}>
+                                        <ArchiveRestore className="mr-2" /> Mark as Returned
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                            )}
-                           {part.status === 'Pending Verification' && (
+                           {(part.status === 'Pending Usage Verification' || part.status === 'Pending Return Verification') && (
                                <Button variant="outline" size="sm" onClick={() => openVerifyDialog(part)}>
                                    <ShieldCheck className="mr-2 h-4 w-4" />
                                    Verify

@@ -1,9 +1,18 @@
 
 'use server';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
+import { render } from '@react-email/render';
 import { EmailTemplate, EmailTemplateProps } from './email-template';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 export async function sendEmail(
     email: string, 
@@ -12,25 +21,24 @@ export async function sendEmail(
     tempPassword?: string
 ) {
   try {
-    const { data, error } = await resend.emails.send({
-      from: 'FieldWise <onboarding@resend.dev>',
-      to: [email],
-      subject: subject,
-      react: EmailTemplate({ 
+    const emailHtml = render(EmailTemplate({ 
         name: name,
         email: email,
         tempPassword: tempPassword,
-       } as EmailTemplateProps),
-    });
+       } as EmailTemplateProps));
 
-    if (error) {
-      console.error('Email sending error:', error);
-      throw new Error('Failed to send email.');
-    }
+    const options = {
+      from: '"FieldWise" <onboarding@fieldwise.com>',
+      to: email,
+      subject: subject,
+      html: emailHtml,
+    };
+
+    const data = await transporter.sendMail(options);
 
     return data;
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error('Email sending error:', error);
+    throw new Error('Failed to send email.');
   }
 }

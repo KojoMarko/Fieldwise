@@ -1,15 +1,4 @@
 
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Img,
-  Link,
-  Preview,
-  Text,
-} from '@react-email/components';
 import * as React from 'react';
 
 export interface EmailTemplateProps {
@@ -20,104 +9,60 @@ export interface EmailTemplateProps {
 
 const baseUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : '';
+  : 'http://localhost:9002';
 
 export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
   name,
   email,
   tempPassword,
 }) => (
-  <Html>
-    <Head />
-    <Preview>Your FieldWise Account is Ready</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Img
-          src={'/Field Wise Logo.png'}
+  <html lang="en">
+    <head>
+        <style dangerouslySetInnerHTML={{ __html: `
+            body { background-color: #f6f9fc; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif; }
+            .container { background-color: #ffffff; margin: 0 auto; padding: 20px 0 48px; margin-bottom: 64px; border: 1px solid #e6ebf1; border-radius: 8px; }
+            .heading { color: #333; font-size: 24px; font-weight: bold; text-align: center; margin: 30px 0; }
+            .paragraph { color: #555; font-size: 16px; line-height: 26px; padding: 0 20px; }
+            .credential-text { color: #555; font-size: 16px; line-height: 26px; padding: 0 20px; margin: 10px 0; }
+            .button { background-color: #3498DB; border-radius: 3px; color: #fff; font-size: 16px; text-decoration: none; text-align: center; display: block; width: 200px; padding: 12px; margin: 20px auto; }
+            .footer { color: #8898aa; font-size: 12px; line-height: 16px; text-align: center; }
+        `}} />
+    </head>
+    <body>
+      <div className="container">
+        <img
+          src={`${baseUrl}/Field%20Wise%20Logo.png`}
           width="48"
           height="48"
           alt="FieldWise"
+          style={{ margin: '0 auto', display: 'block' }}
         />
-        <Heading style={heading}>Welcome to FieldWise, {name}!</Heading>
-        <Text style={paragraph}>
+        <h1 className="heading">Welcome to FieldWise, {name}!</h1>
+        <p className="paragraph">
           Your account has been created and is ready to use. Here are your
           login credentials:
-        </Text>
-        <Text style={credentialText}>
+        </p>
+        <p className="credential-text">
           <strong>Email:</strong> {email}
-        </Text>
+        </p>
         {tempPassword && (
-          <Text style={credentialText}>
+          <p className="credential-text">
             <strong>Temporary Password:</strong> {tempPassword}
-          </Text>
+          </p>
         )}
-        <Text style={paragraph}>
+        <p className="paragraph">
           For security reasons, you will be required to change this password
           upon your first login.
-        </Text>
-        <Link href={baseUrl} style={button}>
+        </p>
+        <a href={baseUrl} className="button">
           Login to Your Account
-        </Link>
-        <Text style={footer}>
+        </a>
+        <p className="footer">
           FieldWise | Enterprise-grade field service management
-        </Text>
-      </Container>
-    </Body>
-  </Html>
+        </p>
+      </div>
+    </body>
+  </html>
 );
 
-const main = {
-  backgroundColor: '#f6f9fc',
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-};
-
-const container = {
-  backgroundColor: '#ffffff',
-  margin: '0 auto',
-  padding: '20px 0 48px',
-  marginBottom: '64px',
-  border: '1px solid #e6ebf1',
-  borderRadius: '8px',
-};
-
-const heading = {
-  color: '#333',
-  fontSize: '24px',
-  fontWeight: 'bold',
-  textAlign: 'center' as const,
-  margin: '30px 0',
-};
-
-const paragraph = {
-  color: '#555',
-  fontSize: '16px',
-  lineHeight: '26px',
-  padding: '0 20px',
-};
-
-const credentialText = {
-  ...paragraph,
-  padding: '0 20px',
-  margin: '10px 0',
-};
-
-const button = {
-  backgroundColor: '#3498DB',
-  borderRadius: '3px',
-  color: '#fff',
-  fontSize: '16px',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  display: 'block',
-  width: '200px',
-  padding: '12px',
-  margin: '20px auto',
-};
-
-const footer = {
-  color: '#8898aa',
-  fontSize: '12px',
-  lineHeight: '16px',
-  textAlign: 'center' as const,
-};
+export default EmailTemplate;

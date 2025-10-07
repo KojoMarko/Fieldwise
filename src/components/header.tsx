@@ -1,4 +1,6 @@
 
+'use client';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -39,7 +41,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
-import React from 'react';
+import React, { useState } from 'react';
 
 function capitalize(s: string) {
   if (!s) return '';
@@ -100,6 +102,7 @@ function generateBreadcrumbs(pathname: string) {
 export function Header() {
     const { user, logout } = useAuth();
     const pathname = usePathname();
+    const [isSheetOpen, setSheetOpen] = useState(false);
 
     if (!user) {
         return (
@@ -117,7 +120,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-      <Sheet>
+      <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
         <SheetTrigger asChild>
           <Button size="icon" variant="outline" className="sm:hidden">
             <PanelLeft className="h-5 w-5" />
@@ -129,6 +132,7 @@ export function Header() {
             <Link
               href="/dashboard"
               className="group flex h-20 w-20 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground"
+               onClick={() => setSheetOpen(false)}
             >
               <Image src="/White Logo FW.png" width={80} height={80} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
               <span className="sr-only">FieldWise</span>
@@ -136,6 +140,7 @@ export function Header() {
              <Link
               href="/dashboard"
               className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+               onClick={() => setSheetOpen(false)}
             >
               <Home className="h-5 w-5" />
               Dashboard
@@ -143,6 +148,7 @@ export function Header() {
             <Link
               href="/dashboard/work-orders"
               className="flex items-center gap-4 px-2.5 text-foreground"
+               onClick={() => setSheetOpen(false)}
             >
               <Wrench className="h-5 w-5" />
               Work Orders
@@ -152,6 +158,7 @@ export function Header() {
                  <Link
                   href="/dashboard/ppm"
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                   onClick={() => setSheetOpen(false)}
                 >
                   <CalendarCheck className="h-5 w-5" />
                   PPM
@@ -159,6 +166,7 @@ export function Header() {
                  <Link
                   href="/dashboard/spare-parts"
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                   onClick={() => setSheetOpen(false)}
                 >
                   <List className="h-5 w-5" />
                   Spare Parts
@@ -166,6 +174,7 @@ export function Header() {
                  <Link
                   href="/dashboard/resources"
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                   onClick={() => setSheetOpen(false)}
                 >
                   <BookText className="h-5 w-5" />
                   Resource Center
@@ -177,6 +186,7 @@ export function Header() {
                 <Link
                   href="/dashboard/customers"
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                   onClick={() => setSheetOpen(false)}
                 >
                   <Building className="h-5 w-5" />
                   Customers
@@ -184,6 +194,7 @@ export function Header() {
                 <Link
                 href="/dashboard/users"
                 className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                 onClick={() => setSheetOpen(false)}
                 >
                 <Users className="h-5 w-5" />
                 Users
@@ -191,6 +202,7 @@ export function Header() {
                 <Link
                 href="/dashboard/assets"
                 className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                 onClick={() => setSheetOpen(false)}
                 >
                 <Package className="h-5 w-5" />
                 Assets
@@ -200,6 +212,7 @@ export function Header() {
             <Link
               href="/dashboard/settings"
               className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+               onClick={() => setSheetOpen(false)}
             >
               <Settings className="h-5 w-5" />
               Settings

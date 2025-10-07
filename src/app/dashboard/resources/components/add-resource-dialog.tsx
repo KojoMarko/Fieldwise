@@ -138,7 +138,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
         uploaderName: user.name,
         companyId: user.companyId,
         updatedDate: formatISO(new Date()),
-        fileUrl: '#', // Placeholder URL
+        fileUrl: 'javascript:void(0);', // Placeholder URL
       };
 
       // Validate with a more complete schema before sending to Firestore

@@ -134,11 +134,11 @@ export function Header() {
           <nav className="grid gap-6 text-lg font-medium">
             <Link
               href="/dashboard"
-              className="group flex h-20 w-20 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground"
-               onClick={() => setSheetOpen(false)}
+              className="group flex items-center gap-4 px-2.5 text-foreground"
+              onClick={() => setSheetOpen(false)}
             >
-              <Image src="/Field Wise Logo.png" width={80} height={80} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
-              <span className="sr-only">FieldWise</span>
+              <Image src="/Field Wise Logo.png" width={40} height={40} alt="FieldWise Logo" />
+              <span className="font-semibold text-xl">FieldWise</span>
             </Link>
              <Link
               href="/dashboard"

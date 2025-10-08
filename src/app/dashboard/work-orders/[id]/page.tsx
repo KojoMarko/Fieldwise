@@ -11,6 +11,7 @@ import {
   Check,
   ClipboardList,
   Package,
+  Download,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -215,17 +216,14 @@ export default function WorkOrderDetailPage({
       'Scheduled': { label: 'Start Travel', icon: Truck, nextStatus: 'Dispatched' },
       'Dispatched': { label: 'Arrive on Site', icon: UserCheck, nextStatus: 'On-Site' },
       'On-Site': { label: 'Start Work', icon: Play, nextStatus: 'In-Progress' },
-      'In-Progress': { label: 'Complete Work', icon: Check, nextStatus: 'Completed' },
     };
   
     const currentAction = actions[workOrder.status];
   
-    if (!currentAction) {
+    if (!currentAction && workOrder.status !== 'In-Progress') {
       return null;
     }
-  
-    const { label, icon: Icon, nextStatus } = currentAction;
-  
+    
     return (
       <Card>
         <CardHeader>
@@ -233,10 +231,15 @@ export default function WorkOrderDetailPage({
           <CardDescription>Update your progress on this work order.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button className="w-full" onClick={() => handleStatusChange(nextStatus)}>
-            <Icon className="mr-2" />
-            {label}
-          </Button>
+            {currentAction ? (
+                 <Button className="w-full" onClick={() => handleStatusChange(currentAction.nextStatus)}>
+                    <currentAction.icon className="mr-2" />
+                    {currentAction.label}
+                </Button>
+            ) : (
+                <p className='text-sm text-muted-foreground'>Work is in progress. Go to the Service Report tab to complete the job.</p>
+            )}
+         
         </CardContent>
       </Card>
     );

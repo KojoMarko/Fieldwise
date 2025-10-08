@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,7 +20,8 @@ import {
   Pause,
   Calendar as CalendarIcon,
   PlusCircle,
-  Trash2
+  Trash2,
+  Download,
 } from 'lucide-react';
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
@@ -46,6 +47,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export function WorkOrderClientSection({
   workOrder,
@@ -79,6 +82,44 @@ export function WorkOrderClientSection({
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [consumedParts, setConsumedParts] = useState<string[]>([]);
   const [customPart, setCustomPart] = useState('');
+  const reportRef = useRef<HTMLDivElement>(null);
+
+
+  const handleDownloadPdf = async () => {
+    const reportElement = reportRef.current;
+    if (!reportElement) return;
+
+    toast({
+        title: 'Generating PDF...',
+        description: 'Please wait while the report is being prepared for download.',
+    });
+
+    try {
+        const canvas = await html2canvas(reportElement, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`ServiceReport-ESR-${workOrder.id}.pdf`);
+
+        toast({
+            title: 'Download Ready',
+            description: 'Your PDF report has been downloaded.',
+        });
+    } catch (error) {
+        console.error("Failed to generate PDF:", error);
+        toast({
+            variant: 'destructive',
+            title: 'PDF Generation Failed',
+            description: 'Could not generate the PDF at this time.',
+        });
+    }
+  };
 
   // Open questionnaire when status changes to 'Completed'
   useState(() => {
@@ -169,13 +210,15 @@ export function WorkOrderClientSection({
               Work Order: {currentWorkOrder.id}
             </CardDescription>
           </div>
-          <FileText className="h-6 w-6 text-muted-foreground" />
+          <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
+            <Download className="h-4 w-4 mr-2" />
+            Download PDF
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="p-6 prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-card-foreground prose-p:text-muted-foreground prose-strong:text-card-foreground">
-          {/* Using dangerouslySetInnerHTML is okay here if we trust the AI output is safe markdown */}
-          <div dangerouslySetInnerHTML={{ __html: workOrder.technicianNotes?.replace(/\n/g, '<br />') || '' }} />
+        <div ref={reportRef} className="p-6 prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-card-foreground prose-p:text-muted-foreground prose-strong:text-card-foreground bg-background">
+          <div dangerouslySetInnerHTML={{ __html: workOrder.technicianNotes?.replace(/\n/g, '<br />').replace(/---/g, '<hr />') || '' }} />
         </div>
         <Separator />
         <div className="p-6">
@@ -199,6 +242,11 @@ export function WorkOrderClientSection({
             <CardDescription>Update the work order status.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
+            {(workOrder.status === 'In-Progress' || workOrder.status === 'On-Site') && (
+                 <Button onClick={() => setQuestionnaireOpen(true)}>
+                    <Check className="mr-2" /> Complete & Generate Report
+                </Button>
+            )}
             {(workOrder.status === 'On-Hold') && (
                 <Button onClick={() => {
                   const workOrderRef = doc(db, 'work-orders', workOrder.id);

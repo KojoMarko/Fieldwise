@@ -53,7 +53,6 @@ function AiPartExtractor() {
         const result = await extractAndCreateParts({
           fileDataUri: dataUri,
           companyId: user.companyId,
-          assetModel: 'Vitros 5600', // Hardcoded for now as per user request
         });
         
         toast({
@@ -88,7 +87,7 @@ function AiPartExtractor() {
           AI-Powered Part Importer
         </CardTitle>
         <CardDescription>
-          Upload a service manual or parts list for the Vitros 5600, and the AI will automatically add the parts to your inventory.
+          Upload a service manual or parts list. The AI will automatically identify the parts, the machine they belong to, and add them to your inventory.
         </CardDescription>
       </CardHeader>
       <CardContent>

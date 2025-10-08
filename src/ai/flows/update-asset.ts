@@ -34,7 +34,7 @@ const updateAssetFlow = ai.defineFlow(
     const dataToUpdate: any = {
         ...assetData,
         // Ensure dates are in the correct string format for Firestore
-        installationDate: formatISO(assetData.installationDate ? new Date(assetData.installationDate) : new Date()),
+        installationDate: assetData.installationDate ? formatISO(new Date(assetData.installationDate)) : undefined,
         purchaseDate: assetData.purchaseDate ? formatISO(new Date(assetData.purchaseDate)) : undefined,
         warrantyExpiry: assetData.warrantyExpiry ? formatISO(new Date(assetData.warrantyExpiry)) : undefined,
         lastPpmDate: assetData.lastPpmDate ? formatISO(new Date(assetData.lastPpmDate)) : undefined,
@@ -48,6 +48,16 @@ const updateAssetFlow = ai.defineFlow(
     Object.keys(dataToUpdate).forEach(key => {
         if (dataToUpdate[key] === undefined) {
             delete dataToUpdate[key];
+        }
+        // Clean nested objects in lifecycleNotes
+        if (key === 'lifecycleNotes' && Array.isArray(dataToUpdate[key])) {
+            dataToUpdate[key].forEach((note: any) => {
+                Object.keys(note).forEach(noteKey => {
+                    if (note[noteKey] === undefined) {
+                        delete note[noteKey];
+                    }
+                });
+            });
         }
     });
 

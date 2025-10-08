@@ -27,6 +27,7 @@ const GenerateServiceReportInputSchema = ServiceReportQuestionnaireSchema.extend
     clientAddress: z.string().describe('The address of the client.'),
     preparedBy: z.string().describe("The name of the engineer who prepared the report."),
     workOrderId: z.string().describe("The ID of the work order."),
+    currentDate: z.string().describe("The current date for the report in MM/DD/YYYY format."),
 });
 export type GenerateServiceReportInput = z.infer<typeof GenerateServiceReportInputSchema>;
 
@@ -54,14 +55,14 @@ The report must be clean, professional, and easy to read.
 **Report Data:**
 
 *   **Report ID:** ESR-{{{workOrderId}}}
-*   **Date:** Today's Date (Format: MM/DD/YYYY)
+*   **Date:** {{{currentDate}}}
 
 **Formatting Instructions:**
 
 1.  **Main Header:**
     *   Start with a main heading: \`# Engineering Service Report\`
     *   On the next line, add: \`**CONFIDENTIAL** | **Rev. 1.0**\`
-    *   On the next line, add: \`Report ID: ESR-{{{workOrderId}}} | Date: \` followed by today's date.
+    *   On the next line, add: \`Report ID: ESR-{{{workOrderId}}} | Date: {{{currentDate}}}\`
     *   Add a horizontal rule (\`---\`) after this header block.
 
 2.  **Information Sections (Do NOT use tables):**

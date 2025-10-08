@@ -176,6 +176,7 @@ export function WorkOrderClientSection({
             preparedBy: technician?.name || user?.name || 'N/A',
             workOrderId: currentWorkOrder.id,
             type: currentWorkOrder.type,
+            currentDate: format(new Date(), 'MM/dd/yyyy'),
         });
 
         const workOrderRef = doc(db, 'work-orders', currentWorkOrder.id);

@@ -125,14 +125,11 @@ export function WorkOrderClientSection({
             root.render(
                 <ReportBody 
                     ref={reportRef} 
-                    htmlContent={workOrder.technicianNotes || ''} 
-                />,
-                () => resolve()
+                    htmlContent={workOrder.technicianNotes?.replace(/\n/g, '<br />').replace(/---/g, '<hr />') || ''} 
+                />
             );
+            setTimeout(resolve, 500); // Give React time to render
         });
-
-        // Small delay to ensure styles are applied
-        await new Promise(resolve => setTimeout(resolve, 500));
 
         const canvas = await html2canvas(tempContainer, { scale: 2 });
         
@@ -243,41 +240,114 @@ export function WorkOrderClientSection({
 
   const isEngineerView = user?.role === 'Engineer';
 
-  const ServiceReport = () => (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Service Report</CardTitle>
-            <CardDescription>
-              Work Order: {currentWorkOrder.id}
-            </CardDescription>
-          </div>
-          <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <ReportBody 
-            ref={reportRef} 
-            htmlContent={marked.parse(workOrder.technicianNotes || '') as string}
-        />
-        <Separator />
-        <div className="p-6">
-           <h4 className="font-medium mb-2 text-card-foreground">Customer Approval</h4>
-           <div className="mt-4 border bg-muted rounded-lg h-32 flex items-center justify-center">
-                <p className="text-sm text-muted-foreground italic">Customer Signature</p>
-           </div>
-           <div className="mt-2 text-sm">
-                <p>Signed by: {customer?.contactPerson}</p>
-                <p className="text-muted-foreground">Date: {workOrder.completedDate ? format(new Date(workOrder.completedDate), 'PPP') : 'N/A'}</p>
-           </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const ServiceReport = () => {
+      const jsonReport = workOrder.technicianNotes ? JSON.parse(workOrder.technicianNotes) : {};
+      
+      return (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Service Report</CardTitle>
+                <CardDescription>
+                  Work Order: {currentWorkOrder.id}
+                </CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
+                <Download className="h-4 w-4 mr-2" />
+                Download PDF
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent ref={reportRef} className="p-6 bg-background">
+             <div className="space-y-6">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h2 className="text-2xl font-bold text-primary">Engineering Service Report</h2>
+                        <p className="text-muted-foreground">Report ID: ESR-{jsonReport.workOrder?.number}</p>
+                        <p className="text-muted-foreground">Date: {jsonReport.workOrder?.completionDate}</p>
+                    </div>
+                    <div className="text-right">
+                        <h3 className="font-semibold text-lg">{jsonReport.account?.name}</h3>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{jsonReport.account?.address}</p>
+                    </div>
+                </div>
+
+                 <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                        <h4 className="font-semibold">Client Information</h4>
+                        <p className="font-medium">{jsonReport.customer?.contact}</p>
+                        <p className="text-sm text-muted-foreground">{jsonReport.customer?.purchaseOrder}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <h4 className="font-semibold">Asset Serviced</h4>
+                        <p className="font-medium">{jsonReport.asset?.model}</p>
+                        <p className="text-sm text-muted-foreground">S/N: {jsonReport.asset?.serialNumber}</p>
+                    </div>
+                </div>
+                
+                 <Separator />
+
+                <div className="space-y-4">
+                     <div>
+                        <h4 className="font-semibold mb-1">Reported Problem</h4>
+                        <p className="text-sm text-muted-foreground">{jsonReport.summary?.reportedProblem}</p>
+                    </div>
+                     <div>
+                        <h4 className="font-semibold mb-1">Resolution Summary</h4>
+                        <p className="text-sm text-muted-foreground">{jsonReport.summary?.resolutionSummary}</p>
+                    </div>
+                </div>
+
+                <Separator />
+                
+                <div>
+                    <h4 className="font-semibold mb-2">Parts Consumed</h4>
+                    {jsonReport.parts && jsonReport.parts.length > 0 ? (
+                         <div className="border rounded-md">
+                            <Table>
+                                <TableHeader>
+                                <TableRow>
+                                    <TableHead>Part Number</TableHead>
+                                    <TableHead>Description</TableHead>
+                                    <TableHead className="text-right">Quantity</TableHead>
+                                </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                {jsonReport.parts.map((part: any, index: number) => (
+                                    <TableRow key={index}>
+                                        <TableCell>{part.partNumber}</TableCell>
+                                        <TableCell>{part.description}</TableCell>
+                                        <TableCell className="text-right">{part.quantity}</TableCell>
+                                    </TableRow>
+                                ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">No parts were consumed for this service.</p>
+                    )}
+                </div>
+
+                 <Separator />
+                
+                <div className="flex justify-between items-end">
+                    <div>
+                         <h4 className="font-semibold mb-2">Technician</h4>
+                         <p className="text-sm">{jsonReport.technicianName}</p>
+                    </div>
+                     <div className="text-right">
+                        <div className="border-b-2 border-dotted w-48 mb-1"></div>
+                        <p className="text-xs text-muted-foreground">Customer Signature ({jsonReport.signingPerson})</p>
+                    </div>
+                </div>
+
+
+             </div>
+          </CardContent>
+        </Card>
+      )
+  };
 
   const EngineerActions = () => (
     <Card>

@@ -21,3 +21,4 @@ import '@/ai/flows/analyze-document.ts';
 import '@/ai/flows/create-spare-part.ts';
 import '@/ai/flows/update-spare-part.ts';
 import '@/ai/flows/extract-and-create-parts.ts';
+import '@/ai/flows/delete-spare-part.ts';

@@ -116,3 +116,7 @@ export const UpdateSparePartInputSchema = z.object({
   id: z.string().min(1, 'Part ID is required'),
   quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
 });
+
+export const DeleteSparePartInputSchema = z.object({
+    partId: z.string().min(1, 'Part ID is required'),
+});

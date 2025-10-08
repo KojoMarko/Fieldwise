@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, forwardRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -49,6 +49,19 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type jsPDF from 'jspdf';
 import type html2canvas from 'html2canvas';
+
+// New component to isolate the ref and the content
+const ReportBody = forwardRef<HTMLDivElement, { htmlContent: string }>(({ htmlContent }, ref) => {
+    return (
+        <div ref={ref} className="p-6 bg-background">
+             <div className="prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-card-foreground prose-p:text-muted-foreground prose-strong:text-card-foreground">
+                <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+             </div>
+        </div>
+    );
+});
+ReportBody.displayName = 'ReportBody';
+
 
 export function WorkOrderClientSection({
   workOrder,
@@ -221,9 +234,10 @@ export function WorkOrderClientSection({
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div ref={reportRef} className="p-6 prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-card-foreground prose-p:text-muted-foreground prose-strong:text-card-foreground bg-background">
-          <div dangerouslySetInnerHTML={{ __html: workOrder.technicianNotes?.replace(/\n/g, '<br />').replace(/---/g, '<hr />') || '' }} />
-        </div>
+        <ReportBody 
+            ref={reportRef} 
+            htmlContent={workOrder.technicianNotes?.replace(/\n/g, '<br />').replace(/---/g, '<hr />') || ''} 
+        />
         <Separator />
         <div className="p-6">
            <h4 className="font-medium mb-2 text-card-foreground">Customer Approval</h4>

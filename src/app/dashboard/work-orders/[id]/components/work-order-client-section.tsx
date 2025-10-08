@@ -125,7 +125,7 @@ export function WorkOrderClientSection({
             root.render(
                 <ReportBody 
                     ref={reportRef} 
-                    htmlContent={workOrder.technicianNotes?.replace(/\n/g, '<br />').replace(/---/g, '<hr />') || ''} 
+                    htmlContent={marked.parse(workOrder.technicianNotes || '') as string}
                 />
             );
             setTimeout(resolve, 500); // Give React time to render
@@ -241,7 +241,35 @@ export function WorkOrderClientSection({
   const isEngineerView = user?.role === 'Engineer';
 
   const ServiceReport = () => {
-      const jsonReport = workOrder.technicianNotes ? JSON.parse(workOrder.technicianNotes) : {};
+      let jsonReport: any;
+      let isJson = true;
+
+      try {
+        if (workOrder.technicianNotes) {
+            jsonReport = JSON.parse(workOrder.technicianNotes);
+        } else {
+            jsonReport = {};
+        }
+      } catch (e) {
+          isJson = false;
+          console.warn("Could not parse technician notes as JSON. Falling back to plain text display.");
+      }
+
+      if (!isJson) {
+          return (
+             <Card>
+                <CardHeader>
+                    <CardTitle>Service Report</CardTitle>
+                    <CardDescription>Work Order: {currentWorkOrder.id}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="prose prose-sm max-w-none">
+                        <div dangerouslySetInnerHTML={{ __html: marked.parse(workOrder.technicianNotes || 'No report content.') as string }} />
+                    </div>
+                </CardContent>
+             </Card>
+          )
+      }
       
       return (
         <Card>

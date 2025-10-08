@@ -169,11 +169,7 @@ export const columns: ColumnDef<Asset>[] = [
   {
     accessorKey: 'customerId',
     header: 'Customer',
-    cell: ({ row }) => <CustomerNameCell customerId={row.original.customerId} />,
-    // Hide this column on smaller screens
-     meta: {
-        className: 'hidden lg:table-cell'
-    }
+    cell: ({ row }) => <CustomerNameCell customerId={row.original.customerId} />
   },
   {
     accessorKey: 'installationDate',

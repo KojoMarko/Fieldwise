@@ -21,15 +21,16 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectSeparator,
 } from '@/components/ui/select';
-import { LoaderCircle, CalendarIcon } from 'lucide-react';
+import { LoaderCircle, CalendarIcon, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Customer } from '@/lib/types';
+import type { Customer, Asset } from '@/lib/types';
 import { CreateAssetInputSchema } from '@/lib/schemas';
 import { createAsset } from '@/ai/flows/create-asset';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -37,6 +38,16 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type AssetFormValues = z.infer<typeof CreateAssetInputSchema>;
 
@@ -46,27 +57,52 @@ export function AssetForm() {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
+  const [allAssets, setAllAssets] = useState<Asset[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isNewModelDialogOpen, setNewModelDialogOpen] = useState(false);
+  const [newModelName, setNewModelName] = useState('');
 
   useEffect(() => {
     if (!user?.companyId) {
-      setIsLoadingCustomers(false);
+      setIsLoading(false);
       return;
     }
 
     const customerQuery = query(collection(db, "customers"), where("companyId", "==", user.companyId));
-
     const unsubscribeCustomers = onSnapshot(customerQuery, (snapshot) => {
       const customersData: Customer[] = [];
       snapshot.forEach((doc) => {
         customersData.push({ id: doc.id, ...doc.data() } as Customer);
       });
       setCustomers(customersData);
-      setIsLoadingCustomers(false);
     });
 
-    return () => unsubscribeCustomers();
+    const assetQuery = query(collection(db, "assets"), where("companyId", "==", user.companyId));
+    const unsubscribeAssets = onSnapshot(assetQuery, (snapshot) => {
+        const assetsData: Asset[] = [];
+        snapshot.forEach((doc) => {
+            assetsData.push({ id: doc.id, ...doc.data() } as Asset);
+        });
+        setAllAssets(assetsData);
+        setIsLoading(false);
+    });
+
+    return () => {
+        unsubscribeCustomers();
+        unsubscribeAssets();
+    }
   }, [user?.companyId]);
+  
+  const discoveredModels = useMemo(() => {
+    const modelMap = new Map<string, number | undefined>();
+    allAssets.forEach(asset => {
+        if (!modelMap.has(asset.model)) {
+            modelMap.set(asset.model, asset.ppmFrequency);
+        }
+    });
+    return Array.from(modelMap.entries()).map(([name, ppmFrequency]) => ({ name, ppmFrequency }));
+  }, [allAssets]);
+
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(CreateAssetInputSchema),
@@ -112,8 +148,57 @@ export function AssetForm() {
       setIsSubmitting(false);
     }
   }
+  
+  const handleModelChange = (modelName: string) => {
+    if (modelName === 'add_new_model') {
+        setNewModelDialogOpen(true);
+    } else {
+        form.setValue('model', modelName);
+        const selectedModel = discoveredModels.find(m => m.name === modelName);
+        if (selectedModel && selectedModel.ppmFrequency) {
+            form.setValue('ppmFrequency', selectedModel.ppmFrequency);
+             toast({
+                title: 'PPM Frequency Pre-filled',
+                description: `PPM frequency set to ${selectedModel.ppmFrequency} months based on model template.`,
+            });
+        }
+    }
+  }
+
+  const handleAddNewModel = () => {
+    if(newModelName.trim()) {
+        form.setValue('model', newModelName);
+        setNewModelDialogOpen(false);
+        setNewModelName('');
+    }
+  }
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center py-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
+  }
 
   return (
+    <>
+      <AlertDialog open={isNewModelDialogOpen} onOpenChange={setNewModelDialogOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Add New Asset Model</AlertDialogTitle>
+            <AlertDialogDescription>
+                Enter the name for the new model you want to add.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Input 
+                placeholder="e.g., Beckman Coulter DxH 900"
+                value={newModelName}
+                onChange={(e) => setNewModelName(e.target.value)}
+            />
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAddNewModel}>Add Model</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
@@ -133,19 +218,41 @@ export function AssetForm() {
           )}
         />
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="model"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Model</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., Vitros 5600" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+           <FormField
+                control={form.control}
+                name="model"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Asset Model</FormLabel>
+                    <Select
+                    onValueChange={handleModelChange}
+                    value={field.value}
+                    >
+                    <FormControl>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Select an existing model or add new" />
+                        </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {discoveredModels.map((model) => (
+                        <SelectItem key={model.name} value={model.name}>
+                            {model.name}
+                        </SelectItem>
+                        ))}
+                         <SelectSeparator />
+                        <SelectItem value="add_new_model" className="text-primary focus:text-primary-foreground focus:bg-primary">
+                            <div className='flex items-center gap-2'>
+                                <PlusCircle className="h-4 w-4" />
+                                <span>Add New Model...</span>
+                            </div>
+                        </SelectItem>
+                    </SelectContent>
+                    </Select>
+                    <FormDescription>Select a model to pre-fill template data like PPM frequency.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
           <FormField
             control={form.control}
             name="serialNumber"
@@ -230,7 +337,7 @@ export function AssetForm() {
                     <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    disabled={isLoadingCustomers}
+                    disabled={isLoading}
                     >
                     <FormControl>
                         <SelectTrigger>
@@ -440,7 +547,6 @@ export function AssetForm() {
         </div>
       </form>
     </Form>
+    </>
   );
 }
-
-    

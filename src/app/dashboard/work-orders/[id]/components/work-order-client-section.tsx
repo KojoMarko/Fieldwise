@@ -47,8 +47,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import type jsPDF from 'jspdf';
+import type html2canvas from 'html2canvas';
 
 export function WorkOrderClientSection({
   workOrder,
@@ -95,6 +95,9 @@ export function WorkOrderClientSection({
     });
 
     try {
+        const { default: jsPDF } = await import('jspdf');
+        const { default: html2canvas } = await import('html2canvas');
+
         const canvas = await html2canvas(reportElement, { scale: 2 });
         const imgData = canvas.toDataURL('image/png');
         

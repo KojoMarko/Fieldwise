@@ -50,6 +50,8 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type jsPDF from 'jspdf';
 import type html2canvas from 'html2canvas';
+import { marked } from 'marked';
+
 
 // New component to isolate the ref and the content
 const ReportBody = forwardRef<HTMLDivElement, { htmlContent: string }>(({ htmlContent }, ref) => {
@@ -118,10 +120,12 @@ export function WorkOrderClientSection({
         
         const root = createRoot(tempContainer);
         
+        const parsedHtml = await marked.parse(workOrder.technicianNotes || '');
+
         root.render(
             <ReportBody 
                 ref={reportRef} 
-                htmlContent={workOrder.technicianNotes?.replace(/\n/g, '<br />').replace(/---/g, '<hr />') || ''} 
+                htmlContent={parsedHtml} 
             />
         );
 
@@ -259,7 +263,7 @@ export function WorkOrderClientSection({
       <CardContent className="p-0">
         <ReportBody 
             ref={reportRef} 
-            htmlContent={workOrder.technicianNotes?.replace(/\n/g, '<br />').replace(/---/g, '<hr />') || ''} 
+            htmlContent={marked.parse(workOrder.technicianNotes || '') as string}
         />
         <Separator />
         <div className="p-6">
@@ -494,4 +498,3 @@ export function WorkOrderClientSection({
     </>
   );
 }
-

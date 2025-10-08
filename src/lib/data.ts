@@ -25,12 +25,12 @@ const now = new Date();
 
 export const assets: Asset[] = [
   // Vitros 5600
-  { id: 'asset-v5600-1', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-001', customerId: 'cust-1', location: 'Lab 1', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 365)) },
-  { id: 'asset-v5600-2', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-002', customerId: 'cust-2', location: 'Main Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 400)) },
-  { id: 'asset-v5600-3', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-003', customerId: 'cust-3', location: 'Hematology', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 500)) },
-  { id: 'asset-v5600-4', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-004', customerId: 'cust-4', location: 'Central Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 600)) },
-  { id: 'asset-v5600-5', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-005', customerId: 'cust-5', location: 'Emergency Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 700)) },
-  { id: 'asset-v5600-6', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-006', customerId: 'cust-6', location: 'University Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 800)) },
+  { id: 'asset-v5600-1', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-001', customerId: 'cust-1', location: 'Lab 1', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 365)), ppmFrequency: 6, lastPpmDate: formatISO(subDays(now, 60)) },
+  { id: 'asset-v5600-2', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-002', customerId: 'cust-2', location: 'Main Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 400)), ppmFrequency: 6, lastPpmDate: formatISO(subDays(now, 90)) },
+  { id: 'asset-v5600-3', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-003', customerId: 'cust-3', location: 'Hematology', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 500)), ppmFrequency: 6, lastPpmDate: formatISO(subDays(now, 120)) },
+  { id: 'asset-v5600-4', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-004', customerId: 'cust-4', location: 'Central Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 600)), ppmFrequency: 6, lastPpmDate: formatISO(subDays(now, 30)) },
+  { id: 'asset-v5600-5', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-005', customerId: 'cust-5', location: 'Emergency Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 700)), ppmFrequency: 6, lastPpmDate: formatISO(subDays(now, 150)) },
+  { id: 'asset-v5600-6', name: 'Vitros 5600', model: 'Vitros 5600', serialNumber: 'V5600-006', customerId: 'cust-6', location: 'University Lab', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 800)), ppmFrequency: 6, lastPpmDate: formatISO(subDays(now, 75)) },
   // Diapro Elisa Analyzer
   { id: 'asset-dea-1', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-001', customerId: 'cust-7', location: 'Immunology', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 200)) },
   { id: 'asset-dea-2', name: 'Diapro Elisa Analyzer', model: 'Diapro Elisa Analyzer', serialNumber: 'DEA-002', customerId: 'cust-8', location: 'Serology Dept', companyId: defaultCompanyId, installationDate: formatISO(subDays(now, 250)) },

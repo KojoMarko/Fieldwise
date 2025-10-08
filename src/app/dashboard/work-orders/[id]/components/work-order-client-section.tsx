@@ -118,18 +118,15 @@ export function WorkOrderClientSection({
         
         const root = createRoot(tempContainer);
         
-        await new Promise<void>((resolve) => {
-            root.render(
-                <ReportBody 
-                    ref={reportRef} 
-                    htmlContent={workOrder.technicianNotes?.replace(/\n/g, '<br />').replace(/---/g, '<hr />') || ''} 
-                />,
-                () => {
-                    // This callback ensures rendering is complete before capturing
-                    setTimeout(resolve, 500); // Small delay to ensure styles are applied
-                }
-            );
-        });
+        root.render(
+            <ReportBody 
+                ref={reportRef} 
+                htmlContent={workOrder.technicianNotes?.replace(/\n/g, '<br />').replace(/---/g, '<hr />') || ''} 
+            />
+        );
+
+        // Wait a moment for the content to render before capturing
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         const canvas = await html2canvas(tempContainer, { scale: 2 });
         
@@ -497,3 +494,4 @@ export function WorkOrderClientSection({
     </>
   );
 }
+

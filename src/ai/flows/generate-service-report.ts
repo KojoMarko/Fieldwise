@@ -40,35 +40,6 @@ export async function generateServiceReport(input: GenerateServiceReportInput): 
 }
 
 
-const prompt = ai.definePrompt({
-  name: 'generateServiceReportPrompt',
-  input: { schema: GenerateServiceReportInputSchema },
-  output: { schema: GenerateServiceReportOutputSchema },
-  tools: [findPartNumber],
-  prompt: `You are an AI assistant that structures technical service data.
-Your task is to take the provided JSON input from an engineer's questionnaire and return it as a JSON string within a 'report' field.
-**Do not modify, interpret, or summarize the data.**
-Simply structure the input data into the specified output format.
-
-**Example Input:**
-{
-  "reportedProblem": "Machine not powering on.",
-  "symptomSummary": "No lights, no response.",
-  "problemSummary": "Power supply failure.",
-  "resolutionSummary": "Replaced the main power supply unit.",
-  ...
-}
-
-**Expected Output:**
-{
-  "report": "{\\"reportedProblem\\":\\"Machine not powering on.\\",\\"symptomSummary\\":\\"No lights, no response.\\",...}"
-}
-
-**Input Data:**
-{{{json input}}}
-`,
-});
-
 const generateServiceReportFlow = ai.defineFlow(
   {
     name: 'generateServiceReportFlow',
@@ -135,4 +106,3 @@ const generateServiceReportFlow = ai.defineFlow(
     }
   }
 );
-

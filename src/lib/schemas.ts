@@ -2,7 +2,6 @@
 import { z } from 'zod';
 
 export const ServiceReportQuestionnaireSchema = z.object({
-  // New fields from image
   reportedProblem: z.string().describe("The problem as reported by the customer."),
   symptomSummary: z.string().describe("Summary of the symptoms observed."),
   problemSummary: z.string().describe("A summary of the identified problem."),
@@ -12,23 +11,14 @@ export const ServiceReportQuestionnaireSchema = z.object({
   agreementType: z.string().describe("The type of service agreement (e.g., Warranty, Contract)."),
   laborHours: z.coerce.number().describe("The number of hours spent on labor."),
   signingPerson: z.string().describe("The name of the person signing the service report."),
-
-  // Old fields
-  workPerformed: z.string().describe('A summary of the work that was performed by the technician.'),
+  timeWorkStarted: z.any().describe("The date and time the engineer started the work."),
+  timeWorkCompleted: z.any().describe("The date and time the engineer completed the work."),
   partsUsed: z.array(z.object({
     partNumber: z.string(),
     description: z.string(),
     quantity: z.coerce.number(),
     price: z.coerce.number(),
   })).describe('A list of parts that were used during the service.'),
-  finalObservations: z.string().describe('Any final observations or recommendations the technician has.'),
-  customerFeedback: z.string().describe('Any feedback or comments provided by the customer on-site.'),
-  timeOnSite: z.any().describe("The date and time the engineer arrived on site."),
-  timeWorkStarted: z.any().describe("The date and time the engineer started the work."),
-  timeWorkCompleted: z.any().describe("The date and time the engineer completed the work."),
-  rootCause: z.string().describe("The identified root cause of the equipment failure."),
-  failureCode: z.string().describe("The specific failure code associated with the root cause."),
-  followUpNeeded: z.boolean().describe("Whether any follow-up action is required."),
 });
 
 

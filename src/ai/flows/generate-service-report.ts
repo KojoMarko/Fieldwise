@@ -93,7 +93,7 @@ const generateServiceReportFlow = ai.defineFlow(
             hours: input.laborHours,
             rate: 'N/A', // Placeholder
             total: 'N/A', // Placeholder
-            customerCharge: 'N/A' // Placeholder
+            customerCharge: 'N/A', // Placeholder
         }],
         parts: input.partsUsed,
         customerCallOriginator: 'N/A', // Placeholder

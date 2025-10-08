@@ -96,7 +96,6 @@ export function WorkOrderClientSection({
       laborHours: workOrder.duration || 0,
       signingPerson: customer?.contactPerson || '',
       partsUsed: [],
-      followUpNeeded: false
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -486,7 +485,7 @@ export function WorkOrderClientSection({
                            <Input value={questionnaireData.signingPerson} onChange={e => setQuestionnaireData({...questionnaireData, signingPerson: e.target.value})} />
                         </div>
                    </div>
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                            <Label>Time Work Started</Label>
                            <DateTimePicker value={questionnaireData.timeWorkStarted} onChange={date => setQuestionnaireData({...questionnaireData, timeWorkStarted: date})} />

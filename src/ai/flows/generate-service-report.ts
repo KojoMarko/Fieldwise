@@ -47,7 +47,7 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateServiceReportInputSchema },
   output: { schema: GenerateServiceReportOutputSchema },
   tools: [findPartNumber],
-  prompt: `You are an expert technical writer specializing in creating professional engineering service reports. Your task is to generate a comprehensive and elegantly formatted service report in Markdown based on the provided data. The report should follow the structure of the example provided.
+  prompt: `You are an expert technical writer specializing in creating professional engineering service reports. Your task is to generate a comprehensive and elegantly formatted service report in Markdown based on the provided data. The report should be clean, readable, and avoid using markdown tables.
 
 **Report Data:**
 
@@ -65,45 +65,34 @@ const prompt = ai.definePrompt({
 *   **Contact Person:** {{{clientContact}}}
 *   **Client Address:** {{{clientAddress}}}
 
-**Project Information:**
-*   **Project Name:** {{{workOrderTitle}}}
+**Service & Asset Information:**
+*   **Work Order Title:** {{{workOrderTitle}}}
 *   **Asset Serviced:** {{{assetName}}}
 *   **Service Start Date:** {{{timeWorkStarted}}}
 *   **Service Completion Date:** {{{timeWorkCompleted}}}
-
-**Report Details:**
 *   **Service Type:** {{{type}}}
 *   **Prepared By:** {{{preparedBy}}}
+
+**Detailed Report Sections:**
 *   **Time On-Site:** {{{timeOnSite}}}
-*   **Actual Work Performed (Summary):** {{{workPerformed}}}
+*   **Work Performed Summary:** {{{workPerformed}}}
 *   **Root Cause Analysis:** {{{rootCause}}} (Failure Code: {{{failureCode}}})
 *   **Parts Consumed:** {{{partsUsed}}}
 *   **Final Observations & Recommendations:** {{{finalObservations}}}
 *   **Customer On-Site Feedback:** {{{customerFeedback}}}
 *   **Follow-up Required:** {{{followUpNeeded}}}
 
-**Instructions:**
+**Formatting Instructions:**
 
-1.  **Header:** Start with a main heading "Engineering Service Report". Include "CONFIDENTIAL" and "Rev. 1.0" as subheadings. On the top right, include the Report ID and the current date.
-2.  **Information Sections:** Create three main sections: "Engineering Firm Information", "Client Information", and "Project Information". Each section should have two columns.
-    *   **Engineering Firm Info:** Show Company Name, Address, Phone, and Email.
-    *   **Client Info:** Show Client Name, Contact Person, and Client Address.
-    *   **Project Info:** Show Project Name (use Work Order Title), Project Number (use Work Order ID), Project Location (use Client Address), Service Start Date, and Service Completion Date.
-3.  **Report Details Section:**
-    *   Create a section for "Report Details".
-    *   Include "Service Type" and "Prepared By".
-    *   **Service Summary:** Provide a detailed narrative under a heading like "Summary of Work Performed". This should be based on the "Actual Work Performed" data.
-    *   **Root Cause:** Under a heading "Root Cause Analysis", state the identified root cause and the failure code.
-    *   **Parts:** Under a heading "Parts Consumed", list all parts from the "Parts Consumed" data. If the 'findPartNumber' tool returns a valid part number for any named part, include it.
-    *   **Recommendations:** Under a heading "Final Observations & Recommendations", detail any important observations or recommendations for future maintenance.
-    *   **Follow-Up:** If follow-up is needed, create a section "Required Follow-Up Actions" and state what is required.
-4.  **Formatting:**
-    *   Use Markdown for all formatting.
-    *   Use headings (\`##\`, \`###\`) to structure the report.
-    *   Use bold (\`**text**\`) for labels (e.g., **Company Name:**).
-    *   Use lists for items like parts consumed.
-
-Generate the final report text based on these instructions. The tone must be professional and the formatting clean and readable.`,
+1.  **Main Header:** Start with a main heading "# Engineering Service Report". Add "CONFIDENTIAL" and "Rev. 1.0" on the next line. Then include the Report ID and the current date. Add a horizontal rule (---) after this block.
+2.  **Information Sections:** Create three distinct sections using "##" headings: "Company Information", "Client Information", and "Service & Asset Information".
+    *   Under each heading, list the details using bold labels followed by the data (e.g., **Company Name:** {{{companyName}}}). Do NOT use tables.
+3.  **Detailed Report Section:**
+    *   Create a main heading "## Service Details".
+    *   Under this, create subsections using "###" for each of the following: "Summary of Work Performed", "Root Cause Analysis", "Parts Consumed", "Final Observations & Recommendations".
+    *   For "Parts Consumed", if the 'findPartNumber' tool returns a valid part number, include it in parentheses next to the part name.
+    *   If "Follow-up Required" is true, create a final subsection "### Required Follow-Up Actions" and state what is needed.
+4.  **Overall Style:** Use clear headings, paragraphs, and lists. The final output must be professional, well-structured, and easy to read. Do not use any markdown tables.`,
 });
 
 const generateServiceReportFlow = ai.defineFlow(
@@ -117,5 +106,3 @@ const generateServiceReportFlow = ai.defineFlow(
     return output!;
   }
 );
-
-

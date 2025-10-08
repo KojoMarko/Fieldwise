@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useRef, forwardRef } from 'react';
+import { createRoot } from 'react-dom/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -99,9 +100,6 @@ export function WorkOrderClientSection({
 
 
   const handleDownloadPdf = async () => {
-    const reportElement = reportRef.current;
-    if (!reportElement) return;
-
     toast({
         title: 'Generating PDF...',
         description: 'Please wait while the report is being prepared for download.',
@@ -111,7 +109,35 @@ export function WorkOrderClientSection({
         const { default: jsPDF } = await import('jspdf');
         const { default: html2canvas } = await import('html2canvas');
 
-        const canvas = await html2canvas(reportElement, { scale: 2 });
+        // Create a temporary element to render the report for canvas capture
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px'; // Position it off-screen
+        tempContainer.style.width = '800px'; // A fixed width helps with consistent rendering
+        document.body.appendChild(tempContainer);
+        
+        const root = createRoot(tempContainer);
+        
+        await new Promise<void>((resolve) => {
+            root.render(
+                <ReportBody 
+                    ref={reportRef} 
+                    htmlContent={workOrder.technicianNotes?.replace(/\n/g, '<br />').replace(/---/g, '<hr />') || ''} 
+                />,
+                () => {
+                    // This callback ensures rendering is complete before capturing
+                    setTimeout(resolve, 500); // Small delay to ensure styles are applied
+                }
+            );
+        });
+
+        const canvas = await html2canvas(tempContainer, { scale: 2 });
+        
+        // Cleanup the temporary element
+        root.unmount();
+        document.body.removeChild(tempContainer);
+
+
         const imgData = canvas.toDataURL('image/png');
         
         const pdf = new jsPDF({

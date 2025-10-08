@@ -14,26 +14,23 @@ import { z } from 'genkit';
 import { ServiceReportQuestionnaireSchema } from '@/lib/schemas';
 import { findPartNumber } from './find-part-number';
 
-
 const GenerateServiceReportInputSchema = ServiceReportQuestionnaireSchema.extend({
-    workOrderTitle: z.string().describe('The title of the work order.'),
-    assetName: z.string().describe('The name of the asset that was serviced.'),
+    workOrderId: z.string().describe("The ID of the work order."),
+    assetName: z.string().describe("The name of the asset that was serviced."),
+    assetModel: z.string().describe("The model of the asset."),
+    assetSerial: z.string().describe("The serial number of the asset."),
     companyName: z.string().describe('The name of the engineering/service company.'),
     companyAddress: z.string().describe('The address of the engineering/service company.'),
-    companyPhone: z.string().describe('The phone number of the engineering/service company.'),
-    companyEmail: z.string().describe('The email of the engineering/service company.'),
     clientName: z.string().describe('The name of the client company.'),
-    clientContact: z.string().describe('The name of the contact person at the client company.'),
     clientAddress: z.string().describe('The address of the client.'),
     preparedBy: z.string().describe("The name of the engineer who prepared the report."),
-    workOrderId: z.string().describe("The ID of the work order."),
-    currentDate: z.string().describe("The current date for the report in MM/DD/YYYY format."),
+    completionDate: z.string().describe("The date the work was completed."),
 });
 export type GenerateServiceReportInput = z.infer<typeof GenerateServiceReportInputSchema>;
 
 
 const GenerateServiceReportOutputSchema = z.object({
-  report: z.string().describe('The full, professionally formatted service report text, written in markdown.'),
+  report: z.string().describe('A JSON string containing the structured service report data.'),
 });
 export type GenerateServiceReportOutput = z.infer<typeof GenerateServiceReportOutputSchema>;
 
@@ -48,48 +45,28 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateServiceReportInputSchema },
   output: { schema: GenerateServiceReportOutputSchema },
   tools: [findPartNumber],
-  prompt: `You are an expert technical writer for a field service company. Your task is to generate a comprehensive and elegantly formatted service report in Markdown based on the provided data.
-The report must be clean, professional, and easy to read.
-**Crucially, you must not use any markdown tables.** Use headings, bolded labels, and paragraphs.
+  prompt: `You are an AI assistant that structures technical service data.
+Your task is to take the provided JSON input from an engineer's questionnaire and return it as a JSON string within a 'report' field.
+**Do not modify, interpret, or summarize the data.**
+Simply structure the input data into the specified output format.
 
-**Report Data:**
+**Example Input:**
+{
+  "reportedProblem": "Machine not powering on.",
+  "symptomSummary": "No lights, no response.",
+  "problemSummary": "Power supply failure.",
+  "resolutionSummary": "Replaced the main power supply unit.",
+  ...
+}
 
-*   **Report ID:** ESR-{{{workOrderId}}}
-*   **Date:** {{{currentDate}}}
+**Expected Output:**
+{
+  "report": "{\\"reportedProblem\\":\\"Machine not powering on.\\",\\"symptomSummary\\":\\"No lights, no response.\\",...}"
+}
 
-**Formatting Instructions:**
-
-1.  **Main Header:**
-    *   Start with a main heading: \`# Engineering Service Report\`
-    *   On the next line, add: \`**CONFIDENTIAL** | **Rev. 1.0**\`
-    *   On the next line, add: \`Report ID: ESR-{{{workOrderId}}} | Date: {{{currentDate}}}\`
-    *   Add a horizontal rule (\`---\`) after this header block.
-
-2.  **Information Sections (Do NOT use tables):**
-    *   Create a section with the heading: \`## Company Information\`
-        *   List the following details using bold labels: \`**Company Name:** {{{companyName}}}\`, \`**Address:** {{{companyAddress}}}\`, \`**Phone:** {{{companyPhone}}}\`, \`**Email:** {{{companyEmail}}}\`.
-    *   Create a section with the heading: \`## Client Information\`
-        *   List the following details using bold labels: \`**Client Name:** {{{clientName}}}\`, \`**Contact Person:** {{{clientContact}}}\`, \`**Client Address:** {{{clientAddress}}}\`.
-    *   Create a section with the heading: \`## Service & Asset Information\`
-        *   List the following details using bold labels: \`**Work Order Title:** {{{workOrderTitle}}}\`, \`**Asset Serviced:** {{{assetName}}}\`, \`**Service Start Date:** {{{timeWorkStarted}}}\`, \`**Service Completion Date:** {{{timeWorkCompleted}}}\`, \`**Service Type:** {{{type}}}\`, \`**Prepared By:** {{{preparedBy}}}\`.
-
-3.  **Detailed Report Section:**
-    *   Create a main heading: \`## Service Details\`
-    *   Under this, create subsections using \`###\` for each of the following: "Summary of Work Performed", "Root Cause Analysis", "Parts Consumed", and "Final Observations & Recommendations".
-    *   For "Summary of Work Performed", use the content from \`{{{workPerformed}}}\`.
-    *   For "Root Cause Analysis", state the cause and failure code: "The identified root cause for the issue was **{{{rootCause}}}**. (Failure Code: {{{failureCode}}})".
-    *   For "Parts Consumed", use the content from \`{{{partsUsed}}}\`. If the 'findPartNumber' tool returns a valid part number, include it in parentheses next to the part name. If no parts were used, state "None".
-    *   For "Final Observations & Recommendations", use the content from \`{{{finalObservations}}}\`.
-    *   If \`{{{followUpNeeded}}}\` is true, create a final subsection "### Required Follow-Up Actions" and describe what is needed.
-
-**Example of a correctly formatted section:**
-
-## Client Information
-**Client Name:** St. Mary's Hospital
-**Contact Person:** Dr. Eleanor Vance
-**Client Address:** 456 Health Ave, Meditown
-
-This format is professional and easy to read. Do not use tables.`,
+**Input Data:**
+{{{json input}}}
+`,
 });
 
 const generateServiceReportFlow = ai.defineFlow(
@@ -99,7 +76,63 @@ const generateServiceReportFlow = ai.defineFlow(
     outputSchema: GenerateServiceReportOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+     // The AI's only job is to receive the structured data and return it as a JSON string.
+    // All formatting will be handled by the React component.
+    const reportData = {
+        account: {
+            name: input.companyName,
+            address: input.companyAddress,
+        },
+        asset: {
+            model: input.assetModel,
+            serialNumber: input.assetSerial,
+            idNumber: 'N/A' // Placeholder
+        },
+        customer: {
+            contact: 'N/A', // Placeholder
+            purchaseOrder: 'N/A', // Placeholder
+            propertyNumber: 'N/A' // Placeholder
+        },
+        agreement: {
+            type: input.agreementType,
+            number: 'N/A', // Placeholder
+            effectiveDates: 'N/A' // Placeholder
+        },
+        case: {
+            number: 'N/A', // Placeholder
+            createdDate: 'N/A' // Placeholder
+        },
+        workOrder: {
+            number: input.workOrderId,
+            completionDate: input.completionDate,
+            performedBy: input.preparedBy,
+            instrumentCondition: input.instrumentCondition
+        },
+        summary: {
+            reportedProblem: input.reportedProblem,
+            symptomSummary: input.symptomSummary,
+            problemSummary: input.problemSummary,
+            resolutionSummary: input.resolutionSummary,
+            verificationOfActivity: input.verificationOfActivity
+        },
+        labor: [{
+            startDate: input.timeWorkStarted,
+            endDate: input.timeWorkCompleted,
+            description: 'SERVICE LABOR',
+            hours: input.laborHours,
+            rate: 'N/A', // Placeholder
+            total: 'N/A', // Placeholder
+            customerCharge: 'N/A' // Placeholder
+        }],
+        parts: input.partsUsed,
+        customerCallOriginator: 'N/A', // Placeholder
+        signingPerson: input.signingPerson,
+        technicianName: input.preparedBy
+    };
+
+    return {
+        report: JSON.stringify(reportData)
+    }
   }
 );
+

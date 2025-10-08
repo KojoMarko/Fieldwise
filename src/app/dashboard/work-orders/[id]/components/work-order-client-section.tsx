@@ -87,17 +87,19 @@ export function WorkOrderClientSection({
   const [isQuestionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
   const [questionnaireData, setQuestionnaireData] = useState<Partial<ServiceReportQuestionnaire>>({
-      workPerformed: '',
-      partsUsed: '',
-      finalObservations: '',
-      customerFeedback: '',
-      rootCause: 'Other',
-      failureCode: '',
+      reportedProblem: workOrder.description,
+      symptomSummary: '',
+      problemSummary: '',
+      resolutionSummary: '',
+      verificationOfActivity: '',
+      instrumentCondition: 'Operational',
+      agreementType: 'Warranty',
+      laborHours: workOrder.duration || 0,
+      signingPerson: customer?.contactPerson || '',
+      partsUsed: [],
       followUpNeeded: false
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [consumedParts, setConsumedParts] = useState<string[]>([]);
-  const [customPart, setCustomPart] = useState('');
   const reportRef = useRef<HTMLDivElement>(null);
 
 
@@ -111,36 +113,33 @@ export function WorkOrderClientSection({
         const { default: jsPDF } = await import('jspdf');
         const { default: html2canvas } = await import('html2canvas');
 
-        // Create a temporary element to render the report for canvas capture
         const tempContainer = document.createElement('div');
         tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px'; // Position it off-screen
-        tempContainer.style.width = '800px'; // A fixed width helps with consistent rendering
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.width = '800px';
         document.body.appendChild(tempContainer);
         
         const root = createRoot(tempContainer);
         
-        const parsedHtml = await marked.parse(workOrder.technicianNotes || '');
+        await new Promise<void>((resolve) => {
+            root.render(
+                <ReportBody 
+                    ref={reportRef} 
+                    htmlContent={workOrder.technicianNotes || ''} 
+                />,
+                () => resolve()
+            );
+        });
 
-        root.render(
-            <ReportBody 
-                ref={reportRef} 
-                htmlContent={parsedHtml} 
-            />
-        );
-
-        // Wait a moment for the content to render before capturing
+        // Small delay to ensure styles are applied
         await new Promise(resolve => setTimeout(resolve, 500));
 
         const canvas = await html2canvas(tempContainer, { scale: 2 });
         
-        // Cleanup the temporary element
         root.unmount();
         document.body.removeChild(tempContainer);
 
-
         const imgData = canvas.toDataURL('image/png');
-        
         const pdf = new jsPDF({
             orientation: 'p',
             unit: 'px',
@@ -164,7 +163,6 @@ export function WorkOrderClientSection({
     }
   };
 
-  // Open questionnaire when status changes to 'Completed'
   useState(() => {
     if (workOrder.status === 'Completed' && user?.role === 'Engineer' && !workOrder.technicianNotes) {
       setQuestionnaireOpen(true);
@@ -196,27 +194,28 @@ export function WorkOrderClientSection({
     setQuestionnaireOpen(false);
     setIsGeneratingReport(true);
     try {
-        const partsList = [...consumedParts];
-        if (customPart) {
-            partsList.push(customPart);
-        }
+        const partsData = allocatedParts
+            .filter(p => p.status === 'Used')
+            .map(p => ({
+                partNumber: p.partNumber,
+                description: p.name,
+                quantity: p.quantity,
+                price: 0, // Placeholder
+            }));
         
         const result = await generateServiceReport({
-            ...(questionnaireData as ServiceReportQuestionnaire),
-            partsUsed: partsList.join(', '),
-            workOrderTitle: currentWorkOrder.title,
+            ...(questionnaireData as Omit<ServiceReportQuestionnaire, 'partsUsed'>),
+            partsUsed: partsData,
+            workOrderId: currentWorkOrder.id,
             assetName: asset?.name || 'N/A',
+            assetModel: asset?.model || 'N/A',
+            assetSerial: asset?.serialNumber || 'N/A',
             companyName: company?.name || 'FieldWise Inc.',
             companyAddress: company?.address || '123 Service Lane, Tech City',
-            companyEmail: company?.email || 'contact@fieldwise.com',
-            companyPhone: company?.phone || '555-010-3452',
             clientName: customer?.name || 'N/A',
-            clientContact: customer?.contactPerson || 'N/A',
             clientAddress: customer?.address || 'N/A',
             preparedBy: technician?.name || user?.name || 'N/A',
-            workOrderId: currentWorkOrder.id,
-            type: currentWorkOrder.type,
-            currentDate: format(new Date(), 'MM/dd/yyyy'),
+            completionDate: format(new Date(), 'yyyy-MM-dd HH:mm'),
         });
 
         const workOrderRef = doc(db, 'work-orders', currentWorkOrder.id);
@@ -360,15 +359,62 @@ export function WorkOrderClientSection({
       <Dialog open={isQuestionnaireOpen} onOpenChange={setQuestionnaireOpen}>
           <DialogContent className="sm:max-w-3xl">
               <DialogHeader>
-                  <DialogTitle>Engineer Completion & Sign-Off</DialogTitle>
-                  <DialogDescription>To be filled by the Engineer</DialogDescription>
+                  <DialogTitle>Engineer Service Report Questionnaire</DialogTitle>
+                  <DialogDescription>Fill out all fields to generate the final service report.</DialogDescription>
               </DialogHeader>
               <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto px-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Reported Problem</Label>
+                        <Textarea value={questionnaireData.reportedProblem} onChange={e => setQuestionnaireData({...questionnaireData, reportedProblem: e.target.value})} />
+                      </div>
+                       <div className="space-y-2">
+                        <Label>Symptom Summary</Label>
+                        <Textarea value={questionnaireData.symptomSummary} onChange={e => setQuestionnaireData({...questionnaireData, symptomSummary: e.target.value})} />
+                      </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Problem Summary</Label>
+                        <Textarea value={questionnaireData.problemSummary} onChange={e => setQuestionnaireData({...questionnaireData, problemSummary: e.target.value})} />
+                      </div>
+                       <div className="space-y-2">
+                        <Label>Resolution Summary</Label>
+                        <Textarea value={questionnaireData.resolutionSummary} onChange={e => setQuestionnaireData({...questionnaireData, resolutionSummary: e.target.value})} />
+                      </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Verification of Activity</Label>
+                        <Input value={questionnaireData.verificationOfActivity} onChange={e => setQuestionnaireData({...questionnaireData, verificationOfActivity: e.target.value})} />
+                      </div>
+                       <div className="space-y-2">
+                        <Label>Instrument Condition</Label>
+                        <Select value={questionnaireData.instrumentCondition} onValueChange={(value) => setQuestionnaireData({...questionnaireData, instrumentCondition: value})}>
+                           <SelectTrigger><SelectValue /></SelectTrigger>
+                           <SelectContent>
+                             <SelectItem value="Operational">Operational</SelectItem>
+                             <SelectItem value="Operational with Limitations">Operational with Limitations</SelectItem>
+                             <SelectItem value="Not Operational">Not Operational</SelectItem>
+                           </SelectContent>
+                        </Select>
+                      </div>
+                  </div>
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                           <Label>Time On-Site</Label>
-                           <DateTimePicker value={questionnaireData.timeOnSite} onChange={date => setQuestionnaireData({...questionnaireData, timeOnSite: date})} />
+                           <Label>Agreement Type</Label>
+                           <Input value={questionnaireData.agreementType} onChange={e => setQuestionnaireData({...questionnaireData, agreementType: e.target.value})} />
                         </div>
+                        <div className="space-y-2">
+                           <Label>Labor Hours</Label>
+                           <Input type="number" value={questionnaireData.laborHours} onChange={e => setQuestionnaireData({...questionnaireData, laborHours: parseFloat(e.target.value) || 0})} />
+                        </div>
+                        <div className="space-y-2">
+                           <Label>Person Signing Report</Label>
+                           <Input value={questionnaireData.signingPerson} onChange={e => setQuestionnaireData({...questionnaireData, signingPerson: e.target.value})} />
+                        </div>
+                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                            <Label>Time Work Started</Label>
                            <DateTimePicker value={questionnaireData.timeWorkStarted} onChange={date => setQuestionnaireData({...questionnaireData, timeWorkStarted: date})} />
@@ -378,77 +424,6 @@ export function WorkOrderClientSection({
                            <DateTimePicker value={questionnaireData.timeWorkCompleted} onChange={date => setQuestionnaireData({...questionnaireData, timeWorkCompleted: date})} />
                         </div>
                    </div>
-                   <div className="space-y-2">
-                      <Label htmlFor="q-work-performed">Actual Work Performed</Label>
-                      <Textarea id="q-work-performed" value={questionnaireData.workPerformed} onChange={e => setQuestionnaireData({...questionnaireData, workPerformed: e.target.value})} placeholder="Detail diagnosis, steps taken, and troubleshooting path..." />
-                  </div>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>Root Cause of Failure</Label>
-                             <Select value={questionnaireData.rootCause} onValueChange={(value) => setQuestionnaireData({...questionnaireData, rootCause: value})}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select cause" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Electrical Fault">Electrical Fault</SelectItem>
-                                    <SelectItem value="Mechanical Wear">Mechanical Wear</SelectItem>
-                                    <SelectItem value="Operator Error">Operator Error</SelectItem>
-                                    <SelectItem value="Software Issue">Software Issue</SelectItem>
-                                    <SelectItem value="Environmental">Environmental</SelectItem>
-                                    <SelectItem value="Other">Other</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Failure Code</Label>
-                            <Input value={questionnaireData.failureCode} onChange={e => setQuestionnaireData({...questionnaireData, failureCode: e.target.value})} placeholder="e.g., C-403"/>
-                        </div>
-                   </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="q-parts-used">Parts Consumed</Label>
-                      <div className="p-3 border rounded-md space-y-3">
-                        {allocatedParts.map(part => (
-                            <div key={part.id} className="flex items-center space-x-2">
-                                <Checkbox 
-                                    id={`part-${part.id}`} 
-                                    checked={consumedParts.includes(`${part.name} (x${part.quantity})`)}
-                                    onCheckedChange={(checked) => {
-                                        const partString = `${part.name} (x${part.quantity})`;
-                                        if(checked) {
-                                            setConsumedParts(prev => [...prev, partString]);
-                                        } else {
-                                            setConsumedParts(prev => prev.filter(p => p !== partString));
-                                        }
-                                    }}
-                                />
-                                <Label htmlFor={`part-${part.id}`}>{part.name} ({part.partNumber}) - {part.quantity} unit(s)</Label>
-                            </div>
-                        ))}
-                        <Separator />
-                        <div className="flex items-center gap-2">
-                           <PlusCircle className="h-4 w-4"/>
-                           <Input 
-                            placeholder="Add part purchased on-field..."
-                            value={customPart}
-                            onChange={(e) => setCustomPart(e.target.value)}
-                            className="h-8"
-                           />
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">Select from allocated parts or add one purchased on the field.</p>
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="q-observations">Final Observations & Recommendations</Label>
-                      <Textarea id="q-observations" value={questionnaireData.finalObservations} onChange={e => setQuestionnaireData({...questionnaireData, finalObservations: e.target.value})} placeholder="Any notes for the customer or for future service?" />
-                  </div>
-                   <div className="space-y-2">
-                      <Label htmlFor="q-customer-feedback">Customer On-Site Feedback</Label>
-                      <Textarea id="q-customer-feedback" value={questionnaireData.customerFeedback} onChange={e => setQuestionnaireData({...questionnaireData, customerFeedback: e.target.value})} placeholder="Any comments or feedback from the customer?" />
-                  </div>
-                   <div className="flex items-center space-x-2">
-                        <Checkbox id="follow-up" checked={questionnaireData.followUpNeeded} onCheckedChange={(checked) => setQuestionnaireData({...questionnaireData, followUpNeeded: !!checked})} />
-                        <Label htmlFor="follow-up">Follow-Up Needed?</Label>
-                    </div>
               </div>
               <DialogFooter>
                   <Button variant="outline" onClick={() => setQuestionnaireOpen(false)}>Cancel</Button>
@@ -464,7 +439,7 @@ export function WorkOrderClientSection({
                 <CardContent className="p-6 flex flex-col items-center justify-center min-h-[300px]">
                     <LoaderCircle className="h-10 w-10 animate-spin text-primary mb-4" />
                     <p className="font-medium">Generating Service Report...</p>
-                    <p className="text-sm text-muted-foreground">The AI is writing a professional summary of your work.</p>
+                    <p className="text-sm text-muted-foreground">The AI is structuring your report data.</p>
                 </CardContent>
             </Card>
         )}

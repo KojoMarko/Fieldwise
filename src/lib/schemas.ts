@@ -2,8 +2,25 @@
 import { z } from 'zod';
 
 export const ServiceReportQuestionnaireSchema = z.object({
+  // New fields from image
+  reportedProblem: z.string().describe("The problem as reported by the customer."),
+  symptomSummary: z.string().describe("Summary of the symptoms observed."),
+  problemSummary: z.string().describe("A summary of the identified problem."),
+  resolutionSummary: z.string().describe("A summary of how the issue was resolved."),
+  verificationOfActivity: z.string().describe("How the resolution was verified (e.g., customer letter, test run)."),
+  instrumentCondition: z.string().describe("The final condition of the instrument after service."),
+  agreementType: z.string().describe("The type of service agreement (e.g., Warranty, Contract)."),
+  laborHours: z.coerce.number().describe("The number of hours spent on labor."),
+  signingPerson: z.string().describe("The name of the person signing the service report."),
+
+  // Old fields
   workPerformed: z.string().describe('A summary of the work that was performed by the technician.'),
-  partsUsed: z.string().describe('A comma-separated list of parts that were used during the service.'),
+  partsUsed: z.array(z.object({
+    partNumber: z.string(),
+    description: z.string(),
+    quantity: z.coerce.number(),
+    price: z.coerce.number(),
+  })).describe('A list of parts that were used during the service.'),
   finalObservations: z.string().describe('Any final observations or recommendations the technician has.'),
   customerFeedback: z.string().describe('Any feedback or comments provided by the customer on-site.'),
   timeOnSite: z.any().describe("The date and time the engineer arrived on site."),

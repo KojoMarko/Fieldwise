@@ -297,6 +297,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
 export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [asset, setAsset] = useState<Asset | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const nextPpmDate = useMemo(() => {
@@ -309,16 +310,34 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
 
   useEffect(() => {
     setIsLoading(true);
-    const docRef = doc(db, 'assets', id);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setAsset({ id: docSnap.id, ...docSnap.data() } as Asset);
+    const assetRef = doc(db, 'assets', id);
+    const unsubscribeAsset = onSnapshot(assetRef, (assetSnap) => {
+      if (assetSnap.exists()) {
+        const assetData = { id: assetSnap.id, ...assetSnap.data() } as Asset;
+        setAsset(assetData);
+
+        if (assetData.customerId) {
+          const customerRef = doc(db, 'customers', assetData.customerId);
+          const unsubscribeCustomer = onSnapshot(customerRef, (customerSnap) => {
+            if (customerSnap.exists()) {
+              setCustomer({ id: customerSnap.id, ...customerSnap.data() } as Customer);
+            } else {
+              setCustomer(null);
+            }
+            setIsLoading(false);
+          });
+          return () => unsubscribeCustomer();
+        } else {
+          setCustomer(null);
+          setIsLoading(false);
+        }
       } else {
         setAsset(null);
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => unsubscribeAsset();
   }, [id]);
 
   if (isLoading) {
@@ -430,29 +449,52 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                 )}
               </CardContent>
             </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                       {asset.lifecycleNotes && asset.lifecycleNotes.length > 0 ? (
-                        asset.lifecycleNotes.slice(0,3).map((note, index) => (
-                             <div key={index} className="flex justify-between items-center text-sm">
-                                <div>
-                                    <p className="font-medium">{note.note}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {note.date ? format(new Date(note.date), 'yyyy-MM-dd') : 'Date not specified'}
-                                    </p>
+             <div className="grid gap-4 auto-rows-max">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Customer</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {customer ? (
+                            <div className="space-y-2 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <Building className="h-4 w-4 text-muted-foreground" />
+                                    <p className="font-semibold">{customer.name}</p>
                                 </div>
+                                <p className="text-muted-foreground">{customer.address}</p>
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href={`/dashboard/customers/${customer.id}`}>View Customer</Link>
+                                </Button>
                             </div>
-                        ))
-                       ) : (
-                           <div className="text-sm text-muted-foreground">No manual history logged.</div>
-                       )}
-                    </div>
-                </CardContent>
-             </Card>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">No customer associated with this asset.</p>
+                        )}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Recent Activity</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                        {asset.lifecycleNotes && asset.lifecycleNotes.length > 0 ? (
+                            asset.lifecycleNotes.slice(0,3).map((note, index) => (
+                                <div key={index} className="flex justify-between items-center text-sm">
+                                    <div>
+                                        <p className="font-medium">{note.note}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {note.date ? format(new Date(note.date), 'yyyy-MM-dd') : 'Date not specified'}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-sm text-muted-foreground">No manual history logged.</div>
+                        )}
+                        </div>
+                    </CardContent>
+                </Card>
+             </div>
           </div>
         </TabsContent>
         <TabsContent value="maintenance" className="mt-4">
@@ -475,5 +517,3 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     </div>
   );
 }
-
-    

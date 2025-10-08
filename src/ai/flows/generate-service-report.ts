@@ -47,52 +47,48 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateServiceReportInputSchema },
   output: { schema: GenerateServiceReportOutputSchema },
   tools: [findPartNumber],
-  prompt: `You are an expert technical writer specializing in creating professional engineering service reports. Your task is to generate a comprehensive and elegantly formatted service report in Markdown based on the provided data. The report should be clean, readable, and avoid using markdown tables.
+  prompt: `You are an expert technical writer for a field service company. Your task is to generate a comprehensive and elegantly formatted service report in Markdown based on the provided data.
+The report must be clean, professional, and easy to read.
+**Crucially, you must not use any markdown tables.** Use headings, bolded labels, and paragraphs.
 
 **Report Data:**
 
 *   **Report ID:** ESR-{{{workOrderId}}}
 *   **Date:** Today's Date (Format: MM/DD/YYYY)
 
-**Engineering Firm Information:**
-*   **Company Name:** {{{companyName}}}
-*   **Address:** {{{companyAddress}}}
-*   **Phone:** {{{companyPhone}}}
-*   **Email:** {{{companyEmail}}}
-
-**Client Information:**
-*   **Client Name:** {{{clientName}}}
-*   **Contact Person:** {{{clientContact}}}
-*   **Client Address:** {{{clientAddress}}}
-
-**Service & Asset Information:**
-*   **Work Order Title:** {{{workOrderTitle}}}
-*   **Asset Serviced:** {{{assetName}}}
-*   **Service Start Date:** {{{timeWorkStarted}}}
-*   **Service Completion Date:** {{{timeWorkCompleted}}}
-*   **Service Type:** {{{type}}}
-*   **Prepared By:** {{{preparedBy}}}
-
-**Detailed Report Sections:**
-*   **Time On-Site:** {{{timeOnSite}}}
-*   **Work Performed Summary:** {{{workPerformed}}}
-*   **Root Cause Analysis:** {{{rootCause}}} (Failure Code: {{{failureCode}}})
-*   **Parts Consumed:** {{{partsUsed}}}
-*   **Final Observations & Recommendations:** {{{finalObservations}}}
-*   **Customer On-Site Feedback:** {{{customerFeedback}}}
-*   **Follow-up Required:** {{{followUpNeeded}}}
-
 **Formatting Instructions:**
 
-1.  **Main Header:** Start with a main heading "# Engineering Service Report". Add "CONFIDENTIAL" and "Rev. 1.0" on the next line. Then include the Report ID and the current date. Add a horizontal rule (---) after this block.
-2.  **Information Sections:** Create three distinct sections using "##" headings: "Company Information", "Client Information", and "Service & Asset Information".
-    *   Under each heading, list the details using bold labels followed by the data (e.g., **Company Name:** {{{companyName}}}). Do NOT use tables.
+1.  **Main Header:**
+    *   Start with a main heading: \`# Engineering Service Report\`
+    *   On the next line, add: \`**CONFIDENTIAL** | **Rev. 1.0**\`
+    *   On the next line, add: \`Report ID: ESR-{{{workOrderId}}} | Date: \` followed by today's date.
+    *   Add a horizontal rule (\`---\`) after this header block.
+
+2.  **Information Sections (Do NOT use tables):**
+    *   Create a section with the heading: \`## Company Information\`
+        *   List the following details using bold labels: \`**Company Name:** {{{companyName}}}\`, \`**Address:** {{{companyAddress}}}\`, \`**Phone:** {{{companyPhone}}}\`, \`**Email:** {{{companyEmail}}}\`.
+    *   Create a section with the heading: \`## Client Information\`
+        *   List the following details using bold labels: \`**Client Name:** {{{clientName}}}\`, \`**Contact Person:** {{{clientContact}}}\`, \`**Client Address:** {{{clientAddress}}}\`.
+    *   Create a section with the heading: \`## Service & Asset Information\`
+        *   List the following details using bold labels: \`**Work Order Title:** {{{workOrderTitle}}}\`, \`**Asset Serviced:** {{{assetName}}}\`, \`**Service Start Date:** {{{timeWorkStarted}}}\`, \`**Service Completion Date:** {{{timeWorkCompleted}}}\`, \`**Service Type:** {{{type}}}\`, \`**Prepared By:** {{{preparedBy}}}\`.
+
 3.  **Detailed Report Section:**
-    *   Create a main heading "## Service Details".
-    *   Under this, create subsections using "###" for each of the following: "Summary of Work Performed", "Root Cause Analysis", "Parts Consumed", "Final Observations & Recommendations".
-    *   For "Parts Consumed", if the 'findPartNumber' tool returns a valid part number, include it in parentheses next to the part name.
-    *   If "Follow-up Required" is true, create a final subsection "### Required Follow-Up Actions" and state what is needed.
-4.  **Overall Style:** Use clear headings, paragraphs, and lists. The final output must be professional, well-structured, and easy to read. Do not use any markdown tables.`,
+    *   Create a main heading: \`## Service Details\`
+    *   Under this, create subsections using \`###\` for each of the following: "Summary of Work Performed", "Root Cause Analysis", "Parts Consumed", and "Final Observations & Recommendations".
+    *   For "Summary of Work Performed", use the content from \`{{{workPerformed}}}\`.
+    *   For "Root Cause Analysis", state the cause and failure code: "The identified root cause for the issue was **{{{rootCause}}}**. (Failure Code: {{{failureCode}}})".
+    *   For "Parts Consumed", use the content from \`{{{partsUsed}}}\`. If the 'findPartNumber' tool returns a valid part number, include it in parentheses next to the part name. If no parts were used, state "None".
+    *   For "Final Observations & Recommendations", use the content from \`{{{finalObservations}}}\`.
+    *   If \`{{{followUpNeeded}}}\` is true, create a final subsection "### Required Follow-Up Actions" and describe what is needed.
+
+**Example of a correctly formatted section:**
+
+## Client Information
+**Client Name:** St. Mary's Hospital
+**Contact Person:** Dr. Eleanor Vance
+**Client Address:** 456 Health Ave, Meditown
+
+This format is professional and easy to read. Do not use tables.`,
 });
 
 const generateServiceReportFlow = ai.defineFlow(

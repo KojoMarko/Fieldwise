@@ -92,15 +92,16 @@ const extractAndLogMaintenanceFlow = ai.defineFlow(
         note: event.note,
         type: event.type,
       };
+      
+      // Get existing notes or initialize as empty array
+      const existingNotes = asset.lifecycleNotes || [];
 
       // Create the data object for the update
       const updateData: {
-        lifecycleNotes: FirebaseFirestore.FieldValue;
+        lifecycleNotes: LifecycleEvent[];
         lastPpmDate?: string;
       } = {
-        lifecycleNotes: (asset.lifecycleNotes && asset.lifecycleNotes.length > 0) 
-            ? [...asset.lifecycleNotes, newNote] 
-            : [newNote],
+        lifecycleNotes: [...existingNotes, newNote],
       };
       
       // If the event was a PPM, also update the lastPpmDate field

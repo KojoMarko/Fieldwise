@@ -44,7 +44,8 @@ export default function PpmPage() {
       const assetsData: Asset[] = [];
       snapshot.forEach((doc) => {
         const asset = { id: doc.id, ...doc.data() } as Asset;
-        if (asset.ppmFrequency && asset.lastPpmDate) {
+        // Only show assets that have a PPM schedule defined.
+        if (asset.ppmFrequency) {
           assetsData.push(asset);
         }
       });
@@ -69,14 +70,28 @@ export default function PpmPage() {
   }, [user?.companyId]);
 
   const ppmSchedule = assets.map(asset => {
-    const lastPpm = new Date(asset.lastPpmDate!);
-    const nextPpm = addMonths(lastPpm, asset.ppmFrequency!);
+    if (asset.lastPpmDate && asset.ppmFrequency) {
+        const lastPpm = new Date(asset.lastPpmDate);
+        const nextPpm = addMonths(lastPpm, asset.ppmFrequency);
+        return {
+            ...asset,
+            nextPpmDate: nextPpm,
+            isOverdue: isPast(nextPpm)
+        }
+    }
     return {
         ...asset,
-        nextPpmDate: nextPpm,
-        isOverdue: isPast(nextPpm)
+        nextPpmDate: null,
+        isOverdue: false
     }
-  }).sort((a,b) => a.nextPpmDate.getTime() - b.nextPpmDate.getTime());
+  }).sort((a,b) => {
+      if (a.nextPpmDate && b.nextPpmDate) {
+        return a.nextPpmDate.getTime() - b.nextPpmDate.getTime();
+      }
+      if (!a.nextPpmDate) return 1;
+      if (!b.nextPpmDate) return -1;
+      return 0;
+  });
 
   return (
     <>
@@ -119,13 +134,17 @@ export default function PpmPage() {
                         <TableCell>
                             <Link href={`/dashboard/customers/${asset.customerId}`} className="text-sm text-primary hover:underline">{customers[asset.customerId] || 'Loading...'}</Link>
                         </TableCell>
-                        <TableCell>{format(new Date(asset.lastPpmDate!), 'PPP')}</TableCell>
-                        <TableCell>{format(asset.nextPpmDate, 'PPP')}</TableCell>
+                        <TableCell>{asset.lastPpmDate ? format(new Date(asset.lastPpmDate), 'PPP') : 'N/A'}</TableCell>
+                        <TableCell>{asset.nextPpmDate ? format(asset.nextPpmDate, 'PPP') : 'N/A'}</TableCell>
                         <TableCell>
-                            {asset.isOverdue ? (
-                                <Badge variant="destructive">Overdue</Badge>
-                            ): (
-                                <Badge variant="outline">Upcoming</Badge>
+                            {asset.nextPpmDate ? (
+                                asset.isOverdue ? (
+                                    <Badge variant="destructive">Overdue</Badge>
+                                ) : (
+                                    <Badge variant="outline">Upcoming</Badge>
+                                )
+                            ) : (
+                                <Badge variant="secondary">Unscheduled</Badge>
                             )}
                         </TableCell>
                       </TableRow>

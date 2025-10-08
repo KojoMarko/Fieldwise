@@ -51,15 +51,14 @@ import { db } from '@/lib/firebase';
 import type jsPDF from 'jspdf';
 import type html2canvas from 'html2canvas';
 import { marked } from 'marked';
+import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
 
 
 // New component to isolate the ref and the content
-const ReportBody = forwardRef<HTMLDivElement, { htmlContent: string }>(({ htmlContent }, ref) => {
+const ReportBody = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, ref) => {
     return (
         <div ref={ref} className="p-6 bg-background">
-             <div className="prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-card-foreground prose-p:text-muted-foreground prose-strong:text-card-foreground">
-                <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-             </div>
+             {children}
         </div>
     );
 });
@@ -113,29 +112,12 @@ export function WorkOrderClientSection({
         const { default: jsPDF } = await import('jspdf');
         const { default: html2canvas } = await import('html2canvas');
 
-        const tempContainer = document.createElement('div');
-        tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px';
-        tempContainer.style.width = '800px';
-        document.body.appendChild(tempContainer);
-        
-        const root = createRoot(tempContainer);
-        
-        await new Promise<void>((resolve) => {
-            root.render(
-                <ReportBody 
-                    ref={reportRef} 
-                    htmlContent={marked.parse(workOrder.technicianNotes || '') as string}
-                />
-            );
-            setTimeout(resolve, 500); // Give React time to render
-        });
+        if (!reportRef.current) {
+            throw new Error("Report content is not available.");
+        }
 
-        const canvas = await html2canvas(tempContainer, { scale: 2 });
+        const canvas = await html2canvas(reportRef.current, { scale: 2 });
         
-        root.unmount();
-        document.body.removeChild(tempContainer);
-
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
             orientation: 'p',
@@ -255,22 +237,95 @@ export function WorkOrderClientSection({
           console.warn("Could not parse technician notes as JSON. Falling back to plain text display.");
       }
 
-      if (!isJson) {
-          return (
-             <Card>
-                <CardHeader>
-                    <CardTitle>Service Report</CardTitle>
-                    <CardDescription>Work Order: {currentWorkOrder.id}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="prose prose-sm max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: marked.parse(workOrder.technicianNotes || 'No report content.') as string }} />
+      const reportContent = isJson ? (
+         <div className="space-y-6">
+            <div className="flex justify-between items-start">
+                <div>
+                    <h2 className="text-2xl font-bold text-primary">Engineering Service Report</h2>
+                    <p className="text-muted-foreground">Report ID: ESR-{jsonReport.workOrder?.number}</p>
+                    <p className="text-muted-foreground">Date: {jsonReport.workOrder?.completionDate}</p>
+                </div>
+                <div className="text-right">
+                    <h3 className="font-semibold text-lg">{jsonReport.account?.name}</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{jsonReport.account?.address}</p>
+                </div>
+            </div>
+
+             <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-1">
+                    <h4 className="font-semibold">Client Information</h4>
+                    <p className="font-medium">{jsonReport.customer?.contact}</p>
+                    <p className="text-sm text-muted-foreground">{jsonReport.customer?.purchaseOrder}</p>
+                </div>
+                <div className="space-y-1">
+                    <h4 className="font-semibold">Asset Serviced</h4>
+                    <p className="font-medium">{jsonReport.asset?.model}</p>
+                    <p className="text-sm text-muted-foreground">S/N: {jsonReport.asset?.serialNumber}</p>
+                </div>
+            </div>
+            
+             <Separator />
+
+            <div className="space-y-4">
+                 <div>
+                    <h4 className="font-semibold mb-1">Reported Problem</h4>
+                    <p className="text-sm text-muted-foreground">{jsonReport.summary?.reportedProblem}</p>
+                </div>
+                 <div>
+                    <h4 className="font-semibold mb-1">Resolution Summary</h4>
+                    <p className="text-sm text-muted-foreground">{jsonReport.summary?.resolutionSummary}</p>
+                </div>
+            </div>
+
+            <Separator />
+            
+            <div>
+                <h4 className="font-semibold mb-2">Parts Consumed</h4>
+                {jsonReport.parts && jsonReport.parts.length > 0 ? (
+                     <div className="border rounded-md">
+                        <Table>
+                            <TableHeader>
+                            <TableRow>
+                                <TableHead>Part Number</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead className="text-right">Quantity</TableHead>
+                            </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {jsonReport.parts.map((part: any, index: number) => (
+                                <TableRow key={index}>
+                                    <TableCell>{part.partNumber}</TableCell>
+                                    <TableCell>{part.description}</TableCell>
+                                    <TableCell className="text-right">{part.quantity}</TableCell>
+                                </TableRow>
+                            ))}
+                            </TableBody>
+                        </Table>
                     </div>
-                </CardContent>
-             </Card>
-          )
-      }
-      
+                ) : (
+                    <p className="text-sm text-muted-foreground">No parts were consumed for this service.</p>
+                )}
+            </div>
+
+             <Separator />
+            
+            <div className="flex justify-between items-end">
+                <div>
+                     <h4 className="font-semibold mb-2">Technician</h4>
+                     <p className="text-sm">{jsonReport.technicianName}</p>
+                </div>
+                 <div className="text-right">
+                    <div className="border-b-2 border-dotted w-48 mb-1"></div>
+                    <p className="text-xs text-muted-foreground">Customer Signature ({jsonReport.signingPerson})</p>
+                </div>
+            </div>
+         </div>
+      ) : (
+        <div className="prose prose-sm max-w-none">
+            <div dangerouslySetInnerHTML={{ __html: marked.parse(workOrder.technicianNotes || 'No report content.') as string }} />
+        </div>
+      );
+
       return (
         <Card>
           <CardHeader>
@@ -287,94 +342,13 @@ export function WorkOrderClientSection({
               </Button>
             </div>
           </CardHeader>
-          <CardContent ref={reportRef} className="p-6 bg-background">
-             <div className="space-y-6">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h2 className="text-2xl font-bold text-primary">Engineering Service Report</h2>
-                        <p className="text-muted-foreground">Report ID: ESR-{jsonReport.workOrder?.number}</p>
-                        <p className="text-muted-foreground">Date: {jsonReport.workOrder?.completionDate}</p>
-                    </div>
-                    <div className="text-right">
-                        <h3 className="font-semibold text-lg">{jsonReport.account?.name}</h3>
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{jsonReport.account?.address}</p>
-                    </div>
-                </div>
-
-                 <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                        <h4 className="font-semibold">Client Information</h4>
-                        <p className="font-medium">{jsonReport.customer?.contact}</p>
-                        <p className="text-sm text-muted-foreground">{jsonReport.customer?.purchaseOrder}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <h4 className="font-semibold">Asset Serviced</h4>
-                        <p className="font-medium">{jsonReport.asset?.model}</p>
-                        <p className="text-sm text-muted-foreground">S/N: {jsonReport.asset?.serialNumber}</p>
-                    </div>
-                </div>
-                
-                 <Separator />
-
-                <div className="space-y-4">
-                     <div>
-                        <h4 className="font-semibold mb-1">Reported Problem</h4>
-                        <p className="text-sm text-muted-foreground">{jsonReport.summary?.reportedProblem}</p>
-                    </div>
-                     <div>
-                        <h4 className="font-semibold mb-1">Resolution Summary</h4>
-                        <p className="text-sm text-muted-foreground">{jsonReport.summary?.resolutionSummary}</p>
-                    </div>
-                </div>
-
-                <Separator />
-                
-                <div>
-                    <h4 className="font-semibold mb-2">Parts Consumed</h4>
-                    {jsonReport.parts && jsonReport.parts.length > 0 ? (
-                         <div className="border rounded-md">
-                            <Table>
-                                <TableHeader>
-                                <TableRow>
-                                    <TableHead>Part Number</TableHead>
-                                    <TableHead>Description</TableHead>
-                                    <TableHead className="text-right">Quantity</TableHead>
-                                </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                {jsonReport.parts.map((part: any, index: number) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{part.partNumber}</TableCell>
-                                        <TableCell>{part.description}</TableCell>
-                                        <TableCell className="text-right">{part.quantity}</TableCell>
-                                    </TableRow>
-                                ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-muted-foreground">No parts were consumed for this service.</p>
-                    )}
-                </div>
-
-                 <Separator />
-                
-                <div className="flex justify-between items-end">
-                    <div>
-                         <h4 className="font-semibold mb-2">Technician</h4>
-                         <p className="text-sm">{jsonReport.technicianName}</p>
-                    </div>
-                     <div className="text-right">
-                        <div className="border-b-2 border-dotted w-48 mb-1"></div>
-                        <p className="text-xs text-muted-foreground">Customer Signature ({jsonReport.signingPerson})</p>
-                    </div>
-                </div>
-
-
-             </div>
+          <CardContent>
+            <ReportBody ref={reportRef}>
+                {reportContent}
+            </ReportBody>
           </CardContent>
         </Card>
-      )
+      );
   };
 
   const EngineerActions = () => (

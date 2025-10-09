@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -41,12 +41,16 @@ import {
   History,
   Inbox,
   Bell,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
+import { collection, onSnapshot, query, where, doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Notification } from '@/lib/types';
 
 function capitalize(s: string) {
   if (!s) return '';
@@ -107,7 +111,42 @@ function generateBreadcrumbs(pathname: string) {
 export function Header() {
     const { user, logout } = useAuth();
     const pathname = usePathname();
+    const router = useRouter();
     const [isSheetOpen, setSheetOpen] = useState(false);
+    const [unreadNotifications, setUnreadNotifications] = useState<Notification[]>([]);
+
+    useEffect(() => {
+        if (!user?.companyId) return;
+
+        const notificationsQuery = query(
+            collection(db, 'notifications'),
+            where('companyId', '==', user.companyId),
+            where('isRead', '==', false)
+        );
+
+        const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+            const fetchedNotifications: Notification[] = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                 if (!data.recipientRole || data.recipientRole === 'All' || data.recipientRole === user.role) {
+                    fetchedNotifications.push({ ...data, id: doc.id } as Notification);
+                }
+            });
+            fetchedNotifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            setUnreadNotifications(fetchedNotifications);
+        });
+
+        return () => unsubscribe();
+    }, [user]);
+
+    const handleMarkAsRead = async (notificationId: string, link?: string) => {
+        const notifRef = doc(db, 'notifications', notificationId);
+        await updateDoc(notifRef, { isRead: true });
+        if (link) {
+            router.push(link);
+        }
+    }
+
 
     if (!user) {
         return (
@@ -261,36 +300,43 @@ export function Header() {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" className="relative rounded-full">
             <Bell className="h-5 w-5" />
-            <Badge className="absolute -right-1 -top-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-destructive p-0 text-xs text-destructive-foreground">2</Badge>
+            {unreadNotifications.length > 0 && (
+                <Badge className="absolute -right-1 -top-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-destructive p-0 text-xs text-destructive-foreground">
+                    {unreadNotifications.length}
+                </Badge>
+            )}
             <span className="sr-only">Notifications</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
           <DropdownMenuLabel>Notifications</DropdownMenuLabel>
           <DropdownMenuSeparator />
-           <DropdownMenuItem className="p-0">
-             <div className="p-2 grid gap-1">
-                <p className="font-semibold text-primary">Verification Required</p>
-                <p className="text-sm text-muted-foreground">Sojourner Truth has requested handover of "HEPA Filter" for WO-001. Your verification is needed.</p>
-                <Button variant="secondary" size="sm" className="mt-1 h-7 w-fit" asChild>
-                    <Link href="/dashboard/work-orders/hQjZ5LIbZ1g9xS2nC7vA">Verify Now</Link>
-                </Button>
-             </div>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-           <DropdownMenuItem className="p-0">
-             <div className="p-2 grid gap-1">
-                <p className="font-semibold">New Work Order</p>
-                <p className="text-sm text-muted-foreground">You have been assigned to WO-003: Emergency repair on DxH 900.</p>
-              </div>
-          </DropdownMenuItem>
-           <DropdownMenuSeparator />
-            <DropdownMenuItem className="p-0">
-              <div className="p-2 grid gap-1">
-                <p className="font-semibold">System Update</p>
-                <p className="text-sm text-muted-foreground">The spare parts inventory has been updated with new items.</p>
-              </div>
-          </DropdownMenuItem>
+          {unreadNotifications.length > 0 ? (
+            unreadNotifications.slice(0,3).map((n, index) => (
+              <React.Fragment key={n.id}>
+                <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                  <div className="p-2 grid gap-1 w-full" onClick={() => handleMarkAsRead(n.id, n.link)}>
+                    <p className="font-semibold text-primary">{n.title}</p>
+                    <p className="text-sm text-muted-foreground">{n.description}</p>
+                     {n.link && (
+                        <Button variant="secondary" size="sm" className="mt-1 h-7 w-fit">
+                            {n.type === 'Verification' ? 'Verify Now' : 'View Details'}
+                        </Button>
+                    )}
+                  </div>
+                </DropdownMenuItem>
+                {index < unreadNotifications.slice(0,3).length - 1 && <DropdownMenuSeparator />}
+              </React.Fragment>
+            ))
+          ) : (
+            <DropdownMenuItem disabled>
+                <div className='p-2 text-center text-sm text-muted-foreground w-full'>
+                    <Inbox className="mx-auto h-8 w-8 mb-2" />
+                    No new notifications
+                </div>
+            </DropdownMenuItem>
+          )}
+
           <DropdownMenuSeparator />
             <DropdownMenuItem className="text-center text-primary font-medium p-0">
                 <Link href="/dashboard/notifications" className='py-1.5 w-full'>View all notifications</Link>

@@ -26,10 +26,13 @@ import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
-  { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', badge: '2' },
+  { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
   { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
   { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
   { href: '/dashboard/customers', icon: Building, label: 'Customers' },
@@ -42,7 +45,7 @@ const adminNavItems = [
 
 const engineerNavItems = [
     { href: '/dashboard', icon: Home, label: 'My Dashboard' },
-    { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', badge: '2' },
+    { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
     { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
     { href: '/dashboard/assets', icon: Package, label: 'Assets' },
@@ -58,6 +61,30 @@ const customerNavItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user?.companyId) return;
+    
+    const notificationsQuery = query(
+      collection(db, 'notifications'),
+      where('companyId', '==', user.companyId),
+      where('isRead', '==', false)
+    );
+
+    const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+        let count = 0;
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (!data.recipientRole || data.recipientRole === 'All' || data.recipientRole === user.role) {
+                count++;
+            }
+        });
+        setUnreadCount(count);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   let navItems = adminNavItems;
   if (user?.role === 'Engineer') {
@@ -91,9 +118,9 @@ export function AppSidebar() {
                   )}
                 >
                   <item.icon className="h-5 w-5" />
-                   {item.badge && (
+                   {item.isNotification && unreadCount > 0 && (
                     <Badge className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive p-0 text-xs text-destructive-foreground">
-                      {item.badge}
+                      {unreadCount}
                     </Badge>
                   )}
                   <span className="sr-only">{item.label}</span>

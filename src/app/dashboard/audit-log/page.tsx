@@ -81,8 +81,7 @@ export default function AuditLogPage() {
 
         const logsQuery = query(
             collection(db, 'audit-log'), 
-            where("companyId", "==", user.companyId),
-            orderBy("timestamp", "desc")
+            where("companyId", "==", user.companyId)
         );
 
         const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
@@ -90,6 +89,8 @@ export default function AuditLogPage() {
             snapshot.forEach((doc) => {
                 logsData.push({ id: doc.id, ...doc.data() } as AuditLogEvent);
             });
+            // Sort client-side to avoid needing a composite index
+            logsData.sort((a, b) => parseISO(b.timestamp).getTime() - parseISO(a.timestamp).getTime());
             setAuditLogs(logsData);
             setIsLoading(false);
         }, (error) => {

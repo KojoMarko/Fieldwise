@@ -14,7 +14,6 @@ import type { Asset } from '@/lib/types';
 import { CreateAssetInputSchema } from '@/lib/schemas';
 import { db } from '@/lib/firebase-admin';
 import { formatISO } from 'date-fns';
-import { auth } from 'firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
 
 export type CreateAssetInput = z.infer<typeof CreateAssetInputSchema>;
@@ -72,12 +71,15 @@ const createAssetFlow = ai.defineFlow(
     });
     
     // Log audit event
+    if (!context.auth) {
+        throw new Error("Not authorized for audit logging.");
+    }
     const adminAuth = getAuth();
-    const user = await adminAuth.getUser(context.auth!.uid);
+    const user = await adminAuth.getUser(context.auth.uid);
 
     await db.collection('audit-log').add({
         user: {
-            id: context.auth?.uid,
+            id: context.auth.uid,
             name: user.displayName || 'System'
         },
         action: 'CREATE',

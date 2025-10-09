@@ -39,12 +39,15 @@ const deleteAssetFlow = ai.defineFlow(
     await assetRef.delete();
 
     // Log audit event
+    if (!context.auth) {
+        throw new Error("Not authorized for audit logging.");
+    }
     const adminAuth = getAuth();
-    const user = await adminAuth.getUser(context.auth!.uid);
+    const user = await adminAuth.getUser(context.auth.uid);
 
     await db.collection('audit-log').add({
         user: {
-            id: context.auth?.uid,
+            id: context.auth.uid,
             name: user.displayName || 'System'
         },
         action: 'DELETE',

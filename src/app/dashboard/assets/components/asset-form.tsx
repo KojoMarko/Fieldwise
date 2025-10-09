@@ -51,6 +51,11 @@ import {
 
 type AssetFormValues = z.infer<typeof CreateAssetInputSchema>;
 
+type DiscoveredModel = {
+  name: string;
+  ppmFrequency?: number;
+};
+
 export function AssetForm() {
   const { toast } = useToast();
   const router = useRouter();
@@ -61,6 +66,7 @@ export function AssetForm() {
   const [isLoading, setIsLoading] = useState(true);
   const [isNewModelDialogOpen, setNewModelDialogOpen] = useState(false);
   const [newModelName, setNewModelName] = useState('');
+  const [discoveredModels, setDiscoveredModels] = useState<DiscoveredModel[]>([]);
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -93,14 +99,14 @@ export function AssetForm() {
     }
   }, [user?.companyId]);
   
-  const discoveredModels = useMemo(() => {
+  useEffect(() => {
     const modelMap = new Map<string, number | undefined>();
     allAssets.forEach(asset => {
         if (!modelMap.has(asset.model)) {
             modelMap.set(asset.model, asset.ppmFrequency);
         }
     });
-    return Array.from(modelMap.entries()).map(([name, ppmFrequency]) => ({ name, ppmFrequency }));
+    setDiscoveredModels(Array.from(modelMap.entries()).map(([name, ppmFrequency]) => ({ name, ppmFrequency })));
   }, [allAssets]);
 
 
@@ -167,6 +173,8 @@ export function AssetForm() {
 
   const handleAddNewModel = () => {
     if(newModelName.trim()) {
+        const newModel: DiscoveredModel = { name: newModelName };
+        setDiscoveredModels(prev => [...prev, newModel]);
         form.setValue('model', newModelName);
         setNewModelDialogOpen(false);
         setNewModelName('');

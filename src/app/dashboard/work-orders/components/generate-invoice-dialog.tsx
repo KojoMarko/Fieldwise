@@ -155,8 +155,8 @@ export function GenerateInvoiceDialog({
                                     <Image src={company.logoUrl} alt={company.name} width={40} height={40} className="object-contain" />
                                   )}
                                   <div className="text-left">
-                                      <h3 className="font-semibold text-lg">{firstLine}</h3>
-                                      <h3 className="font-semibold text-lg">{secondLine}</h3>
+                                      <h3 className="font-semibold text-base">{firstLine}</h3>
+                                      <h3 className="font-semibold text-base">{secondLine}</h3>
                                   </div>
                                 </div>
                                 <p className="text-sm text-muted-foreground whitespace-pre-line text-right">

@@ -35,7 +35,7 @@ type AddCustomerFormValues = z.infer<typeof CreateCustomerInputSchema>;
 interface AddCustomerDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onCustomerCreated: (id: string, name: string) => void;
+    onCustomerCreated: (id: string, name?: string) => void;
 }
 
 export function AddCustomerDialog({ open, onOpenChange, onCustomerCreated }: AddCustomerDialogProps) {

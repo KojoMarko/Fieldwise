@@ -27,67 +27,16 @@ import {
   Book,
   Building,
   UserPlus,
+  LoaderCircle,
+  ShieldAlert,
 } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-
-type AuditLogEvent = {
-  id: string;
-  user: {
-    name: string;
-    avatarUrl: string;
-  };
-  action: 'CREATE' | 'UPDATE' | 'DELETE';
-  entity: 'Asset' | 'Work Order' | 'Resource' | 'Spare Part' | 'Customer' | 'User';
-  entityName: string;
-  timestamp: string;
-};
-
-// Mock data for demonstration purposes
-const mockAuditLogs: AuditLogEvent[] = [
-  {
-    id: 'log-1',
-    user: { name: 'Sojourner Truth', avatarUrl: 'https://picsum.photos/seed/user2/100/100' },
-    action: 'CREATE',
-    entity: 'Work Order',
-    entityName: 'Annual maintenance for Vitros 5600',
-    timestamp: new Date().toISOString(),
-  },
-  {
-    id: 'log-2',
-    user: { name: 'Admin', avatarUrl: 'https://picsum.photos/seed/user1/100/100' },
-    action: 'CREATE',
-    entity: 'Asset',
-    entityName: 'Ismart Electrolyte Analyzer',
-    timestamp: '2024-07-22T10:00:00Z',
-  },
-  {
-    id: 'log-3',
-    user: { name: 'Harriet Tubman', avatarUrl: 'https://picsum.photos/seed/user3/100/100' },
-    action: 'UPDATE',
-    entity: 'Work Order',
-    entityName: 'Emergency repair on DxH 900',
-    timestamp: '2024-07-22T09:30:00Z',
-  },
-   {
-    id: 'log-4',
-    user: { name: 'Admin', avatarUrl: 'https://picsum.photos/seed/user1/100/100' },
-    action: 'CREATE',
-    entity: 'User',
-    entityName: 'Sojourner Truth',
-    timestamp: '2024-07-21T15:00:00Z',
-  },
-    {
-    id: 'log-5',
-    user: { name: 'Admin', avatarUrl: 'https://picsum.photos/seed/user1/100/100' },
-    action: 'CREATE',
-    entity: 'Customer',
-    entityName: 'St. Mary\'s Hospital',
-    timestamp: '2024-07-20T11:00:00Z',
-  },
-];
-
+import { useEffect, useState } from 'react';
+import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { AuditLogEvent } from '@/lib/types';
 
 const actionIcons: Record<AuditLogEvent['action'], React.ElementType> = {
   CREATE: FilePlus,
@@ -101,7 +50,8 @@ const entityIcons: Record<AuditLogEvent['entity'], React.ElementType> = {
     Resource: Book,
     'Spare Part': Wrench,
     Customer: Building,
-    User: UserPlus
+    User: UserPlus,
+    Company: Building,
 }
 
 const actionColors: Record<AuditLogEvent['action'], string> = {
@@ -111,12 +61,69 @@ const actionColors: Record<AuditLogEvent['action'], string> = {
 }
 
 export default function AuditLogPage() {
-    const { user, isLoading } = useAuth();
+    const { user, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
+    const [auditLogs, setAuditLogs] = useState<AuditLogEvent[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    if (!isLoading && user?.role !== 'Admin') {
-        router.push('/dashboard');
-        return null;
+    useEffect(() => {
+        if (isAuthLoading) return;
+
+        if (!user || user.role !== 'Admin') {
+            router.push('/dashboard');
+            return;
+        }
+
+        if (!user.companyId) {
+            setIsLoading(false);
+            return;
+        }
+
+        const logsQuery = query(
+            collection(db, 'audit-log'), 
+            where("companyId", "==", user.companyId),
+            orderBy("timestamp", "desc")
+        );
+
+        const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
+            const logsData: AuditLogEvent[] = [];
+            snapshot.forEach((doc) => {
+                logsData.push({ id: doc.id, ...doc.data() } as AuditLogEvent);
+            });
+            setAuditLogs(logsData);
+            setIsLoading(false);
+        }, (error) => {
+            console.error("Error fetching audit logs:", error);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [user, isAuthLoading, router]);
+
+    if (isAuthLoading || isLoading) {
+        return (
+            <div className="flex h-[80vh] items-center justify-center">
+                <LoaderCircle className="h-10 w-10 animate-spin" />
+            </div>
+        );
+    }
+    
+    if (user?.role !== 'Admin') {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center gap-4 p-4">
+                <Card className='max-w-md'>
+                    <CardHeader>
+                        <CardTitle className='flex items-center gap-2 justify-center'>
+                            <ShieldAlert className="h-6 w-6 text-destructive" />
+                            Access Denied
+                        </CardTitle>
+                        <CardDescription>
+                            You must be an administrator to view the audit log.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            </div>
+        )
     }
 
   return (
@@ -142,7 +149,7 @@ export default function AuditLogPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockAuditLogs.map((log) => {
+              {auditLogs.length > 0 ? auditLogs.map((log) => {
                 const ActionIcon = actionIcons[log.action];
                 const EntityIcon = entityIcons[log.entity];
 
@@ -164,7 +171,7 @@ export default function AuditLogPage() {
                     </TableCell>
                      <TableCell>
                         <div className="flex items-center gap-3">
-                            <EntityIcon className="h-5 w-5 text-muted-foreground" />
+                            {EntityIcon && <EntityIcon className="h-5 w-5 text-muted-foreground" />}
                             <div>
                                 <div className="font-medium text-muted-foreground">{log.entity}</div>
                                 <div className="text-sm">{log.entityName}</div>
@@ -176,7 +183,13 @@ export default function AuditLogPage() {
                     </TableCell>
                 </TableRow>
                 )
-              })}
+              }) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    No audit log events found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

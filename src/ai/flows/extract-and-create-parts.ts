@@ -41,7 +41,7 @@ const prompt = ai.definePrompt({
   name: 'extractPartsFromDocPrompt',
   input: { schema: z.object({ fileDataUri: z.string() }) },
   output: { schema: ExtractAndCreatePartsOutputSchema },
-  prompt: `You are an expert at analyzing technical documents and service manuals.
+  prompt: `You are an expert at analyzing technical documents, service manuals and spreadsheets.
 Analyze the following document and extract a list of all spare parts mentioned.
 For each part, identify its name, its corresponding part number, and the specific equipment model it is for.
 Return the data as a list of objects.`,

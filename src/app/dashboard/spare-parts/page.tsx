@@ -87,7 +87,7 @@ function AiPartExtractor() {
           AI-Powered Part Importer
         </CardTitle>
         <CardDescription>
-          Upload a service manual or parts list. The AI will automatically identify the parts, the machine they belong to, and add them to your inventory.
+          Upload a service manual, parts list, or Excel sheet. The AI will automatically identify the parts, the machine they belong to, and add them to your inventory.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -101,7 +101,7 @@ function AiPartExtractor() {
             ref={fileInputRef} 
             className="hidden" 
             onChange={handleFileChange}
-            accept=".pdf,.doc,.docx,.txt"
+            accept=".pdf,.doc,.docx,.txt,.xls,.xlsx"
             disabled={isExtracting}
           />
           {isExtracting && (

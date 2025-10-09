@@ -128,3 +128,16 @@ export type Resource = {
   uploaderName: string;
   companyId: string;
 }
+
+export type Notification = {
+  id: string;
+  type: 'Verification' | 'Assignment' | 'System' | 'Message';
+  title: string;
+  description: string;
+  timestamp: string;
+  isRead: boolean;
+  link?: string;
+  author?: string;
+  companyId: string;
+  recipientRole?: 'Admin' | 'Engineer' | 'All';
+};

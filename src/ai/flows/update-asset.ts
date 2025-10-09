@@ -29,10 +29,10 @@ const updateAssetFlow = ai.defineFlow(
         if (!auth) {
             throw new Error("Not authorized.");
         }
-        return auth;
+        return;
     }
   },
-  async (input, auth) => {
+  async (input, context) => {
     const assetRef = db.collection('assets').doc(input.id);
 
     // The schema includes the ID, but we don't want to save it inside the document itself.
@@ -75,15 +75,15 @@ const updateAssetFlow = ai.defineFlow(
     const asset = assetDoc.data();
 
     // Log audit event
-    if (!auth) {
+    if (!context.auth) {
         throw new Error("Not authorized for audit logging.");
     }
     const adminAuth = getAuth();
-    const user = await adminAuth.getUser(auth.uid);
+    const user = await adminAuth.getUser(context.auth.uid);
 
     await db.collection('audit-log').add({
         user: {
-            id: auth.uid,
+            id: context.auth.uid,
             name: user.displayName || 'System'
         },
         action: 'UPDATE',

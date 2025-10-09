@@ -25,9 +25,11 @@ const deleteCustomerFlow = ai.defineFlow(
     name: 'deleteCustomerFlow',
     inputSchema: DeleteCustomerInputSchema,
     outputSchema: z.void(),
-    auth: (auth) => auth,
+    auth: (auth) => {
+      if (!auth) throw new Error('Authorization required.');
+    },
   },
-  async (input, auth) => {
+  async (input, context) => {
     const customerRef = db.collection('customers').doc(input.customerId);
     const customerDoc = await customerRef.get();
     if (!customerDoc.exists) {
@@ -38,15 +40,15 @@ const deleteCustomerFlow = ai.defineFlow(
     await customerRef.delete();
 
     // Log audit event
-    if (!auth) {
+    if (!context.auth) {
         throw new Error("Not authorized for audit logging.");
     }
     const adminAuth = getAuth();
-    const user = await adminAuth.getUser(auth.uid);
+    const user = await adminAuth.getUser(context.auth.uid);
 
     await db.collection('audit-log').add({
         user: {
-            id: auth.uid,
+            id: context.auth.uid,
             name: user.displayName || 'System'
         },
         action: 'DELETE',

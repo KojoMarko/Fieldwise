@@ -42,9 +42,11 @@ const createWorkOrderFlow = ai.defineFlow(
     name: 'createWorkOrderFlow',
     inputSchema: CreateWorkOrderInputSchema,
     outputSchema: CreateWorkOrderOutputSchema,
-    auth: (auth) => auth,
+    auth: (auth) => {
+      if (!auth) throw new Error('Authorization required.');
+    },
   },
-  async (input, auth) => {
+  async (input, context) => {
     const workOrderRef = db.collection('work-orders').doc();
     const newWorkOrder: WorkOrder = {
         ...input,
@@ -56,15 +58,15 @@ const createWorkOrderFlow = ai.defineFlow(
     await workOrderRef.set(newWorkOrder);
 
     // Log audit event
-    if (!auth) {
+    if (!context.auth) {
         throw new Error("Not authorized for audit logging.");
     }
     const adminAuth = getAuth();
-    const user = await adminAuth.getUser(auth.uid);
+    const user = await adminAuth.getUser(context.auth.uid);
 
     await db.collection('audit-log').add({
         user: {
-            id: auth.uid,
+            id: context.auth.uid,
             name: user.displayName || 'System'
         },
         action: 'CREATE',

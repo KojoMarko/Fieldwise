@@ -25,9 +25,11 @@ const updateSparePartFlow = ai.defineFlow(
     name: 'updateSparePartFlow',
     inputSchema: UpdateSparePartInputSchema,
     outputSchema: z.void(),
-    auth: (auth) => auth,
+    auth: (auth) => {
+      if (!auth) throw new Error('Authorization required.');
+    },
   },
-  async (input, auth) => {
+  async (input, context) => {
     const { id, ...dataToUpdate } = input;
     const sparePartRef = db.collection('spare-parts').doc(id);
     const sparePartDoc = await sparePartRef.get();
@@ -40,15 +42,15 @@ const updateSparePartFlow = ai.defineFlow(
     await sparePartRef.update(dataToUpdate);
 
     // Log audit event
-    if (!auth) {
+    if (!context.auth) {
         throw new Error("Not authorized for audit logging.");
     }
     const adminAuth = getAuth();
-    const user = await adminAuth.getUser(auth.uid);
+    const user = await adminAuth.getUser(context.auth.uid);
 
     await db.collection('audit-log').add({
         user: {
-            id: auth.uid,
+            id: context.auth.uid,
             name: user.displayName || 'System'
         },
         action: 'UPDATE',

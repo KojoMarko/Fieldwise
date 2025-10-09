@@ -34,9 +34,11 @@ const createUserFlow = ai.defineFlow(
     name: 'createUserFlow',
     inputSchema: CreateUserInputSchema,
     outputSchema: CreateUserOutputSchema,
-    auth: (auth) => auth,
+    auth: (auth) => {
+      if (!auth) throw new Error('Authorization required.');
+    },
   },
-  async (input, auth) => {
+  async (input, context) => {
     try {
         // 1. Check if user already exists in Firestore
         const usersRef = db.collection('users');
@@ -70,15 +72,15 @@ const createUserFlow = ai.defineFlow(
         await userDocRef.set(newUser);
 
         // 5. Log audit event
-        if (!auth) {
+        if (!context.auth) {
             throw new Error("Not authorized for audit logging.");
         }
         const adminAuth = getAuth();
-        const actor = await adminAuth.getUser(auth.uid);
+        const actor = await adminAuth.getUser(context.auth.uid);
 
         await db.collection('audit-log').add({
             user: {
-                id: auth.uid,
+                id: context.auth.uid,
                 name: actor.displayName || 'System'
             },
             action: 'CREATE',

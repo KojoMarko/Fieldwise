@@ -73,6 +73,24 @@ export function AssetForm() {
   const [newName, setNewName] = useState('');
   const [discoveredNames, setDiscoveredNames] = useState<string[]>([]);
 
+  const form = useForm<AssetFormValues>({
+    resolver: zodResolver(CreateAssetInputSchema),
+    defaultValues: {
+      name: '',
+      model: '',
+      serialNumber: '',
+      customerId: '',
+      location: '',
+      companyId: user?.companyId,
+      lifecycleNotes: [],
+      status: 'Operational',
+      vendor: '',
+      ppmFrequency: undefined,
+    },
+  });
+
+  const watchedName = form.watch('name');
+
   useEffect(() => {
     if (!user?.companyId) {
       setIsLoading(false);
@@ -105,40 +123,29 @@ export function AssetForm() {
   }, [user?.companyId]);
   
   useEffect(() => {
-    const modelMap = new Map<string, number | undefined>();
-    allAssets.forEach(asset => {
-        if (asset.model && !modelMap.has(asset.model)) {
-            modelMap.set(asset.model, asset.ppmFrequency);
-        }
-    });
-    setDiscoveredModels(Array.from(modelMap.entries()).map(([name, ppmFrequency]) => ({ name, ppmFrequency })));
-
     const nameSet = new Set<string>();
     allAssets.forEach(asset => {
         if(asset.name) {
             nameSet.add(asset.name);
         }
     });
-    setDiscoveredNames(Array.from(nameSet));
+    setDiscoveredNames(Array.from(nameSet).sort());
 
   }, [allAssets]);
 
 
-  const form = useForm<AssetFormValues>({
-    resolver: zodResolver(CreateAssetInputSchema),
-    defaultValues: {
-      name: '',
-      model: '',
-      serialNumber: '',
-      customerId: '',
-      location: '',
-      companyId: user?.companyId,
-      lifecycleNotes: [],
-      status: 'Operational',
-      vendor: '',
-      ppmFrequency: undefined,
-    },
-  });
+  const availableModels = useMemo(() => {
+    if (!watchedName) return [];
+    
+    const modelsForName = allAssets
+      .filter(asset => asset.name === watchedName)
+      .map(asset => ({ name: asset.model, ppmFrequency: asset.ppmFrequency }));
+    
+    const uniqueModels = Array.from(new Map(modelsForName.map(m => [m.name, m])).values());
+    
+    return uniqueModels.sort((a,b) => a.name.localeCompare(b.name));
+  }, [watchedName, allAssets]);
+
 
   async function onSubmit(data: AssetFormValues) {
     if (!user) {
@@ -174,7 +181,7 @@ export function AssetForm() {
         setNewModelDialogOpen(true);
     } else {
         form.setValue('model', modelName);
-        const selectedModel = discoveredModels.find(m => m.name === modelName);
+        const selectedModel = availableModels.find(m => m.name === modelName);
         if (selectedModel && selectedModel.ppmFrequency) {
             form.setValue('ppmFrequency', selectedModel.ppmFrequency);
              toast({
@@ -186,9 +193,20 @@ export function AssetForm() {
   }
 
   const handleAddNewModel = () => {
-    if(newModelName.trim()) {
-        const newModel: DiscoveredModel = { name: newModelName };
-        setDiscoveredModels(prev => [...prev, newModel].sort((a,b) => a.name.localeCompare(b.name)));
+    if(newModelName.trim() && watchedName) {
+        // We create a temporary asset object to update the memoized calculation
+        const tempAsset: Asset = {
+            id: `temp-${Date.now()}`,
+            name: watchedName,
+            model: newModelName,
+            serialNumber: '',
+            customerId: '',
+            location: '',
+            installationDate: '',
+            companyId: user?.companyId || '',
+            status: 'Operational',
+        };
+        setAllAssets(prev => [...prev, tempAsset]);
         form.setValue('model', newModelName);
         setNewModelDialogOpen(false);
         setNewModelName('');
@@ -200,13 +218,17 @@ export function AssetForm() {
         setNewNameDialogOpen(true);
     } else {
         form.setValue('name', nameValue);
+        form.resetField('model'); // Reset model when name changes
     }
   }
 
   const handleAddNewName = () => {
       if (newName.trim()) {
-          setDiscoveredNames(prev => [...prev, newName].sort());
+          if (!discoveredNames.includes(newName)) {
+            setDiscoveredNames(prev => [...prev, newName].sort());
+          }
           form.setValue('name', newName);
+          form.resetField('model');
           setNewNameDialogOpen(false);
           setNewName('');
       }
@@ -223,7 +245,7 @@ export function AssetForm() {
             <AlertDialogHeader>
             <AlertDialogTitle>Add New Asset Model</AlertDialogTitle>
             <AlertDialogDescription>
-                Enter the name for the new model you want to add.
+                Enter the name for the new model for asset type "{watchedName}".
             </AlertDialogDescription>
             </AlertDialogHeader>
             <Input 
@@ -233,7 +255,7 @@ export function AssetForm() {
             />
             <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleAddNewModel}>Add Model</AlertDialogAction>
+            <AlertDialogAction onClick={handleAddNewModel} disabled={!watchedName}>Add Model</AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -305,16 +327,17 @@ export function AssetForm() {
                 <FormItem>
                     <FormLabel>Asset Model</FormLabel>
                     <Select
-                    onValueChange={handleModelChange}
-                    value={field.value}
+                      onValueChange={handleModelChange}
+                      value={field.value}
+                      disabled={!watchedName}
                     >
                     <FormControl>
                         <SelectTrigger>
-                        <SelectValue placeholder="Select an existing model or add new" />
+                        <SelectValue placeholder={!watchedName ? "Select an asset name first" : "Select an existing model or add new"} />
                         </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        {discoveredModels.map((model) => (
+                        {availableModels.map((model) => (
                         <SelectItem key={model.name} value={model.name}>
                             {model.name}
                         </SelectItem>

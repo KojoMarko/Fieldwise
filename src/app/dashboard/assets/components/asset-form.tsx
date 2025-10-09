@@ -64,9 +64,14 @@ export function AssetForm() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [allAssets, setAllAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
   const [isNewModelDialogOpen, setNewModelDialogOpen] = useState(false);
   const [newModelName, setNewModelName] = useState('');
   const [discoveredModels, setDiscoveredModels] = useState<DiscoveredModel[]>([]);
+
+  const [isNewNameDialogOpen, setNewNameDialogOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [discoveredNames, setDiscoveredNames] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -102,11 +107,20 @@ export function AssetForm() {
   useEffect(() => {
     const modelMap = new Map<string, number | undefined>();
     allAssets.forEach(asset => {
-        if (!modelMap.has(asset.model)) {
+        if (asset.model && !modelMap.has(asset.model)) {
             modelMap.set(asset.model, asset.ppmFrequency);
         }
     });
     setDiscoveredModels(Array.from(modelMap.entries()).map(([name, ppmFrequency]) => ({ name, ppmFrequency })));
+
+    const nameSet = new Set<string>();
+    allAssets.forEach(asset => {
+        if(asset.name) {
+            nameSet.add(asset.name);
+        }
+    });
+    setDiscoveredNames(Array.from(nameSet));
+
   }, [allAssets]);
 
 
@@ -174,11 +188,28 @@ export function AssetForm() {
   const handleAddNewModel = () => {
     if(newModelName.trim()) {
         const newModel: DiscoveredModel = { name: newModelName };
-        setDiscoveredModels(prev => [...prev, newModel]);
+        setDiscoveredModels(prev => [...prev, newModel].sort((a,b) => a.name.localeCompare(b.name)));
         form.setValue('model', newModelName);
         setNewModelDialogOpen(false);
         setNewModelName('');
     }
+  }
+
+  const handleNameChange = (nameValue: string) => {
+    if (nameValue === 'add_new_name') {
+        setNewNameDialogOpen(true);
+    } else {
+        form.setValue('name', nameValue);
+    }
+  }
+
+  const handleAddNewName = () => {
+      if (newName.trim()) {
+          setDiscoveredNames(prev => [...prev, newName].sort());
+          form.setValue('name', newName);
+          setNewNameDialogOpen(false);
+          setNewName('');
+      }
   }
 
   if (isLoading) {
@@ -205,25 +236,66 @@ export function AssetForm() {
             <AlertDialogAction onClick={handleAddNewModel}>Add Model</AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
-    </AlertDialog>
+      </AlertDialog>
+
+      <AlertDialog open={isNewNameDialogOpen} onOpenChange={setNewNameDialogOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Add New Asset Name</AlertDialogTitle>
+            <AlertDialogDescription>
+                Enter the name for the new asset type (e.g., Chemistry Analyzer).
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Input 
+                placeholder="e.g., Chemistry Analyzer"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+            />
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAddNewName}>Add Name</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
+         <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
             <FormItem>
-              <FormLabel>Asset Name</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Vitros 5600" {...field} />
-              </FormControl>
-              <FormDescription>
-                The common name of the equipment.
-              </FormDescription>
-              <FormMessage />
+                <FormLabel>Asset Name</FormLabel>
+                <Select
+                onValueChange={handleNameChange}
+                value={field.value}
+                >
+                <FormControl>
+                    <SelectTrigger>
+                    <SelectValue placeholder="Select an existing name or add new" />
+                    </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                    {discoveredNames.map((name) => (
+                    <SelectItem key={name} value={name}>
+                        {name}
+                    </SelectItem>
+                    ))}
+                    <SelectSeparator />
+                    <SelectItem value="add_new_name" className="text-primary focus:text-primary-foreground focus:bg-primary">
+                        <div className='flex items-center gap-2'>
+                            <PlusCircle className="h-4 w-4" />
+                            <span>Add New Name...</span>
+                        </div>
+                    </SelectItem>
+                </SelectContent>
+                </Select>
+                 <FormDescription>
+                    The general category of the equipment.
+                </FormDescription>
+                <FormMessage />
             </FormItem>
-          )}
+            )}
         />
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
            <FormField

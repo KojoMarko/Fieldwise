@@ -33,7 +33,7 @@ const createAssetFlow = ai.defineFlow(
     name: 'createAssetFlow',
     inputSchema: CreateAssetInputSchema,
     outputSchema: CreateAssetOutputSchema,
-    auth: (auth, input) => { // Auth policy
+    auth: (auth, input) => {
         if (!auth) {
             throw new Error("Not authorized.");
         }

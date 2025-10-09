@@ -6,6 +6,7 @@ import { AuthProvider } from '@/hooks/use-auth';
 export const metadata: Metadata = {
   title: 'FieldWise',
   description: 'Enterprise-grade field service management',
+  manifest: '/manifest.webmanifest'
 };
 
 export default function RootLayout({

@@ -11,6 +11,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
 import { DeleteCustomerInputSchema } from '@/lib/schemas';
+import { formatISO } from 'date-fns';
+import { getAuth } from 'firebase-admin/auth';
 
 export type DeleteCustomerInput = z.infer<typeof DeleteCustomerInputSchema>;
 
@@ -23,8 +25,33 @@ const deleteCustomerFlow = ai.defineFlow(
     name: 'deleteCustomerFlow',
     inputSchema: DeleteCustomerInputSchema,
     outputSchema: z.void(),
+    auth: (auth) => !!auth?.uid,
   },
-  async (input) => {
-    await db.collection('customers').doc(input.customerId).delete();
+  async (input, context) => {
+    const customerRef = db.collection('customers').doc(input.customerId);
+    const customerDoc = await customerRef.get();
+    if (!customerDoc.exists) {
+        throw new Error("Customer not found");
+    }
+    const customerData = customerDoc.data();
+
+    await customerRef.delete();
+
+    // Log audit event
+    const adminAuth = getAuth();
+    const user = await adminAuth.getUser(context.auth!.uid);
+
+    await db.collection('audit-log').add({
+        user: {
+            id: context.auth?.uid,
+            name: user.displayName || 'System'
+        },
+        action: 'DELETE',
+        entity: 'Customer',
+        entityId: input.customerId,
+        entityName: customerData?.name || 'Unknown Customer',
+        companyId: customerData?.companyId,
+        timestamp: formatISO(new Date()),
+    });
   }
 );

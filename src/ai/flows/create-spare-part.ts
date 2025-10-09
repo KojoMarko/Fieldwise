@@ -13,6 +13,8 @@ import { z } from 'zod';
 import type { SparePart } from '@/lib/types';
 import { CreateSparePartInputSchema } from '@/lib/schemas';
 import { db } from '@/lib/firebase-admin';
+import { formatISO } from 'date-fns';
+import { getAuth } from 'firebase-admin/auth';
 
 export type CreateSparePartInput = z.infer<typeof CreateSparePartInputSchema>;
 
@@ -30,8 +32,9 @@ const createSparePartFlow = ai.defineFlow(
     name: 'createSparePartFlow',
     inputSchema: CreateSparePartInputSchema,
     outputSchema: CreateSparePartOutputSchema,
+    auth: (auth) => !!auth?.uid,
   },
-  async (input) => {
+  async (input, context) => {
     const sparePartRef = db.collection('spare-parts').doc();
     const newSparePart: SparePart = {
         ...input,
@@ -39,6 +42,23 @@ const createSparePartFlow = ai.defineFlow(
     };
 
     await sparePartRef.set(newSparePart);
+
+    // Log audit event
+    const adminAuth = getAuth();
+    const user = await adminAuth.getUser(context.auth!.uid);
+
+    await db.collection('audit-log').add({
+        user: {
+            id: context.auth?.uid,
+            name: user.displayName || 'System'
+        },
+        action: 'CREATE',
+        entity: 'Spare Part',
+        entityId: sparePartRef.id,
+        entityName: newSparePart.name,
+        companyId: newSparePart.companyId,
+        timestamp: formatISO(new Date()),
+    });
     
     return {
       id: sparePartRef.id,

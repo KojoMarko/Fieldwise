@@ -10,6 +10,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
+import { formatISO } from 'date-fns';
+import { getAuth } from 'firebase-admin/auth';
 
 const UpdateWorkOrderInputSchema = z.object({
   id: z.string().min(1, 'Work Order ID is required'),
@@ -30,10 +32,34 @@ const updateWorkOrderFlow = ai.defineFlow(
     name: 'updateWorkOrderFlow',
     inputSchema: UpdateWorkOrderInputSchema,
     outputSchema: z.void(),
+    auth: (auth) => !!auth?.uid,
   },
-  async (input) => {
+  async (input, context) => {
     const workOrderRef = db.collection('work-orders').doc(input.id);
+    const workOrderDoc = await workOrderRef.get();
+    if (!workOrderDoc.exists) {
+        throw new Error("Work order not found.");
+    }
+    const workOrderData = workOrderDoc.data();
+
     const { id, ...dataToUpdate } = input;
     await workOrderRef.update(dataToUpdate);
+
+    // Log audit event
+    const adminAuth = getAuth();
+    const user = await adminAuth.getUser(context.auth!.uid);
+
+    await db.collection('audit-log').add({
+        user: {
+            id: context.auth?.uid,
+            name: user.displayName || 'System'
+        },
+        action: 'UPDATE',
+        entity: 'Work Order',
+        entityId: id,
+        entityName: workOrderData?.title || 'Unknown Work Order',
+        companyId: workOrderData?.companyId,
+        timestamp: formatISO(new Date()),
+    });
   }
 );

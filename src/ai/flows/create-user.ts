@@ -14,6 +14,8 @@ import type { User } from '@/lib/types';
 import { CreateUserInputSchema } from '@/lib/schemas';
 import { db, auth } from '@/lib/firebase-admin';
 import { sendEmail } from '@/lib/email/send-email';
+import { formatISO } from 'date-fns';
+import { getAuth } from 'firebase-admin/auth';
 
 export type CreateUserInput = z.infer<typeof CreateUserInputSchema>;
 
@@ -32,8 +34,9 @@ const createUserFlow = ai.defineFlow(
     name: 'createUserFlow',
     inputSchema: CreateUserInputSchema,
     outputSchema: CreateUserOutputSchema,
+    auth: (auth) => !!auth?.uid,
   },
-  async (input) => {
+  async (input, context) => {
     try {
         // 1. Check if user already exists in Firestore
         const usersRef = db.collection('users');
@@ -65,8 +68,25 @@ const createUserFlow = ai.defineFlow(
         };
 
         await userDocRef.set(newUser);
+
+        // 5. Log audit event
+        const adminAuth = getAuth();
+        const actor = await adminAuth.getUser(context.auth!.uid);
+
+        await db.collection('audit-log').add({
+            user: {
+                id: context.auth?.uid,
+                name: actor.displayName || 'System'
+            },
+            action: 'CREATE',
+            entity: 'User',
+            entityId: userRecord.uid,
+            entityName: newUser.name,
+            companyId: newUser.companyId,
+            timestamp: formatISO(new Date()),
+        });
         
-        // 5. Send welcome email with credentials
+        // 6. Send welcome email with credentials
         await sendEmail(
             newUser.email,
             "Welcome to FieldWise - Your Account is Ready",

@@ -12,6 +12,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { db, auth } from '@/lib/firebase-admin';
+import { formatISO } from 'date-fns';
+import { getAuth } from 'firebase-admin/auth';
 
 const DeleteUserInputSchema = z.object({
   userId: z.string().min(1, 'User ID is required'),
@@ -28,14 +30,43 @@ const deleteUserFlow = ai.defineFlow(
     name: 'deleteUserFlow',
     inputSchema: DeleteUserInputSchema,
     outputSchema: z.void(),
+    auth: (auth) => !!auth?.uid,
   },
-  async (input) => {
+  async (input, context) => {
     const { userId } = input;
+
+    // Fetch user doc to get data before deleting
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+        // Still try to delete from Auth if they exist there
+        await auth.deleteUser(userId);
+        return;
+    }
+    const userData = userDoc.data();
 
     // 1. Delete user from Firebase Auth
     await auth.deleteUser(userId);
 
     // 2. Delete user profile from Firestore
     await db.collection('users').doc(userId).delete();
+
+    // 3. Log audit event
+    const adminAuth = getAuth();
+    const actor = await adminAuth.getUser(context.auth!.uid);
+
+    await db.collection('audit-log').add({
+        user: {
+            id: context.auth?.uid,
+            name: actor.displayName || 'System'
+        },
+        action: 'DELETE',
+        entity: 'User',
+        entityId: userId,
+        entityName: userData?.name || 'Unknown User',
+        companyId: userData?.companyId,
+        timestamp: formatISO(new Date()),
+    });
   }
 );

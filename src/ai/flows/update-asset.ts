@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
 import { UpdateAssetInputSchema } from '@/lib/schemas';
 import { formatISO } from 'date-fns';
+import { getAuth } from 'firebase-admin/auth';
 
 export type UpdateAssetInput = z.infer<typeof UpdateAssetInputSchema>;
 
@@ -24,8 +25,14 @@ const updateAssetFlow = ai.defineFlow(
     name: 'updateAssetFlow',
     inputSchema: UpdateAssetInputSchema,
     outputSchema: z.void(),
+    auth: (auth, input) => {
+        if (!auth) {
+            throw new Error("Not authorized.");
+        }
+        return !!auth.uid;
+    }
   },
-  async (input) => {
+  async (input, context) => {
     const assetRef = db.collection('assets').doc(input.id);
 
     // The schema includes the ID, but we don't want to save it inside the document itself.
@@ -63,5 +70,25 @@ const updateAssetFlow = ai.defineFlow(
 
 
     await assetRef.update(dataToUpdate);
+    
+    const assetDoc = await assetRef.get();
+    const asset = assetDoc.data();
+
+    // Log audit event
+    const adminAuth = getAuth();
+    const user = await adminAuth.getUser(context.auth!.uid);
+
+    await db.collection('audit-log').add({
+        user: {
+            id: context.auth?.uid,
+            name: user.displayName || 'System'
+        },
+        action: 'UPDATE',
+        entity: 'Asset',
+        entityId: id,
+        entityName: dataToUpdate.name,
+        companyId: asset?.companyId,
+        timestamp: formatISO(new Date()),
+    });
   }
 );

@@ -8,6 +8,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
 import { UpdateCompanyInputSchema } from '@/lib/schemas';
+import { formatISO } from 'date-fns';
+import { getAuth } from 'firebase-admin/auth';
 
 export type UpdateCompanyInput = z.infer<typeof UpdateCompanyInputSchema>;
 
@@ -20,11 +22,29 @@ const updateCompanyFlow = ai.defineFlow(
     name: 'updateCompanyFlow',
     inputSchema: UpdateCompanyInputSchema,
     outputSchema: z.void(),
+    auth: (auth) => !!auth?.uid,
   },
-  async (input) => {
+  async (input, context) => {
     const { id, ...dataToUpdate } = input;
     const companyRef = db.collection('companies').doc(id);
 
     await companyRef.update(dataToUpdate);
+
+    // Log audit event
+    const adminAuth = getAuth();
+    const user = await adminAuth.getUser(context.auth!.uid);
+
+    await db.collection('audit-log').add({
+        user: {
+            id: context.auth?.uid,
+            name: user.displayName || 'System'
+        },
+        action: 'UPDATE',
+        entity: 'Company',
+        entityId: id,
+        entityName: dataToUpdate.name,
+        companyId: id, // For company updates, the companyId is the entityId
+        timestamp: formatISO(new Date()),
+    });
   }
 );

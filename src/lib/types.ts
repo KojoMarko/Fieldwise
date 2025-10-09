@@ -141,3 +141,21 @@ export type Notification = {
   companyId: string;
   recipientRole?: 'Admin' | 'Engineer' | 'All';
 };
+
+export type AuditLogEvent = {
+  id: string;
+  user: {
+    id: string;
+    name: string;
+  };
+  action: 'CREATE' | 'UPDATE' | 'DELETE';
+  entity: 'Asset' | 'Work Order' | 'Resource' | 'Spare Part' | 'Customer' | 'User' | 'Company';
+  entityId: string;
+  entityName: string;
+  companyId: string;
+  timestamp: string;
+  changes?: {
+    before: Record<string, any>;
+    after: Record<string, any>;
+  }
+};

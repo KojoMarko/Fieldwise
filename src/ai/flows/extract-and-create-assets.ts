@@ -59,8 +59,16 @@ const extractAndCreateAssetsFlow = ai.defineFlow(
     outputSchema: z.object({ count: z.number() }),
   },
   async ({ fileDataUri, companyId, customerId }) => {
-    // Step 1: Extract assets from the document using the LLM
-    const { output } = await prompt({ fileDataUri });
+    let output;
+    try {
+      // Step 1: Extract assets from the document using the LLM
+      const result = await prompt({ fileDataUri });
+      output = result.output;
+    } catch (error: any) {
+      console.error(`[AI Asset Extraction Error]: ${error.message}`);
+      // Re-throw a more user-friendly error to be caught by the frontend.
+      throw new Error("The AI model is currently overloaded or unavailable. Please try again in a few moments.");
+    }
 
     if (!output || !output.assets || output.assets.length === 0) {
       return { count: 0 };

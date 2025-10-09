@@ -96,7 +96,7 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
           </DropdownMenuItem>
           {isAdmin && (
             <>
-              <DropdownMenuItem onClick={() => setAssignDialogOpen(true)} disabled={!workOrder.technicianId}>
+              <DropdownMenuItem onClick={() => setAssignDialogOpen(true)}>
                 {workOrder.technicianId ? 'Re-assign Engineer' : 'Assign Engineer'}
               </DropdownMenuItem>
               {workOrder.status === 'Draft' && (

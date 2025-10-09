@@ -11,7 +11,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { db, auth } from '@/lib/firebase-admin';
+import { db, auth as adminAuthService } from '@/lib/firebase-admin';
 import { formatISO } from 'date-fns';
 import { getAuth } from 'firebase-admin/auth';
 
@@ -30,9 +30,9 @@ const deleteUserFlow = ai.defineFlow(
     name: 'deleteUserFlow',
     inputSchema: DeleteUserInputSchema,
     outputSchema: z.void(),
-    auth: (auth) => !!auth?.uid,
+    auth: (auth) => auth,
   },
-  async (input, context) => {
+  async (input, auth) => {
     const { userId } = input;
 
     // Fetch user doc to get data before deleting
@@ -41,27 +41,27 @@ const deleteUserFlow = ai.defineFlow(
 
     if (!userDoc.exists) {
         // Still try to delete from Auth if they exist there
-        await auth.deleteUser(userId);
+        await adminAuthService.deleteUser(userId);
         return;
     }
     const userData = userDoc.data();
 
     // 1. Delete user from Firebase Auth
-    await auth.deleteUser(userId);
+    await adminAuthService.deleteUser(userId);
 
     // 2. Delete user profile from Firestore
     await db.collection('users').doc(userId).delete();
 
     // 3. Log audit event
-    if (!context.auth) {
+    if (!auth) {
         throw new Error("Not authorized for audit logging.");
     }
     const adminAuth = getAuth();
-    const actor = await adminAuth.getUser(context.auth.uid);
+    const actor = await adminAuth.getUser(auth.uid);
 
     await db.collection('audit-log').add({
         user: {
-            id: context.auth.uid,
+            id: auth.uid,
             name: actor.displayName || 'System'
         },
         action: 'DELETE',

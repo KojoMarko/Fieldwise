@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import type { User } from '@/lib/types';
 import { CreateUserInputSchema } from '@/lib/schemas';
-import { db, auth } from '@/lib/firebase-admin';
+import { db, auth as adminAuthService } from '@/lib/firebase-admin';
 import { sendEmail } from '@/lib/email/send-email';
 import { formatISO } from 'date-fns';
 import { getAuth } from 'firebase-admin/auth';
@@ -34,9 +34,9 @@ const createUserFlow = ai.defineFlow(
     name: 'createUserFlow',
     inputSchema: CreateUserInputSchema,
     outputSchema: CreateUserOutputSchema,
-    auth: (auth) => !!auth?.uid,
+    auth: (auth) => auth,
   },
-  async (input, context) => {
+  async (input, auth) => {
     try {
         // 1. Check if user already exists in Firestore
         const usersRef = db.collection('users');
@@ -50,7 +50,7 @@ const createUserFlow = ai.defineFlow(
         const tempPassword = Math.random().toString(36).slice(-8);
         
         // 3. Create the user in Firebase Auth
-        const userRecord = await auth.createUser({
+        const userRecord = await adminAuthService.createUser({
             email: input.email,
             password: tempPassword,
             displayName: input.name,
@@ -70,15 +70,15 @@ const createUserFlow = ai.defineFlow(
         await userDocRef.set(newUser);
 
         // 5. Log audit event
-        if (!context.auth) {
+        if (!auth) {
             throw new Error("Not authorized for audit logging.");
         }
         const adminAuth = getAuth();
-        const actor = await adminAuth.getUser(context.auth.uid);
+        const actor = await adminAuth.getUser(auth.uid);
 
         await db.collection('audit-log').add({
             user: {
-                id: context.auth.uid,
+                id: auth.uid,
                 name: actor.displayName || 'System'
             },
             action: 'CREATE',

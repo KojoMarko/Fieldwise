@@ -37,12 +37,12 @@ const createAssetFlow = ai.defineFlow(
             throw new Error("Not authorized.");
         }
         if (auth.uid) { // We can check claims here: (auth.claims.premium)
-            return true;
+            return auth;
         }
         return false;
     }
   },
-  async (input, context) => {
+  async (input, auth) => {
     const assetRef = db.collection('assets').doc();
     
     const newAsset: Omit<Asset, 'id'> = {
@@ -71,15 +71,15 @@ const createAssetFlow = ai.defineFlow(
     });
     
     // Log audit event
-    if (!context.auth) {
+    if (!auth) {
         throw new Error("Not authorized for audit logging.");
     }
     const adminAuth = getAuth();
-    const user = await adminAuth.getUser(context.auth.uid);
+    const user = await adminAuth.getUser(auth.uid);
 
     await db.collection('audit-log').add({
         user: {
-            id: context.auth.uid,
+            id: auth.uid,
             name: user.displayName || 'System'
         },
         action: 'CREATE',

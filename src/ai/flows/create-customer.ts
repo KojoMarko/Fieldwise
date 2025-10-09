@@ -33,9 +33,9 @@ const createCustomerFlow = ai.defineFlow(
     name: 'createCustomerFlow',
     inputSchema: CreateCustomerInputSchema,
     outputSchema: CreateCustomerOutputSchema,
-    auth: (auth) => !!auth?.uid,
+    auth: (auth) => auth,
   },
-  async (input, context) => {
+  async (input, auth) => {
     const customerRef = db.collection('customers').doc();
     const newCustomer: Customer = {
         ...input,
@@ -45,15 +45,15 @@ const createCustomerFlow = ai.defineFlow(
     await customerRef.set(newCustomer);
 
     // Log audit event
-    if (!context.auth) {
+    if (!auth) {
         throw new Error("Not authorized for audit logging.");
     }
     const adminAuth = getAuth();
-    const user = await adminAuth.getUser(context.auth.uid);
+    const user = await adminAuth.getUser(auth.uid);
     
     await db.collection('audit-log').add({
         user: {
-            id: context.auth.uid,
+            id: auth.uid,
             name: user.displayName || 'System'
         },
         action: 'CREATE',

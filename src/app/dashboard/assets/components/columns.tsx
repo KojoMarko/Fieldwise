@@ -5,7 +5,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Asset, Customer } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
@@ -26,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { deleteAsset } from '@/ai/flows/delete-asset';
 import { format } from 'date-fns';
 import { EditAssetModelDialog } from './edit-asset-model-dialog';
+import { ReclassifyAssetDialog } from './reclassify-asset-dialog';
 
 function CustomerNameCell({ customerId, onNameFetched }: { customerId: string, onNameFetched: (name: string) => void }) {
     const [name, setName] = useState('Loading...');
@@ -64,6 +65,7 @@ function AssetActionsCell({ asset }: { asset: Asset }) {
   const { toast } = useToast();
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
   const [isEditModelDialogOpen, setEditModelDialogOpen] = useState(false);
+  const [isReclassifyDialogOpen, setReclassifyDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleRemove = async () => {
@@ -96,6 +98,11 @@ function AssetActionsCell({ asset }: { asset: Asset }) {
             onOpenChange={setEditModelDialogOpen}
             asset={asset}
         />
+        <ReclassifyAssetDialog
+            open={isReclassifyDialogOpen}
+            onOpenChange={setReclassifyDialogOpen}
+            asset={asset}
+        />
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -124,7 +131,10 @@ function AssetActionsCell({ asset }: { asset: Asset }) {
                 <Link href={`/dashboard/assets/${asset.id}`}>View Asset Details</Link>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>Edit / Transfer Asset</DropdownMenuItem>
+             <DropdownMenuSeparator />
              <DropdownMenuItem onClick={() => setEditModelDialogOpen(true)}>Edit Model Name</DropdownMenuItem>
+             <DropdownMenuItem onClick={() => setReclassifyDialogOpen(true)}>Re-classify Asset Name</DropdownMenuItem>
+             <DropdownMenuSeparator />
             <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => setDeleteDialogOpen(true)}

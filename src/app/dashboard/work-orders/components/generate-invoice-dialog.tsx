@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -11,9 +12,10 @@ import {
 import { Button } from '@/components/ui/button';
 import type { WorkOrder } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { customers, assets } from '@/lib/data';
 import { Separator } from '@/components/ui/separator';
+import { Download } from 'lucide-react';
 
 interface GenerateInvoiceDialogProps {
   open: boolean;
@@ -28,6 +30,7 @@ export function GenerateInvoiceDialog({
 }: GenerateInvoiceDialogProps) {
   const { toast } = useToast();
   const [showPreview, setShowPreview] = useState(false);
+  const invoiceRef = useRef<HTMLDivElement>(null);
 
   const customer = customers.find((c) => c.id === workOrder.customerId);
   const asset = assets.find((a) => a.id === workOrder.assetId);
@@ -38,6 +41,47 @@ export function GenerateInvoiceDialog({
       setShowPreview(false);
     }
   }, [open]);
+
+  const handleDownloadPdf = async () => {
+    toast({
+        title: 'Generating PDF...',
+        description: 'Please wait while the invoice is being prepared.',
+    });
+
+    try {
+        const { default: jsPDF } = await import('jspdf');
+        const { default: html2canvas } = await import('html2canvas');
+
+        if (!invoiceRef.current) {
+            throw new Error("Invoice content is not available.");
+        }
+
+        const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`Invoice-INV-${workOrder.id.replace('WO-', '')}.pdf`);
+
+        toast({
+            title: 'Download Ready',
+            description: 'Your PDF invoice has been downloaded.',
+        });
+    } catch (error) {
+        console.error("Failed to generate PDF:", error);
+        toast({
+            variant: 'destructive',
+            title: 'PDF Generation Failed',
+            description: 'Could not generate the PDF at this time.',
+        });
+    }
+  };
+
 
   const handleSendInvoice = () => {
     console.log(`Generating invoice for ${workOrder.id}`);
@@ -70,7 +114,7 @@ export function GenerateInvoiceDialog({
 
         {showPreview ? (
           <div className="max-h-[60vh] overflow-y-auto p-1">
-            <div className="p-6 border rounded-lg bg-background">
+            <div ref={invoiceRef} className="p-6 border rounded-lg bg-background">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-primary">INVOICE</h2>
@@ -159,12 +203,18 @@ export function GenerateInvoiceDialog({
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           {showPreview ? (
-            <Button onClick={handleSendInvoice}>Send Invoice to Customer</Button>
+            <>
+              <Button variant="outline" onClick={handleDownloadPdf}>
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
+              </Button>
+              <Button onClick={handleSendInvoice}>Send Invoice to Customer</Button>
+            </>
           ) : (
             <Button onClick={() => setShowPreview(true)}>Preview Invoice</Button>
           )}

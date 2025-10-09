@@ -138,6 +138,10 @@ export const sparePartsColumns: ColumnDef<SparePart>[] = [
         )
     }
   },
+    {
+    accessorKey: 'assetModel',
+    header: 'Asset Model',
+  },
   {
     accessorKey: 'quantity',
     header: 'Quantity',

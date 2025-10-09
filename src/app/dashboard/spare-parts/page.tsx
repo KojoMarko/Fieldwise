@@ -145,33 +145,15 @@ export default function SparePartsPage() {
   }, [user?.companyId]);
 
 
-  const groupedParts = useMemo(() => {
-    let partsToGroup = spareParts;
-    if (filter) {
-      partsToGroup = spareParts.filter(
+  const filteredParts = useMemo(() => {
+    if (!filter) return spareParts;
+    return spareParts.filter(
         (p) =>
           p.name.toLowerCase().includes(filter.toLowerCase()) ||
           p.partNumber.toLowerCase().includes(filter.toLowerCase()) ||
           p.assetModel.toLowerCase().includes(filter.toLowerCase())
       );
-    }
-
-    return partsToGroup.reduce((acc, part) => {
-      const { assetModel } = part;
-      if (!acc[assetModel]) {
-        acc[assetModel] = [];
-      }
-      acc[assetModel].push(part);
-      return acc;
-    }, {} as Record<string, SparePart[]>);
   }, [filter, spareParts]);
-
-  const defaultOpenValue = useMemo(() => {
-      if (filter && Object.keys(groupedParts).length > 0) {
-          return `item-${Object.keys(groupedParts)[0]}`
-      }
-      return undefined;
-  }, [filter, groupedParts])
 
 
   return (
@@ -203,7 +185,7 @@ export default function SparePartsPage() {
         <CardHeader>
           <CardTitle>Spare Parts Inventory</CardTitle>
           <CardDescription>
-            Manage all spare parts, grouped by the machine they belong to.
+            Manage all spare parts for your company.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -222,30 +204,7 @@ export default function SparePartsPage() {
                   className="max-w-sm"
                 />
               </div>
-              <Accordion
-                type="single"
-                collapsible
-                className="w-full"
-                key={defaultOpenValue} // Force re-render to open accordion on filter
-                defaultValue={defaultOpenValue}
-              >
-                {Object.entries(groupedParts).length > 0 ? (
-                  Object.entries(groupedParts).map(([model, parts]) => (
-                    <AccordionItem key={model} value={`item-${model}`}>
-                      <AccordionTrigger className="text-lg font-medium">
-                        {model} ({parts.length} parts)
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <DataTable columns={sparePartsColumns} data={parts} />
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))
-                ) : (
-                  <div className="text-center py-10 text-muted-foreground">
-                    No spare parts found.
-                  </div>
-                )}
-              </Accordion>
+              <DataTable columns={sparePartsColumns} data={filteredParts} />
             </>
            )}
         </CardContent>

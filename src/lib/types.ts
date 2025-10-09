@@ -49,6 +49,10 @@ export type Asset = {
   purchaseDate?: string;
   vendor?: string;
   warrantyExpiry?: string;
+  // Meta can be used to store client-side computed values, like resolved customer names
+  meta?: {
+    [key: string]: any;
+  }
 };
 
 export type SparePart = {

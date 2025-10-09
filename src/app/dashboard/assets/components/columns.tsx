@@ -26,25 +26,35 @@ import { useToast } from '@/hooks/use-toast';
 import { deleteAsset } from '@/ai/flows/delete-asset';
 import { format } from 'date-fns';
 
-function CustomerNameCell({ customerId }: { customerId: string }) {
+function CustomerNameCell({ customerId, onNameFetched }: { customerId: string, onNameFetched: (name: string) => void }) {
     const [name, setName] = useState('Loading...');
     
     useEffect(() => {
         const fetchCustomer = async () => {
             if (!customerId) {
                 setName('N/A');
+                onNameFetched('N/A');
                 return;
             }
-            const docRef = doc(db, "customers", customerId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setName((docSnap.data() as Customer).name);
-            } else {
-                setName('N/A');
+            try {
+                const docRef = doc(db, "customers", customerId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const customerName = (docSnap.data() as Customer).name;
+                    setName(customerName);
+                    onNameFetched(customerName);
+                } else {
+                    setName('N/A');
+                    onNameFetched('N/A');
+                }
+            } catch (error) {
+                console.error("Error fetching customer:", error);
+                setName('Error');
+                onNameFetched('Error');
             }
         };
         fetchCustomer();
-    }, [customerId]);
+    }, [customerId, onNameFetched]);
 
     return <span>{name}</span>;
 }
@@ -169,7 +179,12 @@ export const columns: ColumnDef<Asset>[] = [
   {
     accessorKey: 'customerId',
     header: 'Customer',
-    cell: ({ row }) => <CustomerNameCell customerId={row.original.customerId} />
+    cell: ({ row }) => <CustomerNameCell customerId={row.original.customerId} onNameFetched={(name) => {
+        // This is a bit of a hack to make the customer name searchable
+        // We are adding it to the row's meta data so the global filter can find it.
+        if (!row.original.meta) row.original.meta = {};
+        row.original.meta.customerName = name;
+    }} />
   },
   {
     accessorKey: 'installationDate',

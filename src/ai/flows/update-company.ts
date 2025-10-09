@@ -26,22 +26,22 @@ const updateCompanyFlow = ai.defineFlow(
       if (!auth) throw new Error('Authorization required.');
     },
   },
-  async (input, context) => {
+  async (input, { auth }) => {
     const { id, ...dataToUpdate } = input;
     const companyRef = db.collection('companies').doc(id);
 
     await companyRef.update(dataToUpdate);
 
     // Log audit event
-    if (!context.auth) {
+    if (!auth) {
         throw new Error("Not authorized for audit logging.");
     }
     const adminAuth = getAuth();
-    const user = await adminAuth.getUser(context.auth.uid);
+    const user = await adminAuth.getUser(auth.uid);
 
     await db.collection('audit-log').add({
         user: {
-            id: context.auth.uid,
+            id: auth.uid,
             name: user.displayName || 'System'
         },
         action: 'UPDATE',

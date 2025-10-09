@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A flow for creating a new asset.
@@ -36,10 +37,6 @@ const createAssetFlow = ai.defineFlow(
         if (!auth) {
             throw new Error("Not authorized.");
         }
-        if (auth.uid) { // We can check claims here: (auth.claims.premium)
-            return;
-        }
-        throw new Error("Not authorized.");
     }
   },
   async (input, { auth }) => {
@@ -95,3 +92,5 @@ const createAssetFlow = ai.defineFlow(
     };
   }
 );
+
+    

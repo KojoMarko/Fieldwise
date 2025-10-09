@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A flow for updating an existing asset.
@@ -29,7 +30,6 @@ const updateAssetFlow = ai.defineFlow(
         if (!auth) {
             throw new Error("Not authorized.");
         }
-        return;
     }
   },
   async (input, { auth }) => {
@@ -95,3 +95,5 @@ const updateAssetFlow = ai.defineFlow(
     });
   }
 );
+
+    

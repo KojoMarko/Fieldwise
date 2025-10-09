@@ -7,6 +7,11 @@ config();
 
 const withPWA = withPWAInit({
   dest: "public",
+  // This prevents the PWA package from causing a restart loop in development.
+  reloadOnOnline: false,
+  swcMinify: true,
+  // By disabling in dev, we avoid the restart loop. PWA will still work in production.
+  disable: process.env.NODE_ENV === 'development',
 });
 
 const nextConfig: NextConfig = {

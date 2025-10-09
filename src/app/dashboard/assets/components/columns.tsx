@@ -25,6 +25,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { deleteAsset } from '@/ai/flows/delete-asset';
 import { format } from 'date-fns';
+import { EditAssetModelDialog } from './edit-asset-model-dialog';
 
 function CustomerNameCell({ customerId, onNameFetched }: { customerId: string, onNameFetched: (name: string) => void }) {
     const [name, setName] = useState('Loading...');
@@ -62,6 +63,7 @@ function CustomerNameCell({ customerId, onNameFetched }: { customerId: string, o
 function AssetActionsCell({ asset }: { asset: Asset }) {
   const { toast } = useToast();
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
+  const [isEditModelDialogOpen, setEditModelDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleRemove = async () => {
@@ -87,6 +89,11 @@ function AssetActionsCell({ asset }: { asset: Asset }) {
         <EditAssetDialog 
             open={isEditDialogOpen}
             onOpenChange={setEditDialogOpen}
+            asset={asset}
+        />
+        <EditAssetModelDialog
+            open={isEditModelDialogOpen}
+            onOpenChange={setEditModelDialogOpen}
             asset={asset}
         />
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -117,6 +124,7 @@ function AssetActionsCell({ asset }: { asset: Asset }) {
                 <Link href={`/dashboard/assets/${asset.id}`}>View Asset Details</Link>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>Edit / Transfer Asset</DropdownMenuItem>
+             <DropdownMenuItem onClick={() => setEditModelDialogOpen(true)}>Edit Model Name</DropdownMenuItem>
             <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => setDeleteDialogOpen(true)}

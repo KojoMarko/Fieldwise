@@ -97,8 +97,7 @@ export default function NotificationsPage() {
 
       const notificationsQuery = query(
           collection(db, 'notifications'),
-          where('companyId', '==', user.companyId),
-          orderBy('timestamp', 'desc')
+          where('companyId', '==', user.companyId)
       );
       
       const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
@@ -110,6 +109,8 @@ export default function NotificationsPage() {
                 fetchedNotifications.push({ ...data, id: doc.id } as Notification);
               }
           });
+          // Sort by timestamp descending on the client
+          fetchedNotifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
           setNotifications(fetchedNotifications);
           setIsLoading(false);
       });

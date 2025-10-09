@@ -117,6 +117,11 @@ export function GenerateInvoiceDialog({
     day: 'numeric',
   });
 
+  // Example of splitting the name. In a real app, this might come from two fields.
+  const companyNameParts = company.name.split(' ');
+  const firstLine = companyNameParts.slice(0, 2).join(' ');
+  const secondLine = companyNameParts.slice(2).join(' ');
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
@@ -147,9 +152,12 @@ export function GenerateInvoiceDialog({
                             <td className="w-1/2 align-top text-right">
                                 <div className="flex justify-end items-center gap-2 mb-2">
                                   {company.logoUrl && (
-                                    <Image src={company.logoUrl} alt={company.name} width={64} height={32} className="object-contain" />
+                                    <Image src={company.logoUrl} alt={company.name} width={40} height={40} className="object-contain" />
                                   )}
-                                  <h3 className="font-semibold text-lg">{company.name}</h3>
+                                  <div className="text-left">
+                                      <h3 className="font-semibold text-lg">{firstLine}</h3>
+                                      <h3 className="font-semibold text-lg">{secondLine}</h3>
+                                  </div>
                                 </div>
                                 <p className="text-sm text-muted-foreground whitespace-pre-line text-right">
                                     {company.address}

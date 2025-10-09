@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { WorkOrder, WorkOrderStatus, User, Customer } from '@/lib/types';
+import type { WorkOrder, WorkOrderStatus, User, Customer, Company } from '@/lib/types';
 import Link from 'next/link';
 import { AssignTechnicianDialog } from './assign-technician-dialog';
 import { GenerateInvoiceDialog } from './generate-invoice-dialog';
@@ -44,8 +44,22 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
   const [isAssignDialogOpen, setAssignDialogOpen] = useState(false);
   const [isInvoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [company, setCompany] = useState<Company | null>(null);
 
   const isAdmin = user?.role === 'Admin';
+  
+  useEffect(() => {
+    if (user?.companyId) {
+      const companyRef = doc(db, 'companies', user.companyId);
+      const unsubscribe = onSnapshot(companyRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setCompany(docSnap.data() as Company);
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [user?.companyId]);
+
 
   const handleStatusUpdate = async (status: WorkOrderStatus) => {
     try {
@@ -73,11 +87,12 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
           workOrder={workOrder}
         />
       )}
-       {isAdmin && (
+       {isAdmin && company && (
         <GenerateInvoiceDialog
           open={isInvoiceDialogOpen}
           onOpenChange={setInvoiceDialogOpen}
           workOrder={workOrder}
+          company={company}
         />
       )}
       <DropdownMenu>

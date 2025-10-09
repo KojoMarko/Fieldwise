@@ -10,30 +10,49 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import type { WorkOrder } from '@/lib/types';
+import type { WorkOrder, Company, Customer, Asset } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useRef } from 'react';
-import { customers, assets } from '@/lib/data';
 import { Separator } from '@/components/ui/separator';
 import { Download } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import Image from 'next/image';
 
 interface GenerateInvoiceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workOrder: WorkOrder;
+  company: Company;
 }
 
 export function GenerateInvoiceDialog({
   open,
   onOpenChange,
   workOrder,
+  company,
 }: GenerateInvoiceDialogProps) {
   const { toast } = useToast();
   const [showPreview, setShowPreview] = useState(false);
   const invoiceRef = useRef<HTMLDivElement>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [asset, setAsset] = useState<Asset | null>(null);
 
-  const customer = customers.find((c) => c.id === workOrder.customerId);
-  const asset = assets.find((a) => a.id === workOrder.assetId);
+  useEffect(() => {
+    if (open) {
+      const fetchDetails = async () => {
+        if (workOrder.customerId) {
+          const customerSnap = await getDoc(doc(db, "customers", workOrder.customerId));
+          if(customerSnap.exists()) setCustomer(customerSnap.data() as Customer);
+        }
+        if (workOrder.assetId) {
+          const assetSnap = await getDoc(doc(db, "assets", workOrder.assetId));
+          if(assetSnap.exists()) setAsset(assetSnap.data() as Asset);
+        }
+      }
+      fetchDetails();
+    }
+  }, [open, workOrder]);
 
   // Reset state when dialog is closed
   useEffect(() => {
@@ -126,11 +145,13 @@ export function GenerateInvoiceDialog({
                                 <p className="text-muted-foreground">Date: {today}</p>
                             </td>
                             <td className="w-1/2 align-top text-right">
-                                <h3 className="font-semibold text-lg">FieldWise</h3>
-                                <p className="text-sm text-muted-foreground">
-                                    123 Service Lane
-                                    <br />
-                                    Anytown, USA 12345
+                                {company.logoUrl ? (
+                                    <Image src={company.logoUrl} alt={company.name} width={100} height={40} className="ml-auto mb-2 object-contain" />
+                                ) : (
+                                    <h3 className="font-semibold text-lg">{company.name}</h3>
+                                )}
+                                <p className="text-sm text-muted-foreground whitespace-pre-line">
+                                    {company.address}
                                 </p>
                             </td>
                         </tr>

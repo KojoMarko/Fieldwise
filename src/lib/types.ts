@@ -107,6 +107,7 @@ export type Company = {
     address?: string;
     phone?: string;
     email?: string;
+    logoUrl?: string;
 }
 
 export type Resource = {

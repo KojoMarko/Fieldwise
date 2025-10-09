@@ -19,7 +19,97 @@ import type { Asset } from '@/lib/types';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { extractAndLogMaintenance } from '@/ai/flows/extract-and-log-maintenance';
+import { extractAndCreateAssets } from '@/ai/flows/extract-and-create-assets';
 import { Input } from '@/components/ui/input';
+
+function AiAssetImporter() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [fileName, setFileName] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.companyId) return;
+
+    setFileName(file.name);
+    setIsExtracting(true);
+    toast({
+      title: 'AI Extraction Started',
+      description: 'The AI is analyzing your document to find assets. This may take a moment.',
+    });
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const dataUri = reader.result as string;
+        const result = await extractAndCreateAssets({
+          fileDataUri: dataUri,
+          companyId: user.companyId,
+        });
+        
+        toast({
+          title: 'Extraction Complete!',
+          description: `Successfully extracted and created ${result.count} new assets.`,
+        });
+      };
+      reader.onerror = () => {
+        throw new Error('Could not read the file.');
+      }
+    } catch (error) {
+      console.error("Error extracting assets:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Extraction Failed',
+        description: 'The AI could not extract assets from the document. Please try again or add them manually.',
+      });
+    } finally {
+      setIsExtracting(false);
+      setFileName('');
+      if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  return (
+    <Card className="bg-accent/50 border-primary/20 border-dashed">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="text-primary" />
+          AI Asset Importer
+        </CardTitle>
+        <CardDescription>
+          Have a list of assets in a document? Upload it here and the AI will automatically add them to your inventory.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4">
+          <Button onClick={() => fileInputRef.current?.click()} disabled={isExtracting} variant="outline">
+              <UploadCloud className="mr-2 h-4 w-4" />
+            Upload Document
+          </Button>
+          <Input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            onChange={handleFileChange}
+            accept=".pdf,.doc,.docx,.txt"
+            disabled={isExtracting}
+          />
+          {isExtracting && (
+            <div className="flex items-center text-sm text-muted-foreground">
+              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+              <span>Analyzing document: {fileName}...</span>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 
 function AiLogImporter() {
@@ -159,7 +249,8 @@ export default function AssetsPage() {
             </Button>
         </div>
       </div>
-       <div className='mb-6'>
+       <div className='mb-6 grid gap-6 md:grid-cols-2'>
+        <AiAssetImporter />
         <AiLogImporter />
       </div>
       <Card>

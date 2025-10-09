@@ -23,3 +23,4 @@ import '@/ai/flows/update-spare-part.ts';
 import '@/ai/flows/extract-and-create-parts.ts';
 import '@/ai/flows/delete-spare-part.ts';
 import '@/ai/flows/extract-and-log-maintenance.ts';
+import '@/ai/flows/extract-and-create-assets.ts';

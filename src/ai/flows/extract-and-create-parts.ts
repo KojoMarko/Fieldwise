@@ -22,7 +22,7 @@ const ExtractAndCreatePartsInputSchema = z.object({
   fileDataUri: z
     .string()
     .describe(
-      "A document containing spare parts, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A document containing spare parts, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
   companyId: z.string().describe('The ID of the company to associate the parts with.'),
 });
@@ -44,9 +44,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert at analyzing technical documents and service manuals.
 Analyze the following document and extract a list of all spare parts mentioned.
 For each part, identify its name, its corresponding part number, and the specific equipment model it is for.
-Return the data as a list of objects.
-
-Document: {{media url=fileDataUri}}`,
+Return the data as a list of objects.`,
 });
 
 const extractAndCreatePartsFlow = ai.defineFlow(
@@ -62,12 +60,20 @@ const extractAndCreatePartsFlow = ai.defineFlow(
     if (!output || !output.parts || output.parts.length === 0) {
       return { count: 0 };
     }
+    
+    // Step 2: Ensure uniqueness based on partNumber
+    const uniqueParts = new Map<string, z.infer<typeof SparePartFromDocSchema>>();
+    output.parts.forEach((part) => {
+        if (!uniqueParts.has(part.partNumber)) {
+            uniqueParts.set(part.partNumber, part);
+        }
+    });
 
-    // Step 2: Iterate and create each part directly in Firestore
+    // Step 3: Iterate and create each unique part directly in Firestore
     const batch = db.batch();
     const sparePartsCollection = db.collection('spare-parts');
     
-    output.parts.forEach((part) => {
+    uniqueParts.forEach((part) => {
         const sparePartRef = sparePartsCollection.doc();
         const newSparePart: SparePart = {
             id: sparePartRef.id,
@@ -81,11 +87,11 @@ const extractAndCreatePartsFlow = ai.defineFlow(
         batch.set(sparePartRef, newSparePart);
     });
 
-    // Step 3: Commit the batch
+    // Step 4: Commit the batch
     await batch.commit();
 
     return {
-      count: output.parts.length,
+      count: uniqueParts.size,
     };
   }
 );

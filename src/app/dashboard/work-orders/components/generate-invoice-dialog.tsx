@@ -145,9 +145,9 @@ export function GenerateInvoiceDialog({
                                 <p className="text-muted-foreground">Date: {today}</p>
                             </td>
                             <td className="w-1/2 align-top text-right">
-                                <div className="flex justify-end items-center gap-4 mb-2">
+                                <div className="flex justify-end items-center gap-2 mb-2">
                                   {company.logoUrl && (
-                                    <Image src={company.logoUrl} alt={company.name} width={80} height={40} className="object-contain" />
+                                    <Image src={company.logoUrl} alt={company.name} width={64} height={32} className="object-contain" />
                                   )}
                                   <h3 className="font-semibold text-lg">{company.name}</h3>
                                 </div>

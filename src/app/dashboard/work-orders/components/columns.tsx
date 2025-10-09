@@ -105,7 +105,7 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setInvoiceDialogOpen(true)} disabled={workOrder.status !== 'Completed'}>
+              <DropdownMenuItem onClick={() => setInvoiceDialogOpen(true)}>
                 Generate Invoice
               </DropdownMenuItem>
             </>

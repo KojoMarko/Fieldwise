@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview A flow for updating an existing asset.
@@ -95,5 +94,3 @@ const updateAssetFlow = ai.defineFlow(
     });
   }
 );
-
-    

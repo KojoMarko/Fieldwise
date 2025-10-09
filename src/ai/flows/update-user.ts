@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview A flow for updating a user's profile information.
@@ -67,5 +66,3 @@ const updateUserFlow = ai.defineFlow(
     });
   }
 );
-
-    

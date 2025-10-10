@@ -88,9 +88,16 @@ const extractAndCreatePartsFlow = ai.defineFlow(
         const result = await textExtractionPrompt({ fileDataUri });
         documentText = result.text;
     }
-
-    // Now, with the guaranteed plain text, call the main extraction prompt.
-    const { output } = await prompt({ documentText });
+    
+    let output;
+    try {
+        // Now, with the guaranteed plain text, call the main extraction prompt.
+        const result = await prompt({ documentText });
+        output = result.output;
+    } catch (error: any) {
+        console.error(`[AI Part Extraction Error]: ${error.message}`);
+        throw new Error("The AI model could not process the document. It might be too large or in an unsupported format.");
+    }
 
     if (!output || !output.parts || output.parts.length === 0) {
       return { count: 0 };

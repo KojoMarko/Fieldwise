@@ -79,25 +79,33 @@ const extractAndCreatePartsFlow = ai.defineFlow(
         documentText = allSheetsText;
 
     } else {
-        const result = await ai.generate({
-            prompt: `Extract all text content from the following document: {{media url="${fileDataUri}"}}`,
+        // For PDF, TXT, DOCX etc., use the multimodal prompt to extract text first.
+        const textExtractionPrompt = ai.definePrompt({
+          name: 'textExtractionPrompt',
+          input: { schema: z.object({ fileDataUri: z.string() }) },
+          prompt: `Extract all text content from the following document: {{media url=fileDataUri}}`,
         });
+        const result = await textExtractionPrompt({ fileDataUri });
         documentText = result.text;
     }
 
+    // Now, with the guaranteed plain text, call the main extraction prompt.
     const { output } = await prompt({ documentText });
 
     if (!output || !output.parts || output.parts.length === 0) {
       return { count: 0 };
     }
     
+    // Filter for unique parts based on partNumber
     const uniqueParts = new Map<string, z.infer<typeof SparePartFromDocSchema>>();
     output.parts.forEach((part) => {
-        if (part.partNumber && !uniqueParts.has(part.partNumber)) {
-            uniqueParts.set(part.partNumber, part);
+        const uniqueKey = `${part.partNumber}-${part.assetModel}`.toLowerCase();
+        if (part.partNumber && !uniqueParts.has(uniqueKey)) {
+            uniqueParts.set(uniqueKey, part);
         }
     });
 
+    // Create a batch write to Firestore
     const batch = db.batch();
     const sparePartsCollection = db.collection('spare-parts');
     

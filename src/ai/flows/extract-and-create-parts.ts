@@ -82,12 +82,12 @@ const extractAndCreatePartsFlow = ai.defineFlow(
         documentText = allSheetsText;
 
     } else {
-        // For other document types, pass the data URI directly to the model
-        // This is a simplified approach; ideally, we'd extract text for other formats too.
+        // For other document types, pass the data URI directly to the model to extract text.
         const { output } = await ai.generate({
             prompt: `Extract all text content from the following document: {{media url="${fileDataUri}"}}`,
         });
-        documentText = output.text;
+        // Ensure we are passing only the text string to the next prompt.
+        documentText = output?.text ?? '';
     }
 
     // Step 1: Extract parts from the document using the LLM

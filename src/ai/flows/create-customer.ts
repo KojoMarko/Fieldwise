@@ -13,8 +13,6 @@ import { z } from 'zod';
 import type { Customer } from '@/lib/types';
 import { CreateCustomerInputSchema } from '@/lib/schemas';
 import { db } from '@/lib/firebase-admin';
-import { formatISO } from 'date-fns';
-import { getAuth } from 'firebase-admin/auth';
 
 export type CreateCustomerInput = z.infer<typeof CreateCustomerInputSchema>;
 
@@ -33,11 +31,8 @@ const createCustomerFlow = ai.defineFlow(
     name: 'createCustomerFlow',
     inputSchema: CreateCustomerInputSchema,
     outputSchema: CreateCustomerOutputSchema,
-    auth: (auth) => {
-      if (!auth) throw new Error('Authorization required.');
-    },
   },
-  async (input, { auth }) => {
+  async (input) => {
     const customerRef = db.collection('customers').doc();
     const newCustomer: Customer = {
         ...input,
@@ -45,26 +40,6 @@ const createCustomerFlow = ai.defineFlow(
     };
 
     await customerRef.set(newCustomer);
-
-    // Log audit event
-    if (!auth) {
-        throw new Error("Not authorized for audit logging.");
-    }
-    const adminAuth = getAuth();
-    const user = await adminAuth.getUser(auth.uid);
-    
-    await db.collection('audit-log').add({
-        user: {
-            id: auth.uid,
-            name: user.displayName || 'System'
-        },
-        action: 'CREATE',
-        entity: 'Customer',
-        entityId: customerRef.id,
-        entityName: newCustomer.name,
-        companyId: newCustomer.companyId,
-        timestamp: formatISO(new Date()),
-    });
     
     return {
       id: customerRef.id,

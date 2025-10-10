@@ -12,7 +12,6 @@ import { z } from 'zod';
 import { formatISO } from 'date-fns';
 import type { WorkOrder } from '@/lib/types';
 import { db } from '@/lib/firebase-admin';
-import { getAuth } from 'firebase-admin/auth';
 
 const CreateWorkOrderInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -42,11 +41,8 @@ const createWorkOrderFlow = ai.defineFlow(
     name: 'createWorkOrderFlow',
     inputSchema: CreateWorkOrderInputSchema,
     outputSchema: CreateWorkOrderOutputSchema,
-    auth: (auth) => {
-      if (!auth) throw new Error('Authorization required.');
-    },
   },
-  async (input, { auth }) => {
+  async (input) => {
     const workOrderRef = db.collection('work-orders').doc();
     const newWorkOrder: WorkOrder = {
         ...input,
@@ -56,26 +52,6 @@ const createWorkOrderFlow = ai.defineFlow(
     };
 
     await workOrderRef.set(newWorkOrder);
-
-    // Log audit event
-    if (!auth) {
-        throw new Error("Not authorized for audit logging.");
-    }
-    const adminAuth = getAuth();
-    const user = await adminAuth.getUser(auth.uid);
-
-    await db.collection('audit-log').add({
-        user: {
-            id: auth.uid,
-            name: user.displayName || 'System'
-        },
-        action: 'CREATE',
-        entity: 'Work Order',
-        entityId: workOrderRef.id,
-        entityName: newWorkOrder.title,
-        companyId: newWorkOrder.companyId,
-        timestamp: formatISO(new Date()),
-    });
     
     return {
       id: workOrderRef.id,

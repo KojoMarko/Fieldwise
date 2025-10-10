@@ -11,8 +11,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
 import { UpdateCustomerInputSchema } from '@/lib/schemas';
-import { formatISO } from 'date-fns';
-import { getAuth } from 'firebase-admin/auth';
 
 export type UpdateCustomerInput = z.infer<typeof UpdateCustomerInputSchema>;
 
@@ -29,37 +27,10 @@ const updateCustomerFlow = ai.defineFlow(
       if (!auth) throw new Error('Authorization required.');
     },
   },
-  async (input, { auth }) => {
-    const customerRef = db.collection('customers').doc(input.id);
-    const customerDoc = await customerRef.get();
-    if (!customerDoc.exists) {
-        throw new Error("Customer not found");
-    }
-    const customerData = customerDoc.data();
-
+  async (input) => {
     // The schema includes the ID, but we don't want to save it inside the document itself.
     const { id, ...dataToUpdate } = input;
-
+    const customerRef = db.collection('customers').doc(id);
     await customerRef.update(dataToUpdate);
-
-    // Log audit event
-    if (!auth) {
-        throw new Error("Not authorized for audit logging.");
-    }
-    const adminAuth = getAuth();
-    const user = await adminAuth.getUser(auth.uid);
-
-    await db.collection('audit-log').add({
-        user: {
-            id: auth.uid,
-            name: user.displayName || 'System'
-        },
-        action: 'UPDATE',
-        entity: 'Customer',
-        entityId: id,
-        entityName: dataToUpdate.name,
-        companyId: customerData?.companyId,
-        timestamp: formatISO(new Date()),
-    });
   }
 );

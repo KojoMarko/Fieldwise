@@ -12,7 +12,6 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
 import { UpdateAssetInputSchema } from '@/lib/schemas';
 import { formatISO } from 'date-fns';
-import { getAuth } from 'firebase-admin/auth';
 
 export type UpdateAssetInput = z.infer<typeof UpdateAssetInputSchema>;
 
@@ -69,28 +68,5 @@ const updateAssetFlow = ai.defineFlow(
 
 
     await assetRef.update(dataToUpdate);
-    
-    const assetDoc = await assetRef.get();
-    const asset = assetDoc.data();
-
-    // Log audit event
-    if (!auth) {
-        throw new Error("Not authorized for audit logging.");
-    }
-    const adminAuth = getAuth();
-    const user = await adminAuth.getUser(auth.uid);
-
-    await db.collection('audit-log').add({
-        user: {
-            id: auth.uid,
-            name: user.displayName || 'System'
-        },
-        action: 'UPDATE',
-        entity: 'Asset',
-        entityId: id,
-        entityName: dataToUpdate.name,
-        companyId: asset?.companyId,
-        timestamp: formatISO(new Date()),
-    });
   }
 );

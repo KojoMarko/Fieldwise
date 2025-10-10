@@ -14,7 +14,6 @@ import type { Asset } from '@/lib/types';
 import { CreateAssetInputSchema } from '@/lib/schemas';
 import { db } from '@/lib/firebase-admin';
 import { formatISO } from 'date-fns';
-import { getAuth } from 'firebase-admin/auth';
 
 export type CreateAssetInput = z.infer<typeof CreateAssetInputSchema>;
 
@@ -32,13 +31,8 @@ const createAssetFlow = ai.defineFlow(
     name: 'createAssetFlow',
     inputSchema: CreateAssetInputSchema,
     outputSchema: CreateAssetOutputSchema,
-    auth: (auth, input) => {
-        if (!auth) {
-            throw new Error("Not authorized.");
-        }
-    }
   },
-  async (input, { auth }) => {
+  async (input) => {
     const assetRef = db.collection('assets').doc();
     
     const newAsset: Omit<Asset, 'id'> = {
@@ -66,26 +60,6 @@ const createAssetFlow = ai.defineFlow(
       id: assetRef.id
     });
     
-    // Log audit event
-    if (!auth) {
-        throw new Error("Not authorized for audit logging.");
-    }
-    const adminAuth = getAuth();
-    const user = await adminAuth.getUser(auth.uid);
-
-    await db.collection('audit-log').add({
-        user: {
-            id: auth.uid,
-            name: user.displayName || 'System'
-        },
-        action: 'CREATE',
-        entity: 'Asset',
-        entityId: assetRef.id,
-        entityName: newAsset.name,
-        companyId: newAsset.companyId,
-        timestamp: formatISO(new Date()),
-    });
-
     return {
       id: assetRef.id,
     };

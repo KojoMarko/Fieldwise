@@ -1,20 +1,10 @@
 
-import type {NextConfig} from 'next';
 import { config } from 'dotenv';
-import withPWAInit from "@ducanh2912/next-pwa";
 
 config();
 
-const withPWA = withPWAInit({
-  dest: "public",
-  // This prevents the PWA package from causing a restart loop in development.
-  reloadOnOnline: false,
-  swcMinify: true,
-  // By disabling in dev, we avoid the restart loop. PWA will still work in production.
-  disable: false,
-});
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   /* config options here */
   experimental: {
     serverActions: {
@@ -42,8 +32,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https'
-        ,
+        protocol: 'https',
         hostname: 'picsum.photos',
         port: '',
         pathname: '/**',
@@ -52,4 +41,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA(nextConfig);
+export default nextConfig;

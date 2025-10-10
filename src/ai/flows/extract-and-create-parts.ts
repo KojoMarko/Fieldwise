@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A flow for extracting spare parts from a document and creating them.
@@ -40,17 +39,15 @@ export async function extractAndCreateParts(input: ExtractAndCreatePartsInput): 
 
 const prompt = ai.definePrompt({
   name: 'extractPartsFromDocPrompt',
-  input: { schema: z.object({ documentText: z.string() }) },
+  input: { schema: z.object({ fileDataUri: z.string() }) },
   output: { schema: ExtractAndCreatePartsOutputSchema },
   prompt: `You are an expert at analyzing technical documents, service manuals and spreadsheets.
-Analyze the following document content and extract a list of all spare parts mentioned.
+Analyze the following document and extract a list of all spare parts mentioned.
 The document may contain thousands of records. Be thorough and extract every single one.
 For each part, identify its name, its corresponding part number, and the specific equipment model it is for.
 Return the data as a list of objects.
 
-Document Content:
-{{{documentText}}}
-`,
+Document: {{media url=fileDataUri}}`,
 });
 
 const extractAndCreatePartsFlow = ai.defineFlow(
@@ -60,39 +57,11 @@ const extractAndCreatePartsFlow = ai.defineFlow(
     outputSchema: z.object({ count: z.number() }),
   },
   async ({ fileDataUri, companyId }) => {
-
-    const mimeType = fileDataUri.substring(fileDataUri.indexOf(':') + 1, fileDataUri.indexOf(';'));
-    let documentText = '';
-
-    if (mimeType.includes('spreadsheetml') || mimeType.includes('excel')) {
-        const base64Data = fileDataUri.substring(fileDataUri.indexOf(',') + 1);
-        const buffer = Buffer.from(base64Data, 'base64');
-        const workbook = xlsx.read(buffer, { type: 'buffer' });
-        
-        let allSheetsText = '';
-        workbook.SheetNames.forEach(sheetName => {
-            allSheetsText += `Sheet: ${sheetName}\n\n`;
-            const sheet = workbook.Sheets[sheetName];
-            const sheetCsv = xlsx.utils.sheet_to_csv(sheet);
-            allSheetsText += sheetCsv + '\n\n';
-        });
-        documentText = allSheetsText;
-
-    } else {
-        // For PDF, TXT, DOCX etc., use the multimodal prompt to extract text first.
-        const textExtractionPrompt = ai.definePrompt({
-          name: 'textExtractionPrompt',
-          input: { schema: z.object({ fileDataUri: z.string() }) },
-          prompt: `Extract all text content from the following document: {{media url=fileDataUri}}`,
-        });
-        const result = await textExtractionPrompt({ fileDataUri });
-        documentText = result.text;
-    }
     
     let output;
     try {
-        // Now, with the guaranteed plain text, call the main extraction prompt.
-        const result = await prompt({ documentText });
+        // Directly pass the data URI to the multimodal prompt
+        const result = await prompt({ fileDataUri });
         output = result.output;
     } catch (error: any) {
         console.error(`[AI Part Extraction Error]: ${error.message}`);

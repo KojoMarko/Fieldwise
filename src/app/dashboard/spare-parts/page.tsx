@@ -20,6 +20,13 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { extractAndCreateParts } from '@/ai/flows/extract-and-create-parts';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
 
 function PartIntelligence() {
   const { user } = useAuth();
@@ -139,16 +146,32 @@ export default function SparePartsPage() {
   }, [user?.companyId]);
 
 
-  const filteredParts = useMemo(() => {
-    if (!filter) return spareParts;
-    return spareParts.filter(
-        (p) =>
-          p.name.toLowerCase().includes(filter.toLowerCase()) ||
-          p.partNumber.toLowerCase().includes(filter.toLowerCase()) ||
-          p.assetModel.toLowerCase().includes(filter.toLowerCase())
-      );
+  const groupedAndFilteredParts = useMemo(() => {
+    if (!spareParts) return {};
+    
+    const filtered = filter 
+        ? spareParts.filter(
+            (p) =>
+            p.name.toLowerCase().includes(filter.toLowerCase()) ||
+            p.partNumber.toLowerCase().includes(filter.toLowerCase()) ||
+            p.assetModel.toLowerCase().includes(filter.toLowerCase())
+        )
+        : spareParts;
+
+    return filtered.reduce((acc, part) => {
+        const model = part.assetModel || 'Uncategorized';
+        if (!acc[model]) {
+            acc[model] = [];
+        }
+        acc[model].push(part);
+        return acc;
+    }, {} as Record<string, SparePart[]>);
   }, [filter, spareParts]);
 
+  const defaultAccordionValue = useMemo(() => {
+      const keys = Object.keys(groupedAndFilteredParts);
+      return keys.length > 0 ? [keys[0]] : [];
+  }, [groupedAndFilteredParts])
 
   return (
     <>
@@ -171,38 +194,56 @@ export default function SparePartsPage() {
         </div>
       </div>
       
-       <div className='mb-6'>
+       <div className='mb-6 grid gap-6 md:grid-cols-2'>
         <PartIntelligence />
+         <Card>
+            <CardHeader>
+            <CardTitle>Spare Parts Inventory</CardTitle>
+            <CardDescription>
+                Manage all spare parts for your company.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Input
+                placeholder="Filter by part name, number, or machine model..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                />
+            </CardContent>
+        </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Spare Parts Inventory</CardTitle>
-          <CardDescription>
-            Manage all spare parts for your company.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-           {isLoading ? (
-             <div className="flex items-center justify-center p-10">
+       <div>
+        {isLoading ? (
+            <div className="flex items-center justify-center p-10">
                 <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
                 <p className="ml-4 text-muted-foreground">Loading inventory...</p>
             </div>
-           ) : (
-            <>
-              <div className="mb-4">
-                <Input
-                  placeholder="Filter by part name, number, or machine model..."
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="max-w-sm"
-                />
-              </div>
-              <DataTable columns={sparePartsColumns} data={filteredParts} />
-            </>
-           )}
-        </CardContent>
-      </Card>
+        ) : Object.keys(groupedAndFilteredParts).length > 0 ? (
+             <Accordion type="multiple" defaultValue={defaultAccordionValue} className="w-full">
+                {Object.entries(groupedAndFilteredParts).map(([model, parts]) => (
+                     <AccordionItem value={model} key={model}>
+                        <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+                            {model} ({parts.length} parts)
+                        </AccordionTrigger>
+                        <AccordionContent>
+                           <Card>
+                             <CardContent className="p-0">
+                               <DataTable columns={sparePartsColumns} data={parts} />
+                             </CardContent>
+                           </Card>
+                        </AccordionContent>
+                    </AccordionItem>
+                ))}
+             </Accordion>
+        ) : (
+            <Card>
+                <CardContent className="p-10 text-center text-muted-foreground">
+                    No spare parts found.
+                </CardContent>
+            </Card>
+        )}
+       </div>
     </>
   );
 }

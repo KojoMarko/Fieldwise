@@ -62,7 +62,7 @@ const extractAndCreatePartsFlow = ai.defineFlow(
       if (!auth) throw new Error('Authorization required.');
     },
   },
-  async ({ fileDataUri, companyId }, { auth }) => {
+  async ({ fileDataUri, companyId }) => {
 
     const mimeType = fileDataUri.substring(fileDataUri.indexOf(':') + 1, fileDataUri.indexOf(';'));
     let documentText = '';
@@ -82,22 +82,18 @@ const extractAndCreatePartsFlow = ai.defineFlow(
         documentText = allSheetsText;
 
     } else {
-        // For other document types, pass the data URI directly to the model to extract text.
-        const { output } = await ai.generate({
+        const { text } = await ai.generate({
             prompt: `Extract all text content from the following document: {{media url="${fileDataUri}"}}`,
         });
-        // Ensure we are passing only the text string to the next prompt.
-        documentText = output?.text ?? '';
+        documentText = text;
     }
 
-    // Step 1: Extract parts from the document using the LLM
     const { output } = await prompt({ documentText });
 
     if (!output || !output.parts || output.parts.length === 0) {
       return { count: 0 };
     }
     
-    // Step 2: Ensure uniqueness based on partNumber
     const uniqueParts = new Map<string, z.infer<typeof SparePartFromDocSchema>>();
     output.parts.forEach((part) => {
         if (part.partNumber && !uniqueParts.has(part.partNumber)) {
@@ -105,7 +101,6 @@ const extractAndCreatePartsFlow = ai.defineFlow(
         }
     });
 
-    // Step 3: Iterate and create each unique part directly in Firestore
     const batch = db.batch();
     const sparePartsCollection = db.collection('spare-parts');
     
@@ -117,13 +112,12 @@ const extractAndCreatePartsFlow = ai.defineFlow(
             partNumber: part.partNumber,
             assetModel: part.assetModel,
             companyId: companyId,
-            quantity: 0, // Default to 0, can be adjusted later
-            location: 'Unspecified', // Default location
+            quantity: 0, 
+            location: 'Unspecified',
         };
         batch.set(sparePartRef, newSparePart);
     });
 
-    // Step 4: Commit the batch
     await batch.commit();
 
     return {

@@ -11,12 +11,6 @@ import {
 } from '@/components/ui/card';
 import { sparePartsColumns } from './components/spare-parts-columns';
 import { DataTable } from './components/data-table';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import type { SparePart } from '@/lib/types';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
@@ -27,7 +21,7 @@ import { db } from '@/lib/firebase';
 import { extractAndCreateParts } from '@/ai/flows/extract-and-create-parts';
 import { useToast } from '@/hooks/use-toast';
 
-function AiPartExtractor() {
+function PartIntelligence() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isExtracting, setIsExtracting] = useState(false);
@@ -84,7 +78,7 @@ function AiPartExtractor() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="text-primary" />
-          AI-Powered Part Importer
+          Part Intelligence
         </CardTitle>
         <CardDescription>
           Upload a service manual, parts list, or Excel sheet. The AI will automatically identify the parts, the machine they belong to, and add them to your inventory.
@@ -178,7 +172,7 @@ export default function SparePartsPage() {
       </div>
 
       <div className='mb-6'>
-        <AiPartExtractor />
+        <PartIntelligence />
       </div>
 
       <Card>

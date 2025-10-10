@@ -11,6 +11,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
 import type { SparePart } from '@/lib/types';
+import * as xlsx from 'xlsx';
 
 const SparePartFromDocSchema = z.object({
   name: z.string().describe('The descriptive name of the spare part.'),
@@ -39,13 +40,17 @@ export async function extractAndCreateParts(input: ExtractAndCreatePartsInput): 
 
 const prompt = ai.definePrompt({
   name: 'extractPartsFromDocPrompt',
-  input: { schema: z.object({ fileDataUri: z.string() }) },
+  input: { schema: z.object({ documentText: z.string() }) },
   output: { schema: ExtractAndCreatePartsOutputSchema },
   prompt: `You are an expert at analyzing technical documents, service manuals and spreadsheets.
-Analyze the following document and extract a list of all spare parts mentioned.
+Analyze the following document content and extract a list of all spare parts mentioned.
 The document may contain thousands of records. Be thorough and extract every single one.
 For each part, identify its name, its corresponding part number, and the specific equipment model it is for.
-Return the data as a list of objects.`,
+Return the data as a list of objects.
+
+Document Content:
+{{{documentText}}}
+`,
 });
 
 const extractAndCreatePartsFlow = ai.defineFlow(
@@ -53,10 +58,40 @@ const extractAndCreatePartsFlow = ai.defineFlow(
     name: 'extractAndCreatePartsFlow',
     inputSchema: ExtractAndCreatePartsInputSchema,
     outputSchema: z.object({ count: z.number() }),
+    auth: (auth) => {
+      if (!auth) throw new Error('Authorization required.');
+    },
   },
-  async ({ fileDataUri, companyId }) => {
+  async ({ fileDataUri, companyId }, { auth }) => {
+
+    const mimeType = fileDataUri.substring(fileDataUri.indexOf(':') + 1, fileDataUri.indexOf(';'));
+    let documentText = '';
+
+    if (mimeType.includes('spreadsheetml') || mimeType.includes('excel')) {
+        const base64Data = fileDataUri.substring(fileDataUri.indexOf(',') + 1);
+        const buffer = Buffer.from(base64Data, 'base64');
+        const workbook = xlsx.read(buffer, { type: 'buffer' });
+        
+        let allSheetsText = '';
+        workbook.SheetNames.forEach(sheetName => {
+            allSheetsText += `Sheet: ${sheetName}\n\n`;
+            const sheet = workbook.Sheets[sheetName];
+            const sheetCsv = xlsx.utils.sheet_to_csv(sheet);
+            allSheetsText += sheetCsv + '\n\n';
+        });
+        documentText = allSheetsText;
+
+    } else {
+        // For other document types, pass the data URI directly to the model
+        // This is a simplified approach; ideally, we'd extract text for other formats too.
+        const { output } = await ai.generate({
+            prompt: `Extract all text content from the following document: {{media url="${fileDataUri}"}}`,
+        });
+        documentText = output.text;
+    }
+
     // Step 1: Extract parts from the document using the LLM
-    const { output } = await prompt({ fileDataUri });
+    const { output } = await prompt({ documentText });
 
     if (!output || !output.parts || output.parts.length === 0) {
       return { count: 0 };

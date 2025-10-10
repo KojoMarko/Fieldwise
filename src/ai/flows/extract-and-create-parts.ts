@@ -43,6 +43,7 @@ const prompt = ai.definePrompt({
   output: { schema: ExtractAndCreatePartsOutputSchema },
   prompt: `You are an expert at analyzing technical documents, service manuals and spreadsheets.
 Analyze the following document and extract a list of all spare parts mentioned.
+The document may contain thousands of records. Be thorough and extract every single one.
 For each part, identify its name, its corresponding part number, and the specific equipment model it is for.
 Return the data as a list of objects.`,
 });
@@ -64,7 +65,7 @@ const extractAndCreatePartsFlow = ai.defineFlow(
     // Step 2: Ensure uniqueness based on partNumber
     const uniqueParts = new Map<string, z.infer<typeof SparePartFromDocSchema>>();
     output.parts.forEach((part) => {
-        if (!uniqueParts.has(part.partNumber)) {
+        if (part.partNumber && !uniqueParts.has(part.partNumber)) {
             uniqueParts.set(part.partNumber, part);
         }
     });

@@ -58,9 +58,6 @@ const extractAndCreatePartsFlow = ai.defineFlow(
     name: 'extractAndCreatePartsFlow',
     inputSchema: ExtractAndCreatePartsInputSchema,
     outputSchema: z.object({ count: z.number() }),
-    auth: (auth) => {
-      if (!auth) throw new Error('Authorization required.');
-    },
   },
   async ({ fileDataUri, companyId }) => {
 
@@ -82,10 +79,10 @@ const extractAndCreatePartsFlow = ai.defineFlow(
         documentText = allSheetsText;
 
     } else {
-        const { text } = await ai.generate({
+        const result = await ai.generate({
             prompt: `Extract all text content from the following document: {{media url="${fileDataUri}"}}`,
         });
-        documentText = text;
+        documentText = result.text;
     }
 
     const { output } = await prompt({ documentText });

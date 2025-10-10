@@ -170,8 +170,8 @@ export default function SparePartsPage() {
           </Button>
         </div>
       </div>
-
-      <div className='mb-6'>
+      
+       <div className='mb-6'>
         <PartIntelligence />
       </div>
 

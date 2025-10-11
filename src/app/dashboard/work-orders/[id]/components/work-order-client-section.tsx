@@ -94,142 +94,139 @@ export function WorkOrderClientSection({
       title: "Generating PDF...",
       description: "Please wait while your report is being created.",
     });
-  
+
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
-    let finalY = 0;
-  
+    let finalY = 40;
+
     let reportData: any = {};
     let isJsonReport = false;
+    
     if (workOrder.technicianNotes) {
         try {
             reportData = JSON.parse(workOrder.technicianNotes);
             isJsonReport = true;
         } catch (e) {
-            console.warn("Could not parse technician notes as JSON. Generating a simple text-based report.");
             isJsonReport = false;
         }
     }
-    
-    // Header
+
+    // Main Header
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
-    doc.text("Engineering Service Report", 40, 50);
+    doc.text("Engineering Service Report", pageWidth / 2, finalY, { align: 'center' });
+    finalY += 20;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text("CONFIDENTIAL | Rev. 1.0", 40, 65);
+    doc.text("CONFIDENTIAL | Rev. 1.0", pageWidth / 2, finalY, { align: 'center' });
+    finalY += 15;
 
     doc.setFont("helvetica", "normal");
     const reportIdText = `Report ID: ESR-${workOrder.id.substring(0, 8)} | Date: ${format(new Date(), 'dd/MM/yyyy')}`;
-    doc.text(reportIdText, 40, 80);
+    doc.text(reportIdText, pageWidth / 2, finalY, { align: 'center' });
+    finalY += 15;
 
     doc.setDrawColor(200, 200, 200);
-    doc.line(40, 90, pageWidth - 40, 90);
+    doc.line(40, finalY, pageWidth - 40, finalY);
+    finalY += 25;
     
     if (isJsonReport) {
-      // JSON-based structured report
-      autoTable(doc, {
-        startY: 100,
-        body: [
-          [{ content: 'ACCOUNT', styles: { fontStyle: 'bold' } }, { content: 'MODEL', styles: { fontStyle: 'bold' } }, { content: 'SERIAL NUMBER', styles: { fontStyle: 'bold' } }, { content: 'ID NUMBER', styles: { fontStyle: 'bold' } }],
-          [reportData.account?.name, reportData.asset?.model, reportData.asset?.serialNumber, reportData.asset?.idNumber],
-          [{ content: 'CUSTOMER CONTACT', styles: { fontStyle: 'bold' } }, { content: 'PURCHASE ORDER', styles: { fontStyle: 'bold' } }, { content: 'PROPERTY NUMBER', styles: { fontStyle: 'bold' } }, ''],
-          [reportData.customer?.contact, reportData.customer?.purchaseOrder, reportData.customer?.propertyNumber, ''],
-        ],
-        theme: 'grid',
-        styles: { fontSize: 9, cellPadding: 5 },
-        headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
-        columnStyles: {
-            0: { cellWidth: 150 },
-            1: { cellWidth: 120 },
-            2: { cellWidth: 120 },
-            3: { cellWidth: 'auto' },
-        }
-      });
-      finalY = (doc as any).lastAutoTable.finalY;
+      const addSection = (title: string, data: [string, string][]) => {
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(12);
+          doc.text(title, 40, finalY);
+          finalY += 15;
 
-      autoTable(doc, {
-          startY: finalY + 10,
-          body: [
-               [{ content: 'AGREEMENT TYPE', styles: { fontStyle: 'bold' } }, { content: 'AGREEMENT NUMBER', styles: { fontStyle: 'bold' } }, { content: 'EFFECTIVE DATES', styles: { fontStyle: 'bold' } }, ''],
-               [reportData.agreement?.type, reportData.agreement?.number, reportData.agreement?.effectiveDates, ''],
-               [{ content: 'CASE NUMBER', styles: { fontStyle: 'bold' } }, { content: 'CREATED DATE/TIME', styles: { fontStyle: 'bold' } }, { content: 'PERFORMED BY', styles: { fontStyle: 'bold' } }, ''],
-               [reportData.case?.number, reportData.case?.createdDate, reportData.workOrder?.performedBy, ''],
-               [{ content: 'WORK ORDER NUMBER', styles: { fontStyle: 'bold' } }, { content: 'COMPLETION DATE', styles: { fontStyle: 'bold' } }, { content: 'INSTRUMENT CONDITION', styles: { fontStyle: 'bold' } }, ''],
-               [reportData.workOrder?.number, reportData.workOrder?.completionDate, reportData.workOrder?.instrumentCondition, ''],
-          ],
-          theme: 'grid',
-          styles: { fontSize: 9, cellPadding: 5 },
-          headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
-          columnStyles: {
-              0: { cellWidth: 150 },
-              1: { cellWidth: 120 },
-              2: { cellWidth: 120 },
-              3: { cellWidth: 'auto' },
-          }
-      });
-      finalY = (doc as any).lastAutoTable.finalY;
-    
-      autoTable(doc, {
-          startY: finalY + 10,
-          head: [[{ content: 'SUMMARY OF WORK PERFORMED', styles: { halign: 'left' } }]],
-          body: [
-              [`Reported Problem: ${reportData.summary?.reportedProblem || ''}`],
-              [`Symptom Summary: ${reportData.summary?.symptomSummary || ''}`],
-              [`Problem Summary: ${reportData.summary?.problemSummary || ''}`],
-              [`Resolution Summary: ${reportData.summary?.resolutionSummary || ''}`],
-              [`Verification of Activity: ${reportData.summary?.verificationOfActivity || ''}`],
-          ],
-          theme: 'grid',
-          styles: { fontSize: 9, cellPadding: 5, halign: 'left' },
-          headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
-      });
-      finalY = (doc as any).lastAutoTable.finalY;
+          autoTable(doc, {
+              startY: finalY,
+              body: data,
+              theme: 'plain',
+              styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
+              columnStyles: { 0: { fontStyle: 'bold', cellWidth: 150 } }
+          });
+          finalY = (doc as any).lastAutoTable.finalY + 15;
+      }
+      
+      const addDetailSection = (title: string, content: string) => {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(title, 40, finalY);
+        finalY += 15;
 
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      const validationText = "SYSTEM VALIDATION: For Medical Devices - Regulatory requirements call for a final validation of instrument repair and system readiness. The final validation of instrument repair and system readiness can only be obtained through a successful QC run using the laboratory's quality control system. This repair record and the laboratory's quality control records comprise the quality documents associated with this instrument repair. Copies of these records may be required by Beckman Coulter or regulatory authorities to complete technical investigations or quality audits. We appreciate your cooperation if requested to provide copies of your QC data related to this repair.";
-      const splitText = doc.splitTextToSize(validationText, pageWidth - 80);
-      doc.text(splitText, 40, finalY + 20);
-      finalY = finalY + 20 + (splitText.length * 12);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        const splitText = doc.splitTextToSize(content || 'N/A', pageWidth - 80);
+        doc.text(splitText, 40, finalY);
+        finalY += (splitText.length * 10) + 15;
+      }
+      
+      // Company Information
+      if (company) {
+        addSection("Company Information", [
+          ["Company Name:", company.name],
+          ["Address:", company.address || 'N/A'],
+          ["Phone:", company.phone || 'N/A'],
+          ["Email:", company.email || 'N/A'],
+        ]);
+      }
 
-      autoTable(doc, {
-        startY: finalY + 10,
-        head: [['START DATE', 'END DATE', 'DESCRIPTION', 'HOURS', 'RATE', 'TOTAL LINE PRICE', 'CUSTOMER CHARGE']],
-        body: (reportData.labor || []).map((item: any) => [
-          item.startDate, item.endDate, item.description, item.hours, item.rate, item.total, item.customerCharge
-        ]),
-        theme: 'grid',
-        styles: { fontSize: 9, cellPadding: 5 },
-        headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
-      });
-      finalY = (doc as any).lastAutoTable.finalY;
-    
-      autoTable(doc, {
-        startY: finalY + 10,
-        head: [['PART NUMBER', 'PART DESCRIPTION', 'QTY', 'PRICE', 'TOTAL LINE PRICE', 'CUSTOMER CHARGE']],
-        body: (reportData.parts || []).map((p: any) => [p.partNumber, p.description, p.quantity, p.price, '', '']),
-        theme: 'grid',
-        styles: { fontSize: 9, cellPadding: 5 },
-        headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
-      });
-      finalY = (doc as any).lastAutoTable.finalY;
+      // Client Information
+      addSection("Client Information", [
+        ["Client Name:", reportData.customer?.contact || customer?.name || 'N/A'],
+        ["Contact Person:", reportData.signingPerson || customer?.contactPerson || 'N/A'],
+        ["Client Address:", reportData.customer?.address || customer?.address || 'N/A'],
+      ]);
+      
+      // Service & Asset Information
+      addSection("Service & Asset Information", [
+        ["Work Order Title:", workOrder.title],
+        ["Asset Serviced:", `${asset?.name} (S/N: ${asset?.serialNumber})`],
+        ["Service Start Date:", reportData.labor?.[0]?.startDate ? format(new Date(reportData.labor[0].startDate), 'Pp') : 'N/A'],
+        ["Service Completion Date:", reportData.labor?.[0]?.endDate ? format(new Date(reportData.labor[0].endDate), 'Pp') : 'N/A'],
+        ["Service Type:", workOrder.type],
+        ["Prepared By:", reportData.technicianName || technician?.name || 'N/A'],
+      ]);
+      
+      doc.setDrawColor(220, 220, 220);
+      doc.line(40, finalY, pageWidth - 40, finalY);
+      finalY += 10;
+      
+      // Service Details
+      addDetailSection("Summary of Work Performed", reportData.summary?.resolutionSummary);
+      addDetailSection("Root Cause Analysis", `The identified root cause for the issue was **${reportData.summary?.problemSummary}**.`);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Parts Consumed", 40, finalY);
+      finalY += 15;
 
-      doc.setFontSize(9);
-      doc.text(`Customer Call Originator: ${reportData.customerCallOriginator || ''}`, 40, finalY + 30);
-      doc.text(`Technician Name: ${reportData.technicianName || ''}`, 40, finalY + 45);
-      doc.line(40, finalY + 65, 240, finalY + 65); // Signature line
-      doc.text("Customer Signature", 40, finalY + 75);
-      doc.line(300, finalY + 65, 500, finalY + 65); // Signature line
-      doc.text("Technician Signature", 300, finalY + 75);
+      if (reportData.parts && reportData.parts.length > 0) {
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Part Number', 'Description', 'Quantity']],
+            body: reportData.parts.map((p: any) => [p.partNumber, p.description, p.quantity]),
+            theme: 'grid',
+            headStyles: { fillColor: [240, 240, 240], textColor: 0 }
+        });
+        finalY = (doc as any).lastAutoTable.finalY + 15;
+      } else {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.text("None", 40, finalY);
+        finalY += 20;
+      }
+      
+      addDetailSection("Final Observations & Recommendations", reportData.summary?.verificationOfActivity);
+      addDetailSection("Required Follow-Up Actions", "No specific follow-up actions were detailed in the provided report data.");
+
 
     } else {
       // Simple text-based report for non-JSON notes
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       const notesText = doc.splitTextToSize(workOrder.technicianNotes || 'No technician notes available.', pageWidth - 80);
-      doc.text(notesText, 40, 100);
+      doc.text(notesText, 40, finalY);
     }
 
     doc.save(`ServiceReport-ESR-${workOrder.id.substring(0, 8)}.pdf`);
@@ -643,5 +640,7 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    
 
     

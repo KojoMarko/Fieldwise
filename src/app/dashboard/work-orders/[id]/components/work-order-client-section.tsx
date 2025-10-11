@@ -604,7 +604,7 @@ export function WorkOrderClientSection({
                   <Button onClick={handleQuestionnaireSubmit}>Generate Report</Button>
               </DialogFooter>
           </DialogContent>
-    
+      </Dialog>
       <div className="grid gap-4 xl:grid-cols-2">
       
         {isGeneratingReport && (

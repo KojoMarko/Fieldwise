@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -13,6 +14,7 @@ import {
   type ColumnFiltersState,
   getFacetedRowModel,
   getFacetedUniqueValues,
+  type FilterFn,
 } from '@tanstack/react-table';
 
 import {
@@ -25,6 +27,25 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+// Define a custom filter function
+const globalFilterFn: FilterFn<any> = (row, columnId, value, addMeta) => {
+  const assetName = row.original.name?.toLowerCase() || '';
+  const assetModel = row.original.model?.toLowerCase() || '';
+  const serialNumber = row.original.serialNumber?.toLowerCase() || '';
+  // Access the asynchronously fetched customer name from the row's meta
+  const customerName = row.original.meta?.customerName?.toLowerCase() || '';
+  
+  const filterValue = value.toLowerCase();
+
+  return (
+    assetName.includes(filterValue) ||
+    assetModel.includes(filterValue) ||
+    serialNumber.includes(filterValue) ||
+    customerName.includes(filterValue)
+  );
+};
+
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -45,6 +66,7 @@ export function DataTable<TData, TValue>({
   const table = useReactTable({
     data,
     columns,
+    globalFilterFn: globalFilterFn, // Use the custom filter function
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,

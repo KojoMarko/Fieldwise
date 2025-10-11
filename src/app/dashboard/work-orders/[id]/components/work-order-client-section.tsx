@@ -19,7 +19,7 @@ import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import type { WorkOrder, Customer, User, Asset, Company } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Dialog,
@@ -107,16 +107,20 @@ export function WorkOrderClientSection({
             reportData = JSON.parse(workOrder.technicianNotes);
             isJsonReport = true;
         } catch (e) {
-            console.warn("Could not parse technician notes as JSON. Falling back to plain text display.");
+            console.warn("Could not parse technician notes as JSON. Falling back to plain text display.", e);
             isJsonReport = false;
         }
     }
 
-    // Helper function to strip markdown
     const stripMarkdown = (text: string | undefined): string => {
-      if (!text) return 'N/A';
-      // Removes **bold**, *italic*, etc.
-      return text.replace(/(\*\*|__)(.*?)\1/g, '$2').replace(/(\*|_)(.*?)\1/g, '$2');
+        if (!text) return 'N/A';
+        return text.replace(/(\*\*|__)(.*?)\1/g, '$2').replace(/(\*|_)(.*?)\1/g, '$2');
+    };
+    
+    const formatDate = (date: any) => {
+        if (!date) return 'N/A';
+        const d = date instanceof Date ? date : parseISO(date);
+        return isValid(d) ? format(d, 'MMM dd, yyyy') : 'N/A';
     };
 
     // Main Header
@@ -173,7 +177,7 @@ export function WorkOrderClientSection({
       // Company Information
       if (company) {
         addSection("Company Information", [
-          ["Company Name:", company.name],
+          ["Company Name:", company.name || 'N/A'],
           ["Address:", company.address || 'N/A'],
           ["Phone:", company.phone || 'N/A'],
           ["Email:", company.email || 'N/A'],
@@ -188,12 +192,13 @@ export function WorkOrderClientSection({
       ]);
       
       // Service & Asset Information
+      const assetServiced = `${asset?.name || 'N/A'} (S/N: ${asset?.serialNumber || 'N/A'})`;
       addSection("Service & Asset Information", [
-        ["Work Order Title:", workOrder.title],
-        ["Asset Serviced:", `${asset?.name} (S/N: ${asset?.serialNumber})`],
-        ["Service Start Date:", reportData.labor?.[0]?.startDate ? format(new Date(reportData.labor[0].startDate), 'Pp') : 'N/A'],
-        ["Service Completion Date:", reportData.labor?.[0]?.endDate ? format(new Date(reportData.labor[0].endDate), 'Pp') : 'N/A'],
-        ["Service Type:", workOrder.type],
+        ["Work Order Title:", workOrder.title || 'N/A'],
+        ["Asset Serviced:", assetServiced],
+        ["Service Start Date:", formatDate(reportData.labor?.[0]?.startDate)],
+        ["Service Completion Date:", formatDate(reportData.labor?.[0]?.endDate)],
+        ["Service Type:", workOrder.type || 'N/A'],
         ["Prepared By:", reportData.technicianName || technician?.name || 'N/A'],
       ]);
       
@@ -655,7 +660,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-    
 
     

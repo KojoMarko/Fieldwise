@@ -114,6 +114,14 @@ export function Header() {
     const router = useRouter();
     const [isSheetOpen, setSheetOpen] = useState(false);
     const [unreadNotifications, setUnreadNotifications] = useState<Notification[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+
+
+    const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && searchQuery.trim()) {
+            router.push(`/dashboard/search?q=${encodeURIComponent(searchQuery.trim())}`);
+        }
+    }
 
     useEffect(() => {
         if (!user?.companyId) return;
@@ -294,6 +302,9 @@ export function Header() {
           type="search"
           placeholder="Search..."
           className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleSearch}
         />
       </div>
        <DropdownMenu>

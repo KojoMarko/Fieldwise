@@ -8,7 +8,7 @@ import {
   collection,
   query,
   where,
-  orderBy,
+  getDocs,
   limit,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -52,7 +52,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { format, parseISO, formatDistanceToNowStrict, addMonths } from 'date-fns';
+import { format, parseISO, isValid, addMonths } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { EditCustomerDialog } from '../components/edit-customer-dialog';
@@ -121,7 +121,13 @@ export default function CustomerDetailPage({
         snapshot.forEach((doc) => woData.push({ id: doc.id, ...doc.data() } as WorkOrder));
         
         // Sort client-side
-        woData.sort((a,b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
+        woData.sort((a,b) => {
+            const dateA = a.scheduledDate ? parseISO(a.scheduledDate) : 0;
+            const dateB = b.scheduledDate ? parseISO(b.scheduledDate) : 0;
+            if (!isValid(dateA)) return 1;
+            if (!isValid(dateB)) return -1;
+            return dateB.getTime() - dateA.getTime();
+        });
         setWorkOrders(woData.slice(0,5));
         
         // After fetching work orders, fetch the relevant users if not already fetched
@@ -159,17 +165,25 @@ export default function CustomerDetailPage({
         description: "Customer infographic report generation is coming soon!",
     });
   }
+  
+  const validInstallationDates = assets
+    .map(asset => parseISO(asset.installationDate))
+    .filter(isValid);
+
+  const customerSince = validInstallationDates.length > 0
+    ? new Date(Math.min(...validInstallationDates.map(date => date.getTime())))
+    : null;
 
   const stats = {
       totalAssets: assets.length,
       totalWorkOrders: workOrders.length,
       pendingWorkOrders: workOrders.filter(wo => !['Completed', 'Cancelled', 'Invoiced'].includes(wo.status)).length,
-      lastServiceDate: workOrders.length > 0 ? new Date(workOrders[0].scheduledDate) : null,
-      customerSince: assets.length > 0 ? new Date(assets.reduce((oldest, asset) => new Date(asset.installationDate) < new Date(oldest) ? asset.installationDate : oldest, assets[0].installationDate)) : null,
+      lastServiceDate: workOrders.length > 0 && isValid(parseISO(workOrders[0].scheduledDate)) ? parseISO(workOrders[0].scheduledDate) : null,
+      customerSince: customerSince,
   }
 
   const upcomingMaintenance = assets
-    .filter(a => a.lastPpmDate && a.ppmFrequency)
+    .filter(a => a.lastPpmDate && a.ppmFrequency && isValid(parseISO(a.lastPpmDate)))
     .map(a => ({
         ...a,
         nextPpmDate: addMonths(new Date(a.lastPpmDate!), a.ppmFrequency!),
@@ -271,7 +285,7 @@ export default function CustomerDetailPage({
                                 <div className="flex items-center gap-2 self-stretch sm:self-center w-full sm:w-auto">
                                     <Badge variant="outline" className={cn("hidden sm:flex", assetStatusStyles[asset.status as keyof typeof assetStatusStyles])}>{asset.status}</Badge>
                                     <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/assets/${asset.id}`}>View</Link></Button>
-                                    <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/assets/${asset.id}`}>History</Link></Button>
+                                    <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/assets/${asset.id}?tab=history`}>History</Link></Button>
                                     <Button variant="secondary" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}&assetId=${asset.id}`}>Service</Link></Button>
                                 </div>
                             </li>
@@ -306,7 +320,7 @@ export default function CustomerDetailPage({
                             <TableBody>
                                 {workOrders.length > 0 ? workOrders.map(wo => (
                                     <TableRow key={wo.id}>
-                                        <TableCell>{format(parseISO(wo.scheduledDate), 'MMM dd, yyyy')}</TableCell>
+                                        <TableCell>{isValid(parseISO(wo.scheduledDate)) ? format(parseISO(wo.scheduledDate), 'MMM dd, yyyy') : 'N/A'}</TableCell>
                                         <TableCell>
                                             <Link href={`/dashboard/work-orders/${wo.id}`} className="text-primary hover:underline font-medium">
                                                 {wo.id.toUpperCase().substring(0, 8)}
@@ -397,3 +411,5 @@ export default function CustomerDetailPage({
     </>
   );
 }
+
+    

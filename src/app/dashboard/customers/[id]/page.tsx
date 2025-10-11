@@ -56,6 +56,7 @@ import { format, parseISO, formatDistanceToNowStrict, addMonths } from 'date-fns
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { EditCustomerDialog } from '../components/edit-customer-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const workOrderStatusStyles: Record<WorkOrder['status'], string> = {
   Draft: 'bg-gray-200 text-gray-800',
@@ -87,6 +88,7 @@ export default function CustomerDetailPage({
   const [users, setUsers] = useState<Record<string, User>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsLoading(true);
@@ -151,6 +153,13 @@ export default function CustomerDetailPage({
     return notFound();
   }
 
+  const handleGenerateReport = () => {
+    toast({
+        title: "Feature in Development",
+        description: "Customer infographic report generation is coming soon!",
+    });
+  }
+
   const stats = {
       totalAssets: assets.length,
       totalWorkOrders: workOrders.length,
@@ -186,7 +195,7 @@ export default function CustomerDetailPage({
           <p className="text-sm text-muted-foreground">Customer Details</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild><Link href="/dashboard/audit-log"><HistoryIcon className="h-4 w-4 mr-2" />View History</Link></Button>
+            <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming Soon!", description: "Full customer history will be available here." })}><HistoryIcon className="h-4 w-4 mr-2" />View History</Button>
             <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}><Edit className="h-4 w-4 mr-2" />Edit</Button>
             <Button size="sm" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}`}><Plus className="h-4 w-4 mr-2" />New Work Order</Link></Button>
         </div>
@@ -262,7 +271,7 @@ export default function CustomerDetailPage({
                                 <div className="flex items-center gap-2 self-stretch sm:self-center w-full sm:w-auto">
                                     <Badge variant="outline" className={cn("hidden sm:flex", assetStatusStyles[asset.status as keyof typeof assetStatusStyles])}>{asset.status}</Badge>
                                     <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/assets/${asset.id}`}>View</Link></Button>
-                                    <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/work-orders?assetId=${asset.id}`}>History</Link></Button>
+                                    <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/assets/${asset.id}`}>History</Link></Button>
                                     <Button variant="secondary" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}&assetId=${asset.id}`}>Service</Link></Button>
                                 </div>
                             </li>
@@ -361,7 +370,7 @@ export default function CustomerDetailPage({
                 </CardHeader>
                 <CardContent className="space-y-2">
                     <Button variant="outline" className="w-full justify-start" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}`}><Plus className="h-4 w-4 mr-2" />Schedule Service</Link></Button>
-                    <Button variant="outline" className="w-full justify-start"><FileText className="h-4 w-4 mr-2" />Generate Report</Button>
+                    <Button variant="outline" className="w-full justify-start" onClick={handleGenerateReport}><FileText className="h-4 w-4 mr-2" />Generate Report</Button>
                     <Button variant="outline" className="w-full justify-start" asChild><a href={`mailto:${customer.contactEmail}`}><MailIcon className="h-4 w-4 mr-2" />Send Email</a></Button>
                     <Button variant="outline" className="w-full justify-start" onClick={() => setEditDialogOpen(true)}><Edit className="h-4 w-4 mr-2" />Edit Customer</Button>
                 </CardContent>

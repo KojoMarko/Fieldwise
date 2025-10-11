@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { LoaderCircle, CalendarIcon, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect, useMemo } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -59,6 +59,7 @@ type DiscoveredModel = {
 export function AssetForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -73,13 +74,15 @@ export function AssetForm() {
   const [newName, setNewName] = useState('');
   const [discoveredNames, setDiscoveredNames] = useState<string[]>([]);
 
+  const customerIdFromParams = searchParams.get('customerId');
+
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(CreateAssetInputSchema),
     defaultValues: {
       name: '',
       model: '',
       serialNumber: '',
-      customerId: '',
+      customerId: customerIdFromParams || '',
       location: '',
       companyId: user?.companyId,
       lifecycleNotes: [],

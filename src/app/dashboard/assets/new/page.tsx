@@ -12,8 +12,9 @@ import {
 import Link from 'next/link';
 import { AssetForm } from '../components/asset-form';
 import { useAuth } from '@/hooks/use-auth';
+import { Suspense } from 'react';
 
-export default function NewAssetPage() {
+function NewAssetPageContent() {
   const { user } = useAuth();
 
   return (
@@ -42,4 +43,12 @@ export default function NewAssetPage() {
       </Card>
     </div>
   );
+}
+
+export default function NewAssetPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <NewAssetPageContent />
+        </Suspense>
+    )
 }

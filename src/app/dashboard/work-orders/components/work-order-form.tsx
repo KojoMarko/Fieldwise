@@ -34,7 +34,7 @@ import { CalendarIcon, LoaderCircle, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { createWorkOrder } from '@/ai/flows/create-work-order';
 import { useEffect, useState } from 'react';
@@ -60,12 +60,16 @@ type WorkOrderFormValues = z.infer<typeof workOrderSchema>;
 export function WorkOrderForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAddCustomerDialogOpen, setAddCustomerDialogOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const customerIdFromParams = searchParams.get('customerId');
+  const assetIdFromParams = searchParams.get('assetId');
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -111,8 +115,8 @@ export function WorkOrderForm() {
       description: '',
       priority: 'Medium',
       type: 'Corrective',
-      customerId: customerProfile?.id || '',
-      assetId: '',
+      customerId: customerIdFromParams || customerProfile?.id || '',
+      assetId: assetIdFromParams || '',
     },
   });
 
@@ -120,7 +124,13 @@ export function WorkOrderForm() {
       if (customerProfile) {
           form.setValue('customerId', customerProfile.id);
       }
-  }, [customerProfile, form]);
+      if (customerIdFromParams) {
+          form.setValue('customerId', customerIdFromParams);
+      }
+      if (assetIdFromParams) {
+          form.setValue('assetId', assetIdFromParams);
+      }
+  }, [customerProfile, customerIdFromParams, assetIdFromParams, form]);
 
   async function onSubmit(data: WorkOrderFormValues) {
     if (!user) {
@@ -224,7 +234,7 @@ export function WorkOrderForm() {
                       }
                   }}
                   value={field.value}
-                  disabled={isCustomer}
+                  disabled={isCustomer || !!customerIdFromParams}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -263,7 +273,7 @@ export function WorkOrderForm() {
                 <Select
                   onValueChange={field.onChange}
                   value={field.value}
-                  disabled={!form.watch('customerId')}
+                  disabled={!form.watch('customerId') || !!assetIdFromParams}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -399,5 +409,3 @@ export function WorkOrderForm() {
     </>
   );
 }
-
-    

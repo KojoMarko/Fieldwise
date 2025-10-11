@@ -13,9 +13,10 @@ import Link from 'next/link';
 import { WorkOrderForm } from '../components/work-order-form';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 
-export default function NewWorkOrderPage() {
+
+function NewWorkOrderPageContent() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
@@ -83,4 +84,12 @@ export default function NewWorkOrderPage() {
       </Card>
     </div>
   );
+}
+
+export default function NewWorkOrderPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <NewWorkOrderPageContent />
+        </Suspense>
+    )
 }

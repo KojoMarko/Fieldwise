@@ -113,22 +113,24 @@ export function WorkOrderClientSection({
     
     // Header
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("CUSTOMER SUPPORT CALL", 40, 50);
-    doc.setFont("helvetica", "normal");
+    doc.setFontSize(18);
+    doc.text("Engineering Service Report", 40, 50);
+
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
+    doc.text("CONFIDENTIAL | Rev. 1.0", 40, 65);
+
+    doc.setFont("helvetica", "normal");
+    const reportIdText = `Report ID: ESR-${workOrder.id.substring(0, 8)} | Date: ${format(new Date(), 'dd/MM/yyyy')}`;
+    doc.text(reportIdText, 40, 80);
+
+    doc.setDrawColor(200, 200, 200);
+    doc.line(40, 90, pageWidth - 40, 90);
     
-    if (company?.name) {
-        const companyWebsite = `www.${company.name.toLowerCase().replace(/\s/g, '')}.com`;
-        doc.setTextColor(60, 140, 210); // Blue color for link
-        doc.textWithLink(companyWebsite.toUpperCase(), 40, 65, { url: `http://${companyWebsite}` });
-        doc.setTextColor(0); // Reset color
-    }
-  
     if (isJsonReport) {
       // JSON-based structured report
       autoTable(doc, {
-        startY: 80,
+        startY: 100,
         body: [
           [{ content: 'ACCOUNT', styles: { fontStyle: 'bold' } }, { content: 'MODEL', styles: { fontStyle: 'bold' } }, { content: 'SERIAL NUMBER', styles: { fontStyle: 'bold' } }, { content: 'ID NUMBER', styles: { fontStyle: 'bold' } }],
           [reportData.account?.name, reportData.asset?.model, reportData.asset?.serialNumber, reportData.asset?.idNumber],
@@ -227,7 +229,7 @@ export function WorkOrderClientSection({
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       const notesText = doc.splitTextToSize(workOrder.technicianNotes || 'No technician notes available.', pageWidth - 80);
-      doc.text(notesText, 40, 80);
+      doc.text(notesText, 40, 100);
     }
 
     doc.save(`ServiceReport-ESR-${workOrder.id.substring(0, 8)}.pdf`);

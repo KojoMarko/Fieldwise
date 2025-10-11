@@ -167,8 +167,8 @@ export default function CustomerDetailPage({
   }
   
   const validInstallationDates = assets
-    .map(asset => parseISO(asset.installationDate))
-    .filter(isValid);
+    .filter(asset => asset.installationDate && isValid(parseISO(asset.installationDate)))
+    .map(asset => parseISO(asset.installationDate));
 
   const customerSince = validInstallationDates.length > 0
     ? new Date(Math.min(...validInstallationDates.map(date => date.getTime())))
@@ -411,5 +411,3 @@ export default function CustomerDetailPage({
     </>
   );
 }
-
-    

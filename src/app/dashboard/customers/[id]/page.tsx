@@ -52,7 +52,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { format, parseISO, formatDistanceToNowStrict } from 'date-fns';
+import { format, parseISO, formatDistanceToNowStrict, addMonths } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { EditCustomerDialog } from '../components/edit-customer-dialog';
@@ -111,14 +111,16 @@ export default function CustomerDetailPage({
     const workOrdersQuery = query(
       collection(db, 'work-orders'),
       where('customerId', '==', id),
-      orderBy('scheduledDate', 'desc'),
-      limit(5)
+      limit(20) // Fetch more to sort client-side
     );
     unsubscribers.push(
       onSnapshot(workOrdersQuery, (snapshot) => {
         const woData: WorkOrder[] = [];
         snapshot.forEach((doc) => woData.push({ id: doc.id, ...doc.data() } as WorkOrder));
-        setWorkOrders(woData);
+        
+        // Sort client-side
+        woData.sort((a,b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
+        setWorkOrders(woData.slice(0,5));
         
         // After fetching work orders, fetch the relevant users if not already fetched
         const technicianIds = [...new Set(woData.map(wo => wo.technicianId).filter(Boolean))];

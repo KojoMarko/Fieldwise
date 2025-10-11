@@ -21,6 +21,7 @@ import {
   BookText,
   History,
   Inbox,
+  Map,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -35,6 +36,7 @@ const adminNavItems = [
   { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
   { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
   { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
+  { href: '/dashboard/map', icon: Map, label: 'Map'},
   { href: '/dashboard/customers', icon: Building, label: 'Customers' },
   { href: '/dashboard/users', icon: Users, label: 'Users' },
   { href: '/dashboard/assets', icon: Package, label: 'Assets' },
@@ -48,6 +50,7 @@ const engineerNavItems = [
     { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
     { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
+    { href: '/dashboard/map', icon: Map, label: 'Map'},
     { href: '/dashboard/assets', icon: Package, label: 'Assets' },
     { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
     { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },

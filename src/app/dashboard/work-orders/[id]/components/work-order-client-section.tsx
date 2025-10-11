@@ -107,6 +107,7 @@ export function WorkOrderClientSection({
             reportData = JSON.parse(workOrder.technicianNotes);
             isJsonReport = true;
         } catch (e) {
+            console.warn("Could not parse technician notes as JSON. Falling back to plain text display.");
             isJsonReport = false;
         }
     }
@@ -150,7 +151,7 @@ export function WorkOrderClientSection({
       
       const addDetailSection = (title: string, content: string) => {
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
+        doc.setFontSize(11);
         doc.text(title, 40, finalY);
         finalY += 15;
 
@@ -175,7 +176,7 @@ export function WorkOrderClientSection({
       addSection("Client Information", [
         ["Client Name:", reportData.customer?.contact || customer?.name || 'N/A'],
         ["Contact Person:", reportData.signingPerson || customer?.contactPerson || 'N/A'],
-        ["Client Address:", reportData.customer?.address || customer?.address || 'N/A'],
+        ["Client Address:", customer?.address || 'N/A'],
       ]);
       
       // Service & Asset Information
@@ -190,14 +191,19 @@ export function WorkOrderClientSection({
       
       doc.setDrawColor(220, 220, 220);
       doc.line(40, finalY, pageWidth - 40, finalY);
-      finalY += 10;
+      finalY += 20;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text("Service Details", 40, finalY);
+      finalY += 20;
       
       // Service Details
       addDetailSection("Summary of Work Performed", reportData.summary?.resolutionSummary);
       addDetailSection("Root Cause Analysis", `The identified root cause for the issue was **${reportData.summary?.problemSummary}**.`);
       
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
+      doc.setFontSize(11);
       doc.text("Parts Consumed", 40, finalY);
       finalY += 15;
 
@@ -207,7 +213,8 @@ export function WorkOrderClientSection({
             head: [['Part Number', 'Description', 'Quantity']],
             body: reportData.parts.map((p: any) => [p.partNumber, p.description, p.quantity]),
             theme: 'grid',
-            headStyles: { fillColor: [240, 240, 240], textColor: 0 }
+            headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
+            styles: { fontSize: 9 }
         });
         finalY = (doc as any).lastAutoTable.finalY + 15;
       } else {
@@ -640,7 +647,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-    
 
     

@@ -117,9 +117,13 @@ export function WorkOrderClientSection({
     doc.text("CUSTOMER SUPPORT CALL", 40, 50);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.setTextColor(60, 140, 210); // Blue color for link
-    doc.textWithLink("WWW.BECKMANCOULTER.COM", 40, 65, { url: 'http://www.beckmancoulter.com' });
-    doc.setTextColor(0); // Reset color
+    
+    if (company?.name) {
+        const companyWebsite = `www.${company.name.toLowerCase().replace(/\s/g, '')}.com`;
+        doc.setTextColor(60, 140, 210); // Blue color for link
+        doc.textWithLink(companyWebsite.toUpperCase(), 40, 65, { url: `http://${companyWebsite}` });
+        doc.setTextColor(0); // Reset color
+    }
   
     if (isJsonReport) {
       // JSON-based structured report

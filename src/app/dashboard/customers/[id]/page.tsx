@@ -153,8 +153,8 @@ export default function CustomerDetailPage({
 
   const stats = {
       totalAssets: assets.length,
-      totalJobs: workOrders.length,
-      pendingJobs: workOrders.filter(wo => !['Completed', 'Cancelled', 'Invoiced'].includes(wo.status)).length,
+      totalWorkOrders: workOrders.length,
+      pendingWorkOrders: workOrders.filter(wo => !['Completed', 'Cancelled', 'Invoiced'].includes(wo.status)).length,
       lastServiceDate: workOrders.length > 0 ? new Date(workOrders[0].scheduledDate) : null,
       customerSince: assets.length > 0 ? new Date(assets.reduce((oldest, asset) => new Date(asset.installationDate) < new Date(oldest) ? asset.installationDate : oldest, assets[0].installationDate)) : null,
   }
@@ -188,7 +188,7 @@ export default function CustomerDetailPage({
         <div className="ml-auto flex items-center gap-2">
             <Button variant="outline" size="sm"><HistoryIcon className="h-4 w-4 mr-2" />View History</Button>
             <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}><Edit className="h-4 w-4 mr-2" />Edit</Button>
-            <Button size="sm" asChild><Link href="/dashboard/work-orders/new"><Plus className="h-4 w-4 mr-2" />New Job</Link></Button>
+            <Button size="sm" asChild><Link href="/dashboard/work-orders/new"><Plus className="h-4 w-4 mr-2" />New Work Order</Link></Button>
         </div>
       </div>
       <div className="grid gap-6 md:grid-cols-12">
@@ -286,7 +286,7 @@ export default function CustomerDetailPage({
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Date</TableHead>
-                                <TableHead>Job ID</TableHead>
+                                <TableHead>Work Order ID</TableHead>
                                 <TableHead>Asset</TableHead>
                                 <TableHead>Service Type</TableHead>
                                 <TableHead>Technician</TableHead>
@@ -333,13 +333,13 @@ export default function CustomerDetailPage({
                     </div>
                      <Separator />
                     <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground flex items-center gap-2"><Briefcase className="h-4 w-4" />Total Jobs</span>
-                        <span className="font-semibold">{stats.totalJobs}</span>
+                        <span className="text-muted-foreground flex items-center gap-2"><Briefcase className="h-4 w-4" />Total Work Orders</span>
+                        <span className="font-semibold">{stats.totalWorkOrders}</span>
                     </div>
                      <Separator />
                     <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Pending Jobs</span>
-                        <span className="font-semibold">{stats.pendingJobs}</span>
+                        <span className="text-muted-foreground flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Pending Work Orders</span>
+                        <span className="font-semibold">{stats.pendingWorkOrders}</span>
                     </div>
                      <Separator />
                     <div className="flex justify-between items-center">

@@ -74,10 +74,10 @@ export default function TechnicianDashboardPage() {
       )
     }
 
-    const todaysJobs = myWorkOrders.filter(wo =>
+    const todaysWorkOrders = myWorkOrders.filter(wo =>
       wo.scheduledDate && isToday(parseISO(wo.scheduledDate))
     );
-    const upcomingJobs = myWorkOrders.filter(wo =>
+    const upcomingWorkOrders = myWorkOrders.filter(wo =>
       wo.scheduledDate && isFuture(parseISO(wo.scheduledDate)) && !isToday(parseISO(wo.scheduledDate))
     );
 
@@ -102,26 +102,26 @@ export default function TechnicianDashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Today's Appointments"
-          value={todaysJobs.length.toString()}
-          description="Jobs scheduled for today"
+          value={todaysWorkOrders.length.toString()}
+          description="Work orders scheduled for today"
           Icon={Calendar}
         />
         <KpiCard
-          title="Upcoming Jobs"
-          value={upcomingJobs.length.toString()}
-          description="Jobs in the next 7 days"
+          title="Upcoming Work Orders"
+          value={upcomingWorkOrders.length.toString()}
+          description="Work orders in the next 7 days"
           Icon={Clock}
         />
         <KpiCard
           title="Completed This Week"
           value={completedThisWeek.toString()}
-          description="Total jobs you've completed"
+          description="Total work orders you've completed"
           Icon={CheckCircle}
         />
          <KpiCard
           title="Total Assigned"
           value={myWorkOrders.length.toString()}
-          description="All open and completed jobs"
+          description="All open and completed work orders"
           Icon={Wrench}
         />
       </div>
@@ -129,15 +129,15 @@ export default function TechnicianDashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Today's Jobs</CardTitle>
+            <CardTitle>Today's Work Orders</CardTitle>
             <CardDescription>
               Your work orders scheduled for today.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {todaysJobs.length > 0 ? (
+            {todaysWorkOrders.length > 0 ? (
               <ul className="space-y-4">
-                {todaysJobs.map(wo => {
+                {todaysWorkOrders.map(wo => {
                     const customer = customers[wo.customerId];
                     return (
                         <li key={wo.id}>
@@ -166,7 +166,7 @@ export default function TechnicianDashboardPage() {
             ) : (
               <div className="text-center py-10">
                 <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
-                <p className="mt-4 text-sm text-muted-foreground">No jobs scheduled for today.</p>
+                <p className="mt-4 text-sm text-muted-foreground">No work orders scheduled for today.</p>
               </div>
             )}
           </CardContent>
@@ -174,15 +174,15 @@ export default function TechnicianDashboardPage() {
         
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming Jobs</CardTitle>
+            <CardTitle>Upcoming Work Orders</CardTitle>
             <CardDescription>
               Your work orders for the coming days.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {upcomingJobs.length > 0 ? (
+            {upcomingWorkOrders.length > 0 ? (
                  <ul className="space-y-4">
-                {upcomingJobs.map(wo => {
+                {upcomingWorkOrders.map(wo => {
                     const customer = customers[wo.customerId];
                     return (
                         <li key={wo.id}>
@@ -203,7 +203,7 @@ export default function TechnicianDashboardPage() {
             ) : (
                 <div className="text-center py-10">
                     <CheckCircle className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <p className="mt-4 text-sm text-muted-foreground">No upcoming jobs on the schedule.</p>
+                    <p className="mt-4 text-sm text-muted-foreground">No upcoming work orders on the schedule.</p>
                 </div>
             )}
           </CardContent>

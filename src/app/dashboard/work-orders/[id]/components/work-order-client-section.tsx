@@ -112,6 +112,13 @@ export function WorkOrderClientSection({
         }
     }
 
+    // Helper function to strip markdown
+    const stripMarkdown = (text: string | undefined): string => {
+      if (!text) return 'N/A';
+      // Removes **bold**, *italic*, etc.
+      return text.replace(/(\*\*|__)(.*?)\1/g, '$2').replace(/(\*|_)(.*?)\1/g, '$2');
+    };
+
     // Main Header
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
@@ -141,7 +148,7 @@ export function WorkOrderClientSection({
 
           autoTable(doc, {
               startY: finalY,
-              body: data,
+              body: data.map(([label, value]) => [label, stripMarkdown(value)]),
               theme: 'plain',
               styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
               columnStyles: { 0: { fontStyle: 'bold', cellWidth: 150 } }
@@ -149,7 +156,7 @@ export function WorkOrderClientSection({
           finalY = (doc as any).lastAutoTable.finalY + 15;
       }
       
-      const addDetailSection = (title: string, content: string) => {
+      const addDetailSection = (title: string, content: string | undefined) => {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(11);
         doc.text(title, 40, finalY);
@@ -157,7 +164,8 @@ export function WorkOrderClientSection({
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
-        const splitText = doc.splitTextToSize(content || 'N/A', pageWidth - 80);
+        const cleanContent = stripMarkdown(content);
+        const splitText = doc.splitTextToSize(cleanContent, pageWidth - 80);
         doc.text(splitText, 40, finalY);
         finalY += (splitText.length * 10) + 15;
       }
@@ -174,7 +182,7 @@ export function WorkOrderClientSection({
 
       // Client Information
       addSection("Client Information", [
-        ["Client Name:", reportData.customer?.contact || customer?.name || 'N/A'],
+        ["Client Name:", customer?.name || 'N/A'],
         ["Contact Person:", reportData.signingPerson || customer?.contactPerson || 'N/A'],
         ["Client Address:", customer?.address || 'N/A'],
       ]);
@@ -200,7 +208,7 @@ export function WorkOrderClientSection({
       
       // Service Details
       addDetailSection("Summary of Work Performed", reportData.summary?.resolutionSummary);
-      addDetailSection("Root Cause Analysis", `The identified root cause for the issue was **${reportData.summary?.problemSummary}**.`);
+      addDetailSection("Root Cause Analysis", `The identified root cause for the issue was ${reportData.summary?.problemSummary}.`);
       
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
@@ -647,5 +655,7 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    
 
     

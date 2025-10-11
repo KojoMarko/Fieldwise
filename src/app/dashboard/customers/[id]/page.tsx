@@ -179,27 +179,27 @@ export default function CustomerDetailPage({
             <span className="sr-only">Back to Customers</span>
           </Link>
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
             {customer.name}
           </h1>
           <p className="text-sm text-muted-foreground">Customer Details</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" size="sm"><HistoryIcon className="h-4 w-4 mr-2" />View History</Button>
+            <Button variant="outline" size="sm" asChild><Link href="/dashboard/audit-log"><HistoryIcon className="h-4 w-4 mr-2" />View History</Link></Button>
             <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}><Edit className="h-4 w-4 mr-2" />Edit</Button>
-            <Button size="sm" asChild><Link href="/dashboard/work-orders/new"><Plus className="h-4 w-4 mr-2" />New Work Order</Link></Button>
+            <Button size="sm" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}`}><Plus className="h-4 w-4 mr-2" />New Work Order</Link></Button>
         </div>
       </div>
       <div className="grid gap-6 md:grid-cols-12">
-        <div className="md:col-span-8 space-y-6">
+        <div className="md:col-span-8 lg:col-span-9 space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Customer Details</CardTitle>
                     <CardDescription>Contact information for {customer.name}.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-6 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6 text-sm">
                         <div className="flex items-center gap-3">
                             <UserIcon className="h-4 w-4 text-muted-foreground" />
                             <div>
@@ -233,20 +233,20 @@ export default function CustomerDetailPage({
             </Card>
             <Card>
                 <CardHeader>
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <div>
                             <CardTitle>Managed Assets</CardTitle>
                             <CardDescription>All equipment supplied to or managed for this customer.</CardDescription>
                         </div>
-                        <Button size="sm" asChild><Link href="/dashboard/assets/new"><Plus className="h-4 w-4 mr-2" />Add Asset</Link></Button>
+                        <Button size="sm" asChild><Link href={`/dashboard/assets/new?customerId=${customer.id}`}><Plus className="h-4 w-4 mr-2" />Add Asset</Link></Button>
                     </div>
                 </CardHeader>
                 <CardContent>
                     {assets.length > 0 ? (
                         <ul className="space-y-4">
                             {assets.map((asset) => (
-                            <li key={asset.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-md border p-4">
-                                <div className="grid gap-1 mb-4 sm:mb-0">
+                            <li key={asset.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-md border p-4 gap-4">
+                                <div className="grid gap-1 flex-1">
                                     <div className="flex items-center gap-3">
                                         <Wrench className="h-5 w-5 text-muted-foreground" />
                                         <div>
@@ -254,16 +254,16 @@ export default function CustomerDetailPage({
                                             <p className="text-sm text-muted-foreground">Model: {asset.model}</p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-6 mt-2 text-xs text-muted-foreground pl-8">
+                                    <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-xs text-muted-foreground pl-8">
                                         <p>Serial Number: <span className="font-mono text-foreground">{asset.serialNumber}</span></p>
                                         <p>Location: <span className="font-medium text-foreground">{asset.location}</span></p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2 self-end sm:self-center">
-                                    <Badge variant="outline" className={cn(assetStatusStyles[asset.status as keyof typeof assetStatusStyles])}>Active</Badge>
-                                    <Button variant="outline" size="sm" asChild><Link href={`/dashboard/assets/${asset.id}`}>View Details</Link></Button>
-                                    <Button variant="outline" size="sm">Service History</Button>
-                                    <Button variant="outline" size="sm">Schedule Maintenance</Button>
+                                <div className="flex items-center gap-2 self-stretch sm:self-center w-full sm:w-auto">
+                                    <Badge variant="outline" className={cn("hidden sm:flex", assetStatusStyles[asset.status as keyof typeof assetStatusStyles])}>{asset.status}</Badge>
+                                    <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/assets/${asset.id}`}>View</Link></Button>
+                                    <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/work-orders?assetId=${asset.id}`}>History</Link></Button>
+                                    <Button variant="secondary" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}&assetId=${asset.id}`}>Service</Link></Button>
                                 </div>
                             </li>
                             ))}
@@ -282,46 +282,48 @@ export default function CustomerDetailPage({
                     <CardTitle>Recent Service History</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Work Order ID</TableHead>
-                                <TableHead>Asset</TableHead>
-                                <TableHead>Service Type</TableHead>
-                                <TableHead>Technician</TableHead>
-                                <TableHead>Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {workOrders.length > 0 ? workOrders.map(wo => (
-                                <TableRow key={wo.id}>
-                                    <TableCell>{format(parseISO(wo.scheduledDate), 'MMM dd, yyyy')}</TableCell>
-                                    <TableCell>
-                                        <Link href={`/dashboard/work-orders/${wo.id}`} className="text-primary hover:underline font-medium">
-                                            {wo.id.toUpperCase().substring(0, 8)}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell>{assets.find(a => a.id === wo.assetId)?.name || 'N/A'}</TableCell>
-                                    <TableCell>{wo.type}</TableCell>
-                                    <TableCell>{users[wo.technicianId || '']?.name || 'Unassigned'}</TableCell>
-                                    <TableCell>
-                                        <Badge className={cn(workOrderStatusStyles[wo.status])} variant="outline">{wo.status}</Badge>
-                                    </TableCell>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Work Order ID</TableHead>
+                                    <TableHead>Asset</TableHead>
+                                    <TableHead>Service Type</TableHead>
+                                    <TableHead>Technician</TableHead>
+                                    <TableHead>Status</TableHead>
                                 </TableRow>
-                            )) : (
-                               <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center">
-                                        No service history for this customer yet.
-                                    </TableCell>
-                                </TableRow> 
-                            )}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {workOrders.length > 0 ? workOrders.map(wo => (
+                                    <TableRow key={wo.id}>
+                                        <TableCell>{format(parseISO(wo.scheduledDate), 'MMM dd, yyyy')}</TableCell>
+                                        <TableCell>
+                                            <Link href={`/dashboard/work-orders/${wo.id}`} className="text-primary hover:underline font-medium">
+                                                {wo.id.toUpperCase().substring(0, 8)}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>{assets.find(a => a.id === wo.assetId)?.name || 'N/A'}</TableCell>
+                                        <TableCell>{wo.type}</TableCell>
+                                        <TableCell>{users[wo.technicianId || '']?.name || 'Unassigned'}</TableCell>
+                                        <TableCell>
+                                            <Badge className={cn(workOrderStatusStyles[wo.status])} variant="outline">{wo.status}</Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                )) : (
+                                <TableRow>
+                                        <TableCell colSpan={6} className="h-24 text-center">
+                                            No service history for this customer yet.
+                                        </TableCell>
+                                    </TableRow> 
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
              </Card>
         </div>
-        <div className="md:col-span-4 space-y-6">
+        <div className="md:col-span-4 lg:col-span-3 space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Customer Stats</CardTitle>
@@ -358,9 +360,9 @@ export default function CustomerDetailPage({
                     <CardTitle>Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start"><Plus className="h-4 w-4 mr-2" />Schedule Service</Button>
+                    <Button variant="outline" className="w-full justify-start" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}`}><Plus className="h-4 w-4 mr-2" />Schedule Service</Link></Button>
                     <Button variant="outline" className="w-full justify-start"><FileText className="h-4 w-4 mr-2" />Generate Report</Button>
-                    <Button variant="outline" className="w-full justify-start"><MailIcon className="h-4 w-4 mr-2" />Send Email</Button>
+                    <Button variant="outline" className="w-full justify-start" asChild><a href={`mailto:${customer.contactEmail}`}><MailIcon className="h-4 w-4 mr-2" />Send Email</a></Button>
                     <Button variant="outline" className="w-full justify-start" onClick={() => setEditDialogOpen(true)}><Edit className="h-4 w-4 mr-2" />Edit Customer</Button>
                 </CardContent>
             </Card>

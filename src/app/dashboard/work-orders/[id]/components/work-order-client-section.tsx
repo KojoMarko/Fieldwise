@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useRef, forwardRef } from 'react';
-import { createRoot } from 'react-dom/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,27 +9,17 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import {
-  Sparkles,
   LoaderCircle,
-  Wrench,
-  AlertCircle,
-  CheckCircle,
-  FileText,
-  Play,
   Check,
   Pause,
-  Calendar as CalendarIcon,
-  PlusCircle,
-  Trash2,
+  Play,
   Download,
 } from 'lucide-react';
-import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
 import type { WorkOrder, Customer, User, Asset, Company } from '@/lib/types';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Dialog,
@@ -43,8 +32,7 @@ import {
 import { HoldWorkOrderDialog } from './hold-work-order-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Calendar } from '@/components/ui/calendar';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar, CalendarIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -145,12 +133,12 @@ export function WorkOrderClientSection({
         ],
         theme: 'grid',
         styles: { fontSize: 9, cellPadding: 5 },
-        headStyles: { fillColor: [230, 230, 230], textColor: 0 },
+        headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
         columnStyles: {
             0: { cellWidth: 150 },
             1: { cellWidth: 120 },
             2: { cellWidth: 120 },
-            3: { cellWidth: 120 },
+            3: { cellWidth: 'auto' },
         }
       });
       finalY = (doc as any).lastAutoTable.finalY;
@@ -167,19 +155,19 @@ export function WorkOrderClientSection({
           ],
           theme: 'grid',
           styles: { fontSize: 9, cellPadding: 5 },
-          headStyles: { fillColor: [230, 230, 230], textColor: 0 },
+          headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
           columnStyles: {
               0: { cellWidth: 150 },
               1: { cellWidth: 120 },
               2: { cellWidth: 120 },
-              3: { cellWidth: 120 },
+              3: { cellWidth: 'auto' },
           }
       });
       finalY = (doc as any).lastAutoTable.finalY;
     
       autoTable(doc, {
           startY: finalY + 10,
-          head: [['SUMMARY OF WORK PERFORMED']],
+          head: [[{ content: 'SUMMARY OF WORK PERFORMED', styles: { halign: 'left' } }]],
           body: [
               [`Reported Problem: ${reportData.summary?.reportedProblem || ''}`],
               [`Symptom Summary: ${reportData.summary?.symptomSummary || ''}`],
@@ -188,7 +176,7 @@ export function WorkOrderClientSection({
               [`Verification of Activity: ${reportData.summary?.verificationOfActivity || ''}`],
           ],
           theme: 'grid',
-          styles: { fontSize: 9, cellPadding: 5 },
+          styles: { fontSize: 9, cellPadding: 5, halign: 'left' },
           headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
       });
       finalY = (doc as any).lastAutoTable.finalY;
@@ -208,7 +196,7 @@ export function WorkOrderClientSection({
         ]),
         theme: 'grid',
         styles: { fontSize: 9, cellPadding: 5 },
-        headStyles: { fillColor: [230, 230, 230], textColor: 0 },
+        headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
       });
       finalY = (doc as any).lastAutoTable.finalY;
     
@@ -218,7 +206,7 @@ export function WorkOrderClientSection({
         body: (reportData.parts || []).map((p: any) => [p.partNumber, p.description, p.quantity, p.price, '', '']),
         theme: 'grid',
         styles: { fontSize: 9, cellPadding: 5 },
-        headStyles: { fillColor: [230, 230, 230], textColor: 0 },
+        headStyles: { fillColor: [230, 230, 230], textColor: 0, fontStyle: 'bold' },
       });
       finalY = (doc as any).lastAutoTable.finalY;
 
@@ -238,7 +226,7 @@ export function WorkOrderClientSection({
       doc.text(notesText, 40, 80);
     }
 
-    doc.save(`ServiceReport-ESR-${workOrder.id}.pdf`);
+    doc.save(`ServiceReport-ESR-${workOrder.id.substring(0, 8)}.pdf`);
     toast({
         title: "Download Ready",
         description: "Your PDF report has been downloaded.",
@@ -249,7 +237,7 @@ export function WorkOrderClientSection({
     if (workOrder.status === 'Completed' && user?.role === 'Engineer' && !workOrder.technicianNotes) {
       setQuestionnaireOpen(true);
     }
-  }, [workOrder.status, user]);
+  });
 
 
   const handlePutOnHold = async (reason: string) => {
@@ -345,7 +333,7 @@ export function WorkOrderClientSection({
             <div className="flex justify-between items-start">
                 <div>
                     <h2 className="text-2xl font-bold text-primary">Engineering Service Report</h2>
-                    <p className="text-muted-foreground">Report ID: ESR-{jsonReport.workOrder?.number}</p>
+                    <p className="text-muted-foreground">Report ID: ESR-{jsonReport.workOrder?.number?.substring(0,8)}</p>
                     <p className="text-muted-foreground">Date: {jsonReport.workOrder?.completionDate}</p>
                 </div>
                 <div className="text-right">
@@ -483,46 +471,49 @@ export function WorkOrderClientSection({
     </Card>
   )
 
-  const DateTimePicker = ({ value, onChange }: { value: any, onChange: (date: Date) => void }) => (
-    <Popover>
-        <PopoverTrigger asChild>
-            <Button
-            variant={'outline'}
-            className={cn(
-                'w-full justify-start text-left font-normal',
-                !value && 'text-muted-foreground'
-            )}
-            >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {value ? format(new Date(value), 'PPP p') : <span>Pick a date</span>}
-            </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0">
-            <Calendar
-                mode="single"
-                selected={value}
-                onSelect={(day) => {
-                    const newDate = new Date(day || '');
-                    const oldTime = value ? new Date(value) : new Date();
-                    newDate.setHours(oldTime.getHours(), oldTime.getMinutes());
-                    onChange(newDate);
-                }}
-            />
-            <div className="p-3 border-t border-border">
-                <Input
-                    type="time"
-                    value={value ? format(new Date(value), 'HH:mm') : ''}
-                    onChange={(e) => {
-                        const [hours, minutes] = e.target.value.split(':');
-                        const newDate = value ? new Date(value) : new Date();
-                        newDate.setHours(parseInt(hours), parseInt(minutes));
+  const DateTimePicker = ({ value, onChange }: { value: any, onChange: (date: Date) => void }) => {
+    const dateValue = value ? new Date(value) : null;
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button
+                variant={'outline'}
+                className={cn(
+                    'w-full justify-start text-left font-normal',
+                    !dateValue && 'text-muted-foreground'
+                )}
+                >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateValue ? format(dateValue, 'PPP p') : <span>Pick a date</span>}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+                <Calendar
+                    mode="single"
+                    selected={dateValue || undefined}
+                    onSelect={(day) => {
+                        const newDate = new Date(day || '');
+                        const oldTime = dateValue || new Date();
+                        newDate.setHours(oldTime.getHours(), oldTime.getMinutes());
                         onChange(newDate);
                     }}
                 />
-            </div>
-        </PopoverContent>
-    </Popover>
-  );
+                <div className="p-3 border-t border-border">
+                    <Input
+                        type="time"
+                        value={dateValue ? format(dateValue, 'HH:mm') : ''}
+                        onChange={(e) => {
+                            const [hours, minutes] = e.target.value.split(':').map(Number);
+                            const newDateWithTime = dateValue || new Date();
+                            newDateWithTime.setHours(hours, minutes);
+                            onChange(newDateWithTime);
+                        }}
+                    />
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+  };
 
   return (
     <>
@@ -633,7 +624,6 @@ export function WorkOrderClientSection({
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                                <AlertCircle className="h-4 w-4 mr-2" />
                                 A service report will be available once the engineer completes the work.
                             </div>
                         </CardContent>

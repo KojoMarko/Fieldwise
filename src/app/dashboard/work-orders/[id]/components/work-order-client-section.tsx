@@ -102,17 +102,6 @@ export function WorkOrderClientSection({
     let finalY = margin;
 
     // --- Safely get data and format dates ---
-    let reportData: any = {};
-    let isJsonReport = false;
-    try {
-        if (workOrder.technicianNotes) {
-            reportData = JSON.parse(workOrder.technicianNotes);
-            isJsonReport = true;
-        }
-    } catch (e) {
-        // Fallback for non-JSON notes
-    }
-
     const safe = (val: any, fallback = 'N/A') => val || fallback;
     const formatDate = (date: any) => {
         try {
@@ -123,11 +112,20 @@ export function WorkOrderClientSection({
     
     // --- Header ---
     if (company?.logoUrl) {
-        doc.addImage(company.logoUrl, 'PNG', margin, finalY, 40, 40);
+        try {
+            // Check if it's a valid image that can be added
+            const img = new Image();
+            img.src = company.logoUrl;
+            img.onload = () => {
+                doc.addImage(company.logoUrl!, 'PNG', margin, finalY, 40, 40);
+            };
+            img.onerror = () => { console.error("Could not load company logo for PDF."); }
+        } catch (e) { console.error("Error adding company logo to PDF:", e)}
     }
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('helvetica', 'bold');
     doc.text(safe(company?.name), margin + 50, finalY + 15);
+    doc.setFont('helvetica', 'normal');
     doc.text(safe(company?.address), margin + 50, finalY + 28);
     
     doc.setFontSize(18);
@@ -138,10 +136,10 @@ export function WorkOrderClientSection({
     // --- SERVICE CLASS Section ---
     const serviceClassBody = [
         [
-            { content: `INSTALLATION: ${workOrder.type === 'Installation' ? '[X]' : '[  ]'}`, styles: { halign: 'left' } },
-            { content: `WARRANTY: ${questionnaireData.agreementType === 'Warranty' ? '[X]' : '[  ]'}`, styles: { halign: 'left' } },
-            { content: `PREVENTIVE MAINTENANCE: ${workOrder.type === 'Preventive' ? '[X]' : '[  ]'}`, styles: { halign: 'left' } },
-            { content: `BILLABLE: ${questionnaireData.agreementType !== 'Warranty' ? '[X]' : '[  ]'}`, styles: { halign: 'left' } },
+            { content: `INSTALLATION: [${workOrder.type === 'Installation' ? 'X' : '  '}]`, styles: { halign: 'left' } },
+            { content: `WARRANTY: [${questionnaireData.agreementType === 'Warranty' ? 'X' : '  '}]`, styles: { halign: 'left' } },
+            { content: `PREVENTIVE MAINTENANCE: [${workOrder.type === 'Preventive' ? 'X' : '  '}]`, styles: { halign: 'left' } },
+            { content: `BILLABLE: [${questionnaireData.agreementType !== 'Warranty' ? 'X' : '  '}]`, styles: { halign: 'left' } },
         ]
     ];
     (doc as any).autoTable({
@@ -158,8 +156,14 @@ export function WorkOrderClientSection({
         startY: finalY,
         head: [['CUSTOMER INFORMATION', 'EQUIPMENT INFORMATION']],
         body: [
-            [{ content: `Customer Name: ${safe(customer?.name)}\nContact: ${safe(customer?.contactPerson)}\nPhone: ${safe(customer?.phone)}\nAddress: ${safe(customer?.address)}`, styles: {cellWidth: 'auto'} }, 
-             { content: `Equipment: ${safe(asset?.name)}\nModel: ${safe(asset?.model)}\nSerial Number: ${safe(asset?.serialNumber)}\nLocation: ${safe(asset?.location)}`, styles: {cellWidth: 'auto'} }]
+            [{ 
+                content: `Customer Name: ${safe(customer?.name)}\nContact: ${safe(customer?.contactPerson)}\nPhone: ${safe(customer?.phone)}\nAddress: ${safe(customer?.address)}`, 
+                styles: {cellWidth: 'auto'} 
+             }, 
+             { 
+                content: `Equipment: ${safe(asset?.name)}\nModel: ${safe(asset?.model)}\nSerial Number: ${safe(asset?.serialNumber)}\nLocation: ${safe(asset?.location)}`, 
+                styles: {cellWidth: 'auto'} 
+            }]
         ],
         theme: 'grid',
         headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
@@ -344,7 +348,6 @@ export function WorkOrderClientSection({
         }
       } catch (e) {
           isJson = false;
-          console.warn("Could not parse technician notes as JSON. Falling back to plain text display.");
       }
 
       const reportContent = isJson && jsonReport ? (

@@ -128,6 +128,26 @@ export function WorkOrderClientSection({
             isJsonReport = false;
         }
     }
+    
+    const getServiceClass = () => {
+        const woType = workOrder.type;
+        const installation = woType === 'Installation' ? '[X] Installation' : '[ ] Installation';
+        const repair = woType === 'Corrective' ? '[X] Repair' : '[ ] Repair';
+        const upgrade = '[ ] Upgrade'; // No data for this
+        const training = '[ ] Training'; // No data for this
+        const others = woType === 'Other' || woType === 'Preventive' ? '[X] Others' : '[ ] Others';
+        return `${installation} ${repair} ${upgrade} ${training} ${others}`;
+    }
+
+    const getServiceType = () => {
+        const agreement = isJsonReport ? reportData.agreement?.type : questionnaireData.agreementType;
+        const warranty = agreement === 'Warranty' ? '[X] Under Warranty' : '[ ] Under Warranty';
+        const contract = agreement === 'Service Contract' ? '[X] Service Contract' : '[ ] Service Contract';
+        const paid = agreement === 'Paid Service' ? '[X] Paid Service' : '[ ] Paid Service';
+        const others = !['Warranty', 'Service Contract', 'Paid Service'].includes(agreement || '') ? '[X] Others' : '[ ] Others';
+        return `${warranty} ${contract} ${paid} ${others}`;
+    }
+
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
@@ -137,10 +157,10 @@ export function WorkOrderClientSection({
         startY: finalY + 50,
         body: [
             [{ content: 'SERVICE CLASS', styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] } },
-             { content: `[ ] Installation [ ] Repair [X] Upgrade [ ] Training [ ] Others`, styles: { halign: 'left' } },
+             { content: getServiceClass(), styles: { halign: 'left' } },
              { content: 'Notification No.', styles: { halign: 'right' } }],
             [{ content: 'SERVICE TYPE', styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] } },
-             { content: `[ ] Under Warranty [X] Service Contract [ ] Paid Service [ ] Others`, styles: { halign: 'left' } },
+             { content: getServiceType(), styles: { halign: 'left' } },
              { content: workOrder.id.substring(0, 8), styles: { halign: 'right' } }],
         ],
         theme: 'grid',
@@ -152,11 +172,11 @@ export function WorkOrderClientSection({
         startY: finalY,
         head: [[{content: 'CUSTOMER INFORMATION', colSpan: 4, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
         body: [
-            [{ content: 'End User Institution:', styles: { fontStyle: 'bold' } }, safeString(customer?.name), { content: 'City, Region, Country:', styles: { fontStyle: 'bold' } }, ''],
+            [{ content: 'End User Institution:', styles: { fontStyle: 'bold' } }, safeString(customer?.name), { content: 'City, Region, Country:', styles: { fontStyle: 'bold' } }, 'N/A'],
             [{ content: 'End User Address:', styles: { fontStyle: 'bold' } }, safeString(customer?.address), '', ''],
-            [{ content: 'Department:', styles: { fontStyle: 'bold' } }, '', { content: 'Contact Person:', styles: { fontStyle: 'bold' } }, safeString(customer?.contactPerson)],
-            [{ content: 'Telephone:', styles: { fontStyle: 'bold' } }, safeString(customer?.phone), { content: 'Fax:', styles: { fontStyle: 'bold' } }, ''],
-            [{ content: 'Title:', styles: { fontStyle: 'bold' } }, '', { content: 'Email:', styles: { fontStyle: 'bold' } }, safeString(customer?.contactEmail)],
+            [{ content: 'Department:', styles: { fontStyle: 'bold' } }, 'N/A', { content: 'Contact Person:', styles: { fontStyle: 'bold' } }, safeString(customer?.contactPerson)],
+            [{ content: 'Telephone:', styles: { fontStyle: 'bold' } }, safeString(customer?.phone), { content: 'Fax:', styles: { fontStyle: 'bold' } }, 'N/A'],
+            [{ content: 'Title:', styles: { fontStyle: 'bold' } }, 'N/A', { content: 'Email:', styles: { fontStyle: 'bold' } }, safeString(customer?.contactEmail)],
         ],
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 2 },
@@ -167,7 +187,7 @@ export function WorkOrderClientSection({
         startY: finalY,
         head: [[{content: 'DISTRIBUTION INFORMATION', colSpan: 2, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
         body: [
-             [{ content: 'Distributor:', styles: { fontStyle: 'bold' } }, safeString(company?.name), { content: 'Contact Person:', styles: { fontStyle: 'bold' } }, 'N/A'],
+             [{ content: 'Distributor:', styles: { fontStyle: 'bold' } }, safeString(company?.name)],
         ],
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 2 },
@@ -181,11 +201,10 @@ export function WorkOrderClientSection({
         body: [
              ['Model', 'Serial Number', 'Installation Date', 'Software Ver.', ''],
              [safeString(asset?.model), safeString(asset?.serialNumber), formatDate(asset?.installationDate), 'N/A', ''],
-             [safeString(asset?.model), safeString(asset?.serialNumber), formatDate(asset?.installationDate), 'N/A', ''],
         ],
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 2 },
-        columnStyles: { 0: { fontStyle: 'bold' } },
+        columnStyles: { 0: { fontStyle: 'normal' } },
     });
     finalY = (doc as any).lastAutoTable.finalY;
     
@@ -210,8 +229,8 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY;
 
-    const partsBody = allocatedParts.length > 0
-        ? allocatedParts.map(p => [p.serialNumber || 'N/A', p.name, p.partNumber, p.quantity])
+    const partsBody = isJsonReport && reportData.parts?.length > 0
+        ? reportData.parts.map((p: any) => ['N/A', p.description, p.partNumber, p.quantity])
         : [['N/A', 'No parts changed', 'N/A', 'N/A']];
     (doc as any).autoTable({
         startY: finalY,
@@ -236,20 +255,23 @@ export function WorkOrderClientSection({
     
     (doc as any).autoTable({
         startY: finalY,
-        head: [['LABOUR TIME']],
+        head: [[{content: 'LABOUR TIME', styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
         body: [],
         theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2, fontStyle: 'bold', fillColor: [230, 230, 230] },
+        styles: { fontSize: 8, cellPadding: 2 },
     });
     finalY = (doc as any).lastAutoTable.finalY;
+    
+    const laborStartDate = isJsonReport ? reportData.labor?.[0]?.startDate : workOrder.createdAt;
+    const laborEndDate = isJsonReport ? reportData.labor?.[0]?.endDate : workOrder.completedDate || workOrder.createdAt;
     (doc as any).autoTable({
         startY: finalY,
         head: [['Date', 'Start Time', 'Finish Time', 'Total Spent', 'Time', 'NEXT SERVICE DATE']],
         body: [
-            [formatDate(isJsonReport ? reportData.labor?.[0]?.startDate : workOrder.createdAt),
-             format(parseISO(isJsonReport ? reportData.labor?.[0]?.startDate : workOrder.createdAt), 'HH:mm'),
-             format(parseISO(isJsonReport ? reportData.labor?.[0]?.endDate : workOrder.completedDate || workOrder.createdAt), 'HH:mm'),
-             `${workOrder.duration || 'N/A'} hrs`,
+            [formatDate(laborStartDate),
+             isValid(parseISO(laborStartDate)) ? format(parseISO(laborStartDate), 'HH:mm') : 'N/A',
+             isValid(parseISO(laborEndDate)) ? format(parseISO(laborEndDate), 'HH:mm') : 'N/A',
+             `${isJsonReport ? reportData.labor?.[0]?.hours : workOrder.duration || 'N/A'} hrs`,
              '',
              ''
             ],
@@ -693,5 +715,3 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-    

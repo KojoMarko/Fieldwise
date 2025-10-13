@@ -98,10 +98,31 @@ export function WorkOrderClientSection({
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
     let finalY = 40;
-
+    
     let reportData: any = {};
     let isJsonReport = false;
     
+    const stripMarkdown = (text: string | undefined): string => {
+        if (!text) return 'N/A';
+        return text
+            .replace(/^#{1,6}\s+/gm, '') // Remove headers
+            .replace(/(\*\*|__)(.*?)\1/g, '$2') // Remove bold
+            .replace(/(\*|_)(.*?)\1/g, '$2') // Remove italic
+            .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Remove links
+            .replace(/`{1,3}[^`]*`{1,3}/g, '') // Remove code blocks
+            .replace(/^[-*+]\s+/gm, '') // Remove bullet points
+            .replace(/^\d+\.\s+/gm, '') // Remove numbered lists
+            .replace(/^>\s+/gm, '') // Remove blockquotes
+            .replace(/---+/g, '') // Remove horizontal rules
+            .trim();
+    };
+
+    const formatDate = (date: any) => {
+        if (!date) return 'N/A';
+        const d = date instanceof Date ? date : parseISO(date);
+        return isValid(d) ? format(d, 'MMM dd, yyyy') : 'N/A';
+    };
+
     if (workOrder.technicianNotes) {
         try {
             reportData = JSON.parse(workOrder.technicianNotes);
@@ -112,18 +133,6 @@ export function WorkOrderClientSection({
         }
     }
 
-    const stripMarkdown = (text: string | undefined): string => {
-        if (!text) return 'N/A';
-        return text.replace(/(\*\*|__)(.*?)\1/g, '$2').replace(/(\*|_)(.*?)\1/g, '$2');
-    };
-    
-    const formatDate = (date: any) => {
-        if (!date) return 'N/A';
-        const d = date instanceof Date ? date : parseISO(date);
-        return isValid(d) ? format(d, 'MMM dd, yyyy') : 'N/A';
-    };
-
-    // Main Header
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text("Engineering Service Report", pageWidth / 2, finalY, { align: 'center' });
@@ -144,7 +153,7 @@ export function WorkOrderClientSection({
     finalY += 25;
     
     if (isJsonReport) {
-      const addSection = (title: string, data: [string, string][]) => {
+      const addSection = (title: string, data: [string, string | undefined][]) => {
           doc.setFont("helvetica", "bold");
           doc.setFontSize(12);
           doc.text(title, 40, finalY);
@@ -174,32 +183,29 @@ export function WorkOrderClientSection({
         finalY += (splitText.length * 10) + 15;
       }
       
-      // Company Information
       if (company) {
         addSection("Company Information", [
-          ["Company Name:", company.name || 'N/A'],
-          ["Address:", company.address || 'N/A'],
-          ["Phone:", company.phone || 'N/A'],
-          ["Email:", company.email || 'N/A'],
+          ["Company Name:", company.name],
+          ["Address:", company.address],
+          ["Phone:", company.phone],
+          ["Email:", company.email],
         ]);
       }
 
-      // Client Information
       addSection("Client Information", [
-        ["Client Name:", customer?.name || 'N/A'],
-        ["Contact Person:", reportData.signingPerson || customer?.contactPerson || 'N/A'],
-        ["Client Address:", customer?.address || 'N/A'],
+        ["Client Name:", customer?.name],
+        ["Contact Person:", reportData.signingPerson || customer?.contactPerson],
+        ["Client Address:", customer?.address],
       ]);
       
-      // Service & Asset Information
-      const assetServiced = `${asset?.name || 'N/A'} (S/N: ${asset?.serialNumber || 'N/A'})`;
+      const assetServiced = `${asset?.name || ''} (S/N: ${asset?.serialNumber || ''})`;
       addSection("Service & Asset Information", [
-        ["Work Order Title:", workOrder.title || 'N/A'],
+        ["Work Order Title:", workOrder.title],
         ["Asset Serviced:", assetServiced],
         ["Service Start Date:", formatDate(reportData.labor?.[0]?.startDate)],
         ["Service Completion Date:", formatDate(reportData.labor?.[0]?.endDate)],
-        ["Service Type:", workOrder.type || 'N/A'],
-        ["Prepared By:", reportData.technicianName || technician?.name || 'N/A'],
+        ["Service Type:", workOrder.type],
+        ["Prepared By:", reportData.technicianName || technician?.name],
       ]);
       
       doc.setDrawColor(220, 220, 220);
@@ -211,9 +217,8 @@ export function WorkOrderClientSection({
       doc.text("Service Details", 40, finalY);
       finalY += 20;
       
-      // Service Details
       addDetailSection("Summary of Work Performed", reportData.summary?.resolutionSummary);
-      addDetailSection("Root Cause Analysis", `The identified root cause for the issue was ${reportData.summary?.problemSummary}.`);
+      addDetailSection("Root Cause Analysis", `The identified root cause for the issue was ${stripMarkdown(reportData.summary?.problemSummary)}.`);
       
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
@@ -224,7 +229,7 @@ export function WorkOrderClientSection({
         autoTable(doc, {
             startY: finalY,
             head: [['Part Number', 'Description', 'Quantity']],
-            body: reportData.parts.map((p: any) => [p.partNumber, p.description, p.quantity]),
+            body: reportData.parts.map((p: any) => [stripMarkdown(p.partNumber), stripMarkdown(p.description), p.quantity]),
             theme: 'grid',
             headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
             styles: { fontSize: 9 }
@@ -242,10 +247,9 @@ export function WorkOrderClientSection({
 
 
     } else {
-      // Simple text-based report for non-JSON notes
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      const notesText = doc.splitTextToSize(workOrder.technicianNotes || 'No technician notes available.', pageWidth - 80);
+      const notesText = doc.splitTextToSize(stripMarkdown(workOrder.technicianNotes), pageWidth - 80);
       doc.text(notesText, 40, finalY);
     }
 
@@ -660,5 +664,3 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-    

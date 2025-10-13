@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, forwardRef } from 'react';
@@ -39,7 +40,6 @@ import { db } from '@/lib/firebase';
 import { marked } from 'marked';
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 
 // New component to isolate the ref and the content
@@ -97,28 +97,12 @@ export function WorkOrderClientSection({
 
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
-    let finalY = 0; 
+    const margin = 40;
+    let y = margin;
 
     let reportData: any = {};
     let isJsonReport = false;
-
-    const stripMarkdown = (text: string | undefined): string => {
-        if (!text) return 'N/A';
-        return text.replace(/(\*\*|__)(.*?)\1/g, '$2');
-    };
-
-    const formatDate = (date: any): string => {
-        if (!date) return 'N/A';
-        try {
-            const d = date instanceof Date ? date : parseISO(date);
-            return isValid(d) ? format(d, 'MMM dd, yyyy') : 'N/A';
-        } catch (e) {
-            return 'N/A';
-        }
-    };
     
-    const safeString = (text: any) => text ? String(text) : 'N/A';
-
     if (workOrder.technicianNotes) {
         try {
             reportData = JSON.parse(workOrder.technicianNotes);
@@ -128,183 +112,132 @@ export function WorkOrderClientSection({
             isJsonReport = false;
         }
     }
+
+    const safeString = (text: any): string => text ? String(text) : 'N/A';
+    const formatDate = (date: any): string => {
+        if (!date) return 'N/A';
+        try {
+            const d = date instanceof Date ? date : new Date(date);
+            return isValid(d) ? format(d, 'MMM dd, yyyy') : 'N/A';
+        } catch (e) {
+            return 'N/A';
+        }
+    };
     
-    const getServiceClass = () => {
-        const woType = workOrder.type;
-        const installation = woType === 'Installation' ? '[X] Installation' : '[ ] Installation';
-        const repair = woType === 'Corrective' ? '[X] Repair' : '[ ] Repair';
-        const upgrade = '[ ] Upgrade'; // No data for this
-        const training = '[ ] Training'; // No data for this
-        const others = woType === 'Other' || woType === 'Preventive' ? '[X] Others' : '[ ] Others';
-        return `${installation} ${repair} ${upgrade} ${training} ${others}`;
+    const stripMarkdown = (text: string | undefined): string => {
+        if (!text) return 'N/A';
+        return text.replace(/(\*\*|__)(.*?)\1/g, '$2').trim();
+    };
+
+    const addSectionHeader = (text: string) => {
+        y += 20;
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(text, margin, y);
+        y += 15;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+    };
+    
+    const addSubHeader = (text: string) => {
+        y += 15;
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(text, margin, y);
+        y += 12;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+    }
+    
+    const addBodyText = (key: string, value: string) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${key}:`, margin, y);
+        const keyWidth = doc.getTextWidth(`${key}: `);
+        doc.setFont('helvetica', 'normal');
+        const valueLines = doc.splitTextToSize(value, pageWidth - margin * 2 - keyWidth);
+        doc.text(valueLines, margin + keyWidth, y);
+        y += valueLines.length * 12;
+    };
+    
+    const addSimpleText = (text: string) => {
+        const textLines = doc.splitTextToSize(text, pageWidth - margin * 2);
+        doc.text(textLines, margin, y);
+        y += textLines.length * 12;
     }
 
-    const getServiceType = () => {
-        const agreement = isJsonReport ? reportData.agreement?.type : questionnaireData.agreementType;
-        const warranty = agreement === 'Warranty' ? '[X] Under Warranty' : '[ ] Under Warranty';
-        const contract = agreement === 'Service Contract' ? '[X] Service Contract' : '[ ] Service Contract';
-        const paid = agreement === 'Paid Service' ? '[X] Paid Service' : '[ ] Paid Service';
-        const others = !['Warranty', 'Service Contract', 'Paid Service'].includes(agreement || '') ? '[X] Others' : '[ ] Others';
-        return `${warranty} ${contract} ${paid} ${others}`;
+    // --- PDF Header ---
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Engineering Service Report", pageWidth / 2, y, { align: 'center' });
+    y += 20;
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`CONFIDENTIAL | Rev. 1.0`, pageWidth / 2, y, { align: 'center' });
+    y += 12;
+
+    const reportId = `ESR-${workOrder.id.substring(0, 12)}`;
+    const reportDate = isJsonReport && reportData.workOrder?.completionDate ? formatDate(reportData.workOrder.completionDate) : formatDate(new Date());
+    doc.text(`Report ID: ${reportId} | Date: ${reportDate}`, pageWidth / 2, y, { align: 'center' });
+    y += 15;
+
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 5;
+    
+    // --- Company Information ---
+    addSectionHeader("Company Information");
+    addBodyText("Company Name", safeString(company?.name));
+    addBodyText("Address", safeString(company?.address));
+    addBodyText("Phone", safeString(company?.phone));
+    addBodyText("Email", safeString(company?.email));
+    
+    // --- Client Information ---
+    addSectionHeader("Client Information");
+    addBodyText("Client Name", safeString(customer?.name));
+    addBodyText("Contact Person", safeString(isJsonReport ? reportData.signingPerson : customer?.contactPerson));
+    addBodyText("Client Address", safeString(customer?.address));
+    
+    // --- Service & Asset Information ---
+    addSectionHeader("Service & Asset Information");
+    addBodyText("Work Order Title", safeString(workOrder.title));
+    addBodyText("Asset Serviced", `${safeString(asset?.name)} (S/N: ${safeString(asset?.serialNumber)})`);
+    addBodyText("Service Start Date", formatDate(isJsonReport ? reportData.labor?.[0]?.startDate : workOrder.createdAt));
+    addBodyText("Service Completion Date", formatDate(isJsonReport ? reportData.labor?.[0]?.endDate : workOrder.completedDate));
+    addBodyText("Service Type", safeString(workOrder.type));
+    addBodyText("Prepared By", safeString(isJsonReport ? reportData.technicianName : technician?.name));
+    
+    // --- Service Details ---
+    addSectionHeader("Service Details");
+    addSubHeader("Summary of Work Performed");
+    addSimpleText(stripMarkdown(isJsonReport ? reportData.summary?.resolutionSummary : "N/A"));
+    
+    addSubHeader("Root Cause Analysis");
+    addSimpleText(stripMarkdown(isJsonReport ? reportData.summary?.problemSummary : "N/A"));
+
+    addSubHeader("Parts Consumed");
+    if (isJsonReport && reportData.parts?.length > 0) {
+        (doc as any).autoTable({
+            startY: y,
+            head: [['Part Number', 'Description', 'Quantity']],
+            body: reportData.parts.map((p: any) => [p.partNumber, p.description, p.quantity]),
+            theme: 'grid',
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [230, 230, 230], textColor: [0,0,0], fontStyle: 'bold' }
+        });
+        y = (doc as any).lastAutoTable.finalY + 10;
+    } else {
+        addSimpleText("None");
     }
-
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("ENGINEER SERVICE REPORT", pageWidth / 2, finalY + 40, { align: 'center' });
     
-    (doc as any).autoTable({
-        startY: finalY + 50,
-        body: [
-            [{ content: 'SERVICE CLASS', styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] } },
-             { content: getServiceClass(), styles: { halign: 'left' } },
-             { content: 'Notification No.', styles: { halign: 'right' } }],
-            [{ content: 'SERVICE TYPE', styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] } },
-             { content: getServiceType(), styles: { halign: 'left' } },
-             { content: workOrder.id.substring(0, 8), styles: { halign: 'right' } }],
-        ],
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
+    addSubHeader("Final Observations & Recommendations");
+    addSimpleText(stripMarkdown(isJsonReport ? reportData.summary?.verificationOfActivity : "N/A"));
 
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [[{content: 'CUSTOMER INFORMATION', colSpan: 4, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
-        body: [
-            [{ content: 'End User Institution:', styles: { fontStyle: 'bold' } }, safeString(customer?.name), { content: 'City, Region, Country:', styles: { fontStyle: 'bold' } }, 'N/A'],
-            [{ content: 'End User Address:', styles: { fontStyle: 'bold' } }, safeString(customer?.address), '', ''],
-            [{ content: 'Department:', styles: { fontStyle: 'bold' } }, 'N/A', { content: 'Contact Person:', styles: { fontStyle: 'bold' } }, safeString(customer?.contactPerson)],
-            [{ content: 'Telephone:', styles: { fontStyle: 'bold' } }, safeString(customer?.phone), { content: 'Fax:', styles: { fontStyle: 'bold' } }, 'N/A'],
-            [{ content: 'Title:', styles: { fontStyle: 'bold' } }, 'N/A', { content: 'Email:', styles: { fontStyle: 'bold' } }, safeString(customer?.contactEmail)],
-        ],
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
-    
-     (doc as any).autoTable({
-        startY: finalY,
-        head: [[{content: 'DISTRIBUTION INFORMATION', colSpan: 2, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
-        body: [
-             [{ content: 'Distributor:', styles: { fontStyle: 'bold' } }, safeString(company?.name)],
-        ],
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
-
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [[{content: 'EQUIPMENT INFORMATION', colSpan: 3, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }},
-                {content: 'DEPARTMENT:', colSpan: 3, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
-        body: [
-             ['Model', 'Serial Number', 'Installation Date', 'Software Ver.', ''],
-             [safeString(asset?.model), safeString(asset?.serialNumber), formatDate(asset?.installationDate), 'N/A', ''],
-        ],
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-        columnStyles: { 0: { fontStyle: 'normal' } },
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
-    
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [[{content: 'MALFUNCTION INFORMATION', colSpan: 2, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
-        body: [
-            [{ content: 'Malfunction Time:', styles: { fontStyle: 'bold' } }, `${formatDate(workOrder.createdAt)} | [ ] Out of Box [ ] Switched On [X] Running`],
-            [{ content: 'Malfunction Description:', styles: { fontStyle: 'bold' } }, safeString(isJsonReport ? reportData.summary?.reportedProblem : workOrder.description)],
-        ],
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
-
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [[{content: 'SERVICE INFORMATION AND PROCESS', styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
-        body: [[stripMarkdown(isJsonReport ? reportData.summary?.resolutionSummary : workOrder.technicianNotes)]],
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
-
-    const partsBody = isJsonReport && reportData.parts?.length > 0
-        ? reportData.parts.map((p: any) => ['N/A', p.description, p.partNumber, p.quantity])
-        : [['N/A', 'No parts changed', 'N/A', 'N/A']];
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [['Serial No.', 'Part Name', 'Part Number', 'Quantity']],
-        body: partsBody,
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230] }
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
-
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [[{content: 'GENERAL TEST VERIFICATION', styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
-        body: [
-            ['I certify that equipment works normally and could be put into clinical application. [X] Yes [ ] No Supervisor\'s Sign: ______________']
-        ],
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
-    
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [[{content: 'LABOUR TIME', styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
-        body: [],
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
-    
-    const laborStartDate = isJsonReport ? reportData.labor?.[0]?.startDate : workOrder.createdAt;
-    const laborEndDate = isJsonReport ? reportData.labor?.[0]?.endDate : workOrder.completedDate || workOrder.createdAt;
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [['Date', 'Start Time', 'Finish Time', 'Total Spent', 'Time', 'NEXT SERVICE DATE']],
-        body: [
-            [formatDate(laborStartDate),
-             isValid(parseISO(laborStartDate)) ? format(parseISO(laborStartDate), 'HH:mm') : 'N/A',
-             isValid(parseISO(laborEndDate)) ? format(parseISO(laborEndDate), 'HH:mm') : 'N/A',
-             `${isJsonReport ? reportData.labor?.[0]?.hours : workOrder.duration || 'N/A'} hrs`,
-             '',
-             ''
-            ],
-            ['', '', '', '', '', ''],
-            ['', '', '', '', '', ''],
-        ],
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fontStyle: 'bold', fillColor: [230, 230, 230] }
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
-
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [[{content: "SERVICE ENGINEER / TRAINING FACILITATOR'S REMARKS", styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
-        body: [[stripMarkdown(isJsonReport ? reportData.summary?.verificationOfActivity : 'N/A')]],
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2, minCellHeight: 50 },
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
-
-    (doc as any).autoTable({
-        startY: finalY,
-        body: [
-            [{content: "Service Engineer's Certification:", styles:{fontStyle: 'bold'}}, '_____________________', {content: "Supervisor's Certification:", styles:{fontStyle: 'bold'}}, '_____________________']
-        ],
-        theme: 'plain',
-        styles: { fontSize: 8, cellPadding: 2 },
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
+    addSubHeader("Required Follow-Up Actions");
+    addSimpleText("No specific follow-up actions were detailed in the provided report data.");
 
 
-    doc.save(`ServiceReport-ESR-${workOrder.id.substring(0, 8)}.pdf`);
+    doc.save(`ServiceReport-${reportId}.pdf`);
     toast({
         title: "Download Ready",
         description: "Your PDF report has been downloaded.",

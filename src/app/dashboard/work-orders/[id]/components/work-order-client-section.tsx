@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useRef, forwardRef } from 'react';
@@ -40,7 +39,7 @@ import { db } from '@/lib/firebase';
 import { marked } from 'marked';
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 
 
 // New component to isolate the ref and the content
@@ -98,16 +97,14 @@ export function WorkOrderClientSection({
 
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
-    let finalY = 0; // Start at the top
+    let finalY = 0; 
 
     let reportData: any = {};
     let isJsonReport = false;
 
-    // Helper functions
     const stripMarkdown = (text: string | undefined): string => {
         if (!text) return 'N/A';
-        // This regex is a bit more aggressive to handle various markdown-like syntax
-        return text.replace(/[\*\_#\`\[\]\(\)!]/g, '').trim();
+        return text.replace(/(\*\*|__)(.*?)\1/g, '$2');
     };
 
     const formatDate = (date: any): string => {
@@ -120,8 +117,7 @@ export function WorkOrderClientSection({
         }
     };
     
-    const safeString = (text: any) => text ? String(text) : '';
-
+    const safeString = (text: any) => text ? String(text) : 'N/A';
 
     if (workOrder.technicianNotes) {
         try {
@@ -129,7 +125,7 @@ export function WorkOrderClientSection({
             isJsonReport = true;
         } catch (e) {
             console.warn("Could not parse technician notes as JSON. Will use raw data.", e);
-            isJsonReport = false; // Fallback to using raw data
+            isJsonReport = false;
         }
     }
 
@@ -137,7 +133,7 @@ export function WorkOrderClientSection({
     doc.setFontSize(14);
     doc.text("ENGINEER SERVICE REPORT", pageWidth / 2, finalY + 40, { align: 'center' });
     
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: finalY + 50,
         body: [
             [{ content: 'SERVICE CLASS', styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] } },
@@ -152,43 +148,40 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY;
 
-    // Customer Info
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: finalY,
         head: [[{content: 'CUSTOMER INFORMATION', colSpan: 4, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
         body: [
-            [{ content: 'End User Institution:', styles: { fontStyle: 'bold' } }, customer?.name, { content: 'City, Region, Country:', styles: { fontStyle: 'bold' } }, ''],
-            [{ content: 'End User Address:', styles: { fontStyle: 'bold' } }, customer?.address, '', ''],
-            [{ content: 'Department:', styles: { fontStyle: 'bold' } }, '', { content: 'Contact Person:', styles: { fontStyle: 'bold' } }, customer?.contactPerson],
-            [{ content: 'Telephone:', styles: { fontStyle: 'bold' } }, customer?.phone, { content: 'Fax:', styles: { fontStyle: 'bold' } }, ''],
-            [{ content: 'Title:', styles: { fontStyle: 'bold' } }, '', { content: 'Email:', styles: { fontStyle: 'bold' } }, customer?.contactEmail],
+            [{ content: 'End User Institution:', styles: { fontStyle: 'bold' } }, safeString(customer?.name), { content: 'City, Region, Country:', styles: { fontStyle: 'bold' } }, ''],
+            [{ content: 'End User Address:', styles: { fontStyle: 'bold' } }, safeString(customer?.address), '', ''],
+            [{ content: 'Department:', styles: { fontStyle: 'bold' } }, '', { content: 'Contact Person:', styles: { fontStyle: 'bold' } }, safeString(customer?.contactPerson)],
+            [{ content: 'Telephone:', styles: { fontStyle: 'bold' } }, safeString(customer?.phone), { content: 'Fax:', styles: { fontStyle: 'bold' } }, ''],
+            [{ content: 'Title:', styles: { fontStyle: 'bold' } }, '', { content: 'Email:', styles: { fontStyle: 'bold' } }, safeString(customer?.contactEmail)],
         ],
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 2 },
     });
     finalY = (doc as any).lastAutoTable.finalY;
     
-    // Distributor Info
-     doc.autoTable({
+     (doc as any).autoTable({
         startY: finalY,
         head: [[{content: 'DISTRIBUTION INFORMATION', colSpan: 2, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
         body: [
-             [{ content: 'Distributor:', styles: { fontStyle: 'bold' } }, company?.name, { content: 'Contact Person:', styles: { fontStyle: 'bold' } }, 'N/A'],
+             [{ content: 'Distributor:', styles: { fontStyle: 'bold' } }, safeString(company?.name), { content: 'Contact Person:', styles: { fontStyle: 'bold' } }, 'N/A'],
         ],
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 2 },
     });
     finalY = (doc as any).lastAutoTable.finalY;
 
-    // Equipment Info
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: finalY,
         head: [[{content: 'EQUIPMENT INFORMATION', colSpan: 3, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }},
                 {content: 'DEPARTMENT:', colSpan: 3, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
         body: [
              ['Model', 'Serial Number', 'Installation Date', 'Software Ver.', ''],
-             [asset?.model, asset?.serialNumber, formatDate(asset?.installationDate), 'N/A', ''],
-             [asset?.model, asset?.serialNumber, formatDate(asset?.installationDate), 'N/A', ''],
+             [safeString(asset?.model), safeString(asset?.serialNumber), formatDate(asset?.installationDate), 'N/A', ''],
+             [safeString(asset?.model), safeString(asset?.serialNumber), formatDate(asset?.installationDate), 'N/A', ''],
         ],
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 2 },
@@ -196,8 +189,7 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY;
     
-    // Malfunction Info
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: finalY,
         head: [[{content: 'MALFUNCTION INFORMATION', colSpan: 2, styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
         body: [
@@ -209,8 +201,7 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY;
 
-    // Service Info
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: finalY,
         head: [[{content: 'SERVICE INFORMATION AND PROCESS', styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
         body: [[stripMarkdown(isJsonReport ? reportData.summary?.resolutionSummary : workOrder.technicianNotes)]],
@@ -219,11 +210,10 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY;
 
-    // Parts Changed
     const partsBody = allocatedParts.length > 0
         ? allocatedParts.map(p => [p.serialNumber || 'N/A', p.name, p.partNumber, p.quantity])
         : [['N/A', 'No parts changed', 'N/A', 'N/A']];
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: finalY,
         head: [['Serial No.', 'Part Name', 'Part Number', 'Quantity']],
         body: partsBody,
@@ -233,8 +223,7 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY;
 
-    // General Test
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: finalY,
         head: [[{content: 'GENERAL TEST VERIFICATION', styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
         body: [
@@ -245,16 +234,15 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY;
     
-    // Labour Time
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: finalY,
         head: [['LABOUR TIME']],
-        body: [], // empty body, we'll draw the table inside
+        body: [],
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 2, fontStyle: 'bold', fillColor: [230, 230, 230] },
     });
     finalY = (doc as any).lastAutoTable.finalY;
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: finalY,
         head: [['Date', 'Start Time', 'Finish Time', 'Total Spent', 'Time', 'NEXT SERVICE DATE']],
         body: [
@@ -265,7 +253,7 @@ export function WorkOrderClientSection({
              '',
              ''
             ],
-            ['', '', '', '', '', ''], // Add empty rows for form-like appearance
+            ['', '', '', '', '', ''],
             ['', '', '', '', '', ''],
         ],
         theme: 'grid',
@@ -274,8 +262,7 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY;
 
-    // Remarks
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: finalY,
         head: [[{content: "SERVICE ENGINEER / TRAINING FACILITATOR'S REMARKS", styles: { halign: 'left', fontStyle: 'bold', fillColor: [230, 230, 230] }}]],
         body: [[stripMarkdown(isJsonReport ? reportData.summary?.verificationOfActivity : 'N/A')]],
@@ -284,8 +271,7 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY;
 
-    // Signatures
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: finalY,
         body: [
             [{content: "Service Engineer's Certification:", styles:{fontStyle: 'bold'}}, '_____________________', {content: "Supervisor's Certification:", styles:{fontStyle: 'bold'}}, '_____________________']
@@ -391,14 +377,14 @@ export function WorkOrderClientSection({
         if (workOrder.technicianNotes) {
             jsonReport = JSON.parse(workOrder.technicianNotes);
         } else {
-            jsonReport = {};
+            isJson = false;
         }
       } catch (e) {
           isJson = false;
           console.warn("Could not parse technician notes as JSON. Falling back to plain text display.");
       }
 
-      const reportContent = isJson ? (
+      const reportContent = isJson && jsonReport ? (
          <div className="space-y-6">
             <div className="flex justify-between items-start">
                 <div>
@@ -707,3 +693,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    

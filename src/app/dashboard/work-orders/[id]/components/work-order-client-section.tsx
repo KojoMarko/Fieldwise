@@ -136,7 +136,7 @@ export function WorkOrderClientSection({
     doc.text(safe(company?.name), margin + 50, finalY + 15);
     doc.setFont('helvetica', 'normal');
 
-    const addressLines = doc.splitTextToSize(safe(company?.address), 200);
+    const addressLines = safe(company?.address, '').split('\n');
     doc.text(addressLines, margin + 50, finalY + 28);
     
     doc.setFontSize(14);
@@ -763,6 +763,7 @@ export function WorkOrderClientSection({
     
 
     
+
 
 
 

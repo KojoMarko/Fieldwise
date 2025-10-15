@@ -36,20 +36,8 @@ import { Calendar, CalendarIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { marked } from 'marked';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-
-
-// New component to isolate the ref and the content
-const ReportBody = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, ref) => {
-    return (
-        <div ref={ref} className="p-6 bg-background">
-             {children}
-        </div>
-    );
-});
-ReportBody.displayName = 'ReportBody';
 
 
 export function WorkOrderClientSection({
@@ -59,6 +47,7 @@ export function WorkOrderClientSection({
   asset,
   allocatedParts,
   company,
+  engineerActions,
 }: {
   workOrder: WorkOrder;
   customer?: Customer;
@@ -66,9 +55,9 @@ export function WorkOrderClientSection({
   asset?: Asset;
   allocatedParts: AllocatedPart[],
   company?: Company,
+  engineerActions: React.ReactNode,
 }) {
   const { user } = useAuth();
-  const [currentWorkOrder, setCurrentWorkOrder] = useState<WorkOrder>(workOrder);
   const { toast } = useToast();
   const [isQuestionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
@@ -87,7 +76,6 @@ export function WorkOrderClientSection({
       timeWorkCompleted: workOrder.completedDate ? parseISO(workOrder.completedDate) : undefined,
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const reportRef = useRef<HTMLDivElement>(null);
 
 
   const handleDownloadPdf = async () => {
@@ -301,17 +289,17 @@ export function WorkOrderClientSection({
     });
   };
 
-  useState(() => {
+  useEffect(() => {
     if (workOrder.status === 'Completed' && user?.role === 'Engineer' && !workOrder.technicianNotes) {
       setQuestionnaireOpen(true);
     }
-  });
+  }, [workOrder, user]);
 
 
   const handlePutOnHold = async (reason: string) => {
     try {
-      const workOrderRef = doc(db, 'work-orders', currentWorkOrder.id);
-      const newNotes = `${currentWorkOrder.technicianNotes || ''}\n\nWork put on hold. Reason: ${reason}`;
+      const workOrderRef = doc(db, 'work-orders', workOrder.id);
+      const newNotes = `${workOrder.technicianNotes || ''}\n\nWork put on hold. Reason: ${reason}`;
       await updateDoc(workOrderRef, { status: 'On-Hold', technicianNotes: newNotes });
       toast({
         variant: 'default',
@@ -344,7 +332,7 @@ export function WorkOrderClientSection({
         const result = await generateServiceReport({
             ...(questionnaireData as Omit<ServiceReportQuestionnaire, 'partsUsed'>),
             partsUsed: partsData,
-            workOrderId: currentWorkOrder.id,
+            workOrderId: workOrder.id,
             assetName: asset?.name || 'N/A',
             assetModel: asset?.model || 'N/A',
             assetSerial: asset?.serialNumber || 'N/A',
@@ -356,7 +344,7 @@ export function WorkOrderClientSection({
             completionDate: format(new Date(), 'yyyy-MM-dd HH:mm'),
         });
 
-        const workOrderRef = doc(db, 'work-orders', currentWorkOrder.id);
+        const workOrderRef = doc(db, 'work-orders', workOrder.id);
         await updateDoc(workOrderRef, {
             status: 'Completed',
             technicianNotes: result.report,
@@ -383,100 +371,150 @@ export function WorkOrderClientSection({
 
   const DateTimePicker = ({ value, onChange }: { value: any, onChange: (date: Date) => void }) => {
     const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
-  
-    useEffect(() => {
-      // This effect synchronizes the internal state with the external prop 'value'.
-      if (value) {
-        const newDate = new Date(value);
-        if (!date || newDate.getTime() !== date.getTime()) {
-          setDate(newDate);
-        }
-      } else {
-        setDate(undefined);
-      }
-    }, [value, date]);
-  
-    const handleDateSelect = (selectedDay: Date | undefined) => {
-      if (!selectedDay) return;
-  
-      // Get the time from the current state, or default to now.
-      const currentHours = date ? date.getHours() : new Date().getHours();
-      const currentMinutes = date ? date.getMinutes() : new Date().getMinutes();
-  
-      // Create a new date object with the selected day and existing time.
-      const newDate = new Date(
-        selectedDay.getFullYear(),
-        selectedDay.getMonth(),
-        selectedDay.getDate(),
-        currentHours,
-        currentMinutes
-      );
-  
-      setDate(newDate);
-      onChange(newDate);
-    };
-  
-    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const time = e.target.value;
-      if (!time) return;
-  
-      const [hours, minutes] = time.split(':').map(Number);
-      
-      // If no date is set, default to today.
-      const baseDate = date ? new Date(date) : new Date();
-      
-      const newDate = new Date(
-        baseDate.getFullYear(),
-        baseDate.getMonth(),
-        baseDate.getDate(),
-        hours,
-        minutes
-      );
-  
-      setDate(newDate);
-      onChange(newDate);
-    };
-  
-    return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant={'outline'}
-            className={cn(
-              'w-full justify-start text-left font-normal',
-              !date && 'text-muted-foreground'
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, 'PPP p') : <span>Pick a date</span>}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0">
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={handleDateSelect}
-          />
-          <div className="p-3 border-t border-border">
-            <Input
-              type="time"
-              value={date ? format(date, 'HH:mm') : ''}
-              onChange={handleTimeChange}
-            />
-          </div>
-        </PopoverContent>
-      </Popover>
-    );
-  };
-  
-  const EngineerActions = () => {
-    return null;
-  }
-  
-  const ServiceReport = () => {
-    return null;
-  }
 
+    useEffect(() => {
+        if (value) {
+            const newDate = new Date(value);
+            if (!date || newDate.getTime() !== date.getTime()) {
+                setDate(newDate);
+            }
+        } else {
+            setDate(undefined);
+        }
+    }, [value]);
+
+    const handleDateSelect = (selectedDay: Date | undefined) => {
+        if (!selectedDay) return;
+        const currentHours = date ? date.getHours() : new Date().getHours();
+        const currentMinutes = date ? date.getMinutes() : new Date().getMinutes();
+        const newDate = new Date(
+            selectedDay.getFullYear(),
+            selectedDay.getMonth(),
+            selectedDay.getDate(),
+            currentHours,
+            currentMinutes
+        );
+        setDate(newDate);
+        onChange(newDate);
+    };
+
+    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const time = e.target.value;
+        if (!time) return;
+        const [hours, minutes] = time.split(':').map(Number);
+        const baseDate = date || new Date();
+        const newDate = new Date(
+            baseDate.getFullYear(),
+            baseDate.getMonth(),
+            baseDate.getDate(),
+            hours,
+            minutes
+        );
+        setDate(newDate);
+        onChange(newDate);
+    };
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button
+                    variant={'outline'}
+                    className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !date && 'text-muted-foreground'
+                    )}
+                >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, 'PPP p') : <span>Pick a date</span>}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+                <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={handleDateSelect}
+                />
+                <div className="p-3 border-t border-border">
+                    <Input
+                        type="time"
+                        value={date ? format(date, 'HH:mm') : ''}
+                        onChange={handleTimeChange}
+                    />
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+};
+  
+    const ServiceReport = () => {
+        if (!workOrder.technicianNotes) return null;
+
+        let reportData;
+        try {
+            reportData = JSON.parse(workOrder.technicianNotes);
+        } catch (e) {
+            return (
+                <Card>
+                    <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
+                    <CardContent><p>Error parsing service report data.</p></CardContent>
+                </Card>
+            )
+        }
+        
+        const Section = ({ title, data }: { title: string, data: Record<string, string>}) => (
+            <div className="mb-6">
+                <h3 className="text-lg font-semibold text-primary mb-2 border-b pb-1">{title}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                    {Object.entries(data).map(([key, value]) => (
+                        <div key={key}>
+                            <p className="font-medium text-muted-foreground">{key}</p>
+                            <p>{value}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+
+        return (
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Service Report</CardTitle>
+                        <CardDescription>
+                            Generated on {format(parseISO(workOrder.completedDate!), 'PPP p')} by {reportData.workOrder.performedBy}
+                        </CardDescription>
+                    </div>
+                    <Button onClick={handleDownloadPdf}><Download className="mr-2" /> Download PDF</Button>
+                </CardHeader>
+                <CardContent>
+                    <Section title="Service Details" data={{
+                        'Reported Problem': reportData.summary.reportedProblem,
+                        'Symptom Summary': reportData.summary.symptomSummary,
+                        'Problem Summary': reportData.summary.problemSummary,
+                        'Resolution Summary': reportData.summary.resolutionSummary,
+                        'Verification of Activity': reportData.summary.verificationOfActivity,
+                        'Final Instrument Condition': reportData.workOrder.instrumentCondition,
+                    }}/>
+                    <Section title="Labor Information" data={{
+                        'Service Start': format(parseISO(reportData.labor[0].startDate), 'PPP p'),
+                        'Service End': format(parseISO(reportData.labor[0].endDate), 'PPP p'),
+                        'Labor Hours': reportData.labor[0].hours,
+                        'Agreement Type': reportData.agreement.type,
+                    }} />
+
+                    <h3 className="text-lg font-semibold text-primary mt-6 mb-2 border-b pb-1">Parts Used</h3>
+                    {reportData.parts.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                            {reportData.parts.map((part: any, index: number) => (
+                                <li key={index}>{part.description} (PN: {part.partNumber})</li>
+                            ))}
+                        </ul>
+                    ) : <p className="text-sm text-muted-foreground">No parts were used for this service.</p>}
+
+                </CardContent>
+            </Card>
+        );
+  }
 
   return (
     <>
@@ -574,7 +612,7 @@ export function WorkOrderClientSection({
 
         {!isGeneratingReport && (
             <>
-                {isEngineerView && <EngineerActions />}
+                {isEngineerView && engineerActions}
 
                 {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
                     <div className="xl:col-span-2"><ServiceReport /></div>

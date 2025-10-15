@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Package,
   Download,
+  Pause,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WorkOrderPartsTab } from './components/work-order-parts-tab';
 import { WorkOrderClientSection } from './components/work-order-client-section';
 import { useToast } from '@/hooks/use-toast';
+import { HoldWorkOrderDialog } from './components/hold-work-order-dialog';
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {
@@ -75,6 +77,7 @@ export default function WorkOrderDetailPage({
   const [technician, setTechnician] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [allocatedParts, setAllocatedParts] = useState<AllocatedPart[]>([]);
+  const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -170,6 +173,27 @@ export default function WorkOrderDetailPage({
       });
     }
   };
+  
+  const handlePutOnHold = async (reason: string) => {
+    if (!workOrder) return;
+    try {
+      const workOrderRef = doc(db, 'work-orders', workOrder.id);
+      const newNotes = `${workOrder.technicianNotes || ''}\n\nWork put on hold. Reason: ${reason}`;
+      await updateDoc(workOrderRef, { status: 'On-Hold', technicianNotes: newNotes });
+      toast({
+        variant: 'default',
+        title: 'Work Order On Hold',
+        description: 'The work order status has been updated.',
+      });
+      setHoldDialogOpen(false);
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Could not update the work order status.',
+      });
+    }
+  };
 
   const isEngineerView = user?.role === 'Engineer';
 
@@ -220,26 +244,36 @@ export default function WorkOrderDetailPage({
   
     const currentAction = actions[workOrder.status];
   
-    if (!currentAction && workOrder.status !== 'In-Progress') {
-      return null;
-    }
-    
+    const inProgressActions = workOrder.status === 'In-Progress' ? (
+      <>
+        <Button className="w-full" onClick={() => handleStatusChange('Completed')}>
+          <Check className="mr-2" />
+          Mark as Complete
+        </Button>
+        <Button className="w-full" variant="outline" onClick={() => setHoldDialogOpen(true)}>
+          <Pause className="mr-2" />
+          Put on Hold
+        </Button>
+      </>
+    ) : null;
+  
     return (
       <Card>
         <CardHeader>
           <CardTitle>Next Step</CardTitle>
           <CardDescription>Update your progress on this work order.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-2">
             {currentAction ? (
                  <Button className="w-full" onClick={() => handleStatusChange(currentAction.nextStatus)}>
                     <currentAction.icon className="mr-2" />
                     {currentAction.label}
                 </Button>
-            ) : (
-                <p className='text-sm text-muted-foreground'>Work is in progress. Go to the Service Report tab to complete the job.</p>
+            ) : null}
+            {inProgressActions}
+            {!currentAction && !inProgressActions && (
+              <p className='text-sm text-muted-foreground'>No more actions for this status.</p>
             )}
-         
         </CardContent>
       </Card>
     );
@@ -251,6 +285,11 @@ export default function WorkOrderDetailPage({
 
   return (
     <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 p-4 md:p-0">
+      <HoldWorkOrderDialog
+        open={isHoldDialogOpen}
+        onOpenChange={setHoldDialogOpen}
+        onSubmit={handlePutOnHold}
+      />
        <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" className="h-7 w-7" asChild>
           <Link href="/dashboard/work-orders">
@@ -406,7 +445,15 @@ export default function WorkOrderDetailPage({
             <WorkOrderPartsTab workOrder={workOrder} allocatedParts={allocatedParts} setAllocatedParts={setAllocatedParts} />
           </TabsContent>
            <TabsContent value="report">
-                <WorkOrderClientSection workOrder={workOrder} customer={customer ?? undefined} technician={technician ?? undefined} asset={asset ?? undefined} allocatedParts={allocatedParts} company={company ?? undefined} />
+                <WorkOrderClientSection 
+                    workOrder={workOrder} 
+                    customer={customer ?? undefined} 
+                    technician={technician ?? undefined} 
+                    asset={asset ?? undefined} 
+                    allocatedParts={allocatedParts} 
+                    company={company ?? undefined} 
+                    engineerActions={<EngineerWorkflowActions />}
+                />
            </TabsContent>
         </Tabs>
     </div>

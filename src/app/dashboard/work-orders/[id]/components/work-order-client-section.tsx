@@ -84,6 +84,8 @@ export function WorkOrderClientSection({
       laborHours: workOrder.duration || 0,
       signingPerson: customer?.contactPerson || '',
       partsUsed: [],
+      timeWorkStarted: workOrder.createdAt ? new Date(workOrder.createdAt) : new Date(),
+      timeWorkCompleted: workOrder.completedDate ? new Date(workOrder.completedDate) : new Date(),
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -182,37 +184,40 @@ export function WorkOrderClientSection({
         }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
+    
+    // --- Helper function for sections ---
+    const addSection = (title: string, data: { label: string, value: string }[]) => {
+        (doc as any).autoTable({
+            startY: finalY,
+            head: [[title]],
+            body: data.map(item => [
+                { content: item.label, styles: { fontStyle: 'bold' } },
+                item.value
+            ]),
+            theme: 'grid',
+            styles: { lineColor: [0,0,0], lineWidth: 0.5, cellPadding: 5 },
+            headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', cellPadding: 5 },
+            columnStyles: {
+                0: { cellWidth: 150 }
+            }
+        });
+        finalY = (doc as any).lastAutoTable.finalY + 10;
+    };
 
 
     // --- MALFUNCTION / SERVICE REQUEST INFORMATION ---
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [['MALFUNCTION / SERVICE REQUEST INFORMATION']],
-        body: [
-            [{ content: `Reported Problem: ${safe(questionnaireData.reportedProblem)}`}],
-            [{ content: `Symptom Summary: ${safe(questionnaireData.symptomSummary)}`}],
-            [{ content: `Problem Summary / Root Cause: ${safe(questionnaireData.problemSummary)}`}],
-        ],
-        theme: 'grid',
-        styles: { lineColor: [0,0,0], lineWidth: 0.5 },
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
-    });
-    finalY = (doc as any).lastAutoTable.finalY + 10;
+    addSection('MALFUNCTION / SERVICE REQUEST INFORMATION', [
+        { label: 'Reported Problem:', value: safe(questionnaireData.reportedProblem) },
+        { label: 'Symptom Summary:', value: safe(questionnaireData.symptomSummary) },
+        { label: 'Problem Summary / Root Cause:', value: safe(questionnaireData.problemSummary) }
+    ]);
     
     // --- ENGINEER'S REPORT ---
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [['ENGINEER\'S REPORT (CORRECTIVE ACTION TAKEN)']],
-        body: [
-            [{ content: `Resolution Summary: ${safe(questionnaireData.resolutionSummary)}` }],
-            [{ content: `Verification of Activity: ${safe(questionnaireData.verificationOfActivity)}` }],
-            [{ content: `Final Instrument Condition: ${safe(questionnaireData.instrumentCondition)}` }],
-        ],
-        theme: 'grid',
-        styles: { lineColor: [0,0,0], lineWidth: 0.5 },
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
-    });
-    finalY = (doc as any).lastAutoTable.finalY + 10;
+    addSection('ENGINEER\'S REPORT (CORRECTIVE ACTION TAKEN)', [
+        { label: 'Resolution Summary:', value: safe(questionnaireData.resolutionSummary) },
+        { label: 'Verification of Activity:', value: safe(questionnaireData.verificationOfActivity) },
+        { label: 'Final Instrument Condition:', value: safe(questionnaireData.instrumentCondition) }
+    ]);
 
     // --- LABOR ---
     (doc as any).autoTable({
@@ -270,12 +275,18 @@ export function WorkOrderClientSection({
         body: [
             [
                 { 
-                    content: `Customer Name: ${safe(questionnaireData.signingPerson)}`,
-                    styles: { valign: 'top', minCellHeight: 80, fontStyle: 'bold', textColor: [0, 0, 0] }
+                    content: [
+                        { content: 'Customer Name: ', styles: { fontStyle: 'bold', textColor: [0, 0, 0] } },
+                        { content: safe(questionnaireData.signingPerson), styles: { textColor: [100, 100, 100] } }
+                    ],
+                    styles: { valign: 'bottom', minCellHeight: 80 }
                 },
                 { 
-                    content: `Engineer Name: ${safe(technician?.name)}`,
-                    styles: { valign: 'top', fontStyle: 'bold', textColor: [0, 0, 0] }
+                    content: [
+                        { content: 'Engineer Name: ', styles: { fontStyle: 'bold', textColor: [0, 0, 0] } },
+                        { content: safe(technician?.name), styles: { textColor: [100, 100, 100] } }
+                    ],
+                    styles: { valign: 'bottom' }
                 }
             ]
         ],
@@ -724,3 +735,4 @@ export function WorkOrderClientSection({
     
 
     
+

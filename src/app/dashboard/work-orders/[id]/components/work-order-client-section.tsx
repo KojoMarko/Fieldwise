@@ -255,17 +255,27 @@ export function WorkOrderClientSection({
     finalY = (doc as any).lastAutoTable.finalY + 10;
 
     // --- Signatures ---
-    finalY += 30;
-    doc.text('Technician Signature:', margin, finalY);
-    doc.line(margin + 120, finalY, margin + 250, finalY);
-    
-    doc.text('Customer Signature:', pageWidth / 2 + 20, finalY);
-    doc.line(pageWidth / 2 + 130, finalY, pageWidth - margin, finalY);
-    finalY += 15;
-    
-    doc.setFontSize(8);
-    doc.text(`Prepared by: ${safe(technician?.name)}`, margin, finalY);
-    doc.text(`Signed by: ${safe(questionnaireData.signingPerson)}`, pageWidth / 2 + 20, finalY);
+    (doc as any).autoTable({
+        startY: finalY,
+        body: [
+            [
+                { 
+                    content: `Customer Call Originator:\nName of Person Signing Service Report: ${safe(questionnaireData.signingPerson)}`,
+                    styles: { valign: 'top', minCellHeight: 80 }
+                },
+                { 
+                    content: `Technician Name: ${safe(technician?.name)}`,
+                    styles: { valign: 'top', minCellHeight: 80 }
+                }
+            ]
+        ],
+        theme: 'grid',
+        styles: {
+            lineColor: [0, 0, 0], // Black borders
+            lineWidth: 0.5
+        }
+    });
+    finalY = (doc as any).lastAutoTable.finalY;
     
     doc.save(`ServiceReport-INV-${workOrder.id.substring(0, 8)}.pdf`);
     toast({
@@ -677,6 +687,7 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
 
 
 

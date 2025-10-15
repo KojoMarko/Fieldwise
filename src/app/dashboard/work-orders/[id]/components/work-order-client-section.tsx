@@ -141,8 +141,13 @@ export function WorkOrderClientSection({
     
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text("ENGINEER SERVICE REPORT", pageWidth - margin, finalY + 25, { align: 'right' });
-    finalY += 70; // Increased space after header
+    doc.text("Engineering Service Report", pageWidth - margin, finalY + 25, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Report ID: ESR-${workOrder.id.substring(0, 8).toUpperCase()}`, pageWidth - margin, finalY + 40, { align: 'right' });
+    doc.text(`Date: ${format(new Date(), 'MMMM do, yyyy')}`, pageWidth - margin, finalY + 55, { align: 'right' });
+    
+    finalY += 80;
     
     // --- CUSTOMER & EQUIPMENT INFORMATION ---
     (doc as any).autoTable({
@@ -188,7 +193,7 @@ export function WorkOrderClientSection({
     const addSection = (title: string, data: [string, string][]) => {
         (doc as any).autoTable({
             startY: finalY,
-            head: [[{ content: title, colSpan: 2 }]],
+            head: [[{ content: title, colSpan: 2, styles: { halign: 'left' } }]],
             body: data,
             theme: 'grid',
             styles: { lineColor: [0, 0, 0], lineWidth: 0.5, cellPadding: 5 },
@@ -758,6 +763,7 @@ export function WorkOrderClientSection({
     
 
     
+
 
 
 

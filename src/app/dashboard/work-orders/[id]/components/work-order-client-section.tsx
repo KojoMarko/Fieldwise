@@ -116,7 +116,7 @@ export function WorkOrderClientSection({
             // Check if it's a valid image that can be added
             const img = new Image();
             img.src = company.logoUrl;
-            await new Promise((resolve) => {
+            await new Promise((resolve, reject) => {
                 img.onload = () => {
                     doc.addImage(img, 'PNG', margin, finalY, 40, 40);
                     resolve(null);
@@ -140,24 +140,6 @@ export function WorkOrderClientSection({
     doc.setFont('helvetica', 'bold');
     doc.text("ENGINEER SERVICE REPORT", pageWidth - margin, finalY + 25, { align: 'right' });
     finalY += 60;
-    
-    // --- SERVICE CLASS Section ---
-    const serviceClassBody = [
-        [
-            { content: `INSTALLATION: [${workOrder.type === 'Installation' ? 'X' : '  '}]`, styles: { halign: 'left' } },
-            { content: `WARRANTY: [${questionnaireData.agreementType === 'Warranty' ? 'X' : '  '}]`, styles: { halign: 'left' } },
-            { content: `PREVENTIVE MAINTENANCE: [${workOrder.type === 'Preventive' ? 'X' : '  '}]`, styles: { halign: 'left' } },
-            { content: `BILLABLE: [${questionnaireData.agreementType !== 'Warranty' ? 'X' : '  '}]`, styles: { halign: 'left' } },
-        ]
-    ];
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [['SERVICE CLASS']],
-        body: serviceClassBody,
-        theme: 'grid',
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
-    });
-    finalY = (doc as any).lastAutoTable.finalY + 10;
     
     // --- CUSTOMER & EQUIPMENT INFORMATION ---
     (doc as any).autoTable({

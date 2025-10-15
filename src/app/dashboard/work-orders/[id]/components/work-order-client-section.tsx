@@ -84,8 +84,8 @@ export function WorkOrderClientSection({
       laborHours: workOrder.duration || 0,
       signingPerson: customer?.contactPerson || '',
       partsUsed: [],
-      timeWorkStarted: workOrder.createdAt ? parseISO(workOrder.createdAt) : new Date(),
-      timeWorkCompleted: workOrder.completedDate ? parseISO(workOrder.completedDate) : new Date(),
+      timeWorkStarted: workOrder.createdAt ? parseISO(workOrder.createdAt) : undefined,
+      timeWorkCompleted: workOrder.completedDate ? parseISO(workOrder.completedDate) : undefined,
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -185,18 +185,17 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
-    // --- Helper function for sections ---
     const addSection = (title: string, data: { label: string, value: string }[]) => {
         (doc as any).autoTable({
             startY: finalY,
             head: [[title]],
-            body: data.map(item => [[
-                { content: item.label, styles: { fontStyle: 'bold' } },
-                { content: ` ${item.value}` }
-            ]]),
+            body: data.map(item => [item.label, item.value]),
             theme: 'grid',
             styles: { lineColor: [0,0,0], lineWidth: 0.5, cellPadding: 5 },
             headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', cellPadding: 5 },
+            columnStyles: {
+                0: { fontStyle: 'bold', cellWidth: 150 }, // Style for the first column (labels)
+            }
         });
         finalY = (doc as any).lastAutoTable.finalY + 10;
     };
@@ -758,3 +757,4 @@ export function WorkOrderClientSection({
     
 
     
+

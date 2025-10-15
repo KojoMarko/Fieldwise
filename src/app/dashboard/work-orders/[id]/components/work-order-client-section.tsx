@@ -194,7 +194,7 @@ export function WorkOrderClientSection({
             styles: { lineColor: [0,0,0], lineWidth: 0.5, cellPadding: 5 },
             headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', cellPadding: 5 },
             columnStyles: {
-                0: { fontStyle: 'bold', cellWidth: 150 }, // Style for the first column (labels)
+                0: { fontStyle: 'bold', cellWidth: 150 },
             }
         });
         finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -757,4 +757,5 @@ export function WorkOrderClientSection({
     
 
     
+
 

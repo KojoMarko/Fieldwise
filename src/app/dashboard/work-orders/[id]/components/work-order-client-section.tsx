@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, forwardRef } from 'react';
+import { useState, useRef, forwardRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -120,7 +120,7 @@ export function WorkOrderClientSection({
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
                 img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, finalY - 10, 40, 40);
+                    doc.addImage(img, 'PNG', margin, finalY + 5, 40, 40);
                     resolve(null);
                 };
                 img.onerror = (e) => {
@@ -133,25 +133,26 @@ export function WorkOrderClientSection({
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY);
-    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 12);
-    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 24);
+    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY + 15);
+    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 27);
+    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 39);
 
     const titleText = "Engineering Service Report";
     const reportIdText = `Report ID: ESR-5nhWCAdO`;
     const dateText = `Date: October 15th, 2025`;
 
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
     const titleWidth = doc.getTextWidth(titleText);
     const rightAlignX = pageWidth - margin;
     const titleX = rightAlignX - titleWidth;
-    doc.text(titleText, titleX, finalY);
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(titleText, titleX, finalY + 15);
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(reportIdText, titleX, finalY + 15);
-    doc.text(dateText, titleX, finalY + 30);
+    doc.text(reportIdText, titleX, finalY + 30);
+    doc.text(dateText, titleX, finalY + 45);
     
     finalY += 80;
     
@@ -540,31 +541,35 @@ export function WorkOrderClientSection({
 
   const DateTimePicker = ({ value, onChange }: { value: any, onChange: (date: Date) => void }) => {
     const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
+    
+    useEffect(() => {
+        if (value) {
+            const newDate = new Date(value);
+            if (date?.getTime() !== newDate.getTime()) {
+                setDate(newDate);
+            }
+        }
+    }, [value, date]);
 
     const handleDateSelect = (selectedDay: Date | undefined) => {
         if (!selectedDay) return;
+        
         const newDate = new Date(selectedDay);
-        const currentTime = date ? new Date(date) : new Date();
+        // Preserve existing time if available
+        const currentTime = date || new Date();
         newDate.setHours(currentTime.getHours());
         newDate.setMinutes(currentTime.getMinutes());
+
         setDate(newDate);
         onChange(newDate);
     };
 
     const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!date) { // If no date is set, initialize with today's date
-            const newDate = new Date();
-            const [hours, minutes] = e.target.value.split(':').map(Number);
-            newDate.setHours(hours);
-            newDate.setMinutes(minutes);
-            setDate(newDate);
-            onChange(newDate);
-            return;
-        }
         const [hours, minutes] = e.target.value.split(':').map(Number);
-        const newDate = new Date(date);
+        const newDate = date ? new Date(date) : new Date();
         newDate.setHours(hours);
         newDate.setMinutes(minutes);
+        
         setDate(newDate);
         onChange(newDate);
     };

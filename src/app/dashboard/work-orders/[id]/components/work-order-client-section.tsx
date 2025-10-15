@@ -131,7 +131,6 @@ export function WorkOrderClientSection({
         } catch (e) { console.error("Error adding company logo to PDF:", e)}
     }
     
-    const rightAlignX = pageWidth - margin;
     
     // Left side: Company Info
     doc.setFontSize(10);
@@ -139,23 +138,26 @@ export function WorkOrderClientSection({
     doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY + 15);
 
     doc.setFont('helvetica', 'normal');
-    const addressLines = [
-        "GW-0988-6564, JMP8+P3F FH948",
-        "OXYGEN STREET, Oduman"
-    ];
-    doc.text(addressLines[0], margin + 50, finalY + 27);
-    doc.text(addressLines[1], margin + 50, finalY + 39);
+    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 27);
+    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 39);
 
 
     // Right side: Report Title
+    const rightAlignX = pageWidth - margin;
+    const titleText = "Engineering Service Report";
+    const reportIdText = `Report ID: ESR-5nhWCAdO`;
+    const dateText = `Date: October 15th, 2025`;
+
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text("Engineering Service Report", rightAlignX, finalY + 20, { align: 'right' });
+    const titleWidth = doc.getTextWidth(titleText);
+    const titleX = rightAlignX - titleWidth;
+    doc.text(titleText, titleX, finalY + 20);
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Report ID: ESR-5nhWCAdO`, rightAlignX, finalY + 35, { align: 'right' });
-    doc.text(`Date: October 15th, 2025`, rightAlignX, finalY + 50, { align: 'right' });
+    doc.text(reportIdText, titleX, finalY + 35);
+    doc.text(dateText, titleX, finalY + 50);
     
     finalY += 80;
     
@@ -744,44 +746,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-
-
-
-
-
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-    
-
-    
-
-
-
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
 
     

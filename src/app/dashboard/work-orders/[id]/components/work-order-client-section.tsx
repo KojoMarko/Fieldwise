@@ -14,7 +14,7 @@ import {
   Pause,
   Play,
   Download,
-  CalendarIcon,
+  CalendarIcon as CalendarIconLucide,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
@@ -47,20 +47,15 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
     useEffect(() => {
         setDate(value);
     }, [value]);
-    
+
     const handleDateSelect = (day: Date | undefined) => {
-        if (!day) {
-            setDate(undefined);
-            onChange(undefined);
-            return;
+        const newDate = day ? new Date(day) : undefined;
+        if (newDate) {
+            const time = date ? date.toTimeString().split(' ')[0] : '00:00';
+            const [hours, minutes] = time.split(':').map(Number);
+            newDate.setHours(hours);
+            newDate.setMinutes(minutes);
         }
-
-        const newDate = new Date(day);
-        if (date) {
-            newDate.setHours(date.getHours());
-            newDate.setMinutes(date.getMinutes());
-        }
-
         setDate(newDate);
         onChange(newDate);
     };
@@ -71,7 +66,7 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
 
         const [hours, minutes] = time.split(':').map(Number);
         
-        const newDate = date ? new Date(date) : new Date(); // default to today if no date is set
+        const newDate = date ? new Date(date) : new Date();
         newDate.setHours(hours, minutes);
 
         setDate(newDate);
@@ -85,7 +80,7 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
                     variant={'outline'}
                     className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
                 >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIconLucide className="mr-2 h-4 w-4" />
                     {date ? format(date, 'PPP p') : <span>Pick a date & time</span>}
                 </Button>
             </PopoverTrigger>
@@ -167,14 +162,15 @@ export function WorkOrderClientSection({
     };
     
     // --- Header ---
+    let logoY = finalY;
     if (company?.logoUrl) {
         try {
             const img = new Image();
-            img.crossOrigin = 'Anonymous'; // Important for cross-origin images
+            img.crossOrigin = 'Anonymous';
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
                 img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, finalY, 40, 40);
+                    doc.addImage(img, 'PNG', margin, logoY, 40, 40);
                     resolve(null);
                 };
                 img.onerror = (e) => {
@@ -182,20 +178,19 @@ export function WorkOrderClientSection({
                     reject(e);
                 }
             });
-            finalY += 15;
         } catch (e) { console.error("Error adding company logo to PDF:", e)}
     }
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text("Alos Paraklet Healthcare Limited", margin, finalY + 12);
-    doc.text("GW-0988-6564, JMP8+P3F FH948", margin, finalY + 24);
-    doc.text("OXYGEN STREET, Oduman", margin, finalY + 36);
+    doc.text("Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
+    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, logoY + 24);
+    doc.text("OXYGEN STREET, Oduman", margin + 50, logoY + 36);
 
 
     const titleText = "Engineering Service Report";
-    const reportIdText = `Report ID: ESR-5nhWCAdO`;
-    const dateText = `Date: October 15th, 2025`;
+    const reportIdText = `Report ID: ESR-${workOrder.id.substring(0,8)}`;
+    const dateText = `Date: ${format(new Date(), 'MMMM do, yyyy')}`;
 
     const titleWidth = doc.getTextWidth(titleText);
     const rightAlignX = pageWidth - margin;
@@ -610,7 +605,6 @@ export function WorkOrderClientSection({
             </Card>
         ) : (
              <>
-                 {isEngineerView && <EngineerActions />}
                  {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
                     <div className="xl:col-span-2"><ServiceReport /></div>
                 ) : (

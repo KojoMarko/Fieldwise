@@ -102,10 +102,11 @@ export function WorkOrderClientSection({
 
     // --- Safely get data and format dates ---
     const safe = (val: any, fallback = 'N/A') => val || fallback;
-    const formatDate = (date: any) => {
+    const formatDate = (date: any, includeTime = false) => {
         try {
             const d = date instanceof Date ? date : new Date(date);
-            return isValid(d) ? format(d, 'MMM dd, yyyy') : 'N/A';
+            if (!isValid(d)) return 'N/A';
+            return includeTime ? format(d, 'MMM dd, yyyy, p') : format(d, 'MMM dd, yyyy');
         } catch (e) { return 'N/A' }
     };
     
@@ -224,9 +225,9 @@ export function WorkOrderClientSection({
         startY: (doc as any).lastAutoTable.finalY,
         head: [['Start Date and Time', 'End Date and Time', 'Service Type', 'Total Hours']],
         body: [[
-            formatDate(questionnaireData.timeWorkStarted),
-            formatDate(questionnaireData.timeWorkCompleted),
-            'SERVICE LABOR',
+            formatDate(questionnaireData.timeWorkStarted, true),
+            formatDate(questionnaireData.timeWorkCompleted, true),
+            safe(workOrder.type),
             `${safe(questionnaireData.laborHours, 0)}`
         ]],
         theme: 'grid',
@@ -706,3 +707,4 @@ export function WorkOrderClientSection({
     
 
     
+

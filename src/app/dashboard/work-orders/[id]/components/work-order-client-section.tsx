@@ -72,8 +72,8 @@ export function WorkOrderClientSection({
       laborHours: workOrder.duration || 0,
       signingPerson: customer?.contactPerson || '',
       partsUsed: [],
-      timeWorkStarted: workOrder.createdAt ? parseISO(workOrder.createdAt) : undefined,
-      timeWorkCompleted: workOrder.completedDate ? parseISO(workOrder.completedDate) : undefined,
+      timeWorkStarted: undefined,
+      timeWorkCompleted: undefined,
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
@@ -108,7 +108,7 @@ export function WorkOrderClientSection({
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
                 img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, finalY + 5, 40, 40);
+                    doc.addImage(img, 'PNG', margin, finalY, 40, 40);
                     resolve(null);
                 };
                 img.onerror = (e) => {
@@ -116,14 +116,15 @@ export function WorkOrderClientSection({
                     reject(e);
                 }
             });
+            finalY += 15;
         } catch (e) { console.error("Error adding company logo to PDF:", e)}
     }
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY + 17);
-    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 29);
-    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 41);
+    doc.text("Alos Paraklet Healthcare Limited", margin, finalY + 12);
+    doc.text("GW-0988-6564, JMP8+P3F FH948", margin, finalY + 24);
+    doc.text("OXYGEN STREET, Oduman", margin, finalY + 36);
 
 
     const titleText = "Engineering Service Report";
@@ -132,18 +133,17 @@ export function WorkOrderClientSection({
 
     const titleWidth = doc.getTextWidth(titleText);
     const rightAlignX = pageWidth - margin;
-    const commonX = pageWidth - margin - Math.max(titleWidth, doc.getTextWidth(reportIdText), doc.getTextWidth(dateText));
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(titleText, commonX, finalY + 20);
+    doc.text(titleText, rightAlignX, finalY, { align: 'right' });
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(reportIdText, commonX, finalY + 35);
-    doc.text(dateText, commonX, finalY + 50);
+    doc.text(reportIdText, rightAlignX, finalY + 15, { align: 'right' });
+    doc.text(dateText, rightAlignX, finalY + 30, { align: 'right' });
     
-    finalY += 80;
+    finalY += 60;
     
     // --- CUSTOMER & EQUIPMENT INFORMATION ---
     (doc as any).autoTable({
@@ -371,17 +371,21 @@ export function WorkOrderClientSection({
 
   const isEngineerView = user?.role === 'Engineer';
 
-  const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date: Date) => void }) => {
+  const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: Date) => void }) => {
     const [date, setDate] = useState<Date | undefined>(value);
   
     useEffect(() => {
-        if (value && value !== date) {
-            setDate(value);
-        }
-    }, [value, date]);
+      // Keep internal state in sync with external value prop
+      setDate(value);
+    }, [value]);
   
     const handleDateSelect = (day: Date | undefined) => {
-      if (!day) return;
+      if (!day) {
+        setDate(undefined);
+        onChange(undefined);
+        return;
+      }
+      
       const newDate = new Date(
         day.getFullYear(),
         day.getMonth(),
@@ -395,9 +399,9 @@ export function WorkOrderClientSection({
   
     const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const time = e.target.value;
-      if (!time) return;
+      if (!time || !date) return;
       const [hours, minutes] = time.split(':').map(Number);
-      const newDate = date ? new Date(date) : new Date();
+      const newDate = new Date(date);
       newDate.setHours(hours, minutes);
       setDate(newDate);
       onChange(newDate);
@@ -625,3 +629,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    

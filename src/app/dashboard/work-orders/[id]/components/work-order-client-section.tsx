@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, forwardRef } from 'react';
@@ -119,7 +120,7 @@ export function WorkOrderClientSection({
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
                 img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, finalY, 40, 40);
+                    doc.addImage(img, 'PNG', margin, finalY + 5, 40, 40);
                     resolve(null);
                 };
                 img.onerror = (e) => {
@@ -135,22 +136,22 @@ export function WorkOrderClientSection({
     // Left side: Company Info
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY + 10);
+    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY + 15);
 
     doc.setFont('helvetica', 'normal');
-    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 22);
-    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 34);
+    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 27);
+    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 39);
 
 
     // Right side: Report Title
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text("Engineering Service Report", rightAlignX, finalY + 25, { align: 'right' });
+    doc.text("Engineering Service Report", rightAlignX, finalY + 20, { align: 'right' });
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Report ID: ESR-5nhWCAdO`, rightAlignX, finalY + 40, { align: 'right' });
-    doc.text(`Date: October 15th, 2025`, rightAlignX, finalY + 55, { align: 'right' });
+    doc.text(`Report ID: ESR-5nhWCAdO`, rightAlignX, finalY + 35, { align: 'right' });
+    doc.text(`Date: October 15th, 2025`, rightAlignX, finalY + 50, { align: 'right' });
     
     finalY += 80;
     
@@ -768,6 +769,7 @@ export function WorkOrderClientSection({
     
 
     
+
 
 
 

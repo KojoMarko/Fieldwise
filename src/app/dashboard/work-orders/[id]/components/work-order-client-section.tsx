@@ -383,67 +383,99 @@ export function WorkOrderClientSection({
 
   const DateTimePicker = ({ value, onChange }: { value: any, onChange: (date: Date) => void }) => {
     const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
-
+  
     useEffect(() => {
-        if (value) {
-            const newDate = new Date(value);
-            if (!date || newDate.getTime() !== date.getTime()) {
-                setDate(newDate);
-            }
+      // This effect synchronizes the internal state with the external prop 'value'.
+      if (value) {
+        const newDate = new Date(value);
+        if (!date || newDate.getTime() !== date.getTime()) {
+          setDate(newDate);
         }
+      } else {
+        setDate(undefined);
+      }
     }, [value, date]);
-
+  
     const handleDateSelect = (selectedDay: Date | undefined) => {
-        if (!selectedDay) return;
-        const newDate = date ? new Date(date) : new Date();
-        newDate.setFullYear(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate());
-        setDate(newDate);
-        onChange(newDate);
+      if (!selectedDay) return;
+  
+      // Get the time from the current state, or default to now.
+      const currentHours = date ? date.getHours() : new Date().getHours();
+      const currentMinutes = date ? date.getMinutes() : new Date().getMinutes();
+  
+      // Create a new date object with the selected day and existing time.
+      const newDate = new Date(
+        selectedDay.getFullYear(),
+        selectedDay.getMonth(),
+        selectedDay.getDate(),
+        currentHours,
+        currentMinutes
+      );
+  
+      setDate(newDate);
+      onChange(newDate);
     };
-
+  
     const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const time = e.target.value;
-        if (!time || !date) return;
-        const [hours, minutes] = time.split(':').map(Number);
-        const newDate = new Date(date);
-        newDate.setHours(hours);
-        newDate.setMinutes(minutes);
-        setDate(newDate);
-        onChange(newDate);
+      const time = e.target.value;
+      if (!time) return;
+  
+      const [hours, minutes] = time.split(':').map(Number);
+      
+      // If no date is set, default to today.
+      const baseDate = date ? new Date(date) : new Date();
+      
+      const newDate = new Date(
+        baseDate.getFullYear(),
+        baseDate.getMonth(),
+        baseDate.getDate(),
+        hours,
+        minutes
+      );
+  
+      setDate(newDate);
+      onChange(newDate);
     };
-
+  
     return (
-        <Popover>
-            <PopoverTrigger asChild>
-                <Button
-                    variant={'outline'}
-                    className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !date && 'text-muted-foreground'
-                    )}
-                >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, 'PPP p') : <span>Pick a date</span>}
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-                <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDateSelect}
-                    initialFocus
-                />
-                <div className="p-3 border-t border-border">
-                    <Input
-                        type="time"
-                        value={date ? format(date, 'HH:mm') : ''}
-                        onChange={handleTimeChange}
-                    />
-                </div>
-            </PopoverContent>
-        </Popover>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant={'outline'}
+            className={cn(
+              'w-full justify-start text-left font-normal',
+              !date && 'text-muted-foreground'
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date ? format(date, 'PPP p') : <span>Pick a date</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={handleDateSelect}
+          />
+          <div className="p-3 border-t border-border">
+            <Input
+              type="time"
+              value={date ? format(date, 'HH:mm') : ''}
+              onChange={handleTimeChange}
+            />
+          </div>
+        </PopoverContent>
+      </Popover>
     );
-};
+  };
+  
+  const EngineerActions = () => {
+    return null;
+  }
+  
+  const ServiceReport = () => {
+    return null;
+  }
 
 
   return (

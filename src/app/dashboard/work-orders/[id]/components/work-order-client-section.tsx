@@ -108,7 +108,7 @@ export function WorkOrderClientSection({
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
                 img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, finalY, 40, 40);
+                    doc.addImage(img, 'PNG', margin, finalY + 5, 40, 40);
                     resolve(null);
                 };
                 img.onerror = (e) => {
@@ -121,9 +121,9 @@ export function WorkOrderClientSection({
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY + 12);
-    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 24);
-    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 36);
+    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY + 17);
+    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 29);
+    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 41);
 
 
     const titleText = "Engineering Service Report";
@@ -136,12 +136,12 @@ export function WorkOrderClientSection({
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(titleText, commonX, finalY + 15);
+    doc.text(titleText, commonX, finalY + 20);
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(reportIdText, commonX, finalY + 30);
-    doc.text(dateText, commonX, finalY + 45);
+    doc.text(reportIdText, commonX, finalY + 35);
+    doc.text(dateText, commonX, finalY + 50);
     
     finalY += 80;
     
@@ -416,7 +416,6 @@ export function WorkOrderClientSection({
                     mode="single"
                     selected={date}
                     onSelect={handleDateSelect}
-                    initialFocus
                 />
                 <div className="p-3 border-t border-border">
                      <Label className="text-sm">Time</Label>

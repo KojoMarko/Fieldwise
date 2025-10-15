@@ -373,62 +373,65 @@ export function WorkOrderClientSection({
 
   const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date: Date) => void }) => {
     const [date, setDate] = useState<Date | undefined>(value);
-
+  
     useEffect(() => {
         if (value && value !== date) {
             setDate(value);
         }
     }, [value, date]);
-
-    const handleDateSelect = (selectedDay: Date | undefined) => {
-        if (!selectedDay) return;
-        const newDate = new Date(selectedDay);
-        const currentHours = date ? date.getHours() : new Date().getHours();
-        const currentMinutes = date ? date.getMinutes() : new Date().getMinutes();
-        newDate.setHours(currentHours, currentMinutes);
-        setDate(newDate);
-        onChange(newDate);
+  
+    const handleDateSelect = (day: Date | undefined) => {
+      if (!day) return;
+      const newDate = new Date(
+        day.getFullYear(),
+        day.getMonth(),
+        day.getDate(),
+        date?.getHours() ?? 0,
+        date?.getMinutes() ?? 0
+      );
+      setDate(newDate);
+      onChange(newDate);
     };
-
+  
     const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const time = e.target.value;
-        if (!time) return;
-        const [hours, minutes] = time.split(':').map(Number);
-        const newDate = date ? new Date(date) : new Date();
-        newDate.setHours(hours, minutes);
-        setDate(newDate);
-        onChange(newDate);
+      const time = e.target.value;
+      if (!time) return;
+      const [hours, minutes] = time.split(':').map(Number);
+      const newDate = date ? new Date(date) : new Date();
+      newDate.setHours(hours, minutes);
+      setDate(newDate);
+      onChange(newDate);
     };
-
+  
     return (
-        <Popover>
-            <PopoverTrigger asChild>
-                <Button
-                    variant={'outline'}
-                    className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
-                >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, 'PPP p') : <span>Pick a date</span>}
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-                <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDateSelect}
-                />
-                <div className="p-3 border-t border-border">
-                     <Label className="text-sm">Time</Label>
-                    <Input
-                        type="time"
-                        value={date ? format(date, 'HH:mm') : ''}
-                        onChange={handleTimeChange}
-                    />
-                </div>
-            </PopoverContent>
-        </Popover>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant={'outline'}
+            className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date ? format(date, 'PPP p') : <span>Pick a date</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={handleDateSelect}
+          />
+          <div className="p-3 border-t border-border">
+            <Label className="text-sm">Time</Label>
+            <Input
+              type="time"
+              value={date ? format(date, 'HH:mm') : ''}
+              onChange={handleTimeChange}
+            />
+          </div>
+        </PopoverContent>
+      </Popover>
     );
-};
+  };
   
     const ServiceReport = () => {
         if (!workOrder.technicianNotes) return null;

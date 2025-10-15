@@ -240,7 +240,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                                 mode="single"
                                 selected={field.value instanceof Date ? field.value : (field.value ? new Date(field.value) : undefined)}
                                 onSelect={field.onChange}
-                                disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+                                disabled={(date) => date > new Date()}
                                 initialFocus
                                 />
                             </PopoverContent>
@@ -605,3 +605,5 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
     </>
   );
 }
+
+    

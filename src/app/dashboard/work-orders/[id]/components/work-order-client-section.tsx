@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { useState, useRef, forwardRef } from 'react';
@@ -270,11 +271,11 @@ export function WorkOrderClientSection({
         body: [
             [
                 { 
-                    content: `Customer Call Originator:\nName of Person Signing Service Report: ${safe(questionnaireData.signingPerson)}`,
+                    content: `Customer Name: ${safe(questionnaireData.signingPerson)}`,
                     styles: { valign: 'top', minCellHeight: 80 }
                 },
                 { 
-                    content: `Technician Name: ${safe(technician?.name)}`,
+                    content: `Engineer Name: ${safe(technician?.name)}`,
                     styles: { valign: 'top' }
                 }
             ]
@@ -715,3 +716,6 @@ export function WorkOrderClientSection({
 
 
 
+
+
+    

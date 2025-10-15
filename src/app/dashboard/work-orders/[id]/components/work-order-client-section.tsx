@@ -99,7 +99,7 @@ export function WorkOrderClientSection({
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 40;
-    let finalY = margin + 20;
+    let finalY = margin;
 
     // --- Safely get data and format dates ---
     const safe = (val: any, fallback = 'N/A') => val || fallback;
@@ -120,7 +120,7 @@ export function WorkOrderClientSection({
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
                 img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, finalY + 5, 40, 40); // Vertically centered-ish
+                    doc.addImage(img, 'PNG', margin, finalY, 40, 40); // Vertically centered-ish
                     resolve(null);
                 };
                 img.onerror = (e) => {
@@ -143,7 +143,6 @@ export function WorkOrderClientSection({
 
 
     // Right side: Report Title
-    const rightAlignX = pageWidth - margin;
     const titleText = "Engineering Service Report";
     const reportIdText = `Report ID: ESR-5nhWCAdO`;
     const dateText = `Date: October 15th, 2025`;
@@ -151,6 +150,7 @@ export function WorkOrderClientSection({
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     const titleWidth = doc.getTextWidth(titleText);
+    const rightAlignX = pageWidth - margin;
     const titleX = rightAlignX - titleWidth;
     doc.text(titleText, titleX, finalY + 20);
     
@@ -287,7 +287,10 @@ export function WorkOrderClientSection({
     (doc as any).autoTable({
         startY: finalY,
         body: [
-            [{ content: '', styles: { valign: 'bottom', minCellHeight: 80 } }, { content: '', styles: { valign: 'bottom' } }]
+             [
+                { content: `Customer Name: ${safe(questionnaireData.signingPerson)}`, styles: { valign: 'bottom', minCellHeight: 80 } },
+                { content: `Engineer Name: ${safe(technician?.name)}`, styles: { valign: 'bottom' } }
+            ]
         ],
         theme: 'grid',
         styles: {
@@ -297,40 +300,6 @@ export function WorkOrderClientSection({
         columnStyles: {
             0: { cellWidth: (pageWidth - margin * 2) / 2 },
             1: { cellWidth: (pageWidth - margin * 2) / 2 },
-        },
-        didDrawCell: (data: any) => {
-            if (data.section === 'body' && data.row.index === 0) {
-                const cell = data.cell;
-                const doc = data.doc;
-                let textX = cell.x + cell.padding('left');
-                let textY = cell.y + cell.height - cell.padding('bottom'); // Position at the bottom
-
-                if (data.column.index === 0) { // Customer Name Cell
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(0, 0, 0);
-                    doc.text('Customer Name: ', textX, textY);
-                    
-                    const labelWidth = doc.getTextWidth('Customer Name: ');
-
-                    doc.setFont('helvetica', 'normal');
-                    doc.setTextColor(100, 100, 100);
-                    doc.text(safe(questionnaireData.signingPerson), textX + labelWidth, textY);
-                }
-                
-                if (data.column.index === 1) { // Engineer Name Cell
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(0, 0, 0);
-                    doc.text('Engineer Name: ', textX, textY);
-                    
-                    const labelWidth = doc.getTextWidth('Engineer Name: ');
-
-                    doc.setFont('helvetica', 'normal');
-                    doc.setTextColor(100, 100, 100);
-                    doc.text(safe(technician?.name), textX + labelWidth, textY);
-                }
-                 doc.setFont('helvetica', 'normal');
-                 doc.setTextColor(0, 0, 0);
-            }
         }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -746,5 +715,3 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-    

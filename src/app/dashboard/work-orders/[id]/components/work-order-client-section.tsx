@@ -99,7 +99,7 @@ export function WorkOrderClientSection({
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 40;
-    let finalY = margin;
+    let finalY = margin + 20;
 
     // --- Safely get data and format dates ---
     const safe = (val: any, fallback = 'N/A') => val || fallback;
@@ -120,7 +120,7 @@ export function WorkOrderClientSection({
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
                 img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, finalY + 5, 40, 40);
+                    doc.addImage(img, 'PNG', margin, finalY + 5, 40, 40); // Vertically centered-ish
                     resolve(null);
                 };
                 img.onerror = (e) => {
@@ -139,8 +139,12 @@ export function WorkOrderClientSection({
     doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY + 15);
 
     doc.setFont('helvetica', 'normal');
-    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 27);
-    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 39);
+    const addressLines = [
+        "GW-0988-6564, JMP8+P3F FH948",
+        "OXYGEN STREET, Oduman"
+    ];
+    doc.text(addressLines[0], margin + 50, finalY + 27);
+    doc.text(addressLines[1], margin + 50, finalY + 39);
 
 
     // Right side: Report Title
@@ -778,3 +782,6 @@ export function WorkOrderClientSection({
 
 
 
+
+
+    

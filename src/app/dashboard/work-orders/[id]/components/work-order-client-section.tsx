@@ -104,6 +104,7 @@ export function WorkOrderClientSection({
     const safe = (val: any, fallback = 'N/A') => val || fallback;
     const formatDate = (date: any, includeTime = false) => {
         try {
+            if (!date) return 'N/A';
             const d = date instanceof Date ? date : new Date(date);
             if (!isValid(d)) return 'N/A';
             return includeTime ? format(d, 'MMM dd, yyyy, p') : format(d, 'MMM dd, yyyy');
@@ -707,6 +708,7 @@ export function WorkOrderClientSection({
     
 
     
+
 
 
 

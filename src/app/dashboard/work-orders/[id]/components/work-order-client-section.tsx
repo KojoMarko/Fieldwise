@@ -139,13 +139,13 @@ export function WorkOrderClientSection({
     const addressLines = doc.splitTextToSize(safe(company?.address), 200);
     doc.text(addressLines, margin + 50, finalY + 28);
     
-    doc.setFontSize(18);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text("Engineering Service Report", pageWidth - margin, finalY + 25, { align: 'right' });
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Report ID: ESR-${workOrder.id.substring(0, 8).toUpperCase()}`, pageWidth - margin, finalY + 40, { align: 'right' });
-    doc.text(`Date: ${format(new Date(), 'MMMM do, yyyy')}`, pageWidth - margin, finalY + 55, { align: 'right' });
+    doc.text(`Date: October 15th, 2025`, pageWidth - margin, finalY + 55, { align: 'right' });
     
     finalY += 80;
     
@@ -763,6 +763,7 @@ export function WorkOrderClientSection({
     
 
     
+
 
 
 

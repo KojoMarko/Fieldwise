@@ -1,29 +1,11 @@
 'use client';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Header } from '@/components/header';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth, AuthGuard } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [isLoading, user, router]);
-
-  if (isLoading || !user) {
-    // You can show a loading spinner here
-    return <div className="flex h-screen w-full items-center justify-center">Loading...</div>
-  }
-
+function DashboardContent({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <AppSidebar />
@@ -34,5 +16,17 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AuthGuard>
+      <DashboardContent>{children}</DashboardContent>
+    </AuthGuard>
   );
 }

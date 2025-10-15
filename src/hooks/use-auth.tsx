@@ -31,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser) => {
@@ -44,9 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userDoc.exists()) {
           setUser(userDoc.data() as User);
         } else {
-            // If user exists in Auth but not Firestore, they can't use the app.
-            // This could be a new user signing up, which is handled by the signup flow.
-            // For an existing auth user missing a firestore doc, we log them out.
             console.warn(`User ${fbUser.uid} exists in Auth but not in Firestore. Logging out.`);
             await signOut(firebaseAuth);
             setUser(null);
@@ -86,10 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             companyId: companyId
         };
         
-        // Create a new document in the 'users' collection
         await setDoc(doc(db, "users", fbUser.uid), newUser);
         
-        // Also create a company document if it's a new company
         const companyDocRef = doc(db, "companies", companyId);
         const companyDoc = await getDoc(companyDocRef);
         if (!companyDoc.exists()) {
@@ -105,8 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await signOut(firebaseAuth);
-    router.push('/login');
-  }, [router]);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, firebaseUser, login, signup, logout, isLoading }}>
@@ -121,4 +114,21 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+export function AuthGuard({ children }: { children: ReactNode }) {
+    const { user, isLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && !user) {
+            router.push('/login');
+        }
+    }, [isLoading, user, router]);
+
+    if (isLoading || !user) {
+        return <div className="flex h-screen w-full items-center justify-center">Loading...</div>;
+    }
+
+    return <>{children}</>;
 }

@@ -1,6 +1,5 @@
 
 
-
 'use client';
 
 import { useState, useRef, forwardRef } from 'react';
@@ -284,6 +283,10 @@ export function WorkOrderClientSection({
         styles: {
             lineColor: [0, 0, 0],
             lineWidth: 0.5,
+        },
+        columnStyles: {
+            0: { cellWidth: '50%' },
+            1: { cellWidth: '50%' },
         }
     });
 
@@ -717,5 +720,7 @@ export function WorkOrderClientSection({
 
 
 
+
+    
 
     

@@ -223,7 +223,7 @@ export function WorkOrderClientSection({
     });
     (doc as any).autoTable({
         startY: (doc as any).lastAutoTable.finalY,
-        head: [['Start Date and Time', 'End Date and Time', 'Service Type', 'Total Hours']],
+        head: [['Service Start Date', 'Service End Date', 'Service Type', 'Total Hours']],
         body: [[
             formatDate(questionnaireData.timeWorkStarted, true),
             formatDate(questionnaireData.timeWorkCompleted, true),
@@ -642,11 +642,11 @@ export function WorkOrderClientSection({
                    </div>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                           <Label>Time Work Started</Label>
+                           <Label>Service Start Date</Label>
                            <DateTimePicker value={questionnaireData.timeWorkStarted} onChange={date => setQuestionnaireData({...questionnaireData, timeWorkStarted: date})} />
                         </div>
                         <div className="space-y-2">
-                           <Label>Time Work Completed</Label>
+                           <Label>Service Completion Date</Label>
                            <DateTimePicker value={questionnaireData.timeWorkCompleted} onChange={date => setQuestionnaireData({...questionnaireData, timeWorkCompleted: date})} />
                         </div>
                    </div>
@@ -707,4 +707,5 @@ export function WorkOrderClientSection({
     
 
     
+
 

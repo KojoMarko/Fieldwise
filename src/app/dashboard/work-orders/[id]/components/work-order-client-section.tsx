@@ -216,14 +216,22 @@ export function WorkOrderClientSection({
     (doc as any).autoTable({
         startY: finalY,
         head: [['LABOR']],
-        body: [
-            [
-                `Start Date: ${formatDate(questionnaireData.timeWorkStarted)}\nEnd Date: ${formatDate(questionnaireData.timeWorkCompleted)}\nDescription: SERVICE LABOR\nTotal Hours: ${safe(questionnaireData.laborHours, 0)}`
-            ]
-        ],
         theme: 'grid',
         styles: { lineColor: [0,0,0], lineWidth: 0.5 },
         headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
+    });
+    (doc as any).autoTable({
+        startY: (doc as any).lastAutoTable.finalY,
+        head: [['Start Date and Time', 'End Date and Time', 'Service Type', 'Total Hours']],
+        body: [[
+            formatDate(questionnaireData.timeWorkStarted),
+            formatDate(questionnaireData.timeWorkCompleted),
+            'SERVICE LABOR',
+            `${safe(questionnaireData.laborHours, 0)}`
+        ]],
+        theme: 'grid',
+        styles: { lineColor: [0,0,0], lineWidth: 0.5 },
+        headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
@@ -260,11 +268,11 @@ export function WorkOrderClientSection({
         body: [
             [
                 { 
-                    content: `Customer Call Originator:\nName of Person Signing Service Report: ${safe(questionnaireData.signingPerson)}`,
+                    content: `Customer Call Originator:\n\nName of Person Signing Service Report:\n\n${safe(questionnaireData.signingPerson)}`,
                     styles: { valign: 'top', minCellHeight: 80 }
                 },
                 { 
-                    content: `Technician Name: ${safe(technician?.name)}`,
+                    content: `Technician Name:\n\n\n${safe(technician?.name)}`,
                     styles: { valign: 'top', minCellHeight: 80 }
                 }
             ]
@@ -687,6 +695,7 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
 
 
 

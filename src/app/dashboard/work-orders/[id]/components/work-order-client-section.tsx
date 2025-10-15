@@ -114,15 +114,16 @@ export function WorkOrderClientSection({
     if (company?.logoUrl) {
         try {
             const img = new Image();
+            img.crossOrigin = 'Anonymous'; // Important for cross-origin images
             img.src = company.logoUrl;
-            await new Promise((resolve) => {
+            await new Promise((resolve, reject) => {
                 img.onload = () => {
                     doc.addImage(img, 'PNG', margin, finalY, 40, 40);
                     resolve(null);
                 };
-                img.onerror = () => {
-                    console.error("Could not load company logo for PDF.");
-                    resolve(null); 
+                img.onerror = (e) => {
+                    console.error("Could not load company logo for PDF.", e);
+                    reject(e); // Reject promise on error
                 }
             });
         } catch (e) { console.error("Error adding company logo to PDF:", e)}
@@ -138,34 +139,46 @@ export function WorkOrderClientSection({
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.text("ENGINEER SERVICE REPORT", pageWidth - margin, finalY + 25, { align: 'right' });
-    finalY += 60;
+    finalY += 70; // Increased space after header
     
     // --- CUSTOMER & EQUIPMENT INFORMATION ---
     (doc as any).autoTable({
         startY: finalY,
-        head: [['Customer Name', 'Contact', 'Phone', 'Address']],
-        body: [[
-            safe(customer?.name),
-            safe(customer?.contactPerson),
-            safe(customer?.phone),
-            safe(customer?.address)
-        ]],
+        body: [
+            // Row 1: Customer Headers
+            [
+                { content: 'Customer Name', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+                { content: 'Contact', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+                { content: 'Phone', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+                { content: 'Address', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+            ],
+            // Row 2: Customer Data
+            [
+                safe(customer?.name),
+                safe(customer?.contactPerson),
+                safe(customer?.phone),
+                safe(customer?.address),
+            ],
+            // Row 3: Equipment Headers
+             [
+                { content: 'Equipment', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+                { content: 'Model', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+                { content: 'Serial Number', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+                { content: 'Location', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+            ],
+            // Row 4: Equipment Data
+            [
+                safe(asset?.name),
+                safe(asset?.model),
+                safe(asset?.serialNumber),
+                safe(asset?.location),
+            ]
+        ],
         theme: 'grid',
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
-    });
-    finalY = (doc as any).lastAutoTable.finalY;
-
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [['Equipment', 'Model', 'Serial Number', 'Location']],
-        body: [[
-            safe(asset?.name),
-            safe(asset?.model),
-            safe(asset?.serialNumber),
-            safe(asset?.location)
-        ]],
-        theme: 'grid',
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
+        styles: {
+            lineColor: [0, 0, 0], // Black borders
+            lineWidth: 0.5,
+        }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
 
@@ -180,6 +193,7 @@ export function WorkOrderClientSection({
             [{ content: `Problem Summary / Root Cause: ${safe(questionnaireData.problemSummary)}`}],
         ],
         theme: 'grid',
+        styles: { lineColor: [0,0,0], lineWidth: 0.5 },
         headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -194,6 +208,7 @@ export function WorkOrderClientSection({
             [{ content: `Final Instrument Condition: ${safe(questionnaireData.instrumentCondition)}` }],
         ],
         theme: 'grid',
+        styles: { lineColor: [0,0,0], lineWidth: 0.5 },
         headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -208,6 +223,7 @@ export function WorkOrderClientSection({
             ]
         ],
         theme: 'grid',
+        styles: { lineColor: [0,0,0], lineWidth: 0.5 },
         headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -218,6 +234,7 @@ export function WorkOrderClientSection({
         startY: finalY,
         head: [['SPARE PARTS / MATERIALS USED']],
         theme: 'grid',
+        styles: { lineColor: [0,0,0], lineWidth: 0.5 },
         headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
     });
     if (partsBody.length > 0) {
@@ -226,12 +243,14 @@ export function WorkOrderClientSection({
             head: [['Part Number', 'Description', 'Quantity']],
             body: partsBody,
             theme: 'grid',
+            styles: { lineColor: [0,0,0], lineWidth: 0.5 },
         });
     } else {
          (doc as any).autoTable({
             startY: (doc as any).lastAutoTable.finalY,
             body: [['No parts were used for this service.']],
             theme: 'grid',
+            styles: { lineColor: [0,0,0], lineWidth: 0.5 },
         });
     }
     finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -659,4 +678,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
 

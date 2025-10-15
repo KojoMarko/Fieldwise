@@ -38,7 +38,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { marked } from 'marked';
-import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -147,10 +146,10 @@ export function WorkOrderClientSection({
         body: [
             // Row 1: Customer Headers
             [
-                { content: 'Customer Name', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
-                { content: 'Contact', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
-                { content: 'Phone', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
-                { content: 'Address', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+                { content: 'Customer Name', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
+                { content: 'Contact', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
+                { content: 'Phone', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
+                { content: 'Address', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
             ],
             // Row 2: Customer Data
             [
@@ -161,10 +160,10 @@ export function WorkOrderClientSection({
             ],
             // Row 3: Equipment Headers
              [
-                { content: 'Equipment', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
-                { content: 'Model', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
-                { content: 'Serial Number', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
-                { content: 'Location', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+                { content: 'Equipment', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
+                { content: 'Model', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
+                { content: 'Serial Number', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
+                { content: 'Location', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
             ],
             // Row 4: Equipment Data
             [
@@ -678,5 +677,6 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
 
 

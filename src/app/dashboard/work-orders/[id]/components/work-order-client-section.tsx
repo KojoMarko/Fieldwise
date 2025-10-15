@@ -381,211 +381,49 @@ export function WorkOrderClientSection({
 
   const isEngineerView = user?.role === 'Engineer';
 
-  const ServiceReport = () => {
-      let jsonReport: any;
-      let isJson = true;
-
-      try {
-        if (workOrder.technicianNotes) {
-            jsonReport = JSON.parse(workOrder.technicianNotes);
-        } else {
-            isJson = false;
-        }
-      } catch (e) {
-          isJson = false;
-      }
-
-      const reportContent = isJson && jsonReport ? (
-         <div className="space-y-6">
-            <div className="flex justify-between items-start">
-                <div>
-                    <h2 className="text-2xl font-bold text-primary">Engineering Service Report</h2>
-                    <p className="text-muted-foreground">Report ID: ESR-{jsonReport.workOrder?.number?.substring(0,8)}</p>
-                    <p className="text-muted-foreground">Date: {format(new Date(jsonReport.workOrder?.completionDate), 'PPP')}</p>
-                </div>
-                <div className="text-right">
-                    <h3 className="font-semibold text-lg">{jsonReport.account?.name}</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{jsonReport.account?.address}</p>
-                </div>
-            </div>
-
-             <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-1">
-                    <h4 className="font-semibold">Client Information</h4>
-                    <p className="font-medium">{customer?.name}</p>
-                    <p className="text-sm text-muted-foreground">{customer?.address}</p>
-                </div>
-                <div className="space-y-1">
-                    <h4 className="font-semibold">Asset Serviced</h4>
-                    <p className="font-medium">{asset?.name}</p>
-                    <p className="text-sm text-muted-foreground">S/N: {asset?.serialNumber}</p>
-                </div>
-            </div>
-            
-             <Separator />
-
-            <div className="space-y-4">
-                 <div>
-                    <h4 className="font-semibold mb-1">Reported Problem</h4>
-                    <p className="text-sm text-muted-foreground">{jsonReport.summary?.reportedProblem}</p>
-                </div>
-                 <div>
-                    <h4 className="font-semibold mb-1">Resolution Summary</h4>
-                    <p className="text-sm text-muted-foreground">{jsonReport.summary?.resolutionSummary}</p>
-                </div>
-            </div>
-
-            <Separator />
-            
-            <div>
-                <h4 className="font-semibold mb-2">Parts Consumed</h4>
-                {allocatedParts && allocatedParts.filter(p=>p.status === 'Used').length > 0 ? (
-                     <div className="border rounded-md">
-                        <Table>
-                            <TableHeader>
-                            <TableRow>
-                                <TableHead>Part Number</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead className="text-right">Quantity</TableHead>
-                            </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                            {allocatedParts.filter(p=>p.status === 'Used').map((part: any, index: number) => (
-                                <TableRow key={index}>
-                                    <TableCell>{part.partNumber}</TableCell>
-                                    <TableCell>{part.name}</TableCell>
-                                    <TableCell className="text-right">{part.quantity}</TableCell>
-                                </TableRow>
-                            ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground">No parts were consumed for this service.</p>
-                )}
-            </div>
-
-             <Separator />
-            
-            <div className="flex justify-between items-end">
-                <div>
-                     <h4 className="font-semibold mb-2">Technician</h4>
-                     <p className="text-sm">{jsonReport.technicianName}</p>
-                </div>
-                 <div className="text-right">
-                    <div className="border-b-2 border-dotted w-48 mb-1"></div>
-                    <p className="text-xs text-muted-foreground">Customer Signature ({jsonReport.signingPerson})</p>
-                </div>
-            </div>
-         </div>
-      ) : (
-        <div className="prose prose-sm max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: marked.parse(workOrder.technicianNotes || 'No report content.') as string }} />
-        </div>
-      );
-
-      return (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Service Report</CardTitle>
-                <CardDescription>
-                  Work Order: {currentWorkOrder.id}
-                </CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
-                <Download className="h-4 w-4 mr-2" />
-                Download PDF
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ReportBody ref={reportRef}>
-                {reportContent}
-            </ReportBody>
-          </CardContent>
-        </Card>
-      );
-  };
-
-  const EngineerActions = () => (
-    <Card>
-        <CardHeader>
-            <CardTitle>Engineer Controls</CardTitle>
-            <CardDescription>Update the work order status.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-            {(workOrder.status === 'In-Progress' || workOrder.status === 'On-Site') && (
-                 <Button onClick={() => setQuestionnaireOpen(true)}>
-                    <Check className="mr-2" /> Complete & Generate Report
-                </Button>
-            )}
-            {(workOrder.status === 'On-Hold') && (
-                <Button onClick={() => {
-                  const workOrderRef = doc(db, 'work-orders', workOrder.id);
-                  updateDoc(workOrderRef, { status: 'In-Progress' });
-                }}>
-                    <Play className="mr-2" /> Resume Work
-                </Button>
-            )}
-             {workOrder.status === 'In-Progress' && (
-                <Button variant="outline" onClick={() => setHoldDialogOpen(true)}>
-                    <Pause className="mr-2" /> Put on Hold
-                </Button>
-            )}
-        </CardContent>
-    </Card>
-  )
-
   const DateTimePicker = ({ value, onChange }: { value: any, onChange: (date: Date) => void }) => {
     const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
-    
+
     useEffect(() => {
         if (value) {
             const newDate = new Date(value);
-            if (!date || date.getTime() !== newDate.getTime()) {
+            if (!date || newDate.getTime() !== date.getTime()) {
                 setDate(newDate);
             }
-        } else if (date) { // If value is cleared, clear internal state
-            setDate(undefined);
         }
     }, [value, date]);
 
     const handleDateSelect = (selectedDay: Date | undefined) => {
         if (!selectedDay) return;
-        
         const newDate = date ? new Date(date) : new Date();
         newDate.setFullYear(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate());
-
         setDate(newDate);
         onChange(newDate);
     };
 
     const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.value) return;
-        const [hours, minutes] = e.target.value.split(':').map(Number);
-        const newDate = date ? new Date(date) : new Date();
+        const time = e.target.value;
+        if (!time || !date) return;
+        const [hours, minutes] = time.split(':').map(Number);
+        const newDate = new Date(date);
         newDate.setHours(hours);
         newDate.setMinutes(minutes);
-        
         setDate(newDate);
         onChange(newDate);
     };
-
 
     return (
         <Popover>
             <PopoverTrigger asChild>
                 <Button
-                variant={'outline'}
-                className={cn(
-                    'w-full justify-start text-left font-normal',
-                    !date && 'text-muted-foreground'
-                )}
+                    variant={'outline'}
+                    className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !date && 'text-muted-foreground'
+                    )}
                 >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? format(date, 'PPP p') : <span>Pick a date</span>}
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, 'PPP p') : <span>Pick a date</span>}
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -593,6 +431,7 @@ export function WorkOrderClientSection({
                     mode="single"
                     selected={date}
                     onSelect={handleDateSelect}
+                    initialFocus
                 />
                 <div className="p-3 border-t border-border">
                     <Input
@@ -604,7 +443,8 @@ export function WorkOrderClientSection({
             </PopoverContent>
         </Popover>
     );
-  };
+};
+
 
   return (
     <>
@@ -728,5 +568,3 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-    

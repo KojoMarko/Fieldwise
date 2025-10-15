@@ -370,12 +370,11 @@ export function WorkOrderClientSection({
   }
 
   const isEngineerView = user?.role === 'Engineer';
-
+  
   const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: Date) => void }) => {
     const [date, setDate] = useState<Date | undefined>(value);
   
     useEffect(() => {
-      // Keep internal state in sync with external value prop
       setDate(value);
     }, [value]);
   
@@ -390,8 +389,8 @@ export function WorkOrderClientSection({
         day.getFullYear(),
         day.getMonth(),
         day.getDate(),
-        date?.getHours() ?? 0,
-        date?.getMinutes() ?? 0
+        date?.getHours() ?? new Date().getHours(),
+        date?.getMinutes() ?? new Date().getMinutes()
       );
       setDate(newDate);
       onChange(newDate);
@@ -399,9 +398,11 @@ export function WorkOrderClientSection({
   
     const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const time = e.target.value;
-      if (!time || !date) return;
+      if (!time) return;
+  
       const [hours, minutes] = time.split(':').map(Number);
-      const newDate = new Date(date);
+      
+      const newDate = date ? new Date(date) : new Date();
       newDate.setHours(hours, minutes);
       setDate(newDate);
       onChange(newDate);
@@ -415,7 +416,7 @@ export function WorkOrderClientSection({
             className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, 'PPP p') : <span>Pick a date</span>}
+            {date ? format(date, 'PPP p') : <span>Pick a date & time</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">
@@ -423,6 +424,7 @@ export function WorkOrderClientSection({
             mode="single"
             selected={date}
             onSelect={handleDateSelect}
+            initialFocus
           />
           <div className="p-3 border-t border-border">
             <Label className="text-sm">Time</Label>
@@ -437,74 +439,79 @@ export function WorkOrderClientSection({
     );
   };
   
-    const ServiceReport = () => {
-        if (!workOrder.technicianNotes) return null;
+  const ServiceReport = () => {
+    if (!workOrder.technicianNotes) return null;
 
-        let reportData;
-        try {
-            reportData = JSON.parse(workOrder.technicianNotes);
-        } catch (e) {
-            return (
-                <Card>
-                    <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
-                    <CardContent><p>Error parsing service report data.</p></CardContent>
-                </Card>
-            )
-        }
-        
-        const Section = ({ title, data }: { title: string, data: Record<string, string>}) => (
-            <div className="mb-6">
-                <h3 className="text-lg font-semibold text-primary mb-2 border-b pb-1">{title}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                    {Object.entries(data).map(([key, value]) => (
-                        <div key={key}>
-                            <p className="font-medium text-muted-foreground">{key}</p>
-                            <p>{value}</p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-
+    let reportData;
+    try {
+        reportData = JSON.parse(workOrder.technicianNotes);
+    } catch (e) {
+        // If it's not JSON, it might be the old plain text format.
         return (
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Service Report</CardTitle>
-                        <CardDescription>
-                            Generated on {workOrder.completedDate ? format(parseISO(workOrder.completedDate), 'PPP p') : 'N/A'} by {reportData.workOrder.performedBy}
-                        </CardDescription>
-                    </div>
-                    <Button onClick={handleDownloadPdf}><Download className="mr-2" /> Download PDF</Button>
+                <CardHeader>
+                    <CardTitle>Engineer's Notes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Section title="Service Details" data={{
-                        'Reported Problem': reportData.summary.reportedProblem,
-                        'Symptom Summary': reportData.summary.symptomSummary,
-                        'Problem Summary': reportData.summary.problemSummary,
-                        'Resolution Summary': reportData.summary.resolutionSummary,
-                        'Verification of Activity': reportData.summary.verificationOfActivity,
-                        'Final Instrument Condition': reportData.workOrder.instrumentCondition,
-                    }}/>
-                    <Section title="Labor Information" data={{
-                        'Service Start': reportData.labor[0].startDate ? format(parseISO(reportData.labor[0].startDate), 'PPP p') : 'N/A',
-                        'Service End': reportData.labor[0].endDate ? format(parseISO(reportData.labor[0].endDate), 'PPP p') : 'N/A',
-                        'Labor Hours': reportData.labor[0].hours,
-                        'Agreement Type': reportData.agreement.type,
-                    }} />
-
-                    <h3 className="text-lg font-semibold text-primary mt-6 mb-2 border-b pb-1">Parts Used</h3>
-                    {reportData.parts.length > 0 ? (
-                        <ul className="list-disc list-inside space-y-1 text-sm">
-                            {reportData.parts.map((part: any, index: number) => (
-                                <li key={index}>{part.description} (PN: {part.partNumber})</li>
-                            ))}
-                        </ul>
-                    ) : <p className="text-sm text-muted-foreground">No parts were used for this service.</p>}
-
+                    <div className="text-sm text-muted-foreground whitespace-pre-wrap">{workOrder.technicianNotes}</div>
                 </CardContent>
             </Card>
-        );
+        )
+    }
+    
+    const Section = ({ title, data }: { title: string, data: Record<string, string>}) => (
+        <div className="mb-6">
+            <h3 className="text-lg font-semibold text-primary mb-2 border-b pb-1">{title}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                {Object.entries(data).map(([key, value]) => (
+                    <div key={key}>
+                        <p className="font-medium text-muted-foreground">{key}</p>
+                        <p>{value}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Service Report</CardTitle>
+                    <CardDescription>
+                        Generated on {workOrder.completedDate ? format(parseISO(workOrder.completedDate), 'PPP p') : 'N/A'} by {reportData.workOrder.performedBy}
+                    </CardDescription>
+                </div>
+                <Button onClick={handleDownloadPdf}><Download className="mr-2" /> Download PDF</Button>
+            </CardHeader>
+            <CardContent>
+                <Section title="Service Details" data={{
+                    'Reported Problem': reportData.summary.reportedProblem,
+                    'Symptom Summary': reportData.summary.symptomSummary,
+                    'Problem Summary': reportData.summary.problemSummary,
+                    'Resolution Summary': reportData.summary.resolutionSummary,
+                    'Verification of Activity': reportData.summary.verificationOfActivity,
+                    'Final Instrument Condition': reportData.workOrder.instrumentCondition,
+                }}/>
+                <Section title="Labor Information" data={{
+                    'Service Start': reportData.labor[0].startDate ? format(parseISO(reportData.labor[0].startDate), 'PPP p') : 'N/A',
+                    'Service End': reportData.labor[0].endDate ? format(parseISO(reportData.labor[0].endDate), 'PPP p') : 'N/A',
+                    'Labor Hours': reportData.labor[0].hours,
+                    'Agreement Type': reportData.agreement.type,
+                }} />
+
+                <h3 className="text-lg font-semibold text-primary mt-6 mb-2 border-b pb-1">Parts Used</h3>
+                {reportData.parts.length > 0 ? (
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                        {reportData.parts.map((part: any, index: number) => (
+                            <li key={index}>{part.description} (PN: {part.partNumber})</li>
+                        ))}
+                    </ul>
+                ) : <p className="text-sm text-muted-foreground">No parts were used for this service.</p>}
+
+            </CardContent>
+        </Card>
+    );
   }
 
   return (
@@ -591,7 +598,7 @@ export function WorkOrderClientSection({
       </Dialog>
       <div className="grid gap-4 xl:grid-cols-2">
       
-        {isGeneratingReport && (
+        {isGeneratingReport ? (
             <Card className="lg:col-span-2">
                 <CardContent className="p-6 flex flex-col items-center justify-center min-h-[300px]">
                     <LoaderCircle className="h-10 w-10 animate-spin text-primary mb-4" />
@@ -599,35 +606,26 @@ export function WorkOrderClientSection({
                     <p className="text-sm text-muted-foreground">The AI is structuring your report data.</p>
                 </CardContent>
             </Card>
-        )}
-
-        {!isGeneratingReport && (
-            <>
-                {isEngineerView && engineerActions}
-
-                {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
-                    <div className="xl:col-span-2"><ServiceReport /></div>
-                ) : (
-                  <>
-                    { (workOrder.status !== 'In-Progress' || !isEngineerView) &&
-                      <Card className={isEngineerView ? 'xl:col-span-1' : 'xl:col-span-2'}>
-                        <CardHeader>
-                            <CardTitle>Engineer's Report</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                                A service report will be available once the engineer completes the work.
-                            </div>
-                        </CardContent>
-                      </Card>
-                    }
-                  </>
-                )}
-            </>
+        ) : (
+             (workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
+                <div className="xl:col-span-2"><ServiceReport /></div>
+            ) : (
+                 <>
+                    {isEngineerView && engineerActions}
+                    <div className={isEngineerView ? 'xl:col-span-1' : 'xl:col-span-2'}>
+                        <Card>
+                            <CardHeader><CardTitle>Engineer's Report</CardTitle></CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                                    A service report will be available once the engineer completes the work.
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </>
+            )
         )}
       </div>
     </>
   );
 }
-
-    

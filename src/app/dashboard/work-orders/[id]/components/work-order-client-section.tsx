@@ -271,37 +271,54 @@ export function WorkOrderClientSection({
 
     // --- Signatures ---
     (doc as any).autoTable({
-      startY: finalY,
-      body: [
-        [
-          {
-            content: [
-              { content: 'Customer Name: ', styles: { fontStyle: 'bold', textColor: [0, 0, 0] } },
-              { content: safe(questionnaireData.signingPerson), styles: { fontStyle: 'normal', textColor: [100, 100, 100] } }
-            ],
-            styles: { valign: 'bottom', minCellHeight: 80 }
-          },
-          {
-            content: [
-              { content: 'Engineer Name: ', styles: { fontStyle: 'bold', textColor: [0, 0, 0] } },
-              { content: safe(technician?.name), styles: { fontStyle: 'normal', textColor: [100, 100, 100] } }
-            ],
-            styles: { valign: 'bottom' }
-          }
-        ]
-      ],
-      theme: 'grid',
-      styles: {
-        lineColor: [0, 0, 0],
-        lineWidth: 0.5,
-      },
-      columnStyles: {
-        0: { cellWidth: 'auto' },
-        1: { cellWidth: 'auto' },
-      },
+        startY: finalY,
+        body: [
+            [{ content: '', styles: { valign: 'bottom', minCellHeight: 80 } }, { content: '', styles: { valign: 'bottom' } }]
+        ],
+        theme: 'grid',
+        styles: {
+            lineColor: [0, 0, 0],
+            lineWidth: 0.5,
+        },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 'auto' },
+        },
+        didDrawCell: (data: any) => {
+            if (data.section === 'body' && data.row.index === 0) {
+                const cell = data.cell;
+                const doc = data.doc;
+                let textX = cell.x + cell.padding('left');
+                let textY = cell.y + cell.height - cell.padding('bottom'); // Position at the bottom
+
+                if (data.column.index === 0) { // Customer Name Cell
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(0, 0, 0); // Black
+                    doc.text('Customer Name: ', textX, textY);
+                    
+                    const labelWidth = doc.getTextWidth('Customer Name: ');
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(100, 100, 100); // Gray
+                    doc.text(safe(questionnaireData.signingPerson), textX + labelWidth, textY);
+                }
+                
+                if (data.column.index === 1) { // Engineer Name Cell
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(0, 0, 0); // Black
+                    doc.text('Engineer Name: ', textX, textY);
+                    
+                    const labelWidth = doc.getTextWidth('Engineer Name: ');
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(100, 100, 100); // Gray
+                    doc.text(safe(technician?.name), textX + labelWidth, textY);
+                }
+                 doc.setFont('helvetica', 'normal');
+                 doc.setTextColor(0, 0, 0);
+            }
+        }
     });
-
-
     finalY = (doc as any).lastAutoTable.finalY + 10;
 
     doc.save(`ServiceReport-INV-${workOrder.id.substring(0, 8)}.pdf`);
@@ -574,7 +591,7 @@ export function WorkOrderClientSection({
                         newDate.setHours(oldTime.getHours(), oldTime.getMinutes());
                         onChange(newDate);
                     }}
-                    disabled={(date) => date > new Date() && date < new Date('1900-01-01')}
+                    
                 />
                 <div className="p-3 border-t border-border">
                     <Input
@@ -740,5 +757,7 @@ export function WorkOrderClientSection({
 
 
 
+
+    
 
     

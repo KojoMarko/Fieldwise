@@ -113,17 +113,16 @@ export function WorkOrderClientSection({
     // --- Header ---
     if (company?.logoUrl) {
         try {
-            // Check if it's a valid image that can be added
             const img = new Image();
             img.src = company.logoUrl;
-            await new Promise((resolve, reject) => {
+            await new Promise((resolve) => {
                 img.onload = () => {
                     doc.addImage(img, 'PNG', margin, finalY, 40, 40);
                     resolve(null);
                 };
                 img.onerror = () => {
                     console.error("Could not load company logo for PDF.");
-                    resolve(null); // Resolve anyway to not block PDF generation
+                    resolve(null); 
                 }
             });
         } catch (e) { console.error("Error adding company logo to PDF:", e)}
@@ -132,7 +131,7 @@ export function WorkOrderClientSection({
     doc.setFont('helvetica', 'bold');
     doc.text(safe(company?.name), margin + 50, finalY + 15);
     doc.setFont('helvetica', 'normal');
-    // Split address into multiple lines
+
     const addressLines = doc.splitTextToSize(safe(company?.address), 200);
     doc.text(addressLines, margin + 50, finalY + 28);
     
@@ -144,21 +143,32 @@ export function WorkOrderClientSection({
     // --- CUSTOMER & EQUIPMENT INFORMATION ---
     (doc as any).autoTable({
         startY: finalY,
-        head: [['CUSTOMER INFORMATION', 'EQUIPMENT INFORMATION']],
-        body: [
-            [{ 
-                content: `Customer Name: ${safe(customer?.name)}\nContact: ${safe(customer?.contactPerson)}\nPhone: ${safe(customer?.phone)}\nAddress: ${safe(customer?.address)}`, 
-                styles: {cellWidth: 'auto'} 
-             }, 
-             { 
-                content: `Equipment: ${safe(asset?.name)}\nModel: ${safe(asset?.model)}\nSerial Number: ${safe(asset?.serialNumber)}\nLocation: ${safe(asset?.location)}`, 
-                styles: {cellWidth: 'auto'} 
-            }]
-        ],
+        head: [['Customer Name', 'Contact', 'Phone', 'Address']],
+        body: [[
+            safe(customer?.name),
+            safe(customer?.contactPerson),
+            safe(customer?.phone),
+            safe(customer?.address)
+        ]],
+        theme: 'grid',
+        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
+    });
+    finalY = (doc as any).lastAutoTable.finalY;
+
+    (doc as any).autoTable({
+        startY: finalY,
+        head: [['Equipment', 'Model', 'Serial Number', 'Location']],
+        body: [[
+            safe(asset?.name),
+            safe(asset?.model),
+            safe(asset?.serialNumber),
+            safe(asset?.location)
+        ]],
         theme: 'grid',
         headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
+
 
     // --- MALFUNCTION / SERVICE REQUEST INFORMATION ---
     (doc as any).autoTable({
@@ -649,3 +659,4 @@ export function WorkOrderClientSection({
     </>
   );
 }
+

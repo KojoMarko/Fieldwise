@@ -271,11 +271,11 @@ export function WorkOrderClientSection({
             [
                 { 
                     content: `Customer Name: ${safe(questionnaireData.signingPerson)}`,
-                    styles: { valign: 'top', minCellHeight: 80 }
+                    styles: { valign: 'top', minCellHeight: 80, fontStyle: 'bold', textColor: [0, 0, 0] }
                 },
                 { 
                     content: `Engineer Name: ${safe(technician?.name)}`,
-                    styles: { valign: 'top' }
+                    styles: { valign: 'top', fontStyle: 'bold', textColor: [0, 0, 0] }
                 }
             ]
         ],

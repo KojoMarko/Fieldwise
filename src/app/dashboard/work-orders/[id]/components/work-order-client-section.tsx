@@ -185,16 +185,17 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
-    const addSection = (title: string, data: { label: string, value: string }[]) => {
+    const addSection = (title: string, data: [string, string][]) => {
         (doc as any).autoTable({
             startY: finalY,
-            head: [[title]],
-            body: data.map(item => [item.label, item.value]),
+            head: [[{ content: title, colSpan: 2 }]],
+            body: data,
             theme: 'grid',
-            styles: { lineColor: [0,0,0], lineWidth: 0.5, cellPadding: 5 },
+            styles: { lineColor: [0, 0, 0], lineWidth: 0.5, cellPadding: 5 },
             headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', cellPadding: 5 },
             columnStyles: {
                 0: { fontStyle: 'bold', cellWidth: 150 },
+                1: { cellWidth: 'auto' },
             }
         });
         finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -203,16 +204,16 @@ export function WorkOrderClientSection({
 
     // --- MALFUNCTION / SERVICE REQUEST INFORMATION ---
     addSection('MALFUNCTION / SERVICE REQUEST INFORMATION', [
-        { label: 'Reported Problem:', value: safe(questionnaireData.reportedProblem) },
-        { label: 'Symptom Summary:', value: safe(questionnaireData.symptomSummary) },
-        { label: 'Problem Summary / Root Cause:', value: safe(questionnaireData.problemSummary) }
+        ['Reported Problem:', safe(questionnaireData.reportedProblem)],
+        ['Symptom Summary:', safe(questionnaireData.symptomSummary)],
+        ['Problem Summary / Root Cause:', safe(questionnaireData.problemSummary)]
     ]);
     
     // --- ENGINEER'S REPORT ---
     addSection('ENGINEER\'S REPORT (CORRECTIVE ACTION TAKEN)', [
-        { label: 'Resolution Summary:', value: safe(questionnaireData.resolutionSummary) },
-        { label: 'Verification of Activity:', value: safe(questionnaireData.verificationOfActivity) },
-        { label: 'Final Instrument Condition:', value: safe(questionnaireData.instrumentCondition) }
+        ['Resolution Summary:', safe(questionnaireData.resolutionSummary)],
+        ['Verification of Activity:', safe(questionnaireData.verificationOfActivity)],
+        ['Final Instrument Condition:', safe(questionnaireData.instrumentCondition)]
     ]);
 
     // --- LABOR ---
@@ -277,8 +278,8 @@ export function WorkOrderClientSection({
             lineWidth: 0.5,
         },
         columnStyles: {
-            0: { cellWidth: 'auto' },
-            1: { cellWidth: 'auto' },
+            0: { cellWidth: (pageWidth - margin * 2) / 2 },
+            1: { cellWidth: (pageWidth - margin * 2) / 2 },
         },
         didDrawCell: (data: any) => {
             if (data.section === 'body' && data.row.index === 0) {
@@ -757,5 +758,6 @@ export function WorkOrderClientSection({
     
 
     
+
 
 

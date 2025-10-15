@@ -108,7 +108,7 @@ export function WorkOrderClientSection({
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
                 img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, finalY + 5, 40, 40);
+                    doc.addImage(img, 'PNG', margin, finalY, 40, 40);
                     resolve(null);
                 };
                 img.onerror = (e) => {
@@ -121,9 +121,10 @@ export function WorkOrderClientSection({
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY + 15);
-    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 27);
-    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 39);
+    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY + 12);
+    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 24);
+    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 36);
+
 
     const titleText = "Engineering Service Report";
     const reportIdText = `Report ID: ESR-5nhWCAdO`;
@@ -131,15 +132,16 @@ export function WorkOrderClientSection({
 
     const titleWidth = doc.getTextWidth(titleText);
     const rightAlignX = pageWidth - margin;
+    const commonX = pageWidth - margin - Math.max(titleWidth, doc.getTextWidth(reportIdText), doc.getTextWidth(dateText));
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(titleText, rightAlignX, finalY + 15, { align: 'right' });
+    doc.text(titleText, commonX, finalY + 15);
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(reportIdText, rightAlignX, finalY + 30, { align: 'right' });
-    doc.text(dateText, rightAlignX, finalY + 45, { align: 'right' });
+    doc.text(reportIdText, commonX, finalY + 30);
+    doc.text(dateText, commonX, finalY + 45);
     
     finalY += 80;
     
@@ -369,31 +371,21 @@ export function WorkOrderClientSection({
 
   const isEngineerView = user?.role === 'Engineer';
 
-  const DateTimePicker = ({ value, onChange }: { value: any, onChange: (date: Date) => void }) => {
-    const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
+  const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date: Date) => void }) => {
+    const [date, setDate] = useState<Date | undefined>(value);
 
     useEffect(() => {
-        if (value) {
-            const newDate = new Date(value);
-            if (!date || newDate.getTime() !== date.getTime()) {
-                setDate(newDate);
-            }
-        } else {
-            setDate(undefined);
+        if (value && value !== date) {
+            setDate(value);
         }
-    }, [value]);
+    }, [value, date]);
 
     const handleDateSelect = (selectedDay: Date | undefined) => {
         if (!selectedDay) return;
+        const newDate = new Date(selectedDay);
         const currentHours = date ? date.getHours() : new Date().getHours();
         const currentMinutes = date ? date.getMinutes() : new Date().getMinutes();
-        const newDate = new Date(
-            selectedDay.getFullYear(),
-            selectedDay.getMonth(),
-            selectedDay.getDate(),
-            currentHours,
-            currentMinutes
-        );
+        newDate.setHours(currentHours, currentMinutes);
         setDate(newDate);
         onChange(newDate);
     };
@@ -402,14 +394,8 @@ export function WorkOrderClientSection({
         const time = e.target.value;
         if (!time) return;
         const [hours, minutes] = time.split(':').map(Number);
-        const baseDate = date || new Date();
-        const newDate = new Date(
-            baseDate.getFullYear(),
-            baseDate.getMonth(),
-            baseDate.getDate(),
-            hours,
-            minutes
-        );
+        const newDate = date ? new Date(date) : new Date();
+        newDate.setHours(hours, minutes);
         setDate(newDate);
         onChange(newDate);
     };
@@ -419,10 +405,7 @@ export function WorkOrderClientSection({
             <PopoverTrigger asChild>
                 <Button
                     variant={'outline'}
-                    className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !date && 'text-muted-foreground'
-                    )}
+                    className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
                 >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {date ? format(date, 'PPP p') : <span>Pick a date</span>}
@@ -433,8 +416,10 @@ export function WorkOrderClientSection({
                     mode="single"
                     selected={date}
                     onSelect={handleDateSelect}
+                    initialFocus
                 />
                 <div className="p-3 border-t border-border">
+                     <Label className="text-sm">Time</Label>
                     <Input
                         type="time"
                         value={date ? format(date, 'HH:mm') : ''}
@@ -481,7 +466,7 @@ export function WorkOrderClientSection({
                     <div>
                         <CardTitle>Service Report</CardTitle>
                         <CardDescription>
-                            Generated on {format(parseISO(workOrder.completedDate!), 'PPP p')} by {reportData.workOrder.performedBy}
+                            Generated on {workOrder.completedDate ? format(parseISO(workOrder.completedDate), 'PPP p') : 'N/A'} by {reportData.workOrder.performedBy}
                         </CardDescription>
                     </div>
                     <Button onClick={handleDownloadPdf}><Download className="mr-2" /> Download PDF</Button>
@@ -496,8 +481,8 @@ export function WorkOrderClientSection({
                         'Final Instrument Condition': reportData.workOrder.instrumentCondition,
                     }}/>
                     <Section title="Labor Information" data={{
-                        'Service Start': format(parseISO(reportData.labor[0].startDate), 'PPP p'),
-                        'Service End': format(parseISO(reportData.labor[0].endDate), 'PPP p'),
+                        'Service Start': reportData.labor[0].startDate ? format(parseISO(reportData.labor[0].startDate), 'PPP p') : 'N/A',
+                        'Service End': reportData.labor[0].endDate ? format(parseISO(reportData.labor[0].endDate), 'PPP p') : 'N/A',
                         'Labor Hours': reportData.labor[0].hours,
                         'Agreement Type': reportData.agreement.type,
                     }} />

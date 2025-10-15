@@ -84,8 +84,8 @@ export function WorkOrderClientSection({
       laborHours: workOrder.duration || 0,
       signingPerson: customer?.contactPerson || '',
       partsUsed: [],
-      timeWorkStarted: workOrder.createdAt ? new Date(workOrder.createdAt) : new Date(),
-      timeWorkCompleted: workOrder.completedDate ? new Date(workOrder.completedDate) : new Date(),
+      timeWorkStarted: workOrder.createdAt ? parseISO(workOrder.createdAt) : new Date(),
+      timeWorkCompleted: workOrder.completedDate ? parseISO(workOrder.completedDate) : new Date(),
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -107,7 +107,7 @@ export function WorkOrderClientSection({
     const formatDate = (date: any, includeTime = false) => {
         try {
             if (!date) return 'N/A';
-            const d = date instanceof Date ? date : new Date(date);
+            const d = date instanceof Date ? date : parseISO(date);
             if (!isValid(d)) return 'N/A';
             return includeTime ? format(d, 'MMM dd, yyyy, p') : format(d, 'MMM dd, yyyy');
         } catch (e) { return 'N/A' }
@@ -271,59 +271,36 @@ export function WorkOrderClientSection({
 
     // --- Signatures ---
     (doc as any).autoTable({
-        startY: finalY,
-        body: [
-            [
-                { content: 'Customer Name Placeholder', styles: { valign: 'bottom', minCellHeight: 80 } },
-                { content: 'Engineer Name Placeholder', styles: { valign: 'bottom' } },
-            ]
-        ],
-        theme: 'grid',
-        styles: {
-            lineColor: [0, 0, 0],
-            lineWidth: 0.5,
-        },
-        columnStyles: {
-            0: { cellWidth: '50%' },
-            1: { cellWidth: '50%' },
-        },
-        didDrawCell: (data: any) => {
-            if (data.section === 'body' && data.column.index <= 1) {
-                // Prevent default text rendering
-                data.cell.text = '';
-
-                // Get the cell's position and dimensions
-                const { x, y } = data.cell;
-                const cellPadding = data.cell.padding('vertical');
-                const textPos = { x: x + data.cell.padding('left'), y: y + data.cell.height - cellPadding };
-
-
-                let label = '';
-                let value = '';
-
-                if (data.column.index === 0) {
-                    label = 'Customer Name: ';
-                    value = safe(questionnaireData.signingPerson);
-                } else {
-                    label = 'Engineer Name: ';
-                    value = safe(technician?.name);
-                }
-
-                // Draw the bold label
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(0, 0, 0); // Black
-                doc.text(label, textPos.x, textPos.y);
-
-                // Calculate width of the label to position the value next to it
-                const labelWidth = doc.getTextWidth(label);
-
-                // Draw the gray value
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(100, 100, 100); // Gray
-                doc.text(value, textPos.x + labelWidth, textPos.y);
-            }
-        },
+      startY: finalY,
+      body: [
+        [
+          {
+            content: [
+              { content: 'Customer Name: ', styles: { fontStyle: 'bold', textColor: [0, 0, 0] } },
+              { content: safe(questionnaireData.signingPerson), styles: { fontStyle: 'normal', textColor: [100, 100, 100] } }
+            ],
+            styles: { valign: 'bottom', minCellHeight: 80 }
+          },
+          {
+            content: [
+              { content: 'Engineer Name: ', styles: { fontStyle: 'bold', textColor: [0, 0, 0] } },
+              { content: safe(technician?.name), styles: { fontStyle: 'normal', textColor: [100, 100, 100] } }
+            ],
+            styles: { valign: 'bottom' }
+          }
+        ]
+      ],
+      theme: 'grid',
+      styles: {
+        lineColor: [0, 0, 0],
+        lineWidth: 0.5,
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 'auto' },
+      },
     });
+
 
     finalY = (doc as any).lastAutoTable.finalY + 10;
 
@@ -597,6 +574,7 @@ export function WorkOrderClientSection({
                         newDate.setHours(oldTime.getHours(), oldTime.getMinutes());
                         onChange(newDate);
                     }}
+                    disabled={(date) => date > new Date() && date < new Date('1900-01-01')}
                 />
                 <div className="p-3 border-t border-border">
                     <Input
@@ -761,3 +739,6 @@ export function WorkOrderClientSection({
     
 
 
+
+
+    

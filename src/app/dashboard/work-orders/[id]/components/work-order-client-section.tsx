@@ -116,17 +116,25 @@ export function WorkOrderClientSection({
             // Check if it's a valid image that can be added
             const img = new Image();
             img.src = company.logoUrl;
-            img.onload = () => {
-                doc.addImage(company.logoUrl!, 'PNG', margin, finalY, 40, 40);
-            };
-            img.onerror = () => { console.error("Could not load company logo for PDF."); }
+            await new Promise((resolve) => {
+                img.onload = () => {
+                    doc.addImage(img, 'PNG', margin, finalY, 40, 40);
+                    resolve(null);
+                };
+                img.onerror = () => {
+                    console.error("Could not load company logo for PDF.");
+                    resolve(null); // Resolve anyway to not block PDF generation
+                }
+            });
         } catch (e) { console.error("Error adding company logo to PDF:", e)}
     }
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.text(safe(company?.name), margin + 50, finalY + 15);
     doc.setFont('helvetica', 'normal');
-    doc.text(safe(company?.address), margin + 50, finalY + 28);
+    // Split address into multiple lines
+    const addressLines = doc.splitTextToSize(safe(company?.address), 200);
+    doc.text(addressLines, margin + 50, finalY + 28);
     
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');

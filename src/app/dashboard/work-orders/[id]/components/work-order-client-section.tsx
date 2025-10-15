@@ -14,6 +14,7 @@ import {
   Pause,
   Play,
   Download,
+  CalendarIcon,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
@@ -32,13 +33,80 @@ import {
 import { HoldWorkOrderDialog } from './hold-work-order-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Calendar, CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
+
+const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: Date) => void }) => {
+    const [date, setDate] = useState<Date | undefined>(value);
+
+    useEffect(() => {
+        setDate(value);
+    }, [value]);
+    
+    const handleDateSelect = (day: Date | undefined) => {
+        if (!day) {
+            setDate(undefined);
+            onChange(undefined);
+            return;
+        }
+
+        const newDate = new Date(day);
+        if (date) {
+            newDate.setHours(date.getHours());
+            newDate.setMinutes(date.getMinutes());
+        }
+
+        setDate(newDate);
+        onChange(newDate);
+    };
+
+    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const time = e.target.value;
+        if (!time) return;
+
+        const [hours, minutes] = time.split(':').map(Number);
+        
+        const newDate = date ? new Date(date) : new Date(); // default to today if no date is set
+        newDate.setHours(hours, minutes);
+
+        setDate(newDate);
+        onChange(newDate);
+    };
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button
+                    variant={'outline'}
+                    className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
+                >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, 'PPP p') : <span>Pick a date & time</span>}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+                <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={handleDateSelect}
+                />
+                <div className="p-3 border-t border-border">
+                    <Label className="text-sm">Time</Label>
+                    <Input
+                        type="time"
+                        value={date ? format(date, 'HH:mm') : ''}
+                        onChange={handleTimeChange}
+                    />
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+};
 
 export function WorkOrderClientSection({
   workOrder,
@@ -47,7 +115,6 @@ export function WorkOrderClientSection({
   asset,
   allocatedParts,
   company,
-  engineerActions,
 }: {
   workOrder: WorkOrder;
   customer?: Customer;
@@ -55,7 +122,6 @@ export function WorkOrderClientSection({
   asset?: Asset;
   allocatedParts: AllocatedPart[],
   company?: Company,
-  engineerActions: React.ReactNode,
 }) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -371,73 +437,6 @@ export function WorkOrderClientSection({
 
   const isEngineerView = user?.role === 'Engineer';
   
-  const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: Date) => void }) => {
-    const [date, setDate] = useState<Date | undefined>(value);
-
-    useEffect(() => {
-      setDate(value);
-    }, [value]);
-
-    const handleDateSelect = (day: Date | undefined) => {
-        if (!day) {
-            setDate(undefined);
-            onChange(undefined);
-            return;
-        }
-
-        const newDate = new Date(day);
-        if (date) {
-            newDate.setHours(date.getHours());
-            newDate.setMinutes(date.getMinutes());
-        }
-
-        setDate(newDate);
-        onChange(newDate);
-    };
-
-    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const time = e.target.value;
-        if (!time) return;
-
-        const [hours, minutes] = time.split(':').map(Number);
-        
-        const newDate = date ? new Date(date) : new Date();
-        newDate.setHours(hours, minutes);
-
-        setDate(newDate);
-        onChange(newDate);
-    };
-
-    return (
-        <Popover>
-            <PopoverTrigger asChild>
-                <Button
-                    variant={'outline'}
-                    className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
-                >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, 'PPP p') : <span>Pick a date & time</span>}
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-                <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDateSelect}
-                />
-                <div className="p-3 border-t border-border">
-                    <Label className="text-sm">Time</Label>
-                    <Input
-                        type="time"
-                        value={date ? format(date, 'HH:mm') : ''}
-                        onChange={handleTimeChange}
-                    />
-                </div>
-            </PopoverContent>
-        </Popover>
-    );
-};
-  
   const ServiceReport = () => {
     if (!workOrder.technicianNotes) return null;
 
@@ -511,6 +510,10 @@ export function WorkOrderClientSection({
             </CardContent>
         </Card>
     );
+  }
+
+  const EngineerActions = () => {
+    return <h1>Placeholder</h1>
   }
 
   return (
@@ -607,7 +610,7 @@ export function WorkOrderClientSection({
             </Card>
         ) : (
              <>
-                 {isEngineerView && engineerActions}
+                 {isEngineerView && <EngineerActions />}
                  {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
                     <div className="xl:col-span-2"><ServiceReport /></div>
                 ) : (
@@ -628,3 +631,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    

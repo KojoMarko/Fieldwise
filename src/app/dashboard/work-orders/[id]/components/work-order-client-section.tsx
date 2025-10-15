@@ -552,8 +552,17 @@ export function WorkOrderClientSection({
     };
 
     const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!date) { // If no date is set, initialize with today's date
+            const newDate = new Date();
+            const [hours, minutes] = e.target.value.split(':').map(Number);
+            newDate.setHours(hours);
+            newDate.setMinutes(minutes);
+            setDate(newDate);
+            onChange(newDate);
+            return;
+        }
         const [hours, minutes] = e.target.value.split(':').map(Number);
-        const newDate = date ? new Date(date) : new Date();
+        const newDate = new Date(date);
         newDate.setHours(hours);
         newDate.setMinutes(minutes);
         setDate(newDate);
@@ -580,7 +589,6 @@ export function WorkOrderClientSection({
                     mode="single"
                     selected={date}
                     onSelect={handleDateSelect}
-                    initialFocus
                 />
                 <div className="p-3 border-t border-border">
                     <Input

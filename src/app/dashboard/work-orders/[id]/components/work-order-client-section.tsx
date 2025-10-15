@@ -274,20 +274,8 @@ export function WorkOrderClientSection({
         startY: finalY,
         body: [
             [
-                { 
-                    content: [
-                        { content: 'Customer Name: ', styles: { fontStyle: 'bold', textColor: [0, 0, 0] } },
-                        { content: safe(questionnaireData.signingPerson), styles: { textColor: [100, 100, 100] } }
-                    ],
-                    styles: { valign: 'bottom', minCellHeight: 80 }
-                },
-                { 
-                    content: [
-                        { content: 'Engineer Name: ', styles: { fontStyle: 'bold', textColor: [0, 0, 0] } },
-                        { content: safe(technician?.name), styles: { textColor: [100, 100, 100] } }
-                    ],
-                    styles: { valign: 'bottom' }
-                }
+                { content: 'Customer Name Placeholder', styles: { valign: 'bottom', minCellHeight: 80 } },
+                { content: 'Engineer Name Placeholder', styles: { valign: 'bottom' } },
             ]
         ],
         theme: 'grid',
@@ -298,7 +286,43 @@ export function WorkOrderClientSection({
         columnStyles: {
             0: { cellWidth: '50%' },
             1: { cellWidth: '50%' },
-        }
+        },
+        didDrawCell: (data: any) => {
+            if (data.section === 'body' && data.column.index <= 1) {
+                // Prevent default text rendering
+                data.cell.text = '';
+
+                // Get the cell's position and dimensions
+                const { x, y } = data.cell;
+                const cellPadding = data.cell.padding('vertical');
+                const textPos = { x: x + data.cell.padding('left'), y: y + data.cell.height - cellPadding };
+
+
+                let label = '';
+                let value = '';
+
+                if (data.column.index === 0) {
+                    label = 'Customer Name: ';
+                    value = safe(questionnaireData.signingPerson);
+                } else {
+                    label = 'Engineer Name: ';
+                    value = safe(technician?.name);
+                }
+
+                // Draw the bold label
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0, 0, 0); // Black
+                doc.text(label, textPos.x, textPos.y);
+
+                // Calculate width of the label to position the value next to it
+                const labelWidth = doc.getTextWidth(label);
+
+                // Draw the gray value
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100, 100, 100); // Gray
+                doc.text(value, textPos.x + labelWidth, textPos.y);
+            }
+        },
     });
 
     finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -735,4 +759,5 @@ export function WorkOrderClientSection({
     
 
     
+
 

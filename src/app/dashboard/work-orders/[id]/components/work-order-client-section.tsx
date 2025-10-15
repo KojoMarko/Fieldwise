@@ -190,16 +190,13 @@ export function WorkOrderClientSection({
         (doc as any).autoTable({
             startY: finalY,
             head: [[title]],
-            body: data.map(item => [
+            body: data.map(item => [[
                 { content: item.label, styles: { fontStyle: 'bold' } },
-                item.value
-            ]),
+                { content: ` ${item.value}` }
+            ]]),
             theme: 'grid',
             styles: { lineColor: [0,0,0], lineWidth: 0.5, cellPadding: 5 },
             headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', cellPadding: 5 },
-            columnStyles: {
-                0: { cellWidth: 150 }
-            }
         });
         finalY = (doc as any).lastAutoTable.finalY + 10;
     };
@@ -293,25 +290,25 @@ export function WorkOrderClientSection({
 
                 if (data.column.index === 0) { // Customer Name Cell
                     doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(0, 0, 0); // Black
+                    doc.setTextColor(0, 0, 0);
                     doc.text('Customer Name: ', textX, textY);
                     
                     const labelWidth = doc.getTextWidth('Customer Name: ');
 
                     doc.setFont('helvetica', 'normal');
-                    doc.setTextColor(100, 100, 100); // Gray
+                    doc.setTextColor(100, 100, 100);
                     doc.text(safe(questionnaireData.signingPerson), textX + labelWidth, textY);
                 }
                 
                 if (data.column.index === 1) { // Engineer Name Cell
                     doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(0, 0, 0); // Black
+                    doc.setTextColor(0, 0, 0);
                     doc.text('Engineer Name: ', textX, textY);
                     
                     const labelWidth = doc.getTextWidth('Engineer Name: ');
 
                     doc.setFont('helvetica', 'normal');
-                    doc.setTextColor(100, 100, 100); // Gray
+                    doc.setTextColor(100, 100, 100);
                     doc.text(safe(technician?.name), textX + labelWidth, textY);
                 }
                  doc.setFont('helvetica', 'normal');

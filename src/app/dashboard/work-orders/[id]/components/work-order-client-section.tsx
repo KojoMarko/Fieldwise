@@ -120,29 +120,23 @@ export function WorkOrderClientSection({
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
                 img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, finalY - 10, 40, 40); // Vertically centered-ish
+                    doc.addImage(img, 'PNG', margin, finalY - 10, 40, 40);
                     resolve(null);
                 };
                 img.onerror = (e) => {
                     console.error("Could not load company logo for PDF.", e);
-                    reject(e); // Reject promise on error
+                    reject(e);
                 }
             });
         } catch (e) { console.error("Error adding company logo to PDF:", e)}
     }
     
-    
-    // Left side: Company Info
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY);
-
     doc.setFont('helvetica', 'normal');
+    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY);
     doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 12);
     doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 24);
 
-
-    // Right side: Report Title
     const titleText = "Engineering Service Report";
     const reportIdText = `Report ID: ESR-5nhWCAdO`;
     const dateText = `Date: October 15th, 2025`;
@@ -165,28 +159,24 @@ export function WorkOrderClientSection({
     (doc as any).autoTable({
         startY: finalY,
         body: [
-            // Row 1: Customer Headers
             [
                 { content: 'Customer Name', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
                 { content: 'Contact', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
                 { content: 'Phone', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
                 { content: 'Address', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
             ],
-            // Row 2: Customer Data
             [
                 safe(customer?.name),
                 safe(customer?.contactPerson),
                 safe(customer?.phone),
                 safe(customer?.address),
             ],
-            // Row 3: Equipment Headers
              [
                 { content: 'Equipment', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
                 { content: 'Model', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
                 { content: 'Serial Number', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
                 { content: 'Location', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
             ],
-            // Row 4: Equipment Data
             [
                 safe(asset?.name),
                 safe(asset?.model),
@@ -196,7 +186,7 @@ export function WorkOrderClientSection({
         ],
         theme: 'grid',
         styles: {
-            lineColor: [0, 0, 0], // Black borders
+            lineColor: [0, 0, 0],
             lineWidth: 0.5,
         }
     });
@@ -549,7 +539,28 @@ export function WorkOrderClientSection({
   )
 
   const DateTimePicker = ({ value, onChange }: { value: any, onChange: (date: Date) => void }) => {
-    const dateValue = value ? new Date(value) : null;
+    const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
+
+    const handleDateSelect = (selectedDay: Date | undefined) => {
+        if (!selectedDay) return;
+        const newDate = new Date(selectedDay);
+        const currentTime = date ? new Date(date) : new Date();
+        newDate.setHours(currentTime.getHours());
+        newDate.setMinutes(currentTime.getMinutes());
+        setDate(newDate);
+        onChange(newDate);
+    };
+
+    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const [hours, minutes] = e.target.value.split(':').map(Number);
+        const newDate = date ? new Date(date) : new Date();
+        newDate.setHours(hours);
+        newDate.setMinutes(minutes);
+        setDate(newDate);
+        onChange(newDate);
+    };
+
+
     return (
         <Popover>
             <PopoverTrigger asChild>
@@ -557,35 +568,25 @@ export function WorkOrderClientSection({
                 variant={'outline'}
                 className={cn(
                     'w-full justify-start text-left font-normal',
-                    !dateValue && 'text-muted-foreground'
+                    !date && 'text-muted-foreground'
                 )}
                 >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateValue ? format(dateValue, 'PPP p') : <span>Pick a date</span>}
+                {date ? format(date, 'PPP p') : <span>Pick a date</span>}
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
                 <Calendar
                     mode="single"
-                    selected={dateValue || undefined}
-                    onSelect={(day) => {
-                        if (!day) return;
-                        const newDate = new Date(day);
-                        const oldTime = dateValue || new Date();
-                        newDate.setHours(oldTime.getHours(), oldTime.getMinutes());
-                        onChange(newDate);
-                    }}
+                    selected={date}
+                    onSelect={handleDateSelect}
+                    initialFocus
                 />
                 <div className="p-3 border-t border-border">
                     <Input
                         type="time"
-                        value={dateValue ? format(dateValue, 'HH:mm') : ''}
-                        onChange={(e) => {
-                            const [hours, minutes] = e.target.value.split(':').map(Number);
-                            const newDateWithTime = dateValue || new Date();
-                            newDateWithTime.setHours(hours, minutes);
-                            onChange(newDateWithTime);
-                        }}
+                        value={date ? format(date, 'HH:mm') : ''}
+                        onChange={handleTimeChange}
                     />
                 </div>
             </PopoverContent>
@@ -715,5 +716,3 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-    

@@ -143,16 +143,15 @@ export function WorkOrderClientSection({
 
     const titleWidth = doc.getTextWidth(titleText);
     const rightAlignX = pageWidth - margin;
-    const titleX = rightAlignX - titleWidth;
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(titleText, titleX, finalY + 15);
+    doc.text(titleText, rightAlignX, finalY + 15, { align: 'right' });
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(reportIdText, titleX, finalY + 30);
-    doc.text(dateText, titleX, finalY + 45);
+    doc.text(reportIdText, rightAlignX, finalY + 30, { align: 'right' });
+    doc.text(dateText, rightAlignX, finalY + 45, { align: 'right' });
     
     finalY += 80;
     
@@ -545,26 +544,26 @@ export function WorkOrderClientSection({
     useEffect(() => {
         if (value) {
             const newDate = new Date(value);
-            if (date?.getTime() !== newDate.getTime()) {
+            if (!date || date.getTime() !== newDate.getTime()) {
                 setDate(newDate);
             }
+        } else if (date) { // If value is cleared, clear internal state
+            setDate(undefined);
         }
     }, [value, date]);
 
     const handleDateSelect = (selectedDay: Date | undefined) => {
         if (!selectedDay) return;
         
-        const newDate = new Date(selectedDay);
-        // Preserve existing time if available
-        const currentTime = date || new Date();
-        newDate.setHours(currentTime.getHours());
-        newDate.setMinutes(currentTime.getMinutes());
+        const newDate = date ? new Date(date) : new Date();
+        newDate.setFullYear(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate());
 
         setDate(newDate);
         onChange(newDate);
     };
 
     const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.value) return;
         const [hours, minutes] = e.target.value.split(':').map(Number);
         const newDate = date ? new Date(date) : new Date();
         newDate.setHours(hours);
@@ -729,3 +728,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    

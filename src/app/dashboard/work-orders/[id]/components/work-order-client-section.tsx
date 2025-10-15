@@ -131,21 +131,29 @@ export function WorkOrderClientSection({
             });
         } catch (e) { console.error("Error adding company logo to PDF:", e)}
     }
+    
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.text(safe(company?.name), margin + 50, finalY + 15);
+    
     doc.setFont('helvetica', 'normal');
-
     const addressLines = safe(company?.address, '').split('\n');
-    doc.text(addressLines, margin + 50, finalY + 28);
+    let addressY = finalY + 28;
+    addressLines.forEach((line: string) => {
+        doc.text(line, margin + 50, addressY);
+        addressY += 12; // Move to the next line
+    });
+
+    const rightAlignX = pageWidth - margin;
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text("Engineering Service Report", pageWidth - margin, finalY + 25, { align: 'right' });
+    doc.text("Engineering Service Report", rightAlignX, finalY + 25, { align: 'right' });
+    
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Report ID: ESR-${workOrder.id.substring(0, 8).toUpperCase()}`, pageWidth - margin, finalY + 40, { align: 'right' });
-    doc.text(`Date: October 15th, 2025`, pageWidth - margin, finalY + 55, { align: 'right' });
+    doc.text(`Report ID: ESR-${workOrder.id.substring(0, 8).toUpperCase()}`, rightAlignX, finalY + 40, { align: 'right' });
+    doc.text(`Date: October 15th, 2025`, rightAlignX, finalY + 55, { align: 'right' });
     
     finalY += 80;
     
@@ -763,6 +771,7 @@ export function WorkOrderClientSection({
     
 
     
+
 
 
 

@@ -99,7 +99,7 @@ export function WorkOrderClientSection({
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 40;
-    let finalY = margin;
+    let finalY = margin + 20;
 
     // --- Safely get data and format dates ---
     const safe = (val: any, fallback = 'N/A') => val || fallback;
@@ -120,7 +120,7 @@ export function WorkOrderClientSection({
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
                 img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, finalY, 40, 40); // Vertically centered-ish
+                    doc.addImage(img, 'PNG', margin, finalY - 10, 40, 40); // Vertically centered-ish
                     resolve(null);
                 };
                 img.onerror = (e) => {
@@ -135,11 +135,11 @@ export function WorkOrderClientSection({
     // Left side: Company Info
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY + 15);
+    doc.text("Alos Paraklet Healthcare Limited", margin + 50, finalY);
 
     doc.setFont('helvetica', 'normal');
-    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 27);
-    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 39);
+    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, finalY + 12);
+    doc.text("OXYGEN STREET, Oduman", margin + 50, finalY + 24);
 
 
     // Right side: Report Title
@@ -152,12 +152,12 @@ export function WorkOrderClientSection({
     const titleWidth = doc.getTextWidth(titleText);
     const rightAlignX = pageWidth - margin;
     const titleX = rightAlignX - titleWidth;
-    doc.text(titleText, titleX, finalY + 20);
+    doc.text(titleText, titleX, finalY);
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(reportIdText, titleX, finalY + 35);
-    doc.text(dateText, titleX, finalY + 50);
+    doc.text(reportIdText, titleX, finalY + 15);
+    doc.text(dateText, titleX, finalY + 30);
     
     finalY += 80;
     
@@ -569,12 +569,12 @@ export function WorkOrderClientSection({
                     mode="single"
                     selected={dateValue || undefined}
                     onSelect={(day) => {
-                        const newDate = new Date(day || '');
+                        if (!day) return;
+                        const newDate = new Date(day);
                         const oldTime = dateValue || new Date();
                         newDate.setHours(oldTime.getHours(), oldTime.getMinutes());
                         onChange(newDate);
                     }}
-                    
                 />
                 <div className="p-3 border-t border-border">
                     <Input
@@ -715,3 +715,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    

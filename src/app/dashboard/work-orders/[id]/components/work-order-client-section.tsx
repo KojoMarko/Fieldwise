@@ -14,6 +14,7 @@ import {
   Pause,
   Play,
   Download,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
@@ -32,7 +33,6 @@ import {
 import { HoldWorkOrderDialog } from './hold-work-order-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDoc, doc } from 'firebase/firestore';
@@ -50,23 +50,12 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
 
     const handleDateSelect = (day: Date | undefined) => {
         if (!day) {
-            // Don't clear time if only date is cleared, let user decide.
-            // Or maybe we should? For now, let's just update the date part.
-            if(date) {
-                const newDate = new Date(date);
-                newDate.setFullYear(day?.getFullYear() ?? newDate.getFullYear());
-                newDate.setMonth(day?.getMonth() ?? newDate.getMonth());
-                newDate.setDate(day?.getDate() ?? newDate.getDate());
-                setDate(newDate);
-                onChange(newDate);
-            } else {
-                 setDate(day);
-                 onChange(day);
-            }
+            setDate(undefined);
+            onChange(undefined);
             return;
         }
 
-        const newDate = date ? new Date(date) : new Date();
+        const newDate = date ? new Date(date) : new Date(0); // Use a base date if none exists
         newDate.setFullYear(day.getFullYear());
         newDate.setMonth(day.getMonth());
         newDate.setDate(day.getDate());
@@ -81,7 +70,7 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
 
         const [hours, minutes] = time.split(':').map(Number);
         
-        const newDate = date ? new Date(date) : new Date();
+        const newDate = date ? new Date(date) : new Date(); // If no date, use today and let user change it
         newDate.setHours(hours, minutes);
 
         setDate(newDate);
@@ -165,10 +154,9 @@ export function WorkOrderClientSection({
         try {
             reportData = JSON.parse(workOrder.technicianNotes);
         } catch (e) {
-            // fallback to live data if parsing fails
             reportData = {
                 summary: questionnaireData,
-                workOrder: { type: workOrder.type },
+                workOrder: { instrumentCondition: questionnaireData.instrumentCondition },
                 parts: questionnaireData.partsUsed,
                 labor: [{
                     startDate: questionnaireData.timeWorkStarted,
@@ -181,10 +169,9 @@ export function WorkOrderClientSection({
             };
         }
     } else {
-        // This is the fallback for initial generation before notes are saved
          reportData = {
             summary: questionnaireData,
-            workOrder: { type: workOrder.type, instrumentCondition: questionnaireData.instrumentCondition },
+            workOrder: { instrumentCondition: questionnaireData.instrumentCondition },
             parts: questionnaireData.partsUsed,
             labor: [{
                 startDate: questionnaireData.timeWorkStarted,
@@ -197,6 +184,9 @@ export function WorkOrderClientSection({
         };
     }
     
+    // Ensure workOrder.type is always used for the service type
+    reportData.workOrder.type = workOrder.type;
+
     const laborInfo = reportData?.labor?.[0] || {
         startDate: questionnaireData.timeWorkStarted,
         endDate: questionnaireData.timeWorkCompleted,
@@ -242,9 +232,10 @@ export function WorkOrderClientSection({
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    const companyAddress = "GW-0988-6564, JMP8+P3F FH948\nOXYGEN STREET, Oduman";
-    doc.text("Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
-    doc.text(companyAddress, margin + 50, logoY + 24);
+    const companyAddress = company?.address || "GW-0988-6564, JMP8+P3F FH948\nOXYGEN STREET, Oduman";
+    const companyPhone = company?.phone ? `\n${company.phone}` : "";
+    doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
+    doc.text(companyAddress + companyPhone, margin + 50, logoY + 24);
 
     const titleText = "Engineering Service Report";
     const reportIdText = `Report ID: ESR-${workOrder.id.substring(0,8)}`;
@@ -752,7 +743,7 @@ export function WorkOrderClientSection({
             </Card>
         ) : (
              <>
-                 {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
+                {workOrder.status === 'Completed' || workOrder.status === 'Invoiced' ? (
                     <div className="xl:col-span-2"><ServiceReport /></div>
                 ) : (
                     <EngineerActions />

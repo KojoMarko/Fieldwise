@@ -13,6 +13,7 @@ import { RecentWorkOrders } from '@/components/recent-work-orders';
 import { useAuth } from '@/hooks/use-auth';
 import TechnicianDashboardPage from './technician/page';
 import CustomerDashboardPage from './customer/page';
+import SalesDashboardPage from './sales/page';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -25,7 +26,7 @@ export default function DashboardPage() {
     const [isDataLoading, setIsDataLoading] = useState(true);
 
     useEffect(() => {
-      if (!user?.companyId || user.role === 'Customer') {
+      if (!user?.companyId || user.role === 'Customer' || user.role === 'Sales Rep') {
         setIsDataLoading(false);
         return;
       };
@@ -57,6 +58,10 @@ export default function DashboardPage() {
     
     if (user?.role === 'Customer') {
         return <CustomerDashboardPage />
+    }
+    
+    if (user?.role === 'Sales Rep') {
+        return <SalesDashboardPage />
     }
 
   const openWorkOrders = workOrders.filter(

@@ -3,7 +3,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { User } from '@/lib/types';
+import type { User, UserRole } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -80,10 +80,11 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: 'role',
     header: 'Role',
     cell: ({ row }) => {
-      const role = row.original.role;
+      const role: UserRole = row.original.role;
       let variant: 'default' | 'secondary' | 'outline' = 'outline';
       if (role === 'Admin') variant = 'default';
       if (role === 'Engineer') variant = 'secondary';
+      if (role === 'Sales Rep') variant = 'secondary';
       return <Badge variant={variant}>{role}</Badge>;
     },
   },

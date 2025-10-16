@@ -2,7 +2,7 @@
 import type { z } from 'zod';
 import type { ServiceReportQuestionnaireSchema } from './schemas';
 
-export type UserRole = 'Admin' | 'Engineer' | 'Customer';
+export type UserRole = 'Admin' | 'Engineer' | 'Customer' | 'Sales Rep';
 
 export type User = {
   id: string;
@@ -139,7 +139,7 @@ export type Notification = {
   link?: string;
   author?: string;
   companyId: string;
-  recipientRole?: 'Admin' | 'Engineer' | 'All';
+  recipientRole?: 'Admin' | 'Engineer' | 'All' | 'Sales Rep';
 };
 
 export type AuditLogEvent = {

@@ -163,9 +163,10 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                            <SelectItem value="Admin">Admin</SelectItem>
                             <SelectItem value="Engineer">Engineer</SelectItem>
+                            <SelectItem value="Sales Rep">Sales Rep</SelectItem>
                             <SelectItem value="Customer">Customer</SelectItem>
-                             <SelectItem value="Admin">Admin</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />

@@ -15,6 +15,7 @@ import {
   Pause,
   Play,
   Download,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
@@ -34,7 +35,6 @@ import { HoldWorkOrderDialog } from './hold-work-order-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -69,11 +69,16 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
 
     const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const time = e.target.value;
-        if (!time) return;
+        
+        const newDate = date ? new Date(date) : new Date(); // If no date, use today as a base
+        if (!time) {
+            // Don't set time if input is empty, but keep the date
+             setDate(newDate);
+             onChange(newDate);
+            return;
+        }
 
         const [hours, minutes] = time.split(':').map(Number);
-        
-        const newDate = date ? new Date(date) : new Date();
         newDate.setHours(hours, minutes);
 
         setDate(newDate);
@@ -157,9 +162,10 @@ export function WorkOrderClientSection({
         try {
             reportData = JSON.parse(workOrder.technicianNotes);
         } catch (e) {
+             // Fallback for when JSON parsing fails
             reportData = {
                 summary: questionnaireData,
-                workOrder: { instrumentCondition: questionnaireData.instrumentCondition },
+                workOrder: { instrumentCondition: questionnaireData.instrumentCondition, type: workOrder.type },
                 parts: questionnaireData.partsUsed,
                 labor: [{
                     startDate: questionnaireData.timeWorkStarted,
@@ -172,9 +178,10 @@ export function WorkOrderClientSection({
             };
         }
     } else {
+         // Fallback for when technicianNotes is not a JSON string
          reportData = {
             summary: questionnaireData,
-            workOrder: { instrumentCondition: questionnaireData.instrumentCondition },
+            workOrder: { instrumentCondition: questionnaireData.instrumentCondition, type: workOrder.type },
             parts: questionnaireData.partsUsed,
             labor: [{
                 startDate: questionnaireData.timeWorkStarted,
@@ -187,8 +194,13 @@ export function WorkOrderClientSection({
         };
     }
     
-    // Ensure workOrder.type is always used for the service type
-    reportData.workOrder.type = workOrder.type;
+    // Ensure workOrder.type is always used for the service type, overriding if necessary
+    if (reportData.workOrder) {
+      reportData.workOrder.type = workOrder.type;
+    } else {
+      reportData.workOrder = { type: workOrder.type };
+    }
+
 
     const laborInfo = reportData?.labor?.[0] || {
         startDate: questionnaireData.timeWorkStarted,
@@ -236,18 +248,16 @@ export function WorkOrderClientSection({
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     
-    const defaultAddress = [
-      'GW-0988-6564, JMP8+P3F FH948',
-      'OXYGEN STREET, Oduman'
-    ];
-    const companyAddress = company?.address ? company.address.split('\n') : defaultAddress;
+    const companyName = company?.name || "Alos Paraklet Healthcare Limited";
+    const companyAddress = company?.address || "GW-0988-6564, JMP8+P3F FH948 OXYGEN STREET, Oduman";
     const companyPhone = company?.phone || '0552625620';
-
-    doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
-    doc.text(companyAddress, margin + 50, logoY + 24);
-    if(companyPhone) {
-        doc.text(companyPhone, margin + 50, logoY + 24 + (companyAddress.length * 12));
-    }
+    
+    let textY = logoY + 12;
+    doc.text(companyName, margin + 50, textY);
+    textY += 12;
+    doc.text(companyAddress, margin + 50, textY);
+    textY += 12;
+    doc.text(companyPhone, margin + 50, textY);
 
 
     const titleText = "Engineering Service Report";
@@ -769,5 +779,6 @@ export function WorkOrderClientSection({
 }
 
     
+
 
 

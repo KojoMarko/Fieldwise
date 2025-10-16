@@ -22,6 +22,10 @@ import {
   History,
   Inbox,
   Map,
+  FileText,
+  Activity,
+  Briefcase,
+  TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -58,9 +62,12 @@ const engineerNavItems = [
 
 const salesRepNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
-    { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
-    { href: '/dashboard/customers', icon: Building, label: 'Customers' },
-    { href: '/dashboard/assets', icon: Package, label: 'Assets' },
+    { href: '/dashboard/leads', icon: Users, label: 'Leads' },
+    { href: '/dashboard/opportunities', icon: Briefcase, label: 'Opportunities' },
+    { href: '/dashboard/reports', icon: FileText, label: 'Reports' },
+    { href: '/dashboard/activities', icon: Activity, label: 'Activities' },
+    { href: '/dashboard/documents', icon: BookText, label: 'Documents' },
+    { href: '/dashboard/forecasts', icon: TrendingUp, label: 'Forecasts' },
 ];
 
 const customerNavItems = [

@@ -249,8 +249,8 @@ export function WorkOrderClientSection({
     doc.setFont('helvetica', 'normal');
     
     const defaultAddress = [
-      'GW-0988-6564, JMP8+P3F FH948',
-      'OXYGEN STREET, Oduman'
+        'GW-0988-6564, JMP8+P3F FH948',
+        'OXYGEN STREET, Oduman'
     ];
     const companyAddress = company?.address ? company.address.split('\n') : defaultAddress;
 

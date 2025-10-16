@@ -98,11 +98,11 @@ export default function WorkOrdersPage() {
   )
 
   const adminOrTechTabs = (
-      <TabsList className="grid w-full grid-cols-4 sm:w-auto">
+      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
         <TabsTrigger value="all">All</TabsTrigger>
         <TabsTrigger value="active">Active</TabsTrigger>
         <TabsTrigger value="completed">Completed</TabsTrigger>
-        <TabsTrigger value="draft" className="hidden sm:flex">Draft</TabsTrigger>
+        <TabsTrigger value="draft">Draft</TabsTrigger>
       </TabsList>
   )
   
@@ -118,8 +118,8 @@ export default function WorkOrdersPage() {
   return (
     <Tabs defaultValue="all">
       <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl mr-auto">Work Orders</h1>
-        <div className="hidden sm:flex items-center gap-2">
+        <h1 className="text-lg font-semibold md:text-2xl">Work Orders</h1>
+        <div className="ml-auto flex items-center gap-2">
           {user?.role === 'Admin' && (
             <Button size="sm" variant="outline" className="h-8 gap-1">
                 <File className="h-3.5 w-3.5" />
@@ -140,20 +140,8 @@ export default function WorkOrdersPage() {
           )}
         </div>
       </div>
-       <div className="flex items-center gap-4 mt-4">
+       <div className="mt-4">
         {user?.role === 'Admin' || user?.role === 'Engineer' ? adminOrTechTabs : customerTabs}
-         <div className="sm:hidden flex-1">
-             {canCreateWorkOrder && (
-                <Button size="sm" className="h-8 gap-1 w-full" asChild>
-                <Link href="/dashboard/work-orders/new">
-                    <PlusCircle className="h-3.5 w-3.s" />
-                    <span>
-                    {user?.role === 'Customer' ? 'Request' : 'New'}
-                    </span>
-                </Link>
-                </Button>
-            )}
-         </div>
        </div>
       <TabsContent value="all">
         {renderDataTable(workOrders, 'All Work Orders', 'Manage all service jobs and assignments.')}

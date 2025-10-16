@@ -256,7 +256,7 @@ export const columns: ColumnDef<WorkOrder>[] = [
       return <div className={priorityClass}>{priority}</div>;
     },
      meta: {
-      className: 'hidden sm:table-cell',
+      className: 'hidden xl:table-cell',
     },
   },
   {
@@ -275,7 +275,7 @@ export const columns: ColumnDef<WorkOrder>[] = [
       return new Intl.DateTimeFormat('en-US').format(date);
     },
      meta: {
-      className: 'hidden lg:table-cell',
+      className: 'hidden xl:table-cell',
     },
   },
   {
@@ -283,5 +283,3 @@ export const columns: ColumnDef<WorkOrder>[] = [
     cell: ActionsCell,
   },
 ];
-
-    

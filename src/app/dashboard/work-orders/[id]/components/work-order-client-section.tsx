@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, forwardRef, useEffect } from 'react';
@@ -59,7 +60,7 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
             return;
         }
         
-        const newDate = date ? new Date(date) : new Date(0); // Use epoch to avoid timezone issues with just new Date()
+        const newDate = date ? new Date(date) : new Date();
         newDate.setFullYear(day.getFullYear(), day.getMonth(), day.getDate());
         
         setDate(newDate);
@@ -235,10 +236,12 @@ export function WorkOrderClientSection({
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     
-    const defaultAddress = `GW-0988-6564, JMP8+P3F FH948
-OXYGEN STREET, Oduman`;
-    const companyAddress = (company?.address || defaultAddress).split('\n');
-    const companyPhone = company?.phone || '';
+    const defaultAddress = [
+      'GW-0988-6564, JMP8+P3F FH948',
+      'OXYGEN STREET, Oduman'
+    ];
+    const companyAddress = company?.address ? company.address.split('\n') : defaultAddress;
+    const companyPhone = company?.phone || '0552625620';
 
     doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
     doc.text(companyAddress, margin + 50, logoY + 24);
@@ -766,3 +769,4 @@ OXYGEN STREET, Oduman`;
 }
 
     
+

@@ -253,13 +253,9 @@ export function WorkOrderClientSection({
       'OXYGEN STREET, Oduman'
     ];
     const companyAddress = company?.address ? company.address.split('\n') : defaultAddress;
-    const companyPhone = company?.phone || '0552625620';
-    
+
     doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
     doc.text(companyAddress, margin + 50, logoY + 24);
-    if(companyPhone) {
-        doc.text(companyPhone, margin + 50, logoY + 24 + (companyAddress.length * 12));
-    }
 
 
     const titleText = "Engineering Service Report";
@@ -781,6 +777,7 @@ export function WorkOrderClientSection({
 }
 
     
+
 
 
 

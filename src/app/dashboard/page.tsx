@@ -25,7 +25,7 @@ export default function DashboardPage() {
     const [isDataLoading, setIsDataLoading] = useState(true);
 
     useEffect(() => {
-      if (!user?.companyId || user.role !== 'Admin') {
+      if (!user?.companyId || user.role === 'Customer') {
         setIsDataLoading(false);
         return;
       };

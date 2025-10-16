@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth';
 import { FirebaseErrorListener } from '@/components/firebase-error-listener';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export default function RootLayout({
   children,
@@ -29,11 +30,13 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
-        <AuthProvider>
-            <FirebaseErrorListener>
-                {children}
-            </FirebaseErrorListener>
-        </AuthProvider>
+        <FirebaseClientProvider>
+          <AuthProvider>
+              <FirebaseErrorListener>
+                  {children}
+              </FirebaseErrorListener>
+          </AuthProvider>
+        </FirebaseClientProvider>
         <Toaster />
       </body>
     </html>

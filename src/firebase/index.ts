@@ -1,3 +1,7 @@
+export * from './provider';
+export * from './client-provider';
+export { useCollection } from './firestore/use-collection';
+export { useDoc } from './firestore/use-doc';
 
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
@@ -25,11 +29,3 @@ export function initializeFirebase(): FirebaseServices {
     const auth = getAuth(app);
     return { app, db, auth };
 }
-
-// The following exports are for legacy compatibility and might be removed later.
-// It is recommended to use the `initializeFirebase` function in a client provider.
-const legacyApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(legacyApp);
-const auth = getAuth(legacyApp);
-
-export { db, auth };

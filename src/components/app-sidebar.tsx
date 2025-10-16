@@ -59,7 +59,6 @@ const engineerNavItems = [
 const salesRepNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
-    { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
     { href: '/dashboard/customers', icon: Building, label: 'Customers' },
     { href: '/dashboard/assets', icon: Package, label: 'Assets' },
 ];

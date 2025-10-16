@@ -119,7 +119,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     <>
     <AddPartsDialog open={isAddPartsDialogOpen} onOpenChange={setAddPartsDialogOpen} onAddParts={handleAddParts}/>
     {partToVerify && <VerifyPartUsageDialog open={isVerifyDialogOpen} onOpenChange={setVerifyDialogOpen} part={partToVerify} onVerify={handleVerification} />}
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
+    <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3 mt-4">
       <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
         <Card>
           <CardHeader className='flex-row items-center justify-between'>
@@ -134,6 +134,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
             </Button>
           </CardHeader>
           <CardContent>
+             <div className="overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -214,6 +215,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                   )}
                 </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -280,3 +282,5 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     </>
   );
 }
+
+    

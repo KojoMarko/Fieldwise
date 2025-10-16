@@ -213,15 +213,16 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
         </div>
       </CardHeader>
       <CardContent>
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Technician</TableHead>
-              <TableHead>Duration</TableHead>
-              <TableHead>Cost</TableHead>
+              <TableHead className="hidden sm:table-cell">Technician</TableHead>
+              <TableHead className="hidden md:table-cell">Duration</TableHead>
+              <TableHead className="hidden md:table-cell">Cost</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -252,7 +253,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                   <TableCell>
                     <p className="font-medium">{item.description}</p>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <div className="flex items-center gap-2">
                       {item.isManual ? (
                         <PenSquare className="h-4 w-4 text-muted-foreground" />
@@ -262,10 +263,10 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                       <span>{item.technician}</span>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                       {item.duration ? `${item.duration} hours` : 'N/A'}
                   </TableCell>
-                   <TableCell>
+                   <TableCell className="hidden md:table-cell">
                       {item.cost ? `$${item.cost.toLocaleString()}` : 'N/A'}
                   </TableCell>
                   <TableCell>
@@ -289,6 +290,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
             )}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   );
@@ -355,17 +357,17 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="mx-auto grid w-full flex-1 auto-rows-max gap-4">
       <div className="p-4 bg-card border rounded-lg">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
             <h1 className="text-2xl font-semibold">{asset.name}</h1>
             <p className="text-muted-foreground">{asset.model}</p>
           </div>
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <p className="text-sm text-muted-foreground">Machine ID</p>
             <p className="font-mono">{asset.serialNumber}</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 mt-2 text-sm">
+        <div className="flex items-center flex-wrap gap-4 mt-2 text-sm">
           <Badge
             variant="outline"
             className={cn(
@@ -386,7 +388,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="installation">Installation</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
@@ -517,3 +519,5 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     </div>
   );
 }
+
+    

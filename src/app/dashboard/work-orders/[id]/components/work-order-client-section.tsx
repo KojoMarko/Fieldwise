@@ -252,13 +252,9 @@ export function WorkOrderClientSection({
         'OXYGEN STREET, Oduman'
     ];
     const companyAddress = company?.address ? company.address.split('\n') : defaultAddress;
-    const companyPhone = company?.phone || '0552625620';
     
     doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
-    doc.text(companyAddress, margin + 50, logoY + 24); 
-    if(companyPhone) {
-        doc.text(companyPhone, margin + 50, logoY + 24 + (companyAddress.length * 12));
-    }
+    doc.text(companyAddress, margin + 50, logoY + 24);
 
 
     const titleText = "Engineering Service Report";
@@ -753,7 +749,7 @@ export function WorkOrderClientSection({
               </DialogFooter>
           </DialogContent>
       </Dialog>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 mt-4">
       
         {isGeneratingReport ? (
             <Card className="lg:col-span-3">
@@ -769,14 +765,7 @@ export function WorkOrderClientSection({
                     <div className="lg:col-span-3"><ServiceReport /></div>
                 ) : (
                     <div className="lg:col-span-3">
-                        <WorkOrderClientSection 
-                            workOrder={workOrder} 
-                            customer={customer ?? undefined} 
-                            technician={technician ?? undefined} 
-                            asset={asset ?? undefined} 
-                            allocatedParts={allocatedParts} 
-                            company={company ?? undefined}
-                        />
+                        <EngineerActions />
                     </div>
                 )}
             </>
@@ -785,3 +774,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    

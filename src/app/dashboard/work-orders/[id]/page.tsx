@@ -284,7 +284,7 @@ export default function WorkOrderDetailPage({
 
 
   return (
-    <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4">
+    <div className="mx-auto grid w-full flex-1 auto-rows-max gap-4">
       <HoldWorkOrderDialog
         open={isHoldDialogOpen}
         onOpenChange={setHoldDialogOpen}
@@ -307,7 +307,7 @@ export default function WorkOrderDetailPage({
       </div>
       
        <Tabs defaultValue="details">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="parts" disabled={isPartsTabDisabled}>Parts & Tools</TabsTrigger>
             <TabsTrigger value="report" disabled={isReportTabDisabled}>Service Report</TabsTrigger>
@@ -458,3 +458,5 @@ export default function WorkOrderDetailPage({
     </div>
   );
 }
+
+    

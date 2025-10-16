@@ -59,7 +59,7 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
             return;
         }
         
-        const newDate = date ? new Date(date) : new Date();
+        const newDate = date ? new Date(date) : new Date(0); // Use epoch to avoid timezone issues with just new Date()
         newDate.setFullYear(day.getFullYear(), day.getMonth(), day.getDate());
         
         setDate(newDate);
@@ -235,7 +235,8 @@ export function WorkOrderClientSection({
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     
-    const defaultAddress = "GW-0988-6564, JMP8+P3F FH948\nOXYGEN STREET\nOduman";
+    const defaultAddress = `GW-0988-6564, JMP8+P3F FH948
+OXYGEN STREET, Oduman`;
     const companyAddress = (company?.address || defaultAddress).split('\n');
     const companyPhone = company?.phone || '';
 
@@ -255,12 +256,12 @@ export function WorkOrderClientSection({
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(titleText, rightAlignX, logoY, { align: 'right' });
+    doc.text(titleText, rightAlignX, logoY + 12, { align: 'right' });
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(reportIdText, rightAlignX, logoY + 15, { align: 'right' });
-    doc.text(dateText, rightAlignX, logoY + 30, { align: 'right' });
+    doc.text(reportIdText, rightAlignX, logoY + 27, { align: 'right' });
+    doc.text(dateText, rightAlignX, logoY + 42, { align: 'right' });
     
     finalY += 60;
     

@@ -248,13 +248,14 @@ export function WorkOrderClientSection({
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     
-    const defaultAddress = 'GW-0988-6564, JMP8+P3F FH948';
-    const companyAddress = company?.address || defaultAddress;
-    const addressLine2 = "OXYGEN STREET, Oduman";
+    const defaultAddress = [
+      'GW-0988-6564, JMP8+P3F FH948',
+      'OXYGEN STREET, Oduman'
+    ];
+    const companyAddress = company?.address ? company.address.split('\n') : defaultAddress;
 
     doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
     doc.text(companyAddress, margin + 50, logoY + 24);
-    doc.text(addressLine2, margin + 50, logoY + 24 + 12);
 
 
     const titleText = "Engineering Service Report";
@@ -782,5 +783,7 @@ export function WorkOrderClientSection({
 
 
 
+
+    
 
     

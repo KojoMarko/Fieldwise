@@ -284,7 +284,7 @@ export default function WorkOrderDetailPage({
 
 
   return (
-    <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 p-4 md:p-0">
+    <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4">
       <HoldWorkOrderDialog
         open={isHoldDialogOpen}
         onOpenChange={setHoldDialogOpen}
@@ -385,7 +385,7 @@ export default function WorkOrderDetailPage({
                         </CardContent>
                     </Card>
                 </div>
-                <div className="grid auto-rows-max items-start gap-4">
+                <div className="grid auto-rows-max items-start gap-4 lg:col-span-1">
                      <EngineerWorkflowActions />
                      <Card>
                         <CardHeader>
@@ -451,8 +451,7 @@ export default function WorkOrderDetailPage({
                     technician={technician ?? undefined} 
                     asset={asset ?? undefined} 
                     allocatedParts={allocatedParts} 
-                    company={company ?? undefined} 
-                    engineerActions={<EngineerWorkflowActions />}
+                    company={company ?? undefined}
                 />
            </TabsContent>
         </Tabs>

@@ -119,8 +119,8 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     <>
     <AddPartsDialog open={isAddPartsDialogOpen} onOpenChange={setAddPartsDialogOpen} onAddParts={handleAddParts}/>
     {partToVerify && <VerifyPartUsageDialog open={isVerifyDialogOpen} onOpenChange={setVerifyDialogOpen} part={partToVerify} onVerify={handleVerification} />}
-    <div className="grid gap-4 xl:grid-cols-3 xl:gap-8 mt-4">
-      <div className="xl:col-span-2 grid auto-rows-max items-start gap-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
+      <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
         <Card>
           <CardHeader className='flex-row items-center justify-between'>
             <div>
@@ -218,7 +218,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
         </Card>
       </div>
 
-      <div className="grid auto-rows-max items-start gap-4">
+      <div className="grid auto-rows-max items-start gap-4 lg:col-span-1">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useRef, forwardRef, useEffect } from 'react';
@@ -248,12 +247,18 @@ export function WorkOrderClientSection({
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     
-    const companyName = company?.name || "Alos Paraklet Healthcare Limited";
-    const defaultAddress = 'GW-0988-6564, JMP8+P3F FH948 OXYGEN STREET, Oduman';
-    const companyAddress = company?.address || defaultAddress;
-
-    doc.text(companyName, margin + 50, logoY + 12);
-    doc.text(companyAddress, margin + 50, logoY + 24);
+    const defaultAddress = [
+        'GW-0988-6564, JMP8+P3F FH948',
+        'OXYGEN STREET, Oduman'
+    ];
+    const companyAddress = company?.address ? company.address.split('\n') : defaultAddress;
+    const companyPhone = company?.phone || '0552625620';
+    
+    doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
+    doc.text(companyAddress, margin + 50, logoY + 24); 
+    if(companyPhone) {
+        doc.text(companyPhone, margin + 50, logoY + 24 + (companyAddress.length * 12));
+    }
 
 
     const titleText = "Engineering Service Report";
@@ -644,26 +649,24 @@ export function WorkOrderClientSection({
     ) : null;
   
     return (
-        <div className="xl:col-span-1">
-            <Card>
-                <CardHeader><CardTitle>Engineer's Report</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                        A service report will be available once the engineer completes the work.
-                    </div>
-                     {currentAction ? (
-                        <Button className="w-full" onClick={() => handleStatusChange(currentAction.nextStatus)}>
-                            <currentAction.icon className="mr-2" />
-                            {currentAction.label}
-                        </Button>
-                    ) : null}
-                    {inProgressActions}
-                    {!currentAction && !inProgressActions && (
-                    <p className='text-sm text-muted-foreground'>No more actions for this status.</p>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
+      <Card>
+        <CardHeader><CardTitle>Engineer's Report</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+            <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                A service report will be available once the engineer completes the work.
+            </div>
+             {currentAction ? (
+                <Button className="w-full" onClick={() => handleStatusChange(currentAction.nextStatus)}>
+                    <currentAction.icon className="mr-2" />
+                    {currentAction.label}
+                </Button>
+            ) : null}
+            {inProgressActions}
+            {!currentAction && !inProgressActions && (
+            <p className='text-sm text-muted-foreground'>No more actions for this status.</p>
+            )}
+        </CardContent>
+      </Card>
     );
   };
 
@@ -750,10 +753,10 @@ export function WorkOrderClientSection({
               </DialogFooter>
           </DialogContent>
       </Dialog>
-      <div className="grid gap-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       
         {isGeneratingReport ? (
-            <Card className="lg:col-span-2">
+            <Card className="lg:col-span-3">
                 <CardContent className="p-6 flex flex-col items-center justify-center min-h-[300px]">
                     <LoaderCircle className="h-10 w-10 animate-spin text-primary mb-4" />
                     <p className="font-medium">Generating Service Report...</p>
@@ -763,9 +766,18 @@ export function WorkOrderClientSection({
         ) : (
              <>
                 {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
-                    <div className="xl:col-span-2"><ServiceReport /></div>
+                    <div className="lg:col-span-3"><ServiceReport /></div>
                 ) : (
-                    <EngineerActions />
+                    <div className="lg:col-span-3">
+                        <WorkOrderClientSection 
+                            workOrder={workOrder} 
+                            customer={customer ?? undefined} 
+                            technician={technician ?? undefined} 
+                            asset={asset ?? undefined} 
+                            allocatedParts={allocatedParts} 
+                            company={company ?? undefined}
+                        />
+                    </div>
                 )}
             </>
         )}
@@ -773,16 +785,3 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-    
-
-
-
-
-
-
-
-    
-
-    
-

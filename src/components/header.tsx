@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -41,6 +42,7 @@ import {
   Inbox,
   Bell,
   Check,
+  Map,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
@@ -209,7 +211,7 @@ export function Header() {
             </Link>
             <Link
               href="/dashboard/work-orders"
-              className="flex items-center gap-4 px-2.5 text-foreground"
+              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                onClick={() => setSheetOpen(false)}
             >
               <Wrench className="h-5 w-5" />
@@ -224,6 +226,14 @@ export function Header() {
                 >
                   <CalendarCheck className="h-5 w-5" />
                   PPM
+                </Link>
+                <Link
+                  href="/dashboard/map"
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                   onClick={() => setSheetOpen(false)}
+                >
+                  <Map className="h-5 w-5" />
+                  Map
                 </Link>
                  <Link
                   href="/dashboard/assets"

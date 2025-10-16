@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import type {
@@ -9,7 +10,7 @@ import type {
 import { onSnapshot } from 'firebase/firestore';
 import { useAuth as useFirebaseAuth } from '@/hooks/use-auth';
 import { errorEmitter } from '@/lib/error-emitter';
-import { FirestorePermissionError } from '@/lib/errors';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/lib/errors';
 import { useFirestore } from '../provider';
 
 export function useCollection<T>(
@@ -44,11 +45,11 @@ export function useCollection<T>(
         setError(null);
       },
       (err: FirestoreError) => {
-        console.error("Firestore Error in useCollection:", err);
         const permissionError = new FirestorePermissionError({
-          operation: 'list',
           path: 'path' in query ? query.path : 'unknown',
-        });
+          operation: 'list',
+        } satisfies SecurityRuleContext);
+        
         setError(permissionError);
         errorEmitter.emit('permission-error', permissionError);
         setIsLoading(false);

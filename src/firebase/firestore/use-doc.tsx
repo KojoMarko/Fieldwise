@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import type {
@@ -8,7 +9,7 @@ import type {
 import { onSnapshot } from 'firebase/firestore';
 import { useAuth as useFirebaseAuth } from '@/hooks/use-auth';
 import { errorEmitter } from '@/lib/error-emitter';
-import { FirestorePermissionError } from '@/lib/errors';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/lib/errors';
 import { useFirestore } from '../provider';
 
 export function useDoc<T>(docRef: DocumentReference<T> | null) {
@@ -37,11 +38,11 @@ export function useDoc<T>(docRef: DocumentReference<T> | null) {
         setError(null);
       },
       (err: FirestoreError) => {
-        console.error("Firestore Error in useDoc:", err);
         const permissionError = new FirestorePermissionError({
-          operation: 'get',
           path: docRef.path,
-        });
+          operation: 'get',
+        } satisfies SecurityRuleContext);
+
         setError(permissionError);
         errorEmitter.emit('permission-error', permissionError);
         setIsLoading(false);

@@ -14,7 +14,7 @@ import {
   Pause,
   Play,
   Download,
-  Calendar as CalendarIcon,
+  CalendarIcon,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
@@ -44,27 +44,24 @@ import 'jspdf-autotable';
 const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: Date) => void }) => {
     const [date, setDate] = useState<Date | undefined>(value);
 
-    useEffect(() => {
-        setDate(value);
+     useEffect(() => {
+        if (value) {
+            setDate(new Date(value));
+        } else {
+            setDate(undefined);
+        }
     }, [value]);
 
     const handleDateSelect = (day: Date | undefined) => {
         if (!day) {
-            // User cleared the date
             setDate(undefined);
             onChange(undefined);
             return;
         }
-
-        // Create a new date object from the selected day
-        const newDate = new Date(day);
         
-        if (date) {
-            // If a time already exists, preserve it
-            newDate.setHours(date.getHours());
-            newDate.setMinutes(date.getMinutes());
-        }
-
+        const newDate = date ? new Date(date) : new Date();
+        newDate.setFullYear(day.getFullYear(), day.getMonth(), day.getDate());
+        
         setDate(newDate);
         onChange(newDate);
     };
@@ -75,7 +72,6 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
 
         const [hours, minutes] = time.split(':').map(Number);
         
-        // If there's no date, create one for today to hold the time
         const newDate = date ? new Date(date) : new Date();
         newDate.setHours(hours, minutes);
 
@@ -238,10 +234,17 @@ export function WorkOrderClientSection({
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    const companyAddress = company?.address || "GW-0988-6564, JMP8+P3F FH948\nOXYGEN STREET, Oduman";
-    const companyPhone = company?.phone ? `\n${company.phone}` : "";
+    
+    const defaultAddress = "GW-0988-6564, JMP8+P3F FH948\nOXYGEN STREET, Oduman";
+    const companyAddress = (company?.address || defaultAddress).split('\n');
+    const companyPhone = company?.phone || '';
+
     doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
-    doc.text(companyAddress + companyPhone, margin + 50, logoY + 24);
+    doc.text(companyAddress, margin + 50, logoY + 24);
+    if(companyPhone) {
+        doc.text(companyPhone, margin + 50, logoY + 24 + (companyAddress.length * 12));
+    }
+
 
     const titleText = "Engineering Service Report";
     const reportIdText = `Report ID: ESR-${workOrder.id.substring(0,8)}`;
@@ -749,7 +752,7 @@ export function WorkOrderClientSection({
             </Card>
         ) : (
              <>
-                {workOrder.status === 'Completed' || workOrder.status === 'Invoiced' ? (
+                {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
                     <div className="xl:col-span-2"><ServiceReport /></div>
                 ) : (
                     <EngineerActions />
@@ -760,3 +763,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    

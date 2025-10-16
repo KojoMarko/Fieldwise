@@ -14,7 +14,6 @@ import {
   Pause,
   Play,
   Download,
-  CalendarIcon as CalendarIconLucide,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
@@ -33,6 +32,7 @@ import {
 import { HoldWorkOrderDialog } from './hold-work-order-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDoc, doc } from 'firebase/firestore';
@@ -49,13 +49,17 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
     }, [value]);
 
     const handleDateSelect = (day: Date | undefined) => {
-        const newDate = day ? new Date(day) : undefined;
-        if (newDate) {
-            const time = date ? date.toTimeString().split(' ')[0] : '00:00';
-            const [hours, minutes] = time.split(':').map(Number);
-            newDate.setHours(hours);
-            newDate.setMinutes(minutes);
+        if (!day) {
+            setDate(undefined);
+            onChange(undefined);
+            return;
         }
+
+        const newDate = new Date(day);
+        const time = date ? date.toTimeString().split(' ')[0] : '00:00';
+        const [hours, minutes] = time.split(':').map(Number);
+        newDate.setHours(hours, minutes);
+        
         setDate(newDate);
         onChange(newDate);
     };
@@ -66,7 +70,7 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
 
         const [hours, minutes] = time.split(':').map(Number);
         
-        const newDate = date ? new Date(date) : new Date();
+        const newDate = date ? new Date(date) : new Date(); // Default to today if no date is set
         newDate.setHours(hours, minutes);
 
         setDate(newDate);
@@ -80,7 +84,7 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
                     variant={'outline'}
                     className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
                 >
-                    <CalendarIconLucide className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 h-4 w-4" />
                     {date ? format(date, 'PPP p') : <span>Pick a date & time</span>}
                 </Button>
             </PopoverTrigger>
@@ -110,6 +114,7 @@ export function WorkOrderClientSection({
   asset,
   allocatedParts,
   company,
+  engineerActions,
 }: {
   workOrder: WorkOrder;
   customer?: Customer;
@@ -117,6 +122,7 @@ export function WorkOrderClientSection({
   asset?: Asset;
   allocatedParts: AllocatedPart[],
   company?: Company,
+  engineerActions: React.ReactNode;
 }) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -144,6 +150,33 @@ export function WorkOrderClientSection({
         title: "Generating PDF...",
         description: "Please wait while your report is being created.",
     });
+
+    let reportData: any;
+    if (workOrder.technicianNotes && workOrder.technicianNotes.startsWith('{')) {
+        try {
+            reportData = JSON.parse(workOrder.technicianNotes);
+        } catch (e) {
+            // fallback to live data if parsing fails
+            reportData = {
+                summary: questionnaireData,
+                workOrder: { type: workOrder.type },
+            };
+        }
+    } else {
+        // This is the fallback for initial generation before notes are saved
+        reportData = {
+            summary: questionnaireData,
+            workOrder: { type: workOrder.type },
+        };
+    }
+    
+    // Use saved labor data if available, otherwise use live data
+    const laborInfo = reportData?.labor?.[0] || {
+        startDate: questionnaireData.timeWorkStarted,
+        endDate: questionnaireData.timeWorkCompleted,
+        hours: questionnaireData.laborHours,
+    };
+
 
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -183,9 +216,9 @@ export function WorkOrderClientSection({
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text("Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
-    doc.text("GW-0988-6564, JMP8+P3F FH948", margin + 50, logoY + 24);
-    doc.text("OXYGEN STREET, Oduman", margin + 50, logoY + 36);
+    doc.text(safe(company?.name), margin + 50, logoY + 12);
+    doc.text(safe(company?.address), margin + 50, logoY + 24);
+    doc.text(safe(company?.phone), margin + 50, logoY + 36);
 
 
     const titleText = "Engineering Service Report";
@@ -262,16 +295,16 @@ export function WorkOrderClientSection({
 
     // --- MALFUNCTION / SERVICE REQUEST INFORMATION ---
     addSection('MALFUNCTION / SERVICE REQUEST INFORMATION', [
-        ['Reported Problem:', safe(questionnaireData.reportedProblem)],
-        ['Symptom Summary:', safe(questionnaireData.symptomSummary)],
-        ['Problem Summary / Root Cause:', safe(questionnaireData.problemSummary)]
+        ['Reported Problem:', safe(reportData.summary?.reportedProblem)],
+        ['Symptom Summary:', safe(reportData.summary?.symptomSummary)],
+        ['Problem Summary / Root Cause:', safe(reportData.summary?.problemSummary)]
     ]);
     
     // --- ENGINEER'S REPORT ---
     addSection('ENGINEER\'S REPORT (CORRECTIVE ACTION TAKEN)', [
-        ['Resolution Summary:', safe(questionnaireData.resolutionSummary)],
-        ['Verification of Activity:', safe(questionnaireData.verificationOfActivity)],
-        ['Final Instrument Condition:', safe(questionnaireData.instrumentCondition)]
+        ['Resolution Summary:', safe(reportData.summary?.resolutionSummary)],
+        ['Verification of Activity:', safe(reportData.summary?.verificationOfActivity)],
+        ['Final Instrument Condition:', safe(reportData.workOrder?.instrumentCondition || reportData.summary?.instrumentCondition)]
     ]);
 
     // --- LABOR ---
@@ -286,10 +319,10 @@ export function WorkOrderClientSection({
         startY: (doc as any).lastAutoTable.finalY,
         head: [['Service Start Date', 'Service End Date', 'Service Type', 'Total Hours']],
         body: [[
-            formatDate(questionnaireData.timeWorkStarted, true),
-            formatDate(questionnaireData.timeWorkCompleted, true),
-            safe(workOrder.type),
-            `${safe(questionnaireData.laborHours, 0)}`
+            formatDate(laborInfo.startDate, true),
+            formatDate(laborInfo.endDate, true),
+            safe(reportData.workOrder?.type),
+            `${safe(laborInfo.hours, 0)}`
         ]],
         theme: 'grid',
         styles: { lineColor: [0,0,0], lineWidth: 0.5 },
@@ -298,7 +331,8 @@ export function WorkOrderClientSection({
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
     // --- SPARE PARTS ---
-    const partsBody = allocatedParts.filter(p => p.status === 'Used').map(p => [p.partNumber, p.name, p.quantity]);
+    const partsData = reportData.parts || [];
+    const partsBody = partsData.map((p: any) => [p.partNumber, p.description, p.quantity]);
     (doc as any).autoTable({
         startY: finalY,
         head: [['SPARE PARTS / MATERIALS USED']],
@@ -329,8 +363,8 @@ export function WorkOrderClientSection({
         startY: finalY,
         body: [
              [
-                { content: `Customer Name: ${safe(questionnaireData.signingPerson)}`, styles: { valign: 'bottom', minCellHeight: 80 } },
-                { content: `Engineer Name: ${safe(technician?.name)}`, styles: { valign: 'bottom' } }
+                { content: `Customer Name: ${safe(reportData.summary?.signingPerson || reportData.signingPerson)}`, styles: { valign: 'bottom', minCellHeight: 80 } },
+                { content: `Engineer Name: ${safe(reportData.workOrder?.performedBy || reportData.technicianName)}`, styles: { valign: 'bottom' } }
             ]
         ],
         theme: 'grid',
@@ -355,6 +389,27 @@ export function WorkOrderClientSection({
   useEffect(() => {
     if (workOrder.status === 'Completed' && user?.role === 'Engineer' && !workOrder.technicianNotes) {
       setQuestionnaireOpen(true);
+    }
+    if (workOrder.technicianNotes && workOrder.technicianNotes.startsWith('{')) {
+        try {
+            const savedData = JSON.parse(workOrder.technicianNotes);
+            setQuestionnaireData({
+                reportedProblem: savedData.summary?.reportedProblem,
+                symptomSummary: savedData.summary?.symptomSummary,
+                problemSummary: savedData.summary?.problemSummary,
+                resolutionSummary: savedData.summary?.resolutionSummary,
+                verificationOfActivity: savedData.summary?.verificationOfActivity,
+                instrumentCondition: savedData.workOrder?.instrumentCondition,
+                agreementType: savedData.agreement?.type,
+                laborHours: savedData.labor?.[0]?.hours,
+                signingPerson: savedData.summary?.signingPerson || savedData.signingPerson,
+                timeWorkStarted: savedData.labor?.[0]?.startDate ? parseISO(savedData.labor[0].startDate) : undefined,
+                timeWorkCompleted: savedData.labor?.[0]?.endDate ? parseISO(savedData.labor[0].endDate) : undefined,
+                partsUsed: savedData.parts || [],
+            });
+        } catch(e) {
+            console.error("Could not parse saved report data.", e);
+        }
     }
   }, [workOrder, user]);
 
@@ -459,7 +514,7 @@ export function WorkOrderClientSection({
                 {Object.entries(data).map(([key, value]) => (
                     <div key={key}>
                         <p className="font-medium text-muted-foreground">{key}</p>
-                        <p>{value}</p>
+                        <p>{value || 'N/A'}</p>
                     </div>
                 ))}
             </div>
@@ -487,9 +542,9 @@ export function WorkOrderClientSection({
                     'Final Instrument Condition': reportData.workOrder.instrumentCondition,
                 }}/>
                 <Section title="Labor Information" data={{
-                    'Service Start': reportData.labor[0].startDate ? format(parseISO(reportData.labor[0].startDate), 'PPP p') : 'N/A',
-                    'Service End': reportData.labor[0].endDate ? format(parseISO(reportData.labor[0].endDate), 'PPP p') : 'N/A',
-                    'Labor Hours': reportData.labor[0].hours,
+                    'Service Start': reportData.labor[0]?.startDate ? format(parseISO(reportData.labor[0].startDate), 'PPP p') : 'N/A',
+                    'Service End': reportData.labor[0]?.endDate ? format(parseISO(reportData.labor[0].endDate), 'PPP p') : 'N/A',
+                    'Labor Hours': reportData.labor[0]?.hours,
                     'Agreement Type': reportData.agreement.type,
                 }} />
 
@@ -508,8 +563,47 @@ export function WorkOrderClientSection({
   }
 
   const EngineerActions = () => {
-    return <h1>Placeholder</h1>
-  }
+    if (!isEngineerView || !workOrder || workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled') {
+      return null;
+    }
+  
+    const actions: { [key in WorkOrderStatus]?: { label: string; icon: React.ElementType; nextStatus: WorkOrderStatus; } } = {
+      'Scheduled': { label: 'Start Travel', icon: Play, nextStatus: 'Dispatched' },
+      'Dispatched': { label: 'Arrive on Site', icon: Play, nextStatus: 'On-Site' },
+      'On-Site': { label: 'Start Work', icon: Play, nextStatus: 'In-Progress' },
+    };
+  
+    const currentAction = actions[workOrder.status];
+  
+    const inProgressActions = workOrder.status === 'In-Progress' ? (
+      <>
+        <Button className="w-full" onClick={() => setQuestionnaireOpen(true)}>
+          <Check className="mr-2" />
+          Mark as Complete
+        </Button>
+        <Button className="w-full" variant="outline" onClick={() => setHoldDialogOpen(true)}>
+          <Pause className="mr-2" />
+          Put on Hold
+        </Button>
+      </>
+    ) : null;
+  
+    return (
+        <>
+            {currentAction ? (
+                 <Button className="w-full" onClick={() => handleStatusChange(currentAction.nextStatus)}>
+                    <currentAction.icon className="mr-2" />
+                    {currentAction.label}
+                </Button>
+            ) : null}
+            {inProgressActions}
+            {!currentAction && !inProgressActions && (
+              <p className='text-sm text-muted-foreground'>No more actions for this status.</p>
+            )}
+        </>
+    );
+  };
+
 
   return (
     <>
@@ -593,7 +687,7 @@ export function WorkOrderClientSection({
               </DialogFooter>
           </DialogContent>
       </Dialog>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4">
       
         {isGeneratingReport ? (
             <Card className="lg:col-span-2">
@@ -615,6 +709,7 @@ export function WorkOrderClientSection({
                                 <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
                                     A service report will be available once the engineer completes the work.
                                 </div>
+                                { isEngineerView && <EngineerActions/> }
                             </CardContent>
                         </Card>
                     </div>

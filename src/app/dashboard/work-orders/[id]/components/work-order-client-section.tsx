@@ -15,7 +15,6 @@ import {
   Pause,
   Play,
   Download,
-  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
@@ -35,6 +34,7 @@ import { HoldWorkOrderDialog } from './hold-work-order-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -769,4 +769,5 @@ export function WorkOrderClientSection({
 }
 
     
+
 

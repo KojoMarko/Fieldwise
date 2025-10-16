@@ -248,13 +248,11 @@ export function WorkOrderClientSection({
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     
-    const defaultAddress = [
-        'GW-0988-6564, JMP8+P3F FH948',
-        'OXYGEN STREET, Oduman'
-    ];
-    const companyAddress = company?.address ? company.address.split('\n') : defaultAddress;
+    const companyName = company?.name || "Alos Paraklet Healthcare Limited";
+    const defaultAddress = 'GW-0988-6564, JMP8+P3F FH948 OXYGEN STREET, Oduman';
+    const companyAddress = company?.address || defaultAddress;
 
-    doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
+    doc.text(companyName, margin + 50, logoY + 12);
     doc.text(companyAddress, margin + 50, logoY + 24);
 
 

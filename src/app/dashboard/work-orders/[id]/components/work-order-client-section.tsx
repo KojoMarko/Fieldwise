@@ -18,7 +18,7 @@ import {
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import type { WorkOrder, Customer, User, Asset, Company } from '@/lib/types';
+import type { WorkOrder, Customer, User, Asset, Company, WorkOrderStatus } from '@/lib/types';
 import { format, isValid, parseISO } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -50,15 +50,26 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
 
     const handleDateSelect = (day: Date | undefined) => {
         if (!day) {
-            setDate(undefined);
-            onChange(undefined);
+            // Don't clear time if only date is cleared, let user decide.
+            // Or maybe we should? For now, let's just update the date part.
+            if(date) {
+                const newDate = new Date(date);
+                newDate.setFullYear(day?.getFullYear() ?? newDate.getFullYear());
+                newDate.setMonth(day?.getMonth() ?? newDate.getMonth());
+                newDate.setDate(day?.getDate() ?? newDate.getDate());
+                setDate(newDate);
+                onChange(newDate);
+            } else {
+                 setDate(day);
+                 onChange(day);
+            }
             return;
         }
 
-        const newDate = new Date(day);
-        const time = date ? date.toTimeString().split(' ')[0] : '00:00';
-        const [hours, minutes] = time.split(':').map(Number);
-        newDate.setHours(hours, minutes);
+        const newDate = date ? new Date(date) : new Date();
+        newDate.setFullYear(day.getFullYear());
+        newDate.setMonth(day.getMonth());
+        newDate.setDate(day.getDate());
         
         setDate(newDate);
         onChange(newDate);
@@ -70,7 +81,7 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
 
         const [hours, minutes] = time.split(':').map(Number);
         
-        const newDate = date ? new Date(date) : new Date(); // Default to today if no date is set
+        const newDate = date ? new Date(date) : new Date();
         newDate.setHours(hours, minutes);
 
         setDate(newDate);
@@ -114,7 +125,6 @@ export function WorkOrderClientSection({
   asset,
   allocatedParts,
   company,
-  engineerActions,
 }: {
   workOrder: WorkOrder;
   customer?: Customer;
@@ -122,7 +132,6 @@ export function WorkOrderClientSection({
   asset?: Asset;
   allocatedParts: AllocatedPart[],
   company?: Company,
-  engineerActions: React.ReactNode;
 }) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -160,17 +169,34 @@ export function WorkOrderClientSection({
             reportData = {
                 summary: questionnaireData,
                 workOrder: { type: workOrder.type },
+                parts: questionnaireData.partsUsed,
+                labor: [{
+                    startDate: questionnaireData.timeWorkStarted,
+                    endDate: questionnaireData.timeWorkCompleted,
+                    hours: questionnaireData.laborHours,
+                }],
+                signingPerson: questionnaireData.signingPerson,
+                technicianName: technician?.name,
+                agreement: { type: questionnaireData.agreementType },
             };
         }
     } else {
         // This is the fallback for initial generation before notes are saved
-        reportData = {
+         reportData = {
             summary: questionnaireData,
-            workOrder: { type: workOrder.type },
+            workOrder: { type: workOrder.type, instrumentCondition: questionnaireData.instrumentCondition },
+            parts: questionnaireData.partsUsed,
+            labor: [{
+                startDate: questionnaireData.timeWorkStarted,
+                endDate: questionnaireData.timeWorkCompleted,
+                hours: questionnaireData.laborHours,
+            }],
+            signingPerson: questionnaireData.signingPerson,
+            technicianName: technician?.name,
+            agreement: { type: questionnaireData.agreementType },
         };
     }
     
-    // Use saved labor data if available, otherwise use live data
     const laborInfo = reportData?.labor?.[0] || {
         startDate: questionnaireData.timeWorkStarted,
         endDate: questionnaireData.timeWorkCompleted,
@@ -216,10 +242,9 @@ export function WorkOrderClientSection({
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(safe(company?.name), margin + 50, logoY + 12);
-    doc.text(safe(company?.address), margin + 50, logoY + 24);
-    doc.text(safe(company?.phone), margin + 50, logoY + 36);
-
+    const companyAddress = "GW-0988-6564, JMP8+P3F FH948\nOXYGEN STREET, Oduman";
+    doc.text("Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
+    doc.text(companyAddress, margin + 50, logoY + 24);
 
     const titleText = "Engineering Service Report";
     const reportIdText = `Report ID: ESR-${workOrder.id.substring(0,8)}`;
@@ -433,6 +458,26 @@ export function WorkOrderClientSection({
       });
     }
   };
+  
+    const handleStatusChange = async (newStatus: WorkOrderStatus) => {
+    if (!workOrder) return;
+    try {
+      const workOrderRef = doc(db, 'work-orders', workOrder.id);
+      await updateDoc(workOrderRef, { status: newStatus });
+      toast({
+        title: 'Status Updated',
+        description: `Work order status changed to "${newStatus}".`,
+      });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Could not update the work order status.',
+      });
+    }
+  };
+
 
   const handleQuestionnaireSubmit = async () => {
     setQuestionnaireOpen(false);
@@ -589,18 +634,26 @@ export function WorkOrderClientSection({
     ) : null;
   
     return (
-        <>
-            {currentAction ? (
-                 <Button className="w-full" onClick={() => handleStatusChange(currentAction.nextStatus)}>
-                    <currentAction.icon className="mr-2" />
-                    {currentAction.label}
-                </Button>
-            ) : null}
-            {inProgressActions}
-            {!currentAction && !inProgressActions && (
-              <p className='text-sm text-muted-foreground'>No more actions for this status.</p>
-            )}
-        </>
+        <div className="xl:col-span-1">
+            <Card>
+                <CardHeader><CardTitle>Engineer's Report</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                        A service report will be available once the engineer completes the work.
+                    </div>
+                     {currentAction ? (
+                        <Button className="w-full" onClick={() => handleStatusChange(currentAction.nextStatus)}>
+                            <currentAction.icon className="mr-2" />
+                            {currentAction.label}
+                        </Button>
+                    ) : null}
+                    {inProgressActions}
+                    {!currentAction && !inProgressActions && (
+                    <p className='text-sm text-muted-foreground'>No more actions for this status.</p>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
     );
   };
 
@@ -702,17 +755,7 @@ export function WorkOrderClientSection({
                  {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
                     <div className="xl:col-span-2"><ServiceReport /></div>
                 ) : (
-                    <div className={isEngineerView ? 'xl:col-span-1' : 'xl:col-span-2'}>
-                        <Card>
-                            <CardHeader><CardTitle>Engineer's Report</CardTitle></CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                                    A service report will be available once the engineer completes the work.
-                                </div>
-                                { isEngineerView && <EngineerActions/> }
-                            </CardContent>
-                        </Card>
-                    </div>
+                    <EngineerActions />
                 )}
             </>
         )}
@@ -720,5 +763,3 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-    

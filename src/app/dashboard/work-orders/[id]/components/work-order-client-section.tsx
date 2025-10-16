@@ -50,16 +50,21 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
 
     const handleDateSelect = (day: Date | undefined) => {
         if (!day) {
+            // User cleared the date
             setDate(undefined);
             onChange(undefined);
             return;
         }
 
-        const newDate = date ? new Date(date) : new Date(0); // Use a base date if none exists
-        newDate.setFullYear(day.getFullYear());
-        newDate.setMonth(day.getMonth());
-        newDate.setDate(day.getDate());
+        // Create a new date object from the selected day
+        const newDate = new Date(day);
         
+        if (date) {
+            // If a time already exists, preserve it
+            newDate.setHours(date.getHours());
+            newDate.setMinutes(date.getMinutes());
+        }
+
         setDate(newDate);
         onChange(newDate);
     };
@@ -70,7 +75,8 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
 
         const [hours, minutes] = time.split(':').map(Number);
         
-        const newDate = date ? new Date(date) : new Date(); // If no date, use today and let user change it
+        // If there's no date, create one for today to hold the time
+        const newDate = date ? new Date(date) : new Date();
         newDate.setHours(hours, minutes);
 
         setDate(newDate);

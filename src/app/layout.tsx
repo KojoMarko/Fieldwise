@@ -1,13 +1,9 @@
-import type { Metadata } from 'next';
+
+'use client';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth';
-
-export const metadata: Metadata = {
-  title: 'FieldWise',
-  description: 'Enterprise-grade field service management',
-  manifest: '/manifest.webmanifest'
-};
+import { FirebaseErrorListener } from '@/components/firebase-error-listener';
 
 export default function RootLayout({
   children,
@@ -17,6 +13,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <title>FieldWise</title>
+        <meta name="description" content="Enterprise-grade field service management" />
         <link rel="icon" href="/Field Wise Logo.png" sizes="any" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -28,10 +26,13 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
+        <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
         <AuthProvider>
-            {children}
+            <FirebaseErrorListener>
+                {children}
+            </FirebaseErrorListener>
         </AuthProvider>
         <Toaster />
       </body>

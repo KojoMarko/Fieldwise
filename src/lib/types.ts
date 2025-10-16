@@ -159,3 +159,15 @@ export type AuditLogEvent = {
     after: Record<string, any>;
   }
 };
+
+
+// Firestore Permission Error Types
+export type SecurityRuleContext = {
+  path: string;
+  operation: 'get' | 'list' | 'create' | 'update' | 'delete';
+  requestResourceData?: any;
+};
+
+export type SecurityRuleError = Error & {
+  context: SecurityRuleContext;
+};

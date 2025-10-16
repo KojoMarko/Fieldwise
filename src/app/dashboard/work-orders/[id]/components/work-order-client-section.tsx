@@ -14,7 +14,7 @@ import {
   Pause,
   Play,
   Download,
-  CalendarIcon,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
@@ -235,7 +235,7 @@ export function WorkOrderClientSection({
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     
-    const defaultAddress = "GW-0988-6564, JMP8+P3F FH948\nOXYGEN STREET, Oduman";
+    const defaultAddress = "GW-0988-6564, JMP8+P3F FH948\nOXYGEN STREET\nOduman";
     const companyAddress = (company?.address || defaultAddress).split('\n');
     const companyPhone = company?.phone || '';
 
@@ -255,12 +255,12 @@ export function WorkOrderClientSection({
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(titleText, rightAlignX, finalY, { align: 'right' });
+    doc.text(titleText, rightAlignX, logoY, { align: 'right' });
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(reportIdText, rightAlignX, finalY + 15, { align: 'right' });
-    doc.text(dateText, rightAlignX, finalY + 30, { align: 'right' });
+    doc.text(reportIdText, rightAlignX, logoY + 15, { align: 'right' });
+    doc.text(dateText, rightAlignX, logoY + 30, { align: 'right' });
     
     finalY += 60;
     

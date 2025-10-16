@@ -167,6 +167,7 @@ export function Header() {
 
     const isAdmin = user.role === 'Admin';
     const isEngineer = user.role === 'Engineer';
+    const isSales = user.role === 'Sales Rep';
     
     const breadcrumbs = generateBreadcrumbs(pathname);
 
@@ -217,6 +218,18 @@ export function Header() {
               <Wrench className="h-5 w-5" />
               Work Orders
             </Link>
+            {(isAdmin || isEngineer || isSales) && (
+                <>
+                 <Link
+                  href="/dashboard/assets"
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => setSheetOpen(false)}
+                >
+                    <Package className="h-5 w-5" />
+                    Assets
+                </Link>
+                </>
+            )}
             {(isAdmin || isEngineer) && (
                 <>
                  <Link
@@ -236,14 +249,6 @@ export function Header() {
                   Map
                 </Link>
                  <Link
-                  href="/dashboard/assets"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                  onClick={() => setSheetOpen(false)}
-                >
-                    <Package className="h-5 w-5" />
-                    Assets
-                </Link>
-                 <Link
                   href="/dashboard/spare-parts"
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                    onClick={() => setSheetOpen(false)}
@@ -261,9 +266,8 @@ export function Header() {
                 </Link>
                 </>
             )}
-            {isAdmin && (
-                <>
-                <Link
+            {(isAdmin || isSales) && (
+                 <Link
                   href="/dashboard/customers"
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                    onClick={() => setSheetOpen(false)}
@@ -271,6 +275,9 @@ export function Header() {
                   <Building className="h-5 w-5" />
                   Customers
                 </Link>
+            )}
+            {isAdmin && (
+                <>
                 <Link
                 href="/dashboard/users"
                 className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
@@ -385,7 +392,7 @@ export function Header() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-           {user.role === 'Engineer' && (
+           {(user.role === 'Engineer' || user.role === 'Sales Rep') && (
              <DropdownMenuItem asChild>
                 <Link href="/dashboard">
                   <LayoutDashboard className="mr-2 h-4 w-4" />

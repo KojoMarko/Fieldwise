@@ -56,6 +56,14 @@ const engineerNavItems = [
     { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
 ]
 
+const salesRepNavItems = [
+    { href: '/dashboard', icon: Home, label: 'Dashboard' },
+    { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
+    { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
+    { href: '/dashboard/customers', icon: Building, label: 'Customers' },
+    { href: '/dashboard/assets', icon: Package, label: 'Assets' },
+];
+
 const customerNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'My Service History' },
@@ -92,6 +100,8 @@ export function AppSidebar() {
   let navItems = adminNavItems;
   if (user?.role === 'Engineer') {
     navItems = engineerNavItems;
+  } else if (user?.role === 'Sales Rep') {
+    navItems = salesRepNavItems;
   } else if (user?.role === 'Customer') {
       navItems = customerNavItems;
   }

@@ -29,18 +29,20 @@ import { db } from '@/lib/firebase';
 
 
 export default function TechnicianDashboardPage() {
-    const { user } = useAuth();
+    const { user, isLoading: isAuthLoading } = useAuth();
     const [myWorkOrders, setMyWorkOrders] = useState<WorkOrder[]>([]);
     const [customers, setCustomers] = useState<Record<string, Customer>>({});
     const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
-        if (!user || !user.companyId) {
+        if (isAuthLoading || !user) return;
+
+        if (!user.companyId) {
             setIsLoading(false);
             return;
         }
 
-        const workOrdersQuery = query(collection(db, 'work-orders'), where('companyId', '==', user.companyId), where('technicianId', '==', user.id));
+        const workOrdersQuery = query(collection(db, 'work-orders'), where('companyId', '==', user.companyId), where('technicianIds', 'array-contains', user.id));
         const customersQuery = query(collection(db, 'customers'), where('companyId', '==', user.companyId));
         
         const unsubOrders = onSnapshot(workOrdersQuery, (snapshot) => {
@@ -61,12 +63,12 @@ export default function TechnicianDashboardPage() {
             unsubCustomers();
         }
 
-    }, [user]);
+    }, [user, isAuthLoading]);
 
     
     if (!user) return null;
     
-    if (isLoading) {
+    if (isLoading || isAuthLoading) {
       return (
         <div className="flex h-[80vh] w-full items-center justify-center">
             <LoaderCircle className="h-10 w-10 animate-spin" />

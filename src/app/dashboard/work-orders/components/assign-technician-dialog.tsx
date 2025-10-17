@@ -10,13 +10,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import type { WorkOrder, User } from '@/lib/types';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +20,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { updateWorkOrder } from '@/ai/flows/update-work-order';
 import { LoaderCircle } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AssignTechnicianDialogProps {
   open: boolean;
@@ -39,13 +35,13 @@ export function AssignTechnicianDialog({
 }: AssignTechnicianDialogProps) {
   const { user } = useAuth();
   const [engineers, setEngineers] = useState<User[]>([]);
-  const [selectedTech, setSelectedTech] = useState<string | undefined>(workOrder.technicianId);
+  const [selectedTechs, setSelectedTechs] = useState<string[]>([]);
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (workOrder) {
-      setSelectedTech(workOrder.technicianId);
+      setSelectedTechs(workOrder.technicianIds || []);
     }
   }, [workOrder]);
 
@@ -63,67 +59,83 @@ export function AssignTechnicianDialog({
     return () => unsubscribe();
   }, [user?.companyId]);
 
-
   const handleAssign = async () => {
-    if (!selectedTech) {
-        toast({
-            variant: 'destructive',
-            title: 'No Engineer Selected',
-            description: 'Please select an engineer to assign.'
-        })
-        return;
-    };
+    if (selectedTechs.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'No Engineer Selected',
+        description: 'Please select at least one engineer to assign.',
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
-        await updateWorkOrder({ id: workOrder.id, technicianId: selectedTech });
-        const engineer = engineers.find(t => t.id === selectedTech);
-        toast({
-            title: "Engineer Assigned",
-            description: `${engineer?.name} has been assigned to work order ${workOrder.id}.`
-        });
-        onOpenChange(false);
+      await updateWorkOrder({ id: workOrder.id, technicianIds: selectedTechs });
+      const assignedEngineers = engineers
+        .filter(t => selectedTechs.includes(t.id))
+        .map(t => t.name)
+        .join(', ');
+      
+      toast({
+        title: 'Engineers Assigned',
+        description: `${assignedEngineers} has been assigned to work order ${workOrder.id}.`,
+      });
+      onOpenChange(false);
     } catch (error) {
-        console.error('Failed to assign engineer:', error);
-        toast({
-            variant: 'destructive',
-            title: 'Assignment Failed',
-            description: 'Could not assign the engineer at this time. Please try again.'
-        });
+      console.error('Failed to assign engineers:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Assignment Failed',
+        description: 'Could not assign engineers at this time. Please try again.',
+      });
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
+  };
+
+  const handleCheckboxChange = (techId: string) => {
+    setSelectedTechs(prev =>
+      prev.includes(techId)
+        ? prev.filter(id => id !== techId)
+        : [...prev, techId]
+    );
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Assign Engineer</DialogTitle>
+          <DialogTitle>Assign Engineers</DialogTitle>
           <DialogDescription>
-            Assign an engineer to work order: {workOrder.id}
+            Select one or more engineers for work order: {workOrder.id}
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-          <Select value={selectedTech} onValueChange={setSelectedTech}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select an engineer" />
-            </SelectTrigger>
-            <SelectContent>
-              {engineers.map((tech) => (
-                <SelectItem key={tech.id} value={tech.id}>
+        <ScrollArea className="max-h-64 py-4">
+          <div className="space-y-4">
+            {engineers.map((tech) => (
+              <div key={tech.id} className="flex items-center space-x-3">
+                <Checkbox
+                  id={`tech-${tech.id}`}
+                  checked={selectedTechs.includes(tech.id)}
+                  onCheckedChange={() => handleCheckboxChange(tech.id)}
+                />
+                <Label
+                  htmlFor={`tech-${tech.id}`}
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
                   {tech.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+                </Label>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleAssign} disabled={!selectedTech || isSubmitting}>
+          <Button onClick={handleAssign} disabled={isSubmitting}>
             {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Assigning...' : 'Assign'}
+            {isSubmitting ? 'Assigning...' : 'Assign Engineers'}
           </Button>
         </DialogFooter>
       </DialogContent>

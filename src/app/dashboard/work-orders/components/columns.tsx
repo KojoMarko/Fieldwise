@@ -112,7 +112,7 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
           {isAdmin && (
             <>
               <DropdownMenuItem onClick={() => setAssignDialogOpen(true)}>
-                {workOrder.technicianId ? 'Re-assign Engineer' : 'Assign Engineer'}
+                {workOrder.technicianIds && workOrder.technicianIds.length > 0 ? 'Re-assign Engineer(s)' : 'Assign Engineer(s)'}
               </DropdownMenuItem>
               {workOrder.status === 'Draft' && (
                  <DropdownMenuItem onClick={() => handleStatusUpdate('Scheduled')}>
@@ -159,29 +159,30 @@ function CustomerCell({ row }: { row: { original: WorkOrder }}) {
 
 
 function TechnicianCell({ row }: { row: { original: WorkOrder }}) {
-    const [techName, setTechName] = useState<string | null>('Unassigned');
+    const [techNames, setTechNames] = useState<string>('Unassigned');
      const { user } = useAuth();
 
     useEffect(() => {
-        const techId = row.original.technicianId;
-        if (!techId || !user?.companyId) {
-            setTechName('Unassigned');
+        const techIds = row.original.technicianIds;
+        if (!techIds || techIds.length === 0 || !user?.companyId) {
+            setTechNames('Unassigned');
             return;
         };
 
-        const userRef = doc(db, "users", techId);
-        const unsubscribe = onSnapshot(userRef, (doc) => {
-             if (doc.exists()) {
-                setTechName((doc.data() as User).name);
+        const usersQuery = query(collection(db, "users"), where('id', 'in', techIds));
+        const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+             if (!snapshot.empty) {
+                const names = snapshot.docs.map(doc => (doc.data() as User).name);
+                setTechNames(names.join(', '));
              } else {
-                setTechName('Unassigned');
+                setTechNames('Unassigned');
              }
-        }, () => setTechName('Error'));
+        }, () => setTechNames('Error'));
 
         return () => unsubscribe();
-    }, [row.original.technicianId, user?.companyId]);
+    }, [row.original.technicianIds, user?.companyId]);
     
-    return techName ? <div>{techName}</div> : <div className="text-muted-foreground">Unassigned</div>;
+    return techNames ? <div>{techNames}</div> : <div className="text-muted-foreground">Unassigned</div>;
 }
 
 
@@ -260,8 +261,8 @@ export const columns: ColumnDef<WorkOrder>[] = [
     },
   },
   {
-    accessorKey: 'technicianId',
-    header: 'Engineer',
+    accessorKey: 'technicianIds',
+    header: 'Engineer(s)',
     cell: TechnicianCell,
      meta: {
       className: 'hidden lg:table-cell',

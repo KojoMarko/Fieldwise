@@ -92,7 +92,7 @@ export type WorkOrder = {
   type: 'Preventive' | 'Corrective' | 'Emergency' | 'Installation' | 'Other';
   assetId: string;
   customerId: string;
-  technicianId?: string;
+  technicianIds?: string[];
   scheduledDate: string;
   completedDate?: string;
   createdAt: string;

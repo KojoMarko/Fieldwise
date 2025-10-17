@@ -13,7 +13,7 @@ import { db } from '@/lib/firebase-admin';
 
 const UpdateWorkOrderInputSchema = z.object({
   id: z.string().min(1, 'Work Order ID is required'),
-  technicianId: z.string().optional(),
+  technicianIds: z.array(z.string()).optional(),
   status: z.enum(['Draft', 'Scheduled', 'In-Progress', 'On-Hold', 'Completed', 'Invoiced', 'Cancelled']).optional(),
   technicianNotes: z.string().optional(),
   completedDate: z.string().optional(),

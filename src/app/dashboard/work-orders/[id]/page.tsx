@@ -13,6 +13,7 @@ import {
   Package,
   Download,
   Pause,
+  Users,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -74,7 +75,7 @@ export default function WorkOrderDetailPage({
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [asset, setAsset] = useState<Asset | null>(null);
-  const [technician, setTechnician] = useState<User | null>(null);
+  const [technicians, setTechnicians] = useState<User[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [allocatedParts, setAllocatedParts] = useState<AllocatedPart[]>([]);
   const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
@@ -114,9 +115,15 @@ export default function WorkOrderDetailPage({
         onSnapshot(assetRef, (docSnap) => setAsset(docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as Asset : null));
     }
 
-    if (workOrder.technicianId) {
-        const techRef = doc(db, 'users', workOrder.technicianId);
-        onSnapshot(techRef, (docSnap) => setTechnician(docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as User : null));
+    if (workOrder.technicianIds && workOrder.technicianIds.length > 0) {
+        const techsQuery = query(collection(db, 'users'), where('id', 'in', workOrder.technicianIds));
+        onSnapshot(techsQuery, (snapshot) => {
+            const techData: User[] = [];
+            snapshot.forEach(doc => techData.push({ ...doc.data(), id: doc.id } as User));
+            setTechnicians(techData);
+        });
+    } else {
+        setTechnicians([]);
     }
     
     if(user.companyId) {
@@ -350,9 +357,15 @@ export default function WorkOrderDetailPage({
                         <CardContent className="grid md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <p className="text-sm font-medium text-muted-foreground">Assigned Engineer</p>
-                                    <p className="font-semibold">{technician?.name || "Unassigned"}</p>
-                                    {technician && <p className="text-xs text-muted-foreground">Dispatched: {format(parseISO(workOrder.createdAt), 'yyyy-MM-dd hh:mm a')}</p>}
+                                    <p className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Users className="h-4 w-4" />Assigned Engineers</p>
+                                    {technicians.length > 0 ? (
+                                      <div className='font-semibold space-y-1'>
+                                        {technicians.map(t => <p key={t.id}>{t.name}</p>)}
+                                      </div>
+                                    ) : (
+                                      <p className="font-semibold">Unassigned</p>
+                                    )}
+                                    {workOrder.createdAt && <p className="text-xs text-muted-foreground">Dispatched: {format(parseISO(workOrder.createdAt), 'yyyy-MM-dd hh:mm a')}</p>}
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-sm font-medium text-muted-foreground">Skill/Crew Required</p>
@@ -448,7 +461,7 @@ export default function WorkOrderDetailPage({
                 <WorkOrderClientSection 
                     workOrder={workOrder} 
                     customer={customer ?? undefined} 
-                    technician={technician ?? undefined} 
+                    technician={technicians[0] ?? undefined} 
                     asset={asset ?? undefined} 
                     allocatedParts={allocatedParts} 
                     company={company ?? undefined}
@@ -458,5 +471,3 @@ export default function WorkOrderDetailPage({
     </div>
   );
 }
-
-    

@@ -38,6 +38,8 @@ import { db } from '@/lib/firebase';
 const statusStyles: Record<WorkOrderStatus, string> = {
     Draft: 'bg-gray-200 text-gray-800',
     Scheduled: 'bg-blue-100 text-blue-800',
+    Dispatched: 'bg-cyan-100 text-cyan-800',
+    'On-Site': 'bg-teal-100 text-teal-800',
     'In-Progress': 'bg-yellow-100 text-yellow-800',
     'On-Hold': 'bg-orange-100 text-orange-800',
     Completed: 'bg-green-100 text-green-800',
@@ -47,7 +49,7 @@ const statusStyles: Record<WorkOrderStatus, string> = {
 
 
 export function RecentWorkOrders() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [recentOrders, setRecentOrders] = useState<WorkOrder[]>([]);
   const [customers, setCustomers] = useState<Record<string, Customer>>({});
   const [users, setUsers] = useState<Record<string, User>>({});
@@ -57,6 +59,8 @@ export function RecentWorkOrders() {
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
 
   useEffect(() => {
+    if (isAuthLoading || !user) return;
+
     if (!user?.companyId) {
       setIsLoading(false);
       return;
@@ -65,17 +69,15 @@ export function RecentWorkOrders() {
 
     const baseQuery = query(
       collection(db, 'work-orders'),
-      where('companyId', '==', user.companyId),
-      limit(20) // Fetch more to sort client-side
+      where('companyId', '==', user.companyId)
     );
 
     let ordersQuery;
     if (user.role === 'Admin') {
       ordersQuery = baseQuery;
     } else if (user.role === 'Engineer') {
-      ordersQuery = query(baseQuery, where('technicianId', '==', user.id));
+      ordersQuery = query(baseQuery, where('technicianIds', 'array-contains', user.id));
     } else if (user.role === 'Customer') {
-      // We need to fetch customer profile first to get their ID for filtering
       const customerQuery = query(collection(db, 'customers'), where('contactEmail', '==', user.email), where('companyId', '==', user.companyId), limit(1));
       onSnapshot(customerQuery, (customerSnapshot) => {
         if (!customerSnapshot.empty) {
@@ -86,6 +88,7 @@ export function RecentWorkOrders() {
           setIsLoading(false);
         }
       });
+      return; // Handled in the onSnapshot callback
     } else {
         ordersQuery = baseQuery;
     }
@@ -94,9 +97,19 @@ export function RecentWorkOrders() {
         return onSnapshot(q, (snapshot) => {
             const orders: WorkOrder[] = [];
             snapshot.forEach(doc => orders.push({ ...doc.data(), id: doc.id } as WorkOrder));
-            // Sort client-side and take the latest 5
             orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setRecentOrders(orders.slice(0, 5));
+            setIsLoading(false);
+        }, (error) => {
+            console.error("RecentWorkOrders - Permission Error:", {
+                code: error?.code,
+                message: error?.message,
+                name: error?.name,
+                fullError: error,
+                userId: user?.id,
+                userRole: user?.role,
+                companyId: user?.companyId
+            });
             setIsLoading(false);
         });
     }
@@ -106,7 +119,6 @@ export function RecentWorkOrders() {
         unsubscribeOrders = subscribeToOrders(ordersQuery);
     }
     
-    // Subscriptions for customers and users to resolve names
     const customersQuery = query(collection(db, 'customers'), where('companyId', '==', user.companyId));
     const usersQuery = query(collection(db, 'users'), where('companyId', '==', user.companyId));
 
@@ -128,7 +140,7 @@ export function RecentWorkOrders() {
         unsubscribeCustomers();
         unsubscribeUsers();
     };
-  }, [user]);
+  }, [user, isAuthLoading]);
 
   const handleAssignClick = (order: WorkOrder) => {
     setSelectedOrder(order);
@@ -155,7 +167,7 @@ export function RecentWorkOrders() {
             <TableRow>
               <TableHead>Customer</TableHead>
               <TableHead className="hidden sm:table-cell">Status</TableHead>
-              <TableHead className="hidden md:table-cell">Engineer</TableHead>
+              <TableHead className="hidden md:table-cell">Engineer(s)</TableHead>
               <TableHead className="text-right">Date</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -170,7 +182,7 @@ export function RecentWorkOrders() {
             ) : recentOrders.length > 0 ? (
                 recentOrders.map((order) => {
                     const customer = customers[order.customerId];
-                    const technician = users[order.technicianId || ''];
+                    const technicians = order.technicianIds?.map(id => users[id]?.name).filter(Boolean).join(', ') || 'Unassigned';
                     return (
                         <TableRow key={order.id}>
                         <TableCell>
@@ -185,7 +197,7 @@ export function RecentWorkOrders() {
                             </Badge>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                            {technician?.name || 'Unassigned'}
+                            {technicians}
                         </TableCell>
                         <TableCell className="text-right">
                             {new Date(order.scheduledDate).toLocaleDateString()}

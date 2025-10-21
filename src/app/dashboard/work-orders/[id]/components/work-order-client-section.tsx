@@ -1,26 +1,23 @@
 
 'use client';
 
-import { useState, useRef, forwardRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import {
   LoaderCircle,
   Check,
   Pause,
   Play,
-  Download,
-  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import type { WorkOrder, Customer, User, Asset, Company, WorkOrderStatus } from '@/lib/types';
-import { format, isValid, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Dialog,
@@ -37,8 +34,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { CalendarIcon } from 'lucide-react';
 
 
 const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: Date) => void }) => {
@@ -148,279 +144,6 @@ export function WorkOrderClientSection({
       timeWorkCompleted: undefined,
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-
-
-  const handleDownloadPdf = async () => {
-    toast({
-        title: "Generating PDF...",
-        description: "Please wait while your report is being created.",
-    });
-
-    let reportData: any;
-    if (workOrder.technicianNotes && workOrder.technicianNotes.startsWith('{')) {
-        try {
-            reportData = JSON.parse(workOrder.technicianNotes);
-        } catch (e) {
-             // Fallback for when JSON parsing fails
-            reportData = {
-                summary: questionnaireData,
-                workOrder: { instrumentCondition: questionnaireData.instrumentCondition, type: workOrder.type },
-                parts: questionnaireData.partsUsed,
-                labor: [{
-                    startDate: questionnaireData.timeWorkStarted,
-                    endDate: questionnaireData.timeWorkCompleted,
-                    hours: questionnaireData.laborHours,
-                }],
-                signingPerson: questionnaireData.signingPerson,
-                technicianName: technician?.name,
-                agreement: { type: questionnaireData.agreementType },
-            };
-        }
-    } else {
-         // Fallback for when technicianNotes is not a JSON string
-         reportData = {
-            summary: questionnaireData,
-            workOrder: { instrumentCondition: questionnaireData.instrumentCondition, type: workOrder.type },
-            parts: questionnaireData.partsUsed,
-            labor: [{
-                startDate: questionnaireData.timeWorkStarted,
-                endDate: questionnaireData.timeWorkCompleted,
-                hours: questionnaireData.laborHours,
-            }],
-            signingPerson: questionnaireData.signingPerson,
-            technicianName: technician?.name,
-            agreement: { type: questionnaireData.agreementType },
-        };
-    }
-    
-    // Ensure workOrder.type is always used for the service type, overriding if necessary
-    if (reportData.workOrder) {
-      reportData.workOrder.type = workOrder.type;
-    } else {
-      reportData.workOrder = { type: workOrder.type };
-    }
-
-
-    const laborInfo = reportData?.labor?.[0] || {
-        startDate: questionnaireData.timeWorkStarted,
-        endDate: questionnaireData.timeWorkCompleted,
-        hours: questionnaireData.laborHours,
-    };
-
-
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 40;
-    let finalY = margin + 20;
-
-    // --- Safely get data and format dates ---
-    const safe = (val: any, fallback = 'N/A') => val || fallback;
-    const formatDate = (date: any, includeTime = false) => {
-        try {
-            if (!date) return 'N/A';
-            const d = date instanceof Date ? date : parseISO(date);
-            if (!isValid(d)) return 'N/A';
-            return includeTime ? format(d, 'MMM dd, yyyy, p') : format(d, 'MMM dd, yyyy');
-        } catch (e) { return 'N/A' }
-    };
-    
-    // --- Header ---
-    let logoY = finalY;
-    if (company?.logoUrl) {
-        try {
-            const img = new Image();
-            img.crossOrigin = 'Anonymous';
-            img.src = company.logoUrl;
-            await new Promise((resolve, reject) => {
-                img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, logoY, 40, 40);
-                    resolve(null);
-                };
-                img.onerror = (e) => {
-                    console.error("Could not load company logo for PDF.", e);
-                    reject(e);
-                }
-            });
-        } catch (e) { console.error("Error adding company logo to PDF:", e)}
-    }
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    
-    const defaultAddress = [
-        'GW-0988-6564, JMP8+P3F FH948',
-        'OXYGEN STREET, Oduman'
-    ];
-    const companyAddress = company?.address ? company.address.split('\n') : defaultAddress;
-    
-    doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
-    doc.text(companyAddress, margin + 50, logoY + 24);
-
-
-    const titleText = "Engineering Service Report";
-    const reportIdText = `Report ID: ESR-${workOrder.id.substring(0,8)}`;
-    const dateText = `Date: ${format(new Date(), 'MMMM do, yyyy')}`;
-
-    const titleWidth = doc.getTextWidth(titleText);
-    const rightAlignX = pageWidth - margin;
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(titleText, rightAlignX, logoY + 12, { align: 'right' });
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(reportIdText, rightAlignX, logoY + 27, { align: 'right' });
-    doc.text(dateText, rightAlignX, logoY + 42, { align: 'right' });
-    
-    finalY += 60;
-    
-    // --- CUSTOMER & EQUIPMENT INFORMATION ---
-    (doc as any).autoTable({
-        startY: finalY,
-        body: [
-            [
-                { content: 'Customer Name', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
-                { content: 'Contact', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
-                { content: 'Phone', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
-                { content: 'Address', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
-            ],
-            [
-                safe(customer?.name),
-                safe(customer?.contactPerson),
-                safe(customer?.phone),
-                safe(customer?.address),
-            ],
-             [
-                { content: 'Equipment', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
-                { content: 'Model', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
-                { content: 'Serial Number', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
-                { content: 'Location', styles: { fontStyle: 'bold', fillColor: [220, 220, 220], textColor: [0, 0, 0] } },
-            ],
-            [
-                safe(asset?.name),
-                safe(asset?.model),
-                safe(asset?.serialNumber),
-                safe(asset?.location),
-            ]
-        ],
-        theme: 'grid',
-        styles: {
-            lineColor: [0, 0, 0],
-            lineWidth: 0.5,
-        }
-    });
-    finalY = (doc as any).lastAutoTable.finalY + 10;
-    
-    const addSection = (title: string, data: [string, string][]) => {
-        (doc as any).autoTable({
-            startY: finalY,
-            head: [[{ content: title, colSpan: 2, styles: { halign: 'left' } }]],
-            body: data,
-            theme: 'grid',
-            styles: { lineColor: [0, 0, 0], lineWidth: 0.5, cellPadding: 5 },
-            headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', cellPadding: 5 },
-            columnStyles: {
-                0: { fontStyle: 'bold', cellWidth: 150 },
-                1: { cellWidth: 'auto' },
-            }
-        });
-        finalY = (doc as any).lastAutoTable.finalY + 10;
-    };
-
-
-    // --- MALFUNCTION / SERVICE REQUEST INFORMATION ---
-    addSection('MALFUNCTION / SERVICE REQUEST INFORMATION', [
-        ['Reported Problem:', safe(reportData.summary?.reportedProblem)],
-        ['Symptom Summary:', safe(reportData.summary?.symptomSummary)],
-        ['Problem Summary / Root Cause:', safe(reportData.summary?.problemSummary)]
-    ]);
-    
-    // --- ENGINEER'S REPORT ---
-    addSection('ENGINEER\'S REPORT (CORRECTIVE ACTION TAKEN)', [
-        ['Resolution Summary:', safe(reportData.summary?.resolutionSummary)],
-        ['Verification of Activity:', safe(reportData.summary?.verificationOfActivity)],
-        ['Final Instrument Condition:', safe(reportData.workOrder?.instrumentCondition || reportData.summary?.instrumentCondition)]
-    ]);
-
-    // --- LABOR ---
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [['LABOR']],
-        theme: 'grid',
-        styles: { lineColor: [0,0,0], lineWidth: 0.5 },
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
-    });
-    (doc as any).autoTable({
-        startY: (doc as any).lastAutoTable.finalY,
-        head: [['Service Start Date', 'Service End Date', 'Service Type', 'Total Hours']],
-        body: [[
-            formatDate(laborInfo.startDate, true),
-            formatDate(laborInfo.endDate, true),
-            safe(reportData.workOrder?.type),
-            `${safe(laborInfo.hours, 0)}`
-        ]],
-        theme: 'grid',
-        styles: { lineColor: [0,0,0], lineWidth: 0.5 },
-        headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
-    });
-    finalY = (doc as any).lastAutoTable.finalY + 10;
-    
-    // --- SPARE PARTS ---
-    const partsData = reportData.parts || [];
-    const partsBody = partsData.map((p: any) => [p.partNumber, p.description, p.quantity]);
-    (doc as any).autoTable({
-        startY: finalY,
-        head: [['SPARE PARTS / MATERIALS USED']],
-        theme: 'grid',
-        styles: { lineColor: [0,0,0], lineWidth: 0.5 },
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
-    });
-    if (partsBody.length > 0) {
-        (doc as any).autoTable({
-            startY: (doc as any).lastAutoTable.finalY,
-            head: [['Part Number', 'Description', 'Quantity']],
-            body: partsBody,
-            theme: 'grid',
-            styles: { lineColor: [0,0,0], lineWidth: 0.5 },
-        });
-    } else {
-         (doc as any).autoTable({
-            startY: (doc as any).lastAutoTable.finalY,
-            body: [['No parts were used for this service.']],
-            theme: 'grid',
-            styles: { lineColor: [0,0,0], lineWidth: 0.5 },
-        });
-    }
-    finalY = (doc as any).lastAutoTable.finalY + 10;
-
-    // --- Signatures ---
-    (doc as any).autoTable({
-        startY: finalY,
-        body: [
-             [
-                { content: `Customer Name: ${safe(reportData.summary?.signingPerson || reportData.signingPerson)}`, styles: { valign: 'bottom', minCellHeight: 80 } },
-                { content: `Engineer Name: ${safe(reportData.workOrder?.performedBy || reportData.technicianName)}`, styles: { valign: 'bottom' } }
-            ]
-        ],
-        theme: 'grid',
-        styles: {
-            lineColor: [0, 0, 0],
-            lineWidth: 0.5,
-        },
-        columnStyles: {
-            0: { cellWidth: (pageWidth - margin * 2) / 2 },
-            1: { cellWidth: (pageWidth - margin * 2) / 2 },
-        }
-    });
-    finalY = (doc as any).lastAutoTable.finalY + 10;
-
-    doc.save(`ServiceReport-INV-${workOrder.id.substring(0, 8)}.pdf`);
-    toast({
-        title: "Download Ready",
-        description: "Your PDF invoice has been downloaded.",
-    });
-  };
 
   useEffect(() => {
     if (workOrder.status === 'Completed' && user?.role === 'Engineer' && !workOrder.technicianNotes) {
@@ -543,84 +266,57 @@ export function WorkOrderClientSection({
 
   const isEngineerView = user?.role === 'Engineer';
   
-  const ServiceReport = () => {
-    if (!workOrder.technicianNotes) return null;
-
-    let reportData;
-    try {
-        reportData = JSON.parse(workOrder.technicianNotes);
-    } catch (e) {
-        // If it's not JSON, it might be the old plain text format.
-        return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Engineer's Notes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-sm text-muted-foreground whitespace-pre-wrap">{workOrder.technicianNotes}</div>
-                </CardContent>
-            </Card>
-        )
+  const EngineerActions = () => {
+    const isCompletedStatus = workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled';
+    
+    // If completed but no report, allow engineer to generate it
+    if (isCompletedStatus && !workOrder.technicianNotes && isEngineerView) {
+      return (
+        <Card>
+          <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+              <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                  {workOrder.status === 'Cancelled' 
+                    ? 'This work order has been cancelled.'
+                    : 'This work order is marked as completed but no service report was generated.'}
+              </div>
+              {workOrder.status !== 'Cancelled' && (
+                <Button className="w-full" onClick={() => setQuestionnaireOpen(true)}>
+                  <Check className="mr-2" />
+                  Generate Service Report
+                </Button>
+              )}
+          </CardContent>
+        </Card>
+      );
     }
     
-    const Section = ({ title, data }: { title: string, data: Record<string, string>}) => (
-        <div className="mb-6">
-            <h3 className="text-lg font-semibold text-primary mb-2 border-b pb-1">{title}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                {Object.entries(data).map(([key, value]) => (
-                    <div key={key}>
-                        <p className="font-medium text-muted-foreground">{key}</p>
-                        <p>{value || 'N/A'}</p>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-
-    return (
+    // If not engineer view, show a placeholder
+    if (!isEngineerView) {
+      return (
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Service Report</CardTitle>
-                    <CardDescription>
-                        Generated on {workOrder.completedDate ? format(parseISO(workOrder.completedDate), 'PPP p') : 'N/A'} by {reportData.workOrder.performedBy}
-                    </CardDescription>
-                </div>
-                <Button onClick={handleDownloadPdf}><Download className="mr-2" /> Download PDF</Button>
-            </CardHeader>
-            <CardContent>
-                <Section title="Service Details" data={{
-                    'Reported Problem': reportData.summary.reportedProblem,
-                    'Symptom Summary': reportData.summary.symptomSummary,
-                    'Problem Summary': reportData.summary.problemSummary,
-                    'Resolution Summary': reportData.summary.resolutionSummary,
-                    'Verification of Activity': reportData.summary.verificationOfActivity,
-                    'Final Instrument Condition': reportData.workOrder.instrumentCondition,
-                }}/>
-                <Section title="Labor Information" data={{
-                    'Service Start': reportData.labor[0]?.startDate ? format(parseISO(reportData.labor[0].startDate), 'PPP p') : 'N/A',
-                    'Service End': reportData.labor[0]?.endDate ? format(parseISO(reportData.labor[0].endDate), 'PPP p') : 'N/A',
-                    'Labor Hours': reportData.labor[0]?.hours,
-                    'Agreement Type': reportData.agreement.type,
-                }} />
-
-                <h3 className="text-lg font-semibold text-primary mt-6 mb-2 border-b pb-1">Parts Used</h3>
-                {reportData.parts.length > 0 ? (
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                        {reportData.parts.map((part: any, index: number) => (
-                            <li key={index}>{part.description} (PN: {part.partNumber})</li>
-                        ))}
-                    </ul>
-                ) : <p className="text-sm text-muted-foreground">No parts were used for this service.</p>}
-
-            </CardContent>
+          <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+              <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                  A service report will be available once the engineer completes the work.
+              </div>
+          </CardContent>
         </Card>
-    );
-  }
+      );
+    }
 
-  const EngineerActions = () => {
-    if (!isEngineerView || !workOrder || workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled') {
-      return null;
+    // If completed status and not engineer, show generic message
+    if (isCompletedStatus) {
+      return (
+        <Card>
+          <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+              <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                  Service report pending.
+              </div>
+          </CardContent>
+        </Card>
+      );
     }
   
     const actions: { [key in WorkOrderStatus]?: { label: string; icon: React.ElementType; nextStatus: WorkOrderStatus; } } = {
@@ -646,10 +342,10 @@ export function WorkOrderClientSection({
   
     return (
       <Card>
-        <CardHeader><CardTitle>Engineer's Report</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Engineer Actions</CardTitle></CardHeader>
         <CardContent className="space-y-4">
             <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                A service report will be available once the engineer completes the work.
+                Current Status: <span className="font-semibold ml-1">{workOrder.status}</span>
             </div>
              {currentAction ? (
                 <Button className="w-full" onClick={() => handleStatusChange(currentAction.nextStatus)}>
@@ -658,8 +354,10 @@ export function WorkOrderClientSection({
                 </Button>
             ) : null}
             {inProgressActions}
-            {!currentAction && !inProgressActions && (
-            <p className='text-sm text-muted-foreground'>No more actions for this status.</p>
+            {!currentAction && !inProgressActions && workOrder.status === 'On-Hold' && (
+              <div className="text-sm text-muted-foreground">
+                This work order is on hold. Update the status to continue.
+              </div>
             )}
         </CardContent>
       </Card>
@@ -752,7 +450,7 @@ export function WorkOrderClientSection({
       <div className="grid gap-4 mt-4">
       
         {isGeneratingReport ? (
-            <Card className="lg:col-span-3">
+            <Card>
                 <CardContent className="p-6 flex flex-col items-center justify-center min-h-[300px]">
                     <LoaderCircle className="h-10 w-10 animate-spin text-primary mb-4" />
                     <p className="font-medium">Generating Service Report...</p>
@@ -760,19 +458,11 @@ export function WorkOrderClientSection({
                 </CardContent>
             </Card>
         ) : (
-             <>
-                {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
-                    <div className="lg:col-span-3"><ServiceReport /></div>
-                ) : (
-                    <div className="lg:col-span-3">
-                        <EngineerActions />
-                    </div>
-                )}
-            </>
+             <div className="lg:col-span-3">
+                <EngineerActions />
+            </div>
         )}
       </div>
     </>
   );
 }
-
-    

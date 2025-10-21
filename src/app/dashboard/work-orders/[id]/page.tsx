@@ -41,6 +41,7 @@ import { WorkOrderPartsTab } from './components/work-order-parts-tab';
 import { WorkOrderClientSection } from './components/work-order-client-section';
 import { useToast } from '@/hooks/use-toast';
 import { HoldWorkOrderDialog } from './components/hold-work-order-dialog';
+import { ServiceReportDisplay } from './components/service-report-display';
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {
@@ -452,24 +453,31 @@ export default function WorkOrderDetailPage({
                     </Card>
                 </div>
             </div>
-            
           </TabsContent>
           <TabsContent value="parts">
             <WorkOrderPartsTab workOrder={workOrder} allocatedParts={allocatedParts} setAllocatedParts={setAllocatedParts} />
           </TabsContent>
            <TabsContent value="report">
-                <WorkOrderClientSection 
-                    workOrder={workOrder} 
-                    customer={customer ?? undefined} 
-                    technician={technicians[0] ?? undefined} 
-                    asset={asset ?? undefined} 
-                    allocatedParts={allocatedParts} 
-                    company={company ?? undefined}
-                />
+                {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
+                    <ServiceReportDisplay 
+                        workOrder={workOrder} 
+                        company={company ?? undefined}
+                        customer={customer ?? undefined}
+                        asset={asset ?? undefined}
+                        technician={technicians[0] ?? undefined}
+                    />
+                ) : (
+                    <WorkOrderClientSection 
+                        workOrder={workOrder} 
+                        customer={customer ?? undefined} 
+                        technician={technicians[0] ?? undefined} 
+                        asset={asset ?? undefined} 
+                        allocatedParts={allocatedParts} 
+                        company={company ?? undefined}
+                    />
+                )}
            </TabsContent>
         </Tabs>
     </div>
   );
 }
-
-    

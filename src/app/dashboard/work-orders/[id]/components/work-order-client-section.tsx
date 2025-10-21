@@ -518,7 +518,7 @@ export function WorkOrderClientSection({
             companyAddress: company?.address || '123 Service Lane, Tech City',
             clientName: customer?.name || 'N/A',
             clientAddress: customer?.address || 'N/A',
-            preparedBy: technician?.name || user?.name || 'N/A',
+            preparedBy: user?.name || 'N/A',
             completionDate: format(new Date(), 'yyyy-MM-dd HH:mm'),
         });
 
@@ -625,6 +625,28 @@ export function WorkOrderClientSection({
   const EngineerActions = () => {
     const isCompletedStatus = workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled';
     
+    // If completed but no report, allow engineer to generate it
+    if (isCompletedStatus && !workOrder.technicianNotes && isEngineerView) {
+      return (
+        <Card>
+          <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+              <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                  {workOrder.status === 'Cancelled' 
+                    ? 'This work order has been cancelled.'
+                    : 'This work order is marked as completed but no service report was generated.'}
+              </div>
+              {workOrder.status !== 'Cancelled' && (
+                <Button className="w-full" onClick={() => setQuestionnaireOpen(true)}>
+                  <Check className="mr-2" />
+                  Generate Service Report
+                </Button>
+              )}
+          </CardContent>
+        </Card>
+      );
+    }
+    
     // If not engineer view, show a placeholder
     if (!isEngineerView) {
       return (
@@ -639,16 +661,14 @@ export function WorkOrderClientSection({
       );
     }
 
-    // If completed status but no report yet, show status
+    // If completed status and not engineer, show generic message
     if (isCompletedStatus) {
       return (
         <Card>
           <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
           <CardContent className="space-y-4">
               <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                  {workOrder.status === 'Cancelled' 
-                    ? 'This work order has been cancelled.'
-                    : 'Service report is being generated or completed.'}
+                  Service report pending.
               </div>
           </CardContent>
         </Card>

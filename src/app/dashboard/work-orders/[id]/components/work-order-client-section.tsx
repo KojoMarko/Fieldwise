@@ -302,7 +302,7 @@ export function WorkOrderClientSection({
     }
 
     // A non-engineer is viewing a completed order, or any user is viewing an active order.
-    if (!isEngineerView || isCompletedStatus) {
+    if (!isEngineerView && isCompletedStatus) {
        return (
         <Card>
           <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
@@ -315,6 +315,19 @@ export function WorkOrderClientSection({
           </CardContent>
         </Card>
       );
+    }
+
+    if (!isEngineerView) {
+        return (
+            <Card>
+                <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
+                <CardContent>
+                    <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                        A service report will be available once the engineer completes the work.
+                    </div>
+                </CardContent>
+            </Card>
+        );
     }
 
     // Engineer is viewing an active work order, show actions.
@@ -337,7 +350,7 @@ export function WorkOrderClientSection({
         </Button>
       </>
     ) : null;
-
+  
     return (
       <Card>
         <CardHeader><CardTitle>Engineer Actions</CardTitle></CardHeader>

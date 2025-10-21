@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -132,7 +133,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     Allocated: <Badge variant="secondary">Allocated</Badge>,
     'Pending Handover': <Badge variant="outline" className="border-orange-500 text-orange-600">Pending Handover</Badge>,
     'Pending Return': <Badge variant="outline" className="border-blue-500 text-blue-600">Pending Return</Badge>,
-    'With Engineer': <Badge variant="default" className="bg-green-600">With Engineer</Badge>,
+    'With Engineer': <Badge variant="default" className="bg-blue-500">With Engineer</Badge>,
     Returned: <Badge variant="outline" className="bg-gray-200 text-gray-800">Returned</Badge>,
     Used: <Badge variant="default" className="bg-green-600">Used</Badge>,
   }
@@ -187,7 +188,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                         <TableCell>
                             <div className="flex items-center gap-2">
                                 {statusBadge[part.status]}
-                                {(part.status === 'With Engineer' || part.status === 'Returned') && part.verifiedBy && (
+                                {(part.status === 'With Engineer' || part.status === 'Returned' || part.status === 'Used') && part.verifiedBy && (
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
@@ -228,6 +229,9 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
+                                     <DropdownMenuItem onClick={() => handlePartStatusChange(part.id, 'Used')}>
+                                        <CheckCircle className="mr-2" /> Mark as Used
+                                     </DropdownMenuItem>
                                      <DropdownMenuItem onClick={() => handleVerificationRequest(part, 'return')}>
                                         <ArchiveRestore className="mr-2" /> Return Part
                                     </DropdownMenuItem>

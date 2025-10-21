@@ -87,7 +87,7 @@ export function VerifyPartUsageDialog({
                 <AlertDescription>
                     <p><strong>Part Name:</strong> {part.name}</p>
                     <p><strong>Part Number:</strong> {part.partNumber}</p>
-                    <p><strong>Quantity:</strong> 1</p>
+                    <p><strong>Quantity:</strong> {part.quantity}</p>
                 </AlertDescription>
             </Alert>
              <Alert variant="destructive">

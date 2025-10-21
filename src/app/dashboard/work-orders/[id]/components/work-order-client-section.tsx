@@ -312,24 +312,17 @@ export function WorkOrderClientSection({
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
-    const addTitledSection = (title: string, content: string) => {
+    const addSection = (title: string, data: [string, string][]) => {
         (doc as any).autoTable({
             startY: finalY,
-            head: [[title]],
-            body: [[content]],
+            head: [[{ content: title, colSpan: 2, styles: { halign: 'left' } }]],
+            body: data,
             theme: 'grid',
-            styles: {
-                lineColor: [0, 0, 0],
-                lineWidth: 0.5,
-                cellPadding: 5,
-            },
-            headStyles: {
-                fillColor: [220, 220, 220],
-                textColor: [0, 0, 0],
-                fontStyle: 'bold',
-            },
-            bodyStyles: {
-                minCellHeight: 40
+            styles: { lineColor: [0, 0, 0], lineWidth: 0.5, cellPadding: 5 },
+            headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', cellPadding: 5 },
+            columnStyles: {
+                0: { fontStyle: 'bold', cellWidth: 150 },
+                1: { cellWidth: 'auto' },
             }
         });
         finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -337,15 +330,18 @@ export function WorkOrderClientSection({
 
 
     // --- MALFUNCTION / SERVICE REQUEST INFORMATION ---
-    addTitledSection('MALFUNCTION / SERVICE REQUEST INFORMATION (Reported Problem)', safe(reportData.summary?.reportedProblem));
-    addTitledSection('Symptom Summary', safe(reportData.summary?.symptomSummary));
-    addTitledSection('Problem Summary / Root Cause', safe(reportData.summary?.problemSummary));
+    addSection('MALFUNCTION / SERVICE REQUEST INFORMATION', [
+        ['Reported Problem:', safe(reportData.summary?.reportedProblem)],
+        ['Symptom Summary:', safe(reportData.summary?.symptomSummary)],
+        ['Problem Summary / Root Cause:', safe(reportData.summary?.problemSummary)]
+    ]);
     
     // --- ENGINEER'S REPORT ---
-    addTitledSection('ENGINEER\'S REPORT (CORRECTIVE ACTION TAKEN)', safe(reportData.summary?.resolutionSummary));
-    addTitledSection('Verification of Activity', safe(reportData.summary?.verificationOfActivity));
-    addTitledSection('Final Instrument Condition', safe(reportData.workOrder?.instrumentCondition || reportData.summary?.instrumentCondition));
-
+    addSection('ENGINEER\'S REPORT (CORRECTIVE ACTION TAKEN)', [
+        ['Resolution Summary:', safe(reportData.summary?.resolutionSummary)],
+        ['Verification of Activity:', safe(reportData.summary?.verificationOfActivity)],
+        ['Final Instrument Condition:', safe(reportData.workOrder?.instrumentCondition || reportData.summary?.instrumentCondition)]
+    ]);
 
     // --- LABOR ---
     (doc as any).autoTable({
@@ -518,7 +514,7 @@ export function WorkOrderClientSection({
             companyAddress: company?.address || '123 Service Lane, Tech City',
             clientName: customer?.name || 'N/A',
             clientAddress: customer?.address || 'N/A',
-            preparedBy: user?.name || 'N/A',
+            preparedBy: technician?.name || user?.name || 'N/A',
             completionDate: format(new Date(), 'yyyy-MM-dd HH:mm'),
         });
 
@@ -623,56 +619,8 @@ export function WorkOrderClientSection({
   }
 
   const EngineerActions = () => {
-    const isCompletedStatus = workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled';
-    
-    // If completed but no report, allow engineer to generate it
-    if (isCompletedStatus && !workOrder.technicianNotes && isEngineerView) {
-      return (
-        <Card>
-          <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-              <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                  {workOrder.status === 'Cancelled' 
-                    ? 'This work order has been cancelled.'
-                    : 'This work order is marked as completed but no service report was generated.'}
-              </div>
-              {workOrder.status !== 'Cancelled' && (
-                <Button className="w-full" onClick={() => setQuestionnaireOpen(true)}>
-                  <Check className="mr-2" />
-                  Generate Service Report
-                </Button>
-              )}
-          </CardContent>
-        </Card>
-      );
-    }
-    
-    // If not engineer view, show a placeholder
-    if (!isEngineerView) {
-      return (
-        <Card>
-          <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-              <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                  A service report will be available once the engineer completes the work.
-              </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    // If completed status and not engineer, show generic message
-    if (isCompletedStatus) {
-      return (
-        <Card>
-          <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-              <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                  Service report pending.
-              </div>
-          </CardContent>
-        </Card>
-      );
+    if (!isEngineerView || !workOrder || workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled') {
+      return null;
     }
   
     const actions: { [key in WorkOrderStatus]?: { label: string; icon: React.ElementType; nextStatus: WorkOrderStatus; } } = {
@@ -698,10 +646,10 @@ export function WorkOrderClientSection({
   
     return (
       <Card>
-        <CardHeader><CardTitle>Engineer Actions</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Engineer's Report</CardTitle></CardHeader>
         <CardContent className="space-y-4">
             <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                Current Status: <span className="font-semibold ml-1">{workOrder.status}</span>
+                A service report will be available once the engineer completes the work.
             </div>
              {currentAction ? (
                 <Button className="w-full" onClick={() => handleStatusChange(currentAction.nextStatus)}>
@@ -710,10 +658,8 @@ export function WorkOrderClientSection({
                 </Button>
             ) : null}
             {inProgressActions}
-            {!currentAction && !inProgressActions && workOrder.status === 'On-Hold' && (
-              <div className="text-sm text-muted-foreground">
-                This work order is on hold. Update the status to continue.
-              </div>
+            {!currentAction && !inProgressActions && (
+            <p className='text-sm text-muted-foreground'>No more actions for this status.</p>
             )}
         </CardContent>
       </Card>

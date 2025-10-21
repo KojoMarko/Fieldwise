@@ -16,8 +16,8 @@ import {
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import type { WorkOrder, Customer, User, Asset, Company, WorkOrderStatus } from '@/lib/types';
-import { format, parseISO } from 'date-fns';
+import type { WorkOrder, Customer, User, Asset, Company, WorkOrderStatus, AllocatedPart } from '@/lib/types';
+import { format, parseISO, differenceInMinutes } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Dialog,
@@ -122,7 +122,7 @@ export function WorkOrderClientSection({
   customer?: Customer;
   technician?: User;
   asset?: Asset;
-  allocatedParts: any[];
+  allocatedParts: AllocatedPart[];
   company?: Company,
 }) {
   const { user } = useAuth();
@@ -171,6 +171,35 @@ export function WorkOrderClientSection({
         }
     }
   }, [workOrder]);
+
+  // Effect to handle automatic updates to the questionnaire form data
+  useEffect(() => {
+    // Automatically calculate labor hours
+    const { timeWorkStarted, timeWorkCompleted } = questionnaireData;
+    if (timeWorkStarted && timeWorkCompleted && timeWorkCompleted > timeWorkStarted) {
+      const minutes = differenceInMinutes(timeWorkCompleted, timeWorkStarted);
+      const hours = parseFloat((minutes / 60).toFixed(2));
+      if (questionnaireData.laborHours !== hours) {
+        setQuestionnaireData(prev => ({ ...prev, laborHours: hours }));
+      }
+    }
+
+    // Automatically populate parts used
+    const usedParts = allocatedParts
+      .filter(p => p.status === 'Used')
+      .map(p => ({
+        partNumber: p.partNumber,
+        description: p.name,
+        quantity: p.quantity,
+        price: 0, // Price is a placeholder
+      }));
+    
+    // Avoid infinite loops by checking if an update is needed
+    if (JSON.stringify(questionnaireData.partsUsed) !== JSON.stringify(usedParts)) {
+        setQuestionnaireData(prev => ({ ...prev, partsUsed: usedParts }));
+    }
+
+  }, [questionnaireData.timeWorkStarted, questionnaireData.timeWorkCompleted, allocatedParts, questionnaireData.laborHours, questionnaireData.partsUsed]);
 
 
   const handlePutOnHold = async (reason: string) => {
@@ -280,7 +309,7 @@ export function WorkOrderClientSection({
     const isCompletedStatus = workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled';
     
     // An engineer is viewing a completed order that is missing a report.
-    if (isEngineerView && isCompletedStatus && !workOrder.technicianNotes) {
+    if (isEngineerView && isCompletedStatus && !workOrder.technicianNotes?.startsWith('{')) {
       return (
         <Card>
           <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
@@ -451,6 +480,16 @@ export function WorkOrderClientSection({
                            <DateTimePicker value={questionnaireData.timeWorkCompleted} onChange={date => setQuestionnaireData({...questionnaireData, timeWorkCompleted: date})} />
                         </div>
                    </div>
+                    <div>
+                        <Label>Parts Used</Label>
+                        {questionnaireData.partsUsed && questionnaireData.partsUsed.length > 0 ? (
+                            <ul className="list-disc list-inside space-y-1 text-sm p-3 border rounded-md">
+                                {questionnaireData.partsUsed.map((part, index) => (
+                                    <li key={index}>{part.description} (PN: {part.partNumber}) - Qty: {part.quantity}</li>
+                                ))}
+                            </ul>
+                        ) : <p className="text-sm text-muted-foreground p-3 border rounded-md">No parts marked as used.</p>}
+                    </div>
               </div>
               <DialogFooter>
                   <Button variant="outline" onClick={() => setQuestionnaireOpen(false)}>Cancel</Button>
@@ -464,3 +503,4 @@ export function WorkOrderClientSection({
     </>
   );
 }
+

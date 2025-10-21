@@ -1,4 +1,3 @@
-
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,7 @@ import {
   UserCheck,
   ArchiveRestore,
   HandHelping,
+  Trash2,
 } from 'lucide-react';
 import { suggestSpareParts } from '@/ai/flows/suggest-spare-parts';
 import { useToast } from '@/hooks/use-toast';
@@ -27,12 +27,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 import { AddPartsDialog } from './add-parts-dialog';
 import { VerifyPartUsageDialog } from './verify-part-usage-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Input } from '@/components/ui/input';
 
 
 export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts }: { workOrder: WorkOrder, allocatedParts: AllocatedPart[], setAllocatedParts: (parts: AllocatedPart[] | ((prev: AllocatedPart[]) => AllocatedPart[])) => void }) {
@@ -105,6 +107,27 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     setPartToVerify(null);
   }
 
+  const handleQuantityChange = (partId: string, newQuantity: number) => {
+    if (newQuantity < 1) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Quantity',
+        description: 'Quantity must be at least 1. To remove a part, use the delete action.',
+      })
+      return;
+    }
+    setAllocatedParts(prev => prev.map(p => p.id === partId ? {...p, quantity: newQuantity} : p));
+  }
+
+  const handleRemovePart = (partId: string) => {
+    setAllocatedParts(prev => prev.filter(p => p.id !== partId));
+    toast({
+      title: 'Part Removed',
+      description: 'The part has been removed from this work order.',
+    });
+  }
+
+
   const statusBadge: Record<AllocatedPart['status'], React.ReactNode> = {
     Allocated: <Badge variant="secondary">Allocated</Badge>,
     'Pending Handover': <Badge variant="outline" className="border-orange-500 text-orange-600">Pending Handover</Badge>,
@@ -139,7 +162,7 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                 <TableHeader>
                     <TableRow>
                         <TableHead>Part Name</TableHead>
-                        <TableHead>Quantity</TableHead>
+                        <TableHead className='w-[120px]'>Quantity</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className='text-right'>Actions</TableHead>
                     </TableRow>
@@ -151,7 +174,16 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                             <div className="font-medium">{part.name}</div>
                             <div className="text-sm text-muted-foreground">{part.partNumber}</div>
                         </TableCell>
-                        <TableCell>{part.quantity}</TableCell>
+                         <TableCell>
+                            <Input
+                                type="number"
+                                value={part.quantity}
+                                onChange={(e) => handleQuantityChange(part.id, parseInt(e.target.value, 10))}
+                                disabled={part.status !== 'Allocated'}
+                                className="w-20"
+                                min={1}
+                            />
+                        </TableCell>
                         <TableCell>
                             <div className="flex items-center gap-2">
                                 {statusBadge[part.status]}
@@ -180,6 +212,10 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
                                 <DropdownMenuContent>
                                     <DropdownMenuItem onClick={() => handleVerificationRequest(part, 'take')}>
                                         <HandHelping className="mr-2" /> Take Part
+                                    </DropdownMenuItem>
+                                     <DropdownMenuSeparator />
+                                     <DropdownMenuItem className="text-destructive" onClick={() => handleRemovePart(part.id)}>
+                                        <Trash2 className="mr-2" /> Remove Part
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -282,5 +318,3 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     </>
   );
 }
-
-    

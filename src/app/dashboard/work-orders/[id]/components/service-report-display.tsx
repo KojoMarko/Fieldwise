@@ -182,11 +182,11 @@ export function ServiceReportDisplay({
     const addSectionWithAutoWrap = (title: string, data: Record<string, string>) => {
         (doc as any).autoTable({
             startY: finalY,
-            head: [[title]],
+            head: [[{ content: title, colSpan: 2 }]],
             body: Object.entries(data).map(([key, value]) => [key, value]),
             theme: 'grid',
             styles: { lineColor: [0,0,0], lineWidth: 0.5, cellPadding: 5 },
-            headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' },
+            headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'left' },
             columnStyles: {
                 0: { fontStyle: 'bold', cellWidth: 150 },
                 1: { },
@@ -216,7 +216,7 @@ export function ServiceReportDisplay({
         head: [['LABOR']],
         theme: 'grid',
         styles: { lineColor: [0,0,0], lineWidth: 0.5 },
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
+        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'left' }
     });
     (doc as any).autoTable({
         startY: (doc as any).lastAutoTable.finalY,
@@ -238,10 +238,10 @@ export function ServiceReportDisplay({
     const partsBody = partsData.map((p: any) => [p.partNumber, p.description, p.quantity]);
     (doc as any).autoTable({
         startY: finalY,
-        head: [['SPARE PARTS / MATERIALS USED']],
+        head: [[{ content: 'SPARE PARTS / MATERIALS USED', colSpan: 3 }]],
         theme: 'grid',
         styles: { lineColor: [0,0,0], lineWidth: 0.5 },
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
+        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'left' }
     });
     if (partsBody.length > 0) {
         (doc as any).autoTable({
@@ -250,6 +250,7 @@ export function ServiceReportDisplay({
             body: partsBody,
             theme: 'grid',
             styles: { lineColor: [0,0,0], lineWidth: 0.5 },
+            headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
         });
     } else {
          (doc as any).autoTable({

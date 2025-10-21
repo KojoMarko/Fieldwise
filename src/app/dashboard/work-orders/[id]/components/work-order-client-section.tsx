@@ -269,7 +269,6 @@ export function WorkOrderClientSection({
   const EngineerActions = () => {
     const isCompletedStatus = workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled';
     
-    // If completed but no report, allow engineer to generate it
     if (isCompletedStatus && !workOrder.technicianNotes && isEngineerView) {
       return (
         <Card>
@@ -291,32 +290,19 @@ export function WorkOrderClientSection({
       );
     }
     
-    // If not engineer view, show a placeholder
-    if (!isEngineerView) {
-      return (
-        <Card>
-          <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-              <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                  A service report will be available once the engineer completes the work.
-              </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    // If completed status and not engineer, show generic message
-    if (isCompletedStatus) {
-      return (
-        <Card>
-          <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-              <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                  Service report pending.
-              </div>
-          </CardContent>
-        </Card>
-      );
+    if (isCompletedStatus || !isEngineerView) {
+        return (
+            <Card>
+            <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                    {workOrder.status === 'Cancelled' 
+                    ? 'This work order has been cancelled.'
+                    : 'A service report will be available once the engineer completes the work.'}
+                </div>
+            </CardContent>
+            </Card>
+        );
     }
   
     const actions: { [key in WorkOrderStatus]?: { label: string; icon: React.ElementType; nextStatus: WorkOrderStatus; } } = {
@@ -466,3 +452,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    

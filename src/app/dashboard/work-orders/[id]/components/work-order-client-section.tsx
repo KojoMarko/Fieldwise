@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import {
   Play,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
-import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
+import type { ServiceReportQuestionnaire } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import type { WorkOrder, Customer, User, Asset, Company, WorkOrderStatus } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
@@ -122,7 +122,7 @@ export function WorkOrderClientSection({
   customer?: Customer;
   technician?: User;
   asset?: Asset;
-  allocatedParts: AllocatedPart[],
+  allocatedParts: any[];
   company?: Company,
 }) {
   const { user } = useAuth();
@@ -144,11 +144,11 @@ export function WorkOrderClientSection({
       timeWorkCompleted: undefined,
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  
+  const isEngineerView = user?.role === 'Engineer';
 
   useEffect(() => {
-    if (workOrder.status === 'Completed' && user?.role === 'Engineer' && !workOrder.technicianNotes) {
-      setQuestionnaireOpen(true);
-    }
+    // Pre-fill questionnaire from saved notes if they exist
     if (workOrder.technicianNotes && workOrder.technicianNotes.startsWith('{')) {
         try {
             const savedData = JSON.parse(workOrder.technicianNotes);
@@ -170,7 +170,7 @@ export function WorkOrderClientSection({
             console.error("Could not parse saved report data.", e);
         }
     }
-  }, [workOrder, user]);
+  }, [workOrder]);
 
 
   const handlePutOnHold = async (reason: string) => {
@@ -263,13 +263,24 @@ export function WorkOrderClientSection({
         setIsGeneratingReport(false);
     }
   }
-
-  const isEngineerView = user?.role === 'Engineer';
   
-  const EngineerActions = () => {
+  const renderContent = () => {
+    if (isGeneratingReport) {
+      return (
+        <Card>
+          <CardContent className="p-6 flex flex-col items-center justify-center min-h-[300px]">
+            <LoaderCircle className="h-10 w-10 animate-spin text-primary mb-4" />
+            <p className="font-medium">Generating Service Report...</p>
+            <p className="text-sm text-muted-foreground">The AI is structuring your report data.</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
     const isCompletedStatus = workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled';
     
-    if (isCompletedStatus && !workOrder.technicianNotes && isEngineerView) {
+    // An engineer is viewing a completed order that is missing a report.
+    if (isEngineerView && isCompletedStatus && !workOrder.technicianNotes) {
       return (
         <Card>
           <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
@@ -289,28 +300,29 @@ export function WorkOrderClientSection({
         </Card>
       );
     }
-    
-    if (isCompletedStatus || !isEngineerView) {
-        return (
-            <Card>
-            <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                    {workOrder.status === 'Cancelled' 
+
+    // A non-engineer is viewing a completed order, or any user is viewing an active order.
+    if (!isEngineerView || isCompletedStatus) {
+       return (
+        <Card>
+          <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
+          <CardContent>
+              <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
+                  {workOrder.status === 'Cancelled' 
                     ? 'This work order has been cancelled.'
                     : 'A service report will be available once the engineer completes the work.'}
-                </div>
-            </CardContent>
-            </Card>
-        );
+              </div>
+          </CardContent>
+        </Card>
+      );
     }
-  
+
+    // Engineer is viewing an active work order, show actions.
     const actions: { [key in WorkOrderStatus]?: { label: string; icon: React.ElementType; nextStatus: WorkOrderStatus; } } = {
       'Scheduled': { label: 'Start Travel', icon: Play, nextStatus: 'Dispatched' },
       'Dispatched': { label: 'Arrive on Site', icon: Play, nextStatus: 'On-Site' },
       'On-Site': { label: 'Start Work', icon: Play, nextStatus: 'In-Progress' },
     };
-  
     const currentAction = actions[workOrder.status];
   
     const inProgressActions = workOrder.status === 'In-Progress' ? (
@@ -325,7 +337,7 @@ export function WorkOrderClientSection({
         </Button>
       </>
     ) : null;
-  
+
     return (
       <Card>
         <CardHeader><CardTitle>Engineer Actions</CardTitle></CardHeader>
@@ -433,24 +445,9 @@ export function WorkOrderClientSection({
               </DialogFooter>
           </DialogContent>
       </Dialog>
-      <div className="grid gap-4 mt-4">
       
-        {isGeneratingReport ? (
-            <Card>
-                <CardContent className="p-6 flex flex-col items-center justify-center min-h-[300px]">
-                    <LoaderCircle className="h-10 w-10 animate-spin text-primary mb-4" />
-                    <p className="font-medium">Generating Service Report...</p>
-                    <p className="text-sm text-muted-foreground">The AI is structuring your report data.</p>
-                </CardContent>
-            </Card>
-        ) : (
-             <div className="lg:col-span-3">
-                <EngineerActions />
-            </div>
-        )}
-      </div>
+      {renderContent()}
+
     </>
   );
 }
-
-    

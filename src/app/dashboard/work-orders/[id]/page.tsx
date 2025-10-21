@@ -71,7 +71,6 @@ export default function WorkOrderDetailPage({
   const { id } = use(params);
   const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
   
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -79,7 +78,6 @@ export default function WorkOrderDetailPage({
   const [technicians, setTechnicians] = useState<User[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [allocatedParts, setAllocatedParts] = useState<AllocatedPart[]>([]);
-  const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -163,46 +161,6 @@ export default function WorkOrderDetailPage({
 
   }, [workOrder, user, router]);
 
-  const handleStatusChange = async (newStatus: WorkOrderStatus) => {
-    if (!workOrder) return;
-    try {
-      const workOrderRef = doc(db, 'work-orders', workOrder.id);
-      await updateDoc(workOrderRef, { status: newStatus });
-      toast({
-        title: 'Status Updated',
-        description: `Work order status changed to "${newStatus}".`,
-      });
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: 'Could not update the work order status.',
-      });
-    }
-  };
-  
-  const handlePutOnHold = async (reason: string) => {
-    if (!workOrder) return;
-    try {
-      const workOrderRef = doc(db, 'work-orders', workOrder.id);
-      const newNotes = `${workOrder.technicianNotes || ''}\n\nWork put on hold. Reason: ${reason}`;
-      await updateDoc(workOrderRef, { status: 'On-Hold', technicianNotes: newNotes });
-      toast({
-        variant: 'default',
-        title: 'Work Order On Hold',
-        description: 'The work order status has been updated.',
-      });
-      setHoldDialogOpen(false);
-    } catch (error) {
-       toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: 'Could not update the work order status.',
-      });
-    }
-  };
-
   const isEngineerView = user?.role === 'Engineer';
 
   if (isLoading || isAuthLoading) {
@@ -239,65 +197,12 @@ export default function WorkOrderDetailPage({
     )
   }
 
-  const EngineerWorkflowActions = () => {
-    if (!isEngineerView || !workOrder || workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled') {
-      return null;
-    }
-  
-    const actions: { [key in WorkOrderStatus]?: { label: string; icon: React.ElementType; nextStatus: WorkOrderStatus; } } = {
-      'Scheduled': { label: 'Start Travel', icon: Truck, nextStatus: 'Dispatched' },
-      'Dispatched': { label: 'Arrive on Site', icon: UserCheck, nextStatus: 'On-Site' },
-      'On-Site': { label: 'Start Work', icon: Play, nextStatus: 'In-Progress' },
-    };
-  
-    const currentAction = actions[workOrder.status];
-  
-    const inProgressActions = workOrder.status === 'In-Progress' ? (
-      <>
-        <Button className="w-full" onClick={() => handleStatusChange('Completed')}>
-          <Check className="mr-2" />
-          Mark as Complete
-        </Button>
-        <Button className="w-full" variant="outline" onClick={() => setHoldDialogOpen(true)}>
-          <Pause className="mr-2" />
-          Put on Hold
-        </Button>
-      </>
-    ) : null;
-  
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Next Step</CardTitle>
-          <CardDescription>Update your progress on this work order.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-            {currentAction ? (
-                 <Button className="w-full" onClick={() => handleStatusChange(currentAction.nextStatus)}>
-                    <currentAction.icon className="mr-2" />
-                    {currentAction.label}
-                </Button>
-            ) : null}
-            {inProgressActions}
-            {!currentAction && !inProgressActions && (
-              <p className='text-sm text-muted-foreground'>No more actions for this status.</p>
-            )}
-        </CardContent>
-      </Card>
-    );
-  };
-
   const isPartsTabDisabled = isEngineerView && workOrder.status === 'Draft';
   const isReportTabDisabled = isEngineerView && !['In-Progress', 'On-Hold', 'Completed', 'Invoiced'].includes(workOrder.status);
 
 
   return (
     <div className="mx-auto grid w-full flex-1 auto-rows-max gap-4">
-      <HoldWorkOrderDialog
-        open={isHoldDialogOpen}
-        onOpenChange={setHoldDialogOpen}
-        onSubmit={handlePutOnHold}
-      />
        <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" className="h-7 w-7" asChild>
           <Link href="/dashboard/work-orders">
@@ -318,7 +223,7 @@ export default function WorkOrderDetailPage({
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="parts" disabled={isPartsTabDisabled}>Parts & Tools</TabsTrigger>
-            <TabsTrigger value="report" disabled={isReportTabDisabled}>Service Report</TabsTrigger>
+            <TabsTrigger value="report">Service Report</TabsTrigger>
           </TabsList>
           <TabsContent value="details">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
@@ -400,7 +305,6 @@ export default function WorkOrderDetailPage({
                     </Card>
                 </div>
                 <div className="grid auto-rows-max items-start gap-4 lg:col-span-1">
-                     <EngineerWorkflowActions />
                      <Card>
                         <CardHeader>
                             <CardTitle>Asset & Customer</CardTitle>
@@ -457,7 +361,7 @@ export default function WorkOrderDetailPage({
           <TabsContent value="parts">
             <WorkOrderPartsTab workOrder={workOrder} allocatedParts={allocatedParts} setAllocatedParts={setAllocatedParts} />
           </TabsContent>
-           <TabsContent value="report">
+           <TabsContent value="report" className="mt-4">
                 {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
                     <ServiceReportDisplay 
                         workOrder={workOrder} 

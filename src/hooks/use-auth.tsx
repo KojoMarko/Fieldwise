@@ -34,19 +34,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser) => {
-      setIsLoading(true);
       if (fbUser) {
         setFirebaseUser(fbUser);
-        const userDocRef = doc(db, 'users', fbUser.uid);
-        const userDoc = await getDoc(userDocRef);
+        try {
+          const userDocRef = doc(db, 'users', fbUser.uid);
+          const userDoc = await getDoc(userDocRef);
 
-        if (userDoc.exists()) {
-          setUser(userDoc.data() as User);
-        } else {
+          if (userDoc.exists()) {
+            setUser(userDoc.data() as User);
+          } else {
             console.warn(`User ${fbUser.uid} exists in Auth but not in Firestore. Logging out.`);
             await signOut(firebaseAuth);
             setUser(null);
             setFirebaseUser(null);
+          }
+        } catch (error) {
+          console.error('Error fetching user document:', error);
+          setUser(null);
+          setFirebaseUser(null);
         }
       } else {
         setFirebaseUser(null);
@@ -77,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: fbUser.uid,
             name: name,
             email: email,
-            role: 'Admin', // The first user of a company is an Admin
+            role: 'Admin',
             avatarUrl: `https://picsum.photos/seed/${fbUser.uid}/100/100`,
             companyId: companyId
         };
@@ -126,8 +131,25 @@ export function AuthGuard({ children }: { children: ReactNode }) {
         }
     }, [isLoading, user, router]);
 
-    if (isLoading || !user) {
-        return <div className="flex h-screen w-full items-center justify-center">Loading...</div>;
+    // KEY CHANGE: Don't render children at all until loading is complete
+    // This prevents child components from making Firestore queries before auth is ready
+    if (isLoading) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                    <p>Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center">
+                <p>Redirecting to login...</p>
+            </div>
+        );
     }
 
     return <>{children}</>;

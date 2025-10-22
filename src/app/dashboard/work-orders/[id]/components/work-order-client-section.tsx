@@ -17,7 +17,7 @@ import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import type { WorkOrder, Customer, User, Asset, Company, WorkOrderStatus, AllocatedPart } from '@/lib/types';
-import { format, parseISO, differenceInMinutes } from 'date-fns';
+import { format, parseISO, differenceInMinutes, isValid } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Dialog,
@@ -102,7 +102,7 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
                     <Label className="text-sm">Time</Label>
                     <Input
                         type="time"
-                        value={date ? format(date, 'HH:mm') : ''}
+                        value={date && isValid(date) ? format(date, 'HH:mm') : ''}
                         onChange={handleTimeChange}
                     />
                 </div>
@@ -116,14 +116,12 @@ export function WorkOrderClientSection({
   customer,
   technician,
   asset,
-  allocatedParts,
   company,
 }: {
   workOrder: WorkOrder;
   customer?: Customer;
   technician?: User;
   asset?: Asset;
-  allocatedParts: AllocatedPart[];
   company?: Company,
 }) {
   const { user } = useAuth();
@@ -140,7 +138,7 @@ export function WorkOrderClientSection({
       agreementType: 'Warranty',
       laborHours: workOrder.duration || 0,
       signingPerson: customer?.contactPerson || '',
-      partsUsed: [],
+      partsUsed: workOrder.allocatedParts?.filter(p => p.status === 'Used') || [],
       timeWorkStarted: undefined,
       timeWorkCompleted: undefined,
   });
@@ -171,11 +169,16 @@ export function WorkOrderClientSection({
             console.error("Could not parse saved report data.", e);
         }
     }
+     // Auto-update parts used from work order
+    setQuestionnaireData(prev => ({
+        ...prev,
+        partsUsed: workOrder.allocatedParts?.filter(p => p.status === 'Used') || []
+    }));
+
   }, [workOrder]);
 
   // Effect to handle automatic updates to the questionnaire form data
   useEffect(() => {
-    // Automatically calculate labor hours
     const { timeWorkStarted, timeWorkCompleted } = questionnaireData;
     if (timeWorkStarted && timeWorkCompleted && timeWorkCompleted > timeWorkStarted) {
       const minutes = differenceInMinutes(timeWorkCompleted, timeWorkStarted);
@@ -231,7 +234,7 @@ export function WorkOrderClientSection({
     setQuestionnaireOpen(false);
     setIsGeneratingReport(true);
     try {
-        const usedParts = allocatedParts
+        const usedParts = (workOrder.allocatedParts || [])
             .filter(p => p.status === 'Used')
             .map(p => ({
                 partNumber: p.partNumber,
@@ -466,7 +469,9 @@ export function WorkOrderClientSection({
                     <div>
                         <Label>Parts Used</Label>
                         <p className="text-sm text-muted-foreground p-3 border rounded-md">
-                            Parts marked as 'Used' in the Parts tab will be automatically included.
+                           {questionnaireData.partsUsed && questionnaireData.partsUsed.length > 0 
+                                ? `Included: ${questionnaireData.partsUsed.map(p => `${p.name} (Qty: ${p.quantity})`).join(', ')}`
+                                : "No parts marked as 'Used' will be included."}
                         </p>
                     </div>
               </div>
@@ -482,3 +487,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    

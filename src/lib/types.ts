@@ -100,6 +100,7 @@ export type WorkOrder = {
   companyId: string; // New field
   cost?: number;
   duration?: number; // Duration in hours
+  allocatedParts?: AllocatedPart[]; // Added field
 };
 
 export type ServiceReportQuestionnaire = z.infer<typeof ServiceReportQuestionnaireSchema>;
@@ -171,3 +172,5 @@ export type SecurityRuleContext = {
 export type SecurityRuleError = Error & {
   context: SecurityRuleContext;
 };
+
+    

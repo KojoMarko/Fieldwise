@@ -77,8 +77,7 @@ export default function WorkOrderDetailPage({
   const [asset, setAsset] = useState<Asset | null>(null);
   const [technicians, setTechnicians] = useState<User[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
-  const [allocatedParts, setAllocatedParts] = useState<AllocatedPart[]>([]);
-
+  
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -359,29 +358,20 @@ export default function WorkOrderDetailPage({
             </div>
           </TabsContent>
           <TabsContent value="parts">
-            <WorkOrderPartsTab workOrder={workOrder} allocatedParts={allocatedParts} setAllocatedParts={setAllocatedParts} />
+            <WorkOrderPartsTab workOrder={workOrder} />
           </TabsContent>
            <TabsContent value="report" className="mt-4">
-                {(workOrder.status === 'Completed' || workOrder.status === 'Invoiced') && workOrder.technicianNotes ? (
-                    <ServiceReportDisplay 
-                        workOrder={workOrder} 
-                        company={company ?? undefined}
-                        customer={customer ?? undefined}
-                        asset={asset ?? undefined}
-                        technician={technicians[0] ?? undefined}
-                    />
-                ) : (
-                    <WorkOrderClientSection 
-                        workOrder={workOrder} 
-                        customer={customer ?? undefined} 
-                        technician={technicians[0] ?? undefined} 
-                        asset={asset ?? undefined} 
-                        allocatedParts={allocatedParts} 
-                        company={company ?? undefined}
-                    />
-                )}
+                <WorkOrderClientSection 
+                    workOrder={workOrder} 
+                    customer={customer ?? undefined} 
+                    technician={technicians[0] ?? undefined} 
+                    asset={asset ?? undefined} 
+                    company={company ?? undefined}
+                />
            </TabsContent>
         </Tabs>
     </div>
   );
 }
+
+    

@@ -1,6 +1,6 @@
 
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
@@ -36,9 +36,11 @@ import { VerifyPartUsageDialog } from './verify-part-usage-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 
-export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts }: { workOrder: WorkOrder, allocatedParts: AllocatedPart[], setAllocatedParts: (parts: AllocatedPart[] | ((prev: AllocatedPart[]) => AllocatedPart[])) => void }) {
+export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -46,7 +48,27 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
   const [isVerifyDialogOpen, setVerifyDialogOpen] = useState(false);
   const [partToVerify, setPartToVerify] = useState<AllocatedPart | null>(null);
   const { toast } = useToast();
+  const [allocatedParts, setAllocatedParts] = useState<AllocatedPart[]>(workOrder.allocatedParts || []);
+  
+  // Keep local state in sync with Firestore document
+  useEffect(() => {
+    setAllocatedParts(workOrder.allocatedParts || []);
+  }, [workOrder.allocatedParts]);
 
+  const updatePartsInFirestore = async (parts: AllocatedPart[]) => {
+    const workOrderRef = doc(db, 'work-orders', workOrder.id);
+    try {
+      await updateDoc(workOrderRef, { allocatedParts: parts });
+    } catch (error) {
+      console.error("Failed to update parts in Firestore:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Sync Error',
+        description: 'Could not save parts changes to the database.',
+      });
+    }
+  };
+  
   const handleSuggestParts = async () => {
     setIsLoading(true);
     setSuggestions([]);
@@ -71,12 +93,16 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
 
   const handleAddParts = (newParts: SparePart[]) => {
     const newAllocatedParts = newParts.map(p => ({...p, status: 'Allocated' as const, quantity: 1}));
-    setAllocatedParts(prev => [...prev, ...newAllocatedParts]);
+    const updatedParts = [...allocatedParts, ...newAllocatedParts];
+    setAllocatedParts(updatedParts);
+    updatePartsInFirestore(updatedParts);
   }
   
   const handlePartStatusChange = (partId: string, status: AllocatedPart['status']) => {
-    setAllocatedParts(prev => prev.map(p => p.id === partId ? {...p, status} : p));
-     toast({
+    const updatedParts = allocatedParts.map(p => p.id === partId ? {...p, status} : p);
+    setAllocatedParts(updatedParts);
+    updatePartsInFirestore(updatedParts);
+    toast({
         title: 'Part Status Updated',
         description: `Part status changed to "${status}"`,
     });
@@ -97,13 +123,15 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
   }
 
   const handleVerification = (partId: string, verifierName: string) => {
-    setAllocatedParts(prev => prev.map(p => {
+    const updatedParts = allocatedParts.map(p => {
         if (p.id === partId) {
             const finalStatus = p.status === 'Pending Handover' ? 'With Engineer' : 'Returned';
             return { ...p, status: finalStatus, verifiedBy: verifierName };
         }
         return p;
-    }));
+    });
+    setAllocatedParts(updatedParts);
+    updatePartsInFirestore(updatedParts);
     setVerifyDialogOpen(false);
     setPartToVerify(null);
   }
@@ -117,11 +145,15 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
       })
       return;
     }
-    setAllocatedParts(prev => prev.map(p => p.id === partId ? {...p, quantity: newQuantity} : p));
+    const updatedParts = allocatedParts.map(p => p.id === partId ? {...p, quantity: newQuantity} : p);
+    setAllocatedParts(updatedParts);
+    updatePartsInFirestore(updatedParts);
   }
 
   const handleRemovePart = (partId: string) => {
-    setAllocatedParts(prev => prev.filter(p => p.id !== partId));
+    const updatedParts = allocatedParts.filter(p => p.id !== partId);
+    setAllocatedParts(updatedParts);
+    updatePartsInFirestore(updatedParts);
     toast({
       title: 'Part Removed',
       description: 'The part has been removed from this work order.',
@@ -322,3 +354,5 @@ export function WorkOrderPartsTab({ workOrder, allocatedParts, setAllocatedParts
     </>
   );
 }
+
+    

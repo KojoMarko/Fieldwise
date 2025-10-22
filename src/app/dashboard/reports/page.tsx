@@ -24,6 +24,8 @@ import {
   Users,
   FileDown,
   TrendingDown,
+  Clock,
+  Speaker,
 } from 'lucide-react';
 import {
   Bar,
@@ -46,8 +48,8 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import { KpiCard } from '@/components/kpi-card';
-import { Progress } from '@/components/ui/progress';
+import { ReportKpiCard } from './components/report-kpi-card';
+
 
 const lineChartData = [
   { month: 'Jan', revenue: 41000, target: 50000 },
@@ -64,7 +66,7 @@ const lineChartData = [
 const barChartData = [
   { month: 'Jan', revenue: 42000 },
   { month: 'Feb', revenue: 48000 },
-  { month: 'Mar', a: 52000 },
+  { month: 'Mar', revenue: 52000 },
   { month: 'Apr', revenue: 45000 },
   { month: 'May', revenue: 54000 },
   { month: 'Jun', revenue: 58000 },
@@ -75,11 +77,11 @@ const barChartData = [
 ];
 
 const leadSourceData = [
-    { source: 'Website', value: 35, fill: 'var(--color-website)' },
-    { source: 'Referral', value: 25, fill: 'var(--color-referral)' },
-    { source: 'LinkedIn', value: 20, fill: 'var(--color-linkedin)' },
-    { source: 'Cold Call', value: 10, fill: 'var(--color-coldcall)' },
-    { source: 'Trade Show', value: 10, fill: 'var(--color-tradeshow)' },
+    { source: 'Website', value: 350, fill: 'var(--color-website)' },
+    { source: 'Referral', value: 250, fill: 'var(--color-referral)' },
+    { source: 'LinkedIn', value: 200, fill: 'var(--color-linkedin)' },
+    { source: 'Cold Call', value: 100, fill: 'var(--color-coldcall)' },
+    { source: 'Trade Show', value: 100, fill: 'var(--color-tradeshow)' },
 ];
 
 const lineChartConfig = {
@@ -109,27 +111,10 @@ const leadSourceChartConfig = {
     tradeshow: { label: "Trade Show", color: "hsl(var(--chart-5))" },
 } satisfies ChartConfig;
 
-function ReportKpiCard({ title, value, change, Icon, changeType }: { title: string, value: string, change: string, Icon: React.ElementType, changeType: 'increase' | 'decrease' }) {
-    return (
-        <Card>
-            <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                    <CardDescription>{title}</CardDescription>
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                </div>
-            </CardHeader>
-            <CardContent>
-                <h3 className="text-2xl font-bold">{value}</h3>
-                <div className={`flex items-center gap-1 text-xs mt-1 ${changeType === 'increase' ? 'text-green-600' : 'text-red-600'}`}>
-                    {changeType === 'increase' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                    <span>{change} from last period</span>
-                </div>
-            </CardContent>
-        </Card>
-    )
-}
 
 export default function ReportsPage() {
+  const totalLeads = leadSourceData.reduce((acc, curr) => acc + curr.value, 0);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -209,6 +194,12 @@ export default function ReportsPage() {
            </div>
         </TabsContent>
          <TabsContent value="leads" className="mt-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+                <ReportKpiCard title="Total Leads" value="1,000" change="+20.1%" Icon={Users} changeType="increase" />
+                <ReportKpiCard title="Conversion Rate" value="12.5%" change="+2.1%" Icon={Target} changeType="increase" />
+                <ReportKpiCard title="Avg. Response Time" value="3.2h" change="-10.5%" Icon={Clock} changeType="decrease" />
+                <ReportKpiCard title="Active Campaigns" value="3" change=" " Icon={Speaker} changeType="increase" />
+            </div>
             <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                     <CardHeader>
@@ -222,20 +213,18 @@ export default function ReportsPage() {
                         >
                             <PieChart>
                                 <ChartTooltipContent nameKey="value" hideLabel />
-                                <Pie data={leadSourceData} dataKey="value" nameKey="source" labelLine={false} label={({
-                                        cx,
-                                        cy,
-                                        midAngle,
-                                        innerRadius,
-                                        outerRadius,
-                                        value,
-                                        index,
-                                    }) => {
-                                        const RADIAN = Math.PI / 180
-                                        const radius = 12 + outerRadius + (outerRadius - innerRadius) * 0.5
-                                        const x = cx + radius * Math.cos(-midAngle * RADIAN)
-                                        const y = cy + radius * Math.sin(-midAngle * RADIAN)
-                        
+                                <Pie 
+                                    data={leadSourceData} 
+                                    dataKey="value" 
+                                    nameKey="source" 
+                                    labelLine={false} 
+                                    label={({ cx, cy, midAngle, innerRadius, outerRadius, value, index }) => {
+                                        const RADIAN = Math.PI / 180;
+                                        const radius = 12 + outerRadius + (outerRadius - innerRadius) * 0.5;
+                                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                        const percent = ((value / totalLeads) * 100).toFixed(0);
+
                                         return (
                                         <text
                                             x={x}
@@ -245,10 +234,11 @@ export default function ReportsPage() {
                                             dominantBaseline="central"
                                             className="text-xs"
                                         >
-                                            {leadSourceData[index].source} {value}%
+                                            {leadSourceData[index].source} ({percent}%)
                                         </text>
-                                        )
-                                    }}>
+                                        );
+                                    }}
+                                >
                                 {leadSourceData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.fill} />
                                 ))}
@@ -260,18 +250,36 @@ export default function ReportsPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Source Performance</CardTitle>
-                        <CardDescription>Lead sources by volume</CardDescription>
+                        <CardDescription>Lead volume by source</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-4">
-                        {leadSourceData.map((entry) => (
-                           <div key={entry.source} className="flex items-center gap-4">
-                                <span className="flex-1 text-sm font-medium">{entry.source}</span>
-                                <div className="w-28 text-right">
-                                    <span className="text-sm font-medium text-muted-foreground">{entry.value}%</span>
-                                    <Progress value={entry.value} className="h-1 mt-1" indicatorClassName="bg-[--progress-color]" style={{'--progress-color': entry.fill} as React.CSSProperties} />
-                                </div>
-                            </div>
-                        ))}
+                    <CardContent>
+                       <ChartContainer config={leadSourceChartConfig} className="min-h-[250px] w-full">
+                             <BarChart
+                                accessibilityLayer
+                                data={leadSourceData}
+                                layout="vertical"
+                                margin={{
+                                    left: 0,
+                                }}
+                                >
+                                <YAxis
+                                    dataKey="source"
+                                    type="category"
+                                    tickLine={false}
+                                    tickMargin={10}
+                                    axisLine={false}
+                                    tickFormatter={(value) =>
+                                        value.slice(0, 3)
+                                    }
+                                />
+                                <XAxis dataKey="value" type="number" hide />
+                                <Bar dataKey="value" layout="vertical" radius={4}>
+                                     {leadSourceData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ChartContainer>
                     </CardContent>
                 </Card>
             </div>

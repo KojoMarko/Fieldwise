@@ -50,17 +50,10 @@ export const columns: ColumnDef<Lead>[] = [
         return (
             <div className="pl-4">
                 <div className="font-medium">{row.getValue('company')}</div>
-                <div className="text-sm text-muted-foreground md:hidden">{row.getValue('contact')}</div>
+                <div className="text-sm text-muted-foreground">{row.getValue('contact')}</div>
             </div>
         )
      },
-  },
-  {
-    accessorKey: 'contact',
-    header: 'Contact',
-    meta: {
-        className: 'hidden md:table-cell'
-    }
   },
   {
     accessorKey: 'email',

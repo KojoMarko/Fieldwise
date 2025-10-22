@@ -88,7 +88,7 @@ function PipelineView() {
             const stageValue = stageOpportunities.reduce((sum, o) => sum + o.value, 0);
 
             return (
-                <div key={stage.name} className="flex-shrink-0 w-72 space-y-4">
+                <div key={stage.name} className="flex-shrink-0 w-full sm:w-72 md:w-80 space-y-4">
                     <div className="flex items-center gap-2">
                         <div className={`h-2 w-2 rounded-full ${stage.color}`}></div>
                         <h3 className="font-semibold">{stage.name}</h3>
@@ -100,7 +100,7 @@ function PipelineView() {
                         </span>
                     </div>
                     <div className="space-y-4">
-                        {stageOpportunities.map(opp => <OpportunityCard key={opp.id} opportunity={opp} />)}
+                        {stageOpportunities.length > 0 ? stageOpportunities.map(opp => <OpportunityCard key={opp.id} opportunity={opp} />) : <div className="text-sm text-muted-foreground text-center pt-10">No opportunities in this stage.</div>}
                     </div>
                 </div>
             )
@@ -118,12 +118,12 @@ export default function OpportunitiesPage() {
 
   return (
     <div className="space-y-6">
-       <div className="flex items-center">
+       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Opportunities</h1>
           <p className="text-muted-foreground">Track and manage your sales pipeline</p>
         </div>
-        <div className="ml-auto">
+        <div className="sm:ml-auto">
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" /> New Opportunity
           </Button>

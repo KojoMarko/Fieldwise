@@ -40,6 +40,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  LabelList,
 } from 'recharts';
 import {
   ChartContainer,
@@ -269,14 +270,23 @@ export default function ReportsPage() {
                                     tickMargin={10}
                                     axisLine={false}
                                     tickFormatter={(value) =>
-                                        value.slice(0, 3)
+                                        leadSourceChartConfig[value.toLowerCase() as keyof typeof leadSourceChartConfig]?.label || value
                                     }
                                 />
                                 <XAxis dataKey="value" type="number" hide />
+                                <Tooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
                                 <Bar dataKey="value" layout="vertical" radius={4}>
-                                     {leadSourceData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                     {leadSourceData.map((entry) => (
+                                        <Cell key={`cell-${entry.source}`} fill={entry.fill} />
                                     ))}
+                                    <LabelList
+                                        position="right"
+                                        offset={8}
+                                        className="fill-foreground"
+                                        fontSize={12}
+                                        dataKey="value"
+                                        formatter={(value: number) => `${((value / totalLeads) * 100).toFixed(0)}%`}
+                                    />
                                 </Bar>
                             </BarChart>
                         </ChartContainer>

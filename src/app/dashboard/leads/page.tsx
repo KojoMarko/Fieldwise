@@ -89,7 +89,7 @@ export default function LeadsPage() {
                 </Button>
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 overflow-x-auto">
             <DataTable columns={columns} data={leadsData} />
           </div>
         </CardContent>

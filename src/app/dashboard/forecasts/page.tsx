@@ -30,7 +30,7 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import { Target, DollarSign, TrendingUp, Briefcase } from 'lucide-react';
+import { Target, DollarSign, TrendingUp, Briefcase, TrendingDown } from 'lucide-react';
 
 const kpiData = [
   { title: 'Quota', value: '$80K', Icon: Target, description: '' },
@@ -116,6 +116,13 @@ const monthlyChartConfig = {
     color: 'hsl(var(--muted-foreground))',
   },
 } satisfies ChartConfig;
+
+const teamPerformanceData = [
+    { name: 'Sales Rep', committed: 72000, quota: 80000, trend: 'up' },
+    { name: 'Sarah Wilson', committed: 68000, quota: 75000, trend: 'up' },
+    { name: 'Mike Johnson', committed: 55000, quota: 70000, trend: 'down' },
+    { name: 'Emily Chen', committed: 82000, quota: 85000, trend: 'up' },
+]
 
 
 const CustomDot = (props: any) => {
@@ -326,14 +333,35 @@ export default function ForecastsPage() {
                 </CardContent>
             </Card>
         </TabsContent>
-        <TabsContent value="team">
-            <Card>
+        <TabsContent value="team" className="mt-4">
+             <Card>
                 <CardHeader>
-                    <CardTitle>Team Performance</CardTitle>
-                    <CardDescription>This section is under construction.</CardDescription>
+                    <CardTitle>Team Forecast Summary</CardTitle>
+                    <CardDescription>Current month forecast by team member</CardDescription>
                 </CardHeader>
-                <CardContent className="text-center text-muted-foreground py-10">
-                    Team performance metrics will be displayed here.
+                <CardContent className="space-y-8">
+                    {teamPerformanceData.map((member) => {
+                        const percentage = (member.committed / member.quota) * 100;
+                        const TrendIcon = member.trend === 'up' ? TrendingUp : TrendingDown;
+                        const trendColor = member.trend === 'up' ? 'text-green-500' : 'text-red-500';
+
+                        return (
+                            <div key={member.name} className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-x-8 gap-y-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium">{member.name}</span>
+                                    <TrendIcon className={`h-4 w-4 ${trendColor}`} />
+                                </div>
+                                <div className="text-right">
+                                    <span className="font-semibold">${(member.committed / 1000).toFixed(0)}K</span>
+                                    <span className="text-sm text-muted-foreground"> / ${(member.quota / 1000).toFixed(0)}K</span>
+                                    <p className="text-xs text-muted-foreground">{percentage.toFixed(0)}% to quota</p>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <Progress value={percentage} className="h-2" />
+                                </div>
+                            </div>
+                        )
+                    })}
                 </CardContent>
             </Card>
         </TabsContent>

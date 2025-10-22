@@ -273,7 +273,7 @@ export default function ReportsPage() {
                                     {entry.source}
                                     <span className="ml-auto text-muted-foreground">{entry.value}%</span>
                                 </div>
-                                <Progress value={entry.value} className="h-2" style={{'--progress-color': entry.fill} as React.CSSProperties} />
+                                <Progress value={entry.value} className="h-2" indicatorClassName="bg-[--progress-color]" style={{'--progress-color': entry.fill} as React.CSSProperties} />
                             </div>
                         ))}
                     </CardContent>
@@ -293,3 +293,6 @@ export default function ReportsPage() {
   );
 }
 
+
+
+    

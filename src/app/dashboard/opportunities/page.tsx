@@ -82,7 +82,7 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
 
 function PipelineView() {
   return (
-     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
         {pipelineStages.map(stage => {
             const stageOpportunities = opportunities.filter(o => o.stage === stage.name);
             const stageValue = stageOpportunities.reduce((sum, o) => sum + o.value, 0);
@@ -149,7 +149,7 @@ export default function OpportunitiesPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="pipeline" className="pt-4 overflow-x-auto">
-            <div className="min-w-[1000px]">
+            <div className="min-w-[1000px] xl:min-w-full">
                 <PipelineView />
             </div>
         </TabsContent>

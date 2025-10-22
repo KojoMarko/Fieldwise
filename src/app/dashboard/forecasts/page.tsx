@@ -176,9 +176,9 @@ export default function ForecastsPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Forecast Confidence</p>
-              <p className="text-xl font-bold flex items-center justify-center sm:justify-start gap-2">
+              <div className="text-xl font-bold flex items-center justify-center sm:justify-start gap-2">
                 High <Badge>90%</Badge>
-              </p>
+              </div>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Days Remaining</p>

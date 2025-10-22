@@ -20,6 +20,8 @@ import {
   Tooltip,
   Legend,
   Dot,
+  BarChart,
+  Bar,
 } from 'recharts';
 import {
   ChartContainer,
@@ -79,7 +81,7 @@ const quarterlyPerformanceData = [
   },
 ];
 
-const chartConfig = {
+const quarterlyChartConfig = {
   actual: {
     label: 'Actual',
     color: 'hsl(var(--chart-1))',
@@ -93,6 +95,28 @@ const chartConfig = {
     color: 'hsl(var(--muted-foreground))',
   },
 } satisfies ChartConfig;
+
+const monthlyForecastData = [
+  { month: 'Oct', committed: 72000, bestCase: 98000, quota: 80000 },
+  { month: 'Nov', committed: 65000, bestCase: 90000, quota: 85000 },
+  { month: 'Dec', committed: 58000, bestCase: 95000, quota: 92000 },
+];
+
+const monthlyChartConfig = {
+  committed: {
+    label: 'Committed',
+    color: 'hsl(var(--chart-1))',
+  },
+  bestCase: {
+    label: 'Best Case',
+    color: 'hsl(var(--chart-2))',
+  },
+  quota: {
+    label: 'Quota',
+    color: 'hsl(var(--muted-foreground))',
+  },
+} satisfies ChartConfig;
+
 
 const CustomDot = (props: any) => {
   const { cx, cy, stroke, payload, value, dataKey } = props;
@@ -204,7 +228,7 @@ export default function ForecastsPage() {
             </CardHeader>
             <CardContent>
               <ChartContainer
-                config={chartConfig}
+                config={quarterlyChartConfig}
                 className="min-h-[300px] w-full"
               >
                 <LineChart
@@ -269,14 +293,36 @@ export default function ForecastsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="monthly">
+        <TabsContent value="monthly" className="mt-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>Monthly Forecast</CardTitle>
-                    <CardDescription>This section is under construction.</CardDescription>
+                    <CardTitle>3-Month Forecast Outlook</CardTitle>
+                    <CardDescription>Committed, best case, and pipeline projections</CardDescription>
                 </CardHeader>
-                <CardContent className="text-center text-muted-foreground py-10">
-                    Monthly forecast data will be displayed here.
+                <CardContent>
+                    <ChartContainer config={monthlyChartConfig} className="min-h-[300px] w-full">
+                        <BarChart data={monthlyForecastData}>
+                             <XAxis
+                                dataKey="month"
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={10}
+                              />
+                              <YAxis
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={10}
+                                tickFormatter={(value) => value.toLocaleString()}
+                                domain={[0, 100000]}
+                                ticks={[0, 25000, 50000, 75000, 100000]}
+                              />
+                             <Tooltip content={<ChartTooltipContent />} />
+                             <Legend content={<ChartLegendContent />} />
+                             <Bar dataKey="committed" fill="var(--color-committed)" radius={4} />
+                             <Bar dataKey="bestCase" fill="var(--color-bestCase)" radius={4} />
+                             <Bar dataKey="quota" fill="var(--color-quota)" radius={4} />
+                        </BarChart>
+                    </ChartContainer>
                 </CardContent>
             </Card>
         </TabsContent>

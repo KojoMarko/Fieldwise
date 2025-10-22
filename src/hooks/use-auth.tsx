@@ -131,7 +131,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
         }
     }, [isLoading, user, router]);
 
-    if (isLoading || !user) {
+    if (isLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
                 <div className="text-center">
@@ -140,6 +140,10 @@ export function AuthGuard({ children }: { children: ReactNode }) {
                 </div>
             </div>
         );
+    }
+
+    if (!user) {
+        return null; // or a loading spinner, as the redirect will happen shortly
     }
 
     return <>{children}</>;

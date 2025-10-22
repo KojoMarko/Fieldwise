@@ -53,7 +53,7 @@ export default function LeadsPage() {
         </div>
       </div>
 
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard title="Total Leads" value={totalLeads.toString()} Icon={Users} description={`${convertedLeads} leads converted this month`} />
         <KpiCard title="New Leads" value={newLeads.toString()} Icon={User} description="Awaiting initial contact" />
         <KpiCard title="Qualified" value={qualifiedLeads.toString()} Icon={CheckCircle} description="Ready for the next step" />

@@ -264,16 +264,12 @@ export default function ReportsPage() {
                     </CardHeader>
                     <CardContent className="grid gap-4">
                         {leadSourceData.map((entry) => (
-                            <div key={entry.source} className="grid gap-2">
-                                <div className="flex items-center text-sm font-medium">
-                                    <span
-                                        className="h-3 w-3 rounded-full mr-2"
-                                        style={{ backgroundColor: entry.fill }}
-                                    />
-                                    <span>{entry.source}</span>
-                                    <span className="ml-auto text-muted-foreground">{entry.value}%</span>
+                           <div key={entry.source} className="flex items-center gap-4">
+                                <span className="flex-1 text-sm font-medium">{entry.source}</span>
+                                <div className="w-28 text-right">
+                                    <span className="text-sm font-medium text-muted-foreground">{entry.value}%</span>
+                                    <Progress value={entry.value} className="h-1 mt-1" indicatorClassName="bg-[--progress-color]" style={{'--progress-color': entry.fill} as React.CSSProperties} />
                                 </div>
-                                <Progress value={entry.value} className="h-2" indicatorClassName="bg-[--progress-color]" style={{'--progress-color': entry.fill} as React.CSSProperties} />
                             </div>
                         ))}
                     </CardContent>

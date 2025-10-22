@@ -280,9 +280,9 @@ export default function ReportsPage() {
                                         <Cell key={`cell-${entry.source}`} fill={entry.fill} />
                                     ))}
                                     <LabelList
-                                        position="right"
+                                        position="insideRight"
                                         offset={8}
-                                        className="fill-foreground"
+                                        className="fill-white"
                                         fontSize={12}
                                         dataKey="value"
                                         formatter={(value: number) => `${((value / totalLeads) * 100).toFixed(0)}%`}
@@ -306,3 +306,4 @@ export default function ReportsPage() {
     </div>
   );
 }
+

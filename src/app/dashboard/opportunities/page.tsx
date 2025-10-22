@@ -149,7 +149,9 @@ export default function OpportunitiesPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="pipeline" className="pt-4 overflow-x-auto">
-            <PipelineView />
+            <div className="min-w-[1000px]">
+                <PipelineView />
+            </div>
         </TabsContent>
         <TabsContent value="list" className="pt-4">
           <Card>

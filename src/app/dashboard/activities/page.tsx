@@ -203,7 +203,7 @@ export default function ActivitiesPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Activity Timeline</CardTitle>
-                <TabsList className="grid w-full grid-cols-4 mt-2">
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mt-2">
                   <TabsTrigger value="today">Today</TabsTrigger>
                   <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
                   <TabsTrigger value="overdue">Overdue</TabsTrigger>

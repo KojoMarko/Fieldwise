@@ -200,7 +200,7 @@ export default function ForecastsPage() {
               <Progress value={bestCasePercentage} indicatorClassName="bg-primary/70"/>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 text-center sm:text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
             <div>
               <p className="text-sm text-muted-foreground">Gap to Quota</p>
               <p className="text-xl font-bold">$8K</p>
@@ -220,7 +220,7 @@ export default function ForecastsPage() {
       </Card>
 
       <Tabs defaultValue="quarterly">
-        <TabsList>
+        <TabsList className="grid grid-cols-1 sm:grid-cols-3 w-full sm:w-auto">
           <TabsTrigger value="quarterly">Quarterly Trend</TabsTrigger>
           <TabsTrigger value="monthly">Monthly Forecast</TabsTrigger>
           <TabsTrigger value="team">Team Performance</TabsTrigger>

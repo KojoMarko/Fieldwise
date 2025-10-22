@@ -150,7 +150,7 @@ export default function ReportsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Select defaultValue="30">
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Last 30 days" />
             </SelectTrigger>
             <SelectContent>
@@ -165,21 +165,20 @@ export default function ReportsPage() {
           </Button>
         </div>
       </div>
-
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <ReportKpiCard title="Conversion Rate" value="24%" change="+12%" Icon={Target} changeType="increase" />
-        <ReportKpiCard title="Avg Deal Size" value="$52,400" change="+8%" Icon={DollarSign} changeType="increase" />
-        <ReportKpiCard title="Win Rate" value="68%" change="-3%" Icon={TrendingUp} changeType="decrease" />
-        <ReportKpiCard title="Active Leads" value="156" change="+15%" Icon={Users} changeType="increase" />
-      </div>
-
+      
       <Tabs defaultValue="revenue">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-1 sm:w-auto sm:grid-cols-3">
           <TabsTrigger value="revenue">Revenue Analysis</TabsTrigger>
           <TabsTrigger value="leads">Lead Sources</TabsTrigger>
           <TabsTrigger value="deals">Deal Activity</TabsTrigger>
         </TabsList>
         <TabsContent value="revenue" className="mt-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+            <ReportKpiCard title="Conversion Rate" value="24%" change="+12%" Icon={Target} changeType="increase" />
+            <ReportKpiCard title="Avg Deal Size" value="$52,400" change="+8%" Icon={DollarSign} changeType="increase" />
+            <ReportKpiCard title="Win Rate" value="68%" change="-3%" Icon={TrendingUp} changeType="decrease" />
+            <ReportKpiCard title="Active Leads" value="156" change="+15%" Icon={Users} changeType="increase" />
+          </div>
            <div className="grid gap-6 md:grid-cols-2">
              <Card>
                 <CardHeader>
@@ -271,39 +270,45 @@ export default function ReportsPage() {
                     <CardDescription>Lead volume by source</CardDescription>
                   </CardHeader>
                   <CardContent className="grid gap-4">
-                    {leadSourceData.map((entry) => {
-                      const percentage = ((entry.value / totalLeads) * 100).toFixed(
-                        1
-                      );
-                      return (
-                        <div key={entry.source} className="grid gap-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="h-2.5 w-2.5 shrink-0 rounded-full"
-                                style={{ backgroundColor: entry.fill }}
-                              />
-                              <span className="font-medium text-sm">
-                                {entry.source}
-                              </span>
-                            </div>
-                            <span className="font-semibold text-sm text-right">
-                              {percentage}%
-                            </span>
-                          </div>
-                          <Progress
-                            value={Number(percentage)}
-                            className="h-2"
-                            indicatorClassName="data-[value='100']:bg-green-500"
-                            style={
-                              {
-                                '--progress-color': entry.fill,
-                              } as React.CSSProperties
-                            }
-                          />
-                        </div>
-                      );
-                    })}
+                    <ChartContainer
+                      config={leadSourceChartConfig}
+                      className="w-full"
+                    >
+                      <BarChart
+                        layout="vertical"
+                        data={leadSourceData}
+                        margin={{ left: 0, right: 40 }}
+                      >
+                        <XAxis type="number" hide />
+                        <YAxis
+                          dataKey="source"
+                          type="category"
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{
+                            fill: "hsl(var(--foreground))",
+                            fontSize: 12,
+                          }}
+                          className="w-20"
+                        />
+                        <Bar
+                          dataKey="value"
+                          layout="vertical"
+                          radius={4}
+                        >
+                          {leadSourceData.map((entry) => (
+                            <Cell key={entry.source} fill={entry.fill} />
+                          ))}
+                           <LabelList 
+                                dataKey="value" 
+                                position="insideRight"
+                                offset={8}
+                                className="fill-background font-medium"
+                                formatter={(value: number) => `${((value / totalLeads) * 100).toFixed(0)}%`}
+                            />
+                        </Bar>
+                      </BarChart>
+                    </ChartContainer>
                   </CardContent>
                 </Card>
             </div>

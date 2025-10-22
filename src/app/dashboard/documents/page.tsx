@@ -114,7 +114,7 @@ export default function DocumentsPage() {
                 <CardHeader>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <CardTitle>All Documents</CardTitle>
-                        <div className="relative">
+                        <div className="relative w-full sm:w-auto">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input placeholder="Search documents..." className="pl-8 sm:w-64" />
                         </div>
@@ -126,11 +126,11 @@ export default function DocumentsPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Name</TableHead>
-                                    <TableHead>Category</TableHead>
-                                    <TableHead>Related To</TableHead>
-                                    <TableHead>Size</TableHead>
-                                    <TableHead>Uploaded By</TableHead>
-                                    <TableHead>Date</TableHead>
+                                    <TableHead className="hidden sm:table-cell">Category</TableHead>
+                                    <TableHead className="hidden md:table-cell">Related To</TableHead>
+                                    <TableHead className="hidden lg:table-cell">Size</TableHead>
+                                    <TableHead className="hidden lg:table-cell">Uploaded By</TableHead>
+                                    <TableHead className="hidden sm:table-cell">Date</TableHead>
                                     <TableHead><span className="sr-only">Actions</span></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -143,13 +143,13 @@ export default function DocumentsPage() {
                                                 <Icon className="h-4 w-4 text-muted-foreground" />
                                                 {doc.name}
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="hidden sm:table-cell">
                                                 <Badge variant="outline">{doc.category}</Badge>
                                             </TableCell>
-                                            <TableCell>{doc.relatedTo}</TableCell>
-                                            <TableCell>{doc.size}</TableCell>
-                                            <TableCell>{doc.uploadedBy}</TableCell>
-                                            <TableCell>{doc.date}</TableCell>
+                                            <TableCell className="hidden md:table-cell">{doc.relatedTo}</TableCell>
+                                            <TableCell className="hidden lg:table-cell">{doc.size}</TableCell>
+                                            <TableCell className="hidden lg:table-cell">{doc.uploadedBy}</TableCell>
+                                            <TableCell className="hidden sm:table-cell">{doc.date}</TableCell>
                                             <TableCell>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>

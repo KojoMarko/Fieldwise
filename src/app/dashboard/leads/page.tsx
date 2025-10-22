@@ -40,7 +40,7 @@ export default function LeadsPage() {
 
   return (
     <div className="space-y-6">
-       <div className="flex items-center">
+       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
           <p className="text-muted-foreground">Manage and track your sales leads</p>
@@ -66,13 +66,13 @@ export default function LeadsPage() {
                 <Users className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search leads..." className="pl-8 w-full md:w-80" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <Button variant="outline" size="sm" className="h-9">
                     <Filter className="mr-2 h-4 w-4" />
                     Filter
                 </Button>
                  <Select defaultValue="all">
-                    <SelectTrigger className="w-full md:w-[180px] h-9">
+                    <SelectTrigger className="w-full sm:w-[180px] h-9">
                         <SelectValue placeholder="All Leads" />
                     </SelectTrigger>
                     <SelectContent>
@@ -83,7 +83,7 @@ export default function LeadsPage() {
                         <SelectItem value="converted">Converted</SelectItem>
                     </SelectContent>
                 </Select>
-                 <Button variant="outline" size="sm" className="h-9 ml-auto">
+                 <Button variant="outline" size="sm" className="h-9">
                     <File className="mr-2 h-4 w-4" />
                     Export
                 </Button>

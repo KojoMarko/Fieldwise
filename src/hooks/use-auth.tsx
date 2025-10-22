@@ -131,23 +131,13 @@ export function AuthGuard({ children }: { children: ReactNode }) {
         }
     }, [isLoading, user, router]);
 
-    // KEY CHANGE: Don't render children at all until loading is complete
-    // This prevents child components from making Firestore queries before auth is ready
-    if (isLoading) {
+    if (isLoading || !user) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
                     <p>Loading...</p>
                 </div>
-            </div>
-        );
-    }
-
-    if (!user) {
-        return (
-            <div className="flex h-screen w-full items-center justify-center">
-                <p>Redirecting to login...</p>
             </div>
         );
     }

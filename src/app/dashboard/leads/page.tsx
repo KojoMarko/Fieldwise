@@ -1,6 +1,7 @@
+
 'use client';
 
-import { File, PlusCircle, User, Users, CheckCircle, TrendingUp, Filter } from 'lucide-react';
+import { File, PlusCircle, User, Users, CheckCircle, TrendingUp, Filter, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -40,12 +41,12 @@ export default function LeadsPage() {
 
   return (
     <div className="space-y-6">
-       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
           <p className="text-muted-foreground">Manage and track your sales leads</p>
         </div>
-        <div className="ml-auto">
+        <div className="sm:ml-auto">
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" /> Add Lead
           </Button>
@@ -63,7 +64,7 @@ export default function LeadsPage() {
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex-1 relative">
-                <Users className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search leads..." className="pl-8 w-full md:w-80" />
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">

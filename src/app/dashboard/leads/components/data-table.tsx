@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -55,7 +56,7 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} meta={header.column.columnDef.meta}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -76,7 +77,7 @@ export function DataTable<TData, TValue>({
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} meta={cell.column.columnDef.meta}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()

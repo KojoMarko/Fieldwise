@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -45,19 +46,35 @@ export const columns: ColumnDef<Lead>[] = [
         </Button>
       );
     },
-     cell: ({ row }) => <div className="pl-4">{row.getValue('company')}</div>,
+     cell: ({ row }) => {
+        return (
+            <div className="pl-4">
+                <div className="font-medium">{row.getValue('company')}</div>
+                <div className="text-sm text-muted-foreground md:hidden">{row.getValue('contact')}</div>
+            </div>
+        )
+     },
   },
   {
     accessorKey: 'contact',
     header: 'Contact',
+    meta: {
+        className: 'hidden md:table-cell'
+    }
   },
   {
     accessorKey: 'email',
     header: 'Email',
+    meta: {
+        className: 'hidden lg:table-cell'
+    }
   },
   {
     accessorKey: 'phone',
     header: 'Phone',
+     meta: {
+        className: 'hidden xl:table-cell'
+    }
   },
   {
     accessorKey: 'value',
@@ -71,6 +88,9 @@ export const columns: ColumnDef<Lead>[] = [
 
       return <div className="text-right font-medium">{formatted}</div>;
     },
+    meta: {
+        className: 'hidden sm:table-cell'
+    }
   },
   {
     accessorKey: 'status',
@@ -83,10 +103,16 @@ export const columns: ColumnDef<Lead>[] = [
   {
     accessorKey: 'source',
     header: 'Source',
+     meta: {
+        className: 'hidden lg:table-cell'
+    }
   },
   {
     accessorKey: 'lastContact',
     header: 'Last Contact',
+     meta: {
+        className: 'hidden xl:table-cell'
+    }
   },
   {
     id: 'actions',

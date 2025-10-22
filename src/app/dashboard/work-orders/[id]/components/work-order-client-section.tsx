@@ -467,12 +467,18 @@ export function WorkOrderClientSection({
                         </div>
                    </div>
                     <div>
-                        <Label>Parts Used</Label>
-                        <p className="text-sm text-muted-foreground p-3 border rounded-md">
-                           {questionnaireData.partsUsed && questionnaireData.partsUsed.length > 0 
-                                ? `Included: ${questionnaireData.partsUsed.map(p => `${p.name} (Qty: ${p.quantity})`).join(', ')}`
-                                : "No parts marked as 'Used' will be included."}
-                        </p>
+                        <Label>Parts Used in Service</Label>
+                        <div className="text-sm text-muted-foreground p-3 border rounded-md min-h-[60px]">
+                           {questionnaireData.partsUsed && questionnaireData.partsUsed.length > 0 ? (
+                            <ul className='list-disc list-inside'>
+                                {questionnaireData.partsUsed.map(p => (
+                                    <li key={p.id}>{p.name} (Qty: {p.quantity})</li>
+                                ))}
+                            </ul>
+                           ) : (
+                            <p>No parts marked as 'Used' will be included in the report.</p>
+                           )}
+                        </div>
                     </div>
               </div>
               <DialogFooter>
@@ -487,5 +493,3 @@ export function WorkOrderClientSection({
     </>
   );
 }
-
-    

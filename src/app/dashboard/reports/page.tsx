@@ -35,6 +35,9 @@ import {
   YAxis,
   Tooltip,
   Legend,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts';
 import {
   ChartContainer,
@@ -44,6 +47,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { KpiCard } from '@/components/kpi-card';
+import { Progress } from '@/components/ui/progress';
 
 const lineChartData = [
   { month: 'Jan', revenue: 41000, target: 50000 },
@@ -70,10 +74,18 @@ const barChartData = [
   { month: 'Oct', revenue: 72000 },
 ];
 
+const leadSourceData = [
+    { source: 'Website', value: 35, fill: 'var(--color-website)' },
+    { source: 'Referral', value: 25, fill: 'var(--color-referral)' },
+    { source: 'LinkedIn', value: 20, fill: 'var(--color-linkedin)' },
+    { source: 'Cold Call', value: 10, fill: 'var(--color-coldcall)' },
+    { source: 'Trade Show', value: 10, fill: 'var(--color-tradeshow)' },
+];
+
 const lineChartConfig = {
   revenue: {
     label: 'Revenue',
-    color: 'hsl(var(--primary))',
+    color: 'hsl(var(--chart-1))',
   },
   target: {
     label: 'Target',
@@ -84,8 +96,17 @@ const lineChartConfig = {
 const barChartConfig = {
   revenue: {
     label: 'Revenue',
-    color: 'hsl(var(--primary))',
+    color: 'hsl(var(--chart-1))',
   },
+} satisfies ChartConfig;
+
+
+const leadSourceChartConfig = {
+    website: { label: "Website", color: "hsl(var(--chart-1))" },
+    referral: { label: "Referral", color: "hsl(var(--chart-2))" },
+    linkedin: { label: "LinkedIn", color: "hsl(var(--chart-3))" },
+    coldcall: { label: "Cold Call", color: "hsl(var(--chart-4))" },
+    tradeshow: { label: "Trade Show", color: "hsl(var(--chart-5))" },
 } satisfies ChartConfig;
 
 function ReportKpiCard({ title, value, change, Icon, changeType }: { title: string, value: string, change: string, Icon: React.ElementType, changeType: 'increase' | 'decrease' }) {
@@ -188,12 +209,76 @@ export default function ReportsPage() {
            </div>
         </TabsContent>
          <TabsContent value="leads" className="mt-4">
-            <Card>
-                <CardHeader><CardTitle>Lead Sources</CardTitle></CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">Lead source analysis will be displayed here.</p>
-                </CardContent>
-            </Card>
+            <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Lead Source Distribution</CardTitle>
+                        <CardDescription>Where your leads are coming from</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ChartContainer
+                          config={leadSourceChartConfig}
+                          className="mx-auto aspect-square h-[250px]"
+                        >
+                            <PieChart>
+                                <ChartTooltipContent nameKey="value" hideLabel />
+                                <Pie data={leadSourceData} dataKey="value" nameKey="source" labelLine={false} label={({
+                                        cx,
+                                        cy,
+                                        midAngle,
+                                        innerRadius,
+                                        outerRadius,
+                                        value,
+                                        index,
+                                    }) => {
+                                        const RADIAN = Math.PI / 180
+                                        const radius = 12 + outerRadius + (outerRadius - innerRadius) * 0.5
+                                        const x = cx + radius * Math.cos(-midAngle * RADIAN)
+                                        const y = cy + radius * Math.sin(-midAngle * RADIAN)
+                        
+                                        return (
+                                        <text
+                                            x={x}
+                                            y={y}
+                                            fill="hsl(var(--foreground))"
+                                            textAnchor={x > cx ? 'start' : 'end'}
+                                            dominantBaseline="central"
+                                            className="text-xs"
+                                        >
+                                            {leadSourceData[index].source} {value}%
+                                        </text>
+                                        )
+                                    }}>
+                                {leadSourceData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                ))}
+                                </Pie>
+                            </PieChart>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Source Performance</CardTitle>
+                        <CardDescription>Lead sources by volume</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4">
+                        {leadSourceData.map((entry) => (
+                            <div key={entry.source} className="grid gap-2">
+                                <div className="flex items-center gap-2 text-sm font-medium">
+                                    <span
+                                        className="h-3 w-3 rounded-full"
+                                        style={{ backgroundColor: entry.fill }}
+                                    />
+                                    {entry.source}
+                                    <span className="ml-auto text-muted-foreground">{entry.value}%</span>
+                                </div>
+                                <Progress value={entry.value} className="h-2" style={{'--progress-color': entry.fill} as React.CSSProperties} />
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            </div>
         </TabsContent>
          <TabsContent value="deals" className="mt-4">
             <Card>
@@ -207,3 +292,4 @@ export default function ReportsPage() {
     </div>
   );
 }
+

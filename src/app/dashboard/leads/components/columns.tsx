@@ -49,8 +49,8 @@ export const columns: ColumnDef<Lead>[] = [
      cell: ({ row }) => {
         return (
             <div className="pl-4">
-                <div className="font-medium">{row.getValue('company')}</div>
-                <div className="text-sm text-muted-foreground">{row.getValue('contact')}</div>
+                <div className="font-medium">{row.original.company}</div>
+                <div className="text-sm text-muted-foreground">{row.original.contact}</div>
             </div>
         )
      },

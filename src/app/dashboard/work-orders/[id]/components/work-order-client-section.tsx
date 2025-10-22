@@ -35,6 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CalendarIcon } from 'lucide-react';
+import { ServiceReportDisplay } from './service-report-display';
 
 
 const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: Date) => void }) => {
@@ -292,6 +293,8 @@ export function WorkOrderClientSection({
         setIsGeneratingReport(false);
     }
   }
+
+  const hasGeneratedReport = workOrder.technicianNotes?.startsWith('{');
   
   const renderContent = () => {
     if (isGeneratingReport) {
@@ -306,10 +309,22 @@ export function WorkOrderClientSection({
       );
     }
 
+    if (hasGeneratedReport) {
+        return (
+            <ServiceReportDisplay 
+                workOrder={workOrder} 
+                company={company ?? undefined}
+                customer={customer ?? undefined}
+                asset={asset ?? undefined}
+                technician={technician ?? undefined}
+                onRegenerate={() => setQuestionnaireOpen(true)}
+            />
+        )
+    }
+
     const isCompletedStatus = workOrder.status === 'Completed' || workOrder.status === 'Invoiced' || workOrder.status === 'Cancelled';
     
-    // An engineer is viewing a completed order that is missing a report.
-    if (isEngineerView && isCompletedStatus && !workOrder.technicianNotes?.startsWith('{')) {
+    if (isEngineerView && isCompletedStatus) {
       return (
         <Card>
           <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
@@ -330,36 +345,19 @@ export function WorkOrderClientSection({
       );
     }
 
-    // A non-engineer is viewing a completed order, or any user is viewing an active order.
-    if (!isEngineerView && isCompletedStatus) {
+    if (!isEngineerView) {
        return (
         <Card>
           <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
           <CardContent>
               <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                  {workOrder.status === 'Cancelled' 
-                    ? 'This work order has been cancelled.'
-                    : 'A service report will be available once the engineer completes the work.'}
+                  A service report will be available once the engineer completes the work.
               </div>
           </CardContent>
         </Card>
       );
     }
-
-    if (!isEngineerView) {
-        return (
-            <Card>
-                <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
-                <CardContent>
-                    <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-                        A service report will be available once the engineer completes the work.
-                    </div>
-                </CardContent>
-            </Card>
-        );
-    }
-
-    // Engineer is viewing an active work order, show actions.
+    
     const actions: { [key in WorkOrderStatus]?: { label: string; icon: React.ElementType; nextStatus: WorkOrderStatus; } } = {
       'Scheduled': { label: 'Start Travel', icon: Play, nextStatus: 'Dispatched' },
       'Dispatched': { label: 'Arrive on Site', icon: Play, nextStatus: 'On-Site' },
@@ -395,9 +393,10 @@ export function WorkOrderClientSection({
             ) : null}
             {inProgressActions}
             {!currentAction && !inProgressActions && workOrder.status === 'On-Hold' && (
-              <div className="text-sm text-muted-foreground">
-                This work order is on hold. Update the status to continue.
-              </div>
+              <Button className="w-full" onClick={() => handleStatusChange('In-Progress')}>
+                <Play className="mr-2" />
+                Resume Work
+              </Button>
             )}
         </CardContent>
       </Card>

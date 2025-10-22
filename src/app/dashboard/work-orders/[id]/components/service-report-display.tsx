@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Download,
+  RefreshCw,
 } from 'lucide-react';
 import type { ServiceReportQuestionnaire, AllocatedPart } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -22,14 +23,17 @@ export function ServiceReportDisplay({
   technician,
   asset,
   company,
+  onRegenerate,
 }: {
   workOrder: WorkOrder;
   customer?: Customer;
   technician?: User;
   asset?: Asset;
   company?: Company;
+  onRegenerate: () => void;
 }) {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleDownloadPdf = async () => {
     toast({
@@ -197,6 +201,8 @@ export function ServiceReportDisplay({
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
     const addSectionWithAutoWrap = (title: string, data: Record<string, string>) => {
+        const maxWidth = pageWidth - (margin * 2); // Total available width
+        
         (doc as any).autoTable({
             startY: finalY,
             head: [[{ content: title, colSpan: 2 }]],
@@ -208,6 +214,7 @@ export function ServiceReportDisplay({
                 cellPadding: 5,
                 overflow: 'linebreak',
                 cellWidth: 'wrap',
+                halign: 'left',
             },
             headStyles: { 
                 fillColor: [220, 220, 220], 
@@ -216,9 +223,16 @@ export function ServiceReportDisplay({
                 halign: 'left' 
             },
             columnStyles: {
-                0: { fontStyle: 'bold', cellWidth: 150 },
-                1: { cellWidth: 'auto' },
-            }
+                0: { 
+                    fontStyle: 'bold', 
+                    cellWidth: 150 
+                },
+                1: { 
+                    cellWidth: maxWidth - 150,
+                    overflow: 'linebreak',
+                },
+            },
+            tableWidth: maxWidth,
         });
         finalY = (doc as any).lastAutoTable.finalY + 10;
     };
@@ -347,17 +361,22 @@ export function ServiceReportDisplay({
           </Card>
       )
   }
+  
+  const isEngineerView = user?.role === 'Engineer';
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2">
           <div>
               <CardTitle>Service Report</CardTitle>
               <CardDescription>
                   Generated on {workOrder.completedDate ? format(parseISO(workOrder.completedDate), 'PPP p') : 'N/A'} by {reportData.workOrder?.performedBy || 'N/A'}
               </CardDescription>
           </div>
-          <Button onClick={handleDownloadPdf}><Download className="mr-2" /> Download PDF</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleDownloadPdf}><Download className="mr-2" /> PDF</Button>
+            {isEngineerView && <Button onClick={onRegenerate}><RefreshCw className="mr-2" /> Regenerate</Button>}
+          </div>
       </CardHeader>
       <CardContent>
           <Section title="Service Details" data={{
@@ -379,7 +398,7 @@ export function ServiceReportDisplay({
           {reportData.parts && reportData.parts.length > 0 ? (
               <ul className="list-disc list-inside space-y-1 text-sm">
                   {reportData.parts.map((part: any, index: number) => (
-                      <li key={index}>{part.description} (PN: {part.partNumber})</li>
+                      <li key={index}>{part.description} (PN: {part.partNumber}) - Qty: {part.quantity}</li>
                   ))}
               </ul>
           ) : <p className="text-sm text-muted-foreground">No parts were used for this service.</p>}
@@ -387,5 +406,3 @@ export function ServiceReportDisplay({
     </Card>
   );
 }
-
-    

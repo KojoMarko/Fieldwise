@@ -58,9 +58,7 @@ export const columns: ColumnDef<Lead>[] = [
   {
     accessorKey: 'email',
     header: 'Email',
-    meta: {
-        className: 'hidden lg:table-cell'
-    }
+    cell: ({ row }) => <div className="hidden lg:block">{row.original.email}</div>,
   },
   {
     accessorKey: 'phone',

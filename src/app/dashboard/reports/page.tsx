@@ -50,6 +50,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { ReportKpiCard } from './components/report-kpi-card';
+import { Progress } from '@/components/ui/progress';
 
 
 const lineChartData = [
@@ -85,6 +86,20 @@ const leadSourceData = [
     { source: 'Trade Show', value: 100, fill: 'var(--color-tradeshow)' },
 ];
 
+const dealActivityData = [
+    { month: "Jan", deals: 12 },
+    { month: "Feb", deals: 15 },
+    { month: "Mar", deals: 18 },
+    { month: "Apr", deals: 14 },
+    { month: "May", deals: 16 },
+    { month: "Jun", deals: 19 },
+    { month: "Jul", deals: 21 },
+    { month: "Aug", deals: 17 },
+    { month: "Sep", deals: 23 },
+    { month: "Oct", deals: 25 },
+];
+
+
 const lineChartConfig = {
   revenue: {
     label: 'Revenue',
@@ -111,6 +126,14 @@ const leadSourceChartConfig = {
     coldcall: { label: "Cold Call", color: "hsl(var(--chart-4))" },
     tradeshow: { label: "Trade Show", color: "hsl(var(--chart-5))" },
 } satisfies ChartConfig;
+
+const dealActivityChartConfig = {
+  deals: {
+    label: "Deals Closed",
+    color: "hsl(var(--chart-2))",
+  },
+} satisfies ChartConfig;
+
 
 
 export default function ReportsPage() {
@@ -243,56 +266,76 @@ export default function ReportsPage() {
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Source Performance</CardTitle>
-                        <CardDescription>Lead volume by source</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                       <ChartContainer config={leadSourceChartConfig} className="min-h-[250px] w-full">
-                             <BarChart
-                                accessibilityLayer
-                                data={leadSourceData}
-                                layout="vertical"
-                                margin={{
-                                    left: 0,
-                                }}
-                                >
-                                <YAxis
-                                    dataKey="source"
-                                    type="category"
-                                    tickLine={false}
-                                    tickMargin={10}
-                                    axisLine={false}
-                                    tickFormatter={(value) =>
-                                        leadSourceChartConfig[value.toLowerCase() as keyof typeof leadSourceChartConfig]?.label || value
-                                    }
-                                />
-                                <XAxis dataKey="value" type="number" hide />
-                                <Tooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                                <Bar dataKey="value" layout="vertical" radius={4}>
-                                     {leadSourceData.map((entry) => (
-                                        <Cell key={`cell-${entry.source}`} fill={entry.fill} />
-                                    ))}
-                                    <LabelList
-                                        position="insideRight"
-                                        offset={8}
-                                        className="fill-white"
-                                        fontSize={12}
-                                        dataKey="value"
-                                        formatter={(value: number) => `${((value / totalLeads) * 100).toFixed(0)}%`}
-                                    />
-                                </Bar>
-                            </BarChart>
-                        </ChartContainer>
-                    </CardContent>
+                  <CardHeader>
+                    <CardTitle>Source Performance</CardTitle>
+                    <CardDescription>Lead volume by source</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-4">
+                    {leadSourceData.map((entry) => {
+                      const percentage = ((entry.value / totalLeads) * 100).toFixed(
+                        1
+                      );
+                      return (
+                        <div key={entry.source} className="grid gap-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                style={{ backgroundColor: entry.fill }}
+                              />
+                              <span className="font-medium text-sm">
+                                {entry.source}
+                              </span>
+                            </div>
+                            <span className="font-semibold text-sm text-right">
+                              {percentage}%
+                            </span>
+                          </div>
+                          <Progress
+                            value={Number(percentage)}
+                            className="h-2"
+                            indicatorClassName="data-[value='100']:bg-green-500"
+                            style={
+                              {
+                                '--progress-color': entry.fill,
+                              } as React.CSSProperties
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                  </CardContent>
                 </Card>
             </div>
         </TabsContent>
          <TabsContent value="deals" className="mt-4">
             <Card>
-                <CardHeader><CardTitle>Deal Activity</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Deal Activity</CardTitle>
+                  <CardDescription>Number of deals closed per month</CardDescription>
+                </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground">Recent deal activity will be displayed here.</p>
+                   <ChartContainer config={dealActivityChartConfig} className="min-h-[200px] w-full">
+                       <BarChart accessibilityLayer data={dealActivityData}>
+                            <XAxis
+                                dataKey="month"
+                                tickLine={false}
+                                tickMargin={10}
+                                axisLine={false}
+                                tickFormatter={(value) => value.slice(0, 3)}
+                            />
+                             <YAxis
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={10}
+                                tickCount={5}
+                                domain={[0, 28]}
+                             />
+                             <ChartTooltipContent hideLabel />
+                             <Bar dataKey="deals" fill="var(--color-deals)" radius={4} />
+                             <ChartLegend content={<ChartLegendContent />} />
+                       </BarChart>
+                   </ChartContainer>
                 </CardContent>
             </Card>
         </TabsContent>

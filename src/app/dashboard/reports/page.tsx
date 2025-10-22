@@ -1,0 +1,209 @@
+
+'use client';
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Target,
+  DollarSign,
+  TrendingUp,
+  Users,
+  FileDown,
+  TrendingDown,
+} from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+} from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
+import { KpiCard } from '@/components/kpi-card';
+
+const lineChartData = [
+  { month: 'Jan', revenue: 41000, target: 50000 },
+  { month: 'Feb', revenue: 49000, target: 51000 },
+  { month: 'Mar', revenue: 51000, target: 52000 },
+  { month: 'Apr', revenue: 44000, target: 53000 },
+  { month: 'May', revenue: 52000, target: 54000 },
+  { month: 'Jun', revenue: 62000, target: 58000 },
+  { month: 'Jul', revenue: 55000, target: 60000 },
+  { month: 'Aug', revenue: 68000, target: 62000 },
+  { month: 'Sep', revenue: 73000, target: 65000 },
+];
+
+const barChartData = [
+  { month: 'Jan', revenue: 42000 },
+  { month: 'Feb', revenue: 48000 },
+  { month: 'Mar', a: 52000 },
+  { month: 'Apr', revenue: 45000 },
+  { month: 'May', revenue: 54000 },
+  { month: 'Jun', revenue: 58000 },
+  { month: 'Jul', revenue: 61000 },
+  { month: 'Aug', revenue: 56000 },
+  { month: 'Sep', revenue: 67000 },
+  { month: 'Oct', revenue: 72000 },
+];
+
+const lineChartConfig = {
+  revenue: {
+    label: 'Revenue',
+    color: 'hsl(var(--primary))',
+  },
+  target: {
+    label: 'Target',
+    color: 'hsl(var(--muted-foreground))',
+  },
+} satisfies ChartConfig;
+
+const barChartConfig = {
+  revenue: {
+    label: 'Revenue',
+    color: 'hsl(var(--primary))',
+  },
+} satisfies ChartConfig;
+
+function ReportKpiCard({ title, value, change, Icon, changeType }: { title: string, value: string, change: string, Icon: React.ElementType, changeType: 'increase' | 'decrease' }) {
+    return (
+        <Card>
+            <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                    <CardDescription>{title}</CardDescription>
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                </div>
+            </CardHeader>
+            <CardContent>
+                <h3 className="text-2xl font-bold">{value}</h3>
+                <div className={`flex items-center gap-1 text-xs mt-1 ${changeType === 'increase' ? 'text-green-600' : 'text-red-600'}`}>
+                    {changeType === 'increase' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                    <span>{change} from last period</span>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
+export default function ReportsPage() {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Reports &amp; Analytics</h1>
+          <p className="text-muted-foreground">
+            Track your sales performance and metrics
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select defaultValue="30">
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Last 30 days" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+              <SelectItem value="365">Last year</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline">
+            <FileDown className="mr-2 h-4 w-4" />
+            Export Report
+          </Button>
+        </div>
+      </div>
+
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <ReportKpiCard title="Conversion Rate" value="24%" change="+12%" Icon={Target} changeType="increase" />
+        <ReportKpiCard title="Avg Deal Size" value="$52,400" change="+8%" Icon={DollarSign} changeType="increase" />
+        <ReportKpiCard title="Win Rate" value="68%" change="-3%" Icon={TrendingUp} changeType="decrease" />
+        <ReportKpiCard title="Active Leads" value="156" change="+15%" Icon={Users} changeType="increase" />
+      </div>
+
+      <Tabs defaultValue="revenue">
+        <TabsList>
+          <TabsTrigger value="revenue">Revenue Analysis</TabsTrigger>
+          <TabsTrigger value="leads">Lead Sources</TabsTrigger>
+          <TabsTrigger value="deals">Deal Activity</TabsTrigger>
+        </TabsList>
+        <TabsContent value="revenue" className="mt-4">
+           <div className="grid gap-6 md:grid-cols-2">
+             <Card>
+                <CardHeader>
+                    <CardTitle>Revenue vs Target</CardTitle>
+                    <CardDescription>Monthly revenue compared to targets</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ChartContainer config={lineChartConfig} className="min-h-[200px] w-full">
+                        <LineChart data={lineChartData} margin={{ left: 12, right: 12 }}>
+                            <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                            <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value/1000}k`}/>
+                            <Tooltip content={<ChartTooltipContent />} />
+                            <Legend content={<ChartLegendContent />} />
+                            <Line dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
+                            <Line dataKey="target" type="monotone" stroke="var(--color-target)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
+                        </LineChart>
+                    </ChartContainer>
+                </CardContent>
+             </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Monthly Growth</CardTitle>
+                    <CardDescription>Revenue growth over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ChartContainer config={barChartConfig} className="min-h-[200px] w-full">
+                       <BarChart data={barChartData} margin={{ left: 12, right: 12 }}>
+                             <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                            <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value/1000}k`}/>
+                             <Tooltip content={<ChartTooltipContent />} />
+                             <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                       </BarChart>
+                    </ChartContainer>
+                </CardContent>
+             </Card>
+           </div>
+        </TabsContent>
+         <TabsContent value="leads" className="mt-4">
+            <Card>
+                <CardHeader><CardTitle>Lead Sources</CardTitle></CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">Lead source analysis will be displayed here.</p>
+                </CardContent>
+            </Card>
+        </TabsContent>
+         <TabsContent value="deals" className="mt-4">
+            <Card>
+                <CardHeader><CardTitle>Deal Activity</CardTitle></CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">Recent deal activity will be displayed here.</p>
+                </CardContent>
+            </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

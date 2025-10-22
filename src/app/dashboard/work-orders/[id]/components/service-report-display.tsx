@@ -76,6 +76,15 @@ export function ServiceReportDisplay({
     const laborInfo = reportData?.labor?.[0] || {};
 
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+    // Add these default settings
+    (doc as any).autoTableSetDefaults({
+        styles: {
+            overflow: 'linebreak',
+            cellWidth: 'wrap',
+        }
+    });
+
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 40;
     let finalY = margin + 20;
@@ -175,6 +184,14 @@ export function ServiceReportDisplay({
         styles: {
             lineColor: [0, 0, 0],
             lineWidth: 0.5,
+            cellWidth: 'wrap',
+            overflow: 'linebreak',
+        },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 'auto' },
+            2: { cellWidth: 'auto' },
+            3: { cellWidth: 'auto' },
         }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -185,11 +202,22 @@ export function ServiceReportDisplay({
             head: [[{ content: title, colSpan: 2 }]],
             body: Object.entries(data).map(([key, value]) => [key, value]),
             theme: 'grid',
-            styles: { lineColor: [0,0,0], lineWidth: 0.5, cellPadding: 5 },
-            headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'left' },
+            styles: { 
+                lineColor: [0,0,0], 
+                lineWidth: 0.5, 
+                cellPadding: 5,
+                overflow: 'linebreak',
+                cellWidth: 'wrap',
+            },
+            headStyles: { 
+                fillColor: [220, 220, 220], 
+                textColor: [0, 0, 0], 
+                fontStyle: 'bold', 
+                halign: 'left' 
+            },
             columnStyles: {
                 0: { fontStyle: 'bold', cellWidth: 150 },
-                1: { },
+                1: { cellWidth: 'auto' },
             }
         });
         finalY = (doc as any).lastAutoTable.finalY + 10;

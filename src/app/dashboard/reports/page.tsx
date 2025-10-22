@@ -195,12 +195,6 @@ export default function ReportsPage() {
            </div>
         </TabsContent>
          <TabsContent value="leads" className="mt-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-                <ReportKpiCard title="Total Leads" value="1,000" change="+20.1%" Icon={Users} changeType="increase" />
-                <ReportKpiCard title="Conversion Rate" value="12.5%" change="+2.1%" Icon={Target} changeType="increase" />
-                <ReportKpiCard title="Avg. Response Time" value="3.2h" change="-10.5%" Icon={Clock} changeType="decrease" />
-                <ReportKpiCard title="Active Campaigns" value="3" change=" " Icon={Speaker} changeType="increase" />
-            </div>
             <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                     <CardHeader>
@@ -306,4 +300,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-

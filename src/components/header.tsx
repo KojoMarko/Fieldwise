@@ -43,6 +43,10 @@ import {
   Bell,
   Check,
   Map,
+  FileText,
+  Activity,
+  Briefcase,
+  TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
@@ -109,6 +113,46 @@ function generateBreadcrumbs(pathname: string) {
     return breadcrumbs;
 }
 
+const adminNavItems = [
+  { href: '/dashboard', icon: Home, label: 'Dashboard' },
+  { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
+  { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
+  { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
+  { href: '/dashboard/map', icon: Map, label: 'Map'},
+  { href: '/dashboard/customers', icon: Building, label: 'Customers' },
+  { href: '/dashboard/users', icon: Users, label: 'Users' },
+  { href: '/dashboard/assets', icon: Package, label: 'Assets' },
+  { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
+  { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
+  { href: '/dashboard/audit-log', icon: History, label: 'Audit Log' },
+];
+
+const engineerNavItems = [
+    { href: '/dashboard', icon: Home, label: 'My Dashboard' },
+    { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
+    { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
+    { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
+    { href: '/dashboard/map', icon: Map, label: 'Map'},
+    { href: '/dashboard/assets', icon: Package, label: 'Assets' },
+    { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
+    { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
+]
+
+const salesRepNavItems = [
+    { href: '/dashboard', icon: Home, label: 'Dashboard' },
+    { href: '/dashboard/leads', icon: Users, label: 'Leads' },
+    { href: '/dashboard/opportunities', icon: Briefcase, label: 'Opportunities' },
+    { href: '/dashboard/reports', icon: FileText, label: 'Reports' },
+    { href: '/dashboard/activities', icon: Activity, label: 'Activities' },
+    { href: '/dashboard/documents', icon: BookText, label: 'Documents' },
+    { href: '/dashboard/forecasts', icon: TrendingUp, label: 'Forecasts' },
+];
+
+const customerNavItems = [
+    { href: '/dashboard', icon: Home, label: 'Dashboard' },
+    { href: '/dashboard/work-orders', icon: Wrench, label: 'My Service History' },
+]
+
 export function Header() {
     const { user, logout } = useAuth();
     const pathname = usePathname();
@@ -116,6 +160,15 @@ export function Header() {
     const [isSheetOpen, setSheetOpen] = useState(false);
     const [unreadNotifications, setUnreadNotifications] = useState<Notification[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+
+    let navItems = adminNavItems;
+    if (user?.role === 'Engineer') {
+      navItems = engineerNavItems;
+    } else if (user?.role === 'Sales Rep') {
+      navItems = salesRepNavItems;
+    } else if (user?.role === 'Customer') {
+        navItems = customerNavItems;
+    }
 
 
     const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -164,10 +217,6 @@ export function Header() {
              </header>
         )
     }
-
-    const isAdmin = user.role === 'Admin';
-    const isEngineer = user.role === 'Engineer';
-    const isSales = user.role === 'Sales Rep';
     
     const breadcrumbs = generateBreadcrumbs(pathname);
 
@@ -194,108 +243,17 @@ export function Header() {
               <Image src="/Field Wise Logo.png" width={40} height={40} alt="FieldWise Logo" />
               <span className="font-semibold text-xl">FieldWise</span>
             </Link>
-             <Link
-              href="/dashboard"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-               onClick={() => setSheetOpen(false)}
-            >
-              <Home className="h-5 w-5" />
-              Dashboard
-            </Link>
-             <Link
-              href="/dashboard/notifications"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-               onClick={() => setSheetOpen(false)}
-            >
-              <Inbox className="h-5 w-5" />
-              Inbox
-            </Link>
-            <Link
-              href="/dashboard/work-orders"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-               onClick={() => setSheetOpen(false)}
-            >
-              <Wrench className="h-5 w-5" />
-              Work Orders
-            </Link>
-            {(isAdmin || isEngineer || isSales) && (
-                <>
-                 <Link
-                  href="/dashboard/assets"
+             {navItems.map(item => (
+                <Link
+                  key={item.href}
+                  href={item.href}
                   className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                   onClick={() => setSheetOpen(false)}
                 >
-                    <Package className="h-5 w-5" />
-                    Assets
+                  <item.icon className="h-5 w-5" />
+                  {item.label}
                 </Link>
-                </>
-            )}
-            {(isAdmin || isEngineer) && (
-                <>
-                 <Link
-                  href="/dashboard/ppm"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                   onClick={() => setSheetOpen(false)}
-                >
-                  <CalendarCheck className="h-5 w-5" />
-                  PPM
-                </Link>
-                <Link
-                  href="/dashboard/map"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                   onClick={() => setSheetOpen(false)}
-                >
-                  <Map className="h-5 w-5" />
-                  Map
-                </Link>
-                 <Link
-                  href="/dashboard/spare-parts"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                   onClick={() => setSheetOpen(false)}
-                >
-                  <List className="h-5 w-5" />
-                  Spare Parts
-                </Link>
-                 <Link
-                  href="/dashboard/resources"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                   onClick={() => setSheetOpen(false)}
-                >
-                  <BookText className="h-5 w-5" />
-                  Resource Center
-                </Link>
-                </>
-            )}
-            {(isAdmin || isSales) && (
-                 <Link
-                  href="/dashboard/customers"
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                   onClick={() => setSheetOpen(false)}
-                >
-                  <Building className="h-5 w-5" />
-                  Customers
-                </Link>
-            )}
-            {isAdmin && (
-                <>
-                <Link
-                href="/dashboard/users"
-                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                 onClick={() => setSheetOpen(false)}
-                >
-                <Users className="h-5 w-5" />
-                Users
-                </Link>
-                <Link
-                href="/dashboard/audit-log"
-                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                 onClick={() => setSheetOpen(false)}
-                >
-                <History className="h-5 w-5" />
-                Audit Log
-                </Link>
-              </>
-            )}
+             ))}
             <Link
               href="/dashboard/settings"
               className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"

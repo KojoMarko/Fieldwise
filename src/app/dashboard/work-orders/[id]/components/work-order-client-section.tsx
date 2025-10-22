@@ -184,23 +184,7 @@ export function WorkOrderClientSection({
         setQuestionnaireData(prev => ({ ...prev, laborHours: hours }));
       }
     }
-
-    // Automatically populate parts used
-    const usedParts = allocatedParts
-      .filter(p => p.status === 'Used')
-      .map(p => ({
-        partNumber: p.partNumber,
-        description: p.name,
-        quantity: p.quantity,
-        price: 0, // Price is a placeholder
-      }));
-    
-    // Avoid infinite loops by checking if an update is needed
-    if (JSON.stringify(questionnaireData.partsUsed) !== JSON.stringify(usedParts)) {
-        setQuestionnaireData(prev => ({ ...prev, partsUsed: usedParts }));
-    }
-
-  }, [questionnaireData.timeWorkStarted, questionnaireData.timeWorkCompleted, allocatedParts, questionnaireData.laborHours, questionnaireData.partsUsed]);
+  }, [questionnaireData.timeWorkStarted, questionnaireData.timeWorkCompleted, questionnaireData.laborHours]);
 
 
   const handlePutOnHold = async (reason: string) => {
@@ -247,7 +231,7 @@ export function WorkOrderClientSection({
     setQuestionnaireOpen(false);
     setIsGeneratingReport(true);
     try {
-        const partsData = allocatedParts
+        const usedParts = allocatedParts
             .filter(p => p.status === 'Used')
             .map(p => ({
                 partNumber: p.partNumber,
@@ -258,7 +242,7 @@ export function WorkOrderClientSection({
         
         const result = await generateServiceReport({
             ...(questionnaireData as Omit<ServiceReportQuestionnaire, 'partsUsed'>),
-            partsUsed: partsData,
+            partsUsed: usedParts,
             workOrderId: workOrder.id,
             assetName: asset?.name || 'N/A',
             assetModel: asset?.model || 'N/A',
@@ -481,13 +465,9 @@ export function WorkOrderClientSection({
                    </div>
                     <div>
                         <Label>Parts Used</Label>
-                        {questionnaireData.partsUsed && questionnaireData.partsUsed.length > 0 ? (
-                            <ul className="list-disc list-inside space-y-1 text-sm p-3 border rounded-md">
-                                {questionnaireData.partsUsed.map((part, index) => (
-                                    <li key={index}>{part.description} (PN: {part.partNumber}) - Qty: {part.quantity}</li>
-                                ))}
-                            </ul>
-                        ) : <p className="text-sm text-muted-foreground p-3 border rounded-md">No parts marked as used.</p>}
+                        <p className="text-sm text-muted-foreground p-3 border rounded-md">
+                            Parts marked as 'Used' in the Parts tab will be automatically included.
+                        </p>
                     </div>
               </div>
               <DialogFooter>

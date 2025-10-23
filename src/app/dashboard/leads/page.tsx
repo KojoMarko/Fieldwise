@@ -39,58 +39,94 @@ export default function LeadsPage() {
   const convertedLeads = leadsData.filter(lead => lead.status === 'Converted').length;
 
   return (
-    <div className="space-y-6">
-       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
-          <p className="text-muted-foreground">Manage and track your sales leads</p>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header Section - Fully Responsive */}
+      <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Leads</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Manage and track your sales leads
+          </p>
         </div>
-        <div className="sm:ml-auto">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Lead
-          </Button>
-        </div>
+        <Button className="w-full sm:w-auto">
+          <PlusCircle className="mr-2 h-4 w-4" /> Add Lead
+        </Button>
       </div>
 
-       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard title="Total Leads" value={totalLeads.toString()} Icon={Users} description={`${convertedLeads} leads converted this month`} />
-        <KpiCard title="New Leads" value={newLeads.toString()} Icon={User} description="Awaiting initial contact" />
-        <KpiCard title="Qualified" value={qualifiedLeads.toString()} Icon={CheckCircle} description="Ready for the next step" />
-        <KpiCard title="Converted" value={convertedLeads.toString()} Icon={TrendingUp} description="Successfully turned into customers" />
+      {/* KPI Cards - Responsive Grid */}
+      <div className="grid grid-cols-1 min-[500px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <KpiCard 
+          title="Total Leads" 
+          value={totalLeads.toString()} 
+          Icon={Users} 
+          description={`${convertedLeads} leads converted this month`} 
+        />
+        <KpiCard 
+          title="New Leads" 
+          value={newLeads.toString()} 
+          Icon={User} 
+          description="Awaiting initial contact" 
+        />
+        <KpiCard 
+          title="Qualified" 
+          value={qualifiedLeads.toString()} 
+          Icon={CheckCircle} 
+          description="Ready for the next step" 
+        />
+        <KpiCard 
+          title="Converted" 
+          value={convertedLeads.toString()} 
+          Icon={TrendingUp} 
+          description="Successfully turned into customers" 
+        />
       </div>
 
+      {/* Data Table Card - Fully Responsive */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex-1 relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search leads..." className="pl-8 w-full md:w-80" />
+        <CardContent className="p-4 sm:p-6">
+          {/* Search and Filter Controls */}
+          <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            {/* Search Input */}
+            <div className="relative w-full sm:flex-1 sm:max-w-sm">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search leads..." 
+                className="pl-8 w-full h-9" 
+              />
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <Button variant="outline" size="sm" className="h-9">
-                    <Filter className="mr-2 h-4 w-4" />
-                    Filter
-                </Button>
-                 <Select defaultValue="all">
-                    <SelectTrigger className="w-full sm:w-[180px] h-9">
-                        <SelectValue placeholder="All Leads" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Leads</SelectItem>
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="contacted">Contacted</SelectItem>
-                        <SelectItem value="qualified">Qualified</SelectItem>
-                        <SelectItem value="converted">Converted</SelectItem>
-                    </SelectContent>
-                </Select>
-                 <Button variant="outline" size="sm" className="h-9">
-                    <File className="mr-2 h-4 w-4" />
-                    Export
-                </Button>
+            
+            {/* Filter Controls */}
+            <div className="flex flex-col min-[400px]:flex-row items-stretch gap-2">
+              <Button variant="outline" size="sm" className="h-9 flex-1 min-[400px]:flex-none">
+                <Filter className="mr-2 h-4 w-4" />
+                Filter
+              </Button>
+              
+              <Select defaultValue="all">
+                <SelectTrigger className="h-9 w-full min-[400px]:w-[140px] sm:w-[160px]">
+                  <SelectValue placeholder="All Leads" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Leads</SelectItem>
+                  <SelectItem value="new">New</SelectItem>
+                  <SelectItem value="contacted">Contacted</SelectItem>
+                  <SelectItem value="qualified">Qualified</SelectItem>
+                  <SelectItem value="converted">Converted</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button variant="outline" size="sm" className="h-9 flex-1 min-[400px]:flex-none">
+                <File className="mr-2 h-4 w-4" />
+                Export
+              </Button>
             </div>
           </div>
-          <div className="mt-4 overflow-x-auto">
-            <DataTable columns={columns} data={leadsData} />
+          
+          {/* Data Table with Horizontal Scroll */}
+          <div className="mt-4 -mx-4 sm:mx-0">
+            <div className="overflow-x-auto px-4 sm:px-0">
+              <DataTable columns={columns} data={leadsData} />
+            </div>
           </div>
         </CardContent>
       </Card>

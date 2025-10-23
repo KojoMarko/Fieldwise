@@ -148,7 +148,7 @@ export default function ReportsPage() {
             Track your sales performance and metrics
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch gap-2">
           <Select defaultValue="30">
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Last 30 days" />
@@ -159,7 +159,7 @@ export default function ReportsPage() {
               <SelectItem value="365">Last year</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
+          <Button variant="outline" className="w-full sm:w-auto">
             <FileDown className="mr-2 h-4 w-4" />
             Export Report
           </Button>
@@ -167,10 +167,10 @@ export default function ReportsPage() {
       </div>
       
       <Tabs defaultValue="revenue">
-        <TabsList className="grid w-full grid-cols-1 sm:w-auto sm:grid-cols-3">
-          <TabsTrigger value="revenue">Revenue Analysis</TabsTrigger>
-          <TabsTrigger value="leads">Lead Sources</TabsTrigger>
-          <TabsTrigger value="deals">Deal Activity</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="revenue">Revenue</TabsTrigger>
+          <TabsTrigger value="leads">Leads</TabsTrigger>
+          <TabsTrigger value="deals">Deals</TabsTrigger>
         </TabsList>
         <TabsContent value="revenue" className="mt-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
@@ -179,7 +179,7 @@ export default function ReportsPage() {
             <ReportKpiCard title="Win Rate" value="68%" change="-3%" Icon={TrendingUp} changeType="decrease" />
             <ReportKpiCard title="Active Leads" value="156" change="+15%" Icon={Users} changeType="increase" />
           </div>
-           <div className="grid gap-6 md:grid-cols-2">
+           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
              <Card>
                 <CardHeader>
                     <CardTitle>Revenue vs Target</CardTitle>
@@ -217,7 +217,7 @@ export default function ReportsPage() {
            </div>
         </TabsContent>
          <TabsContent value="leads" className="mt-4">
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                 <Card>
                     <CardHeader>
                         <CardTitle>Lead Source Distribution</CardTitle>

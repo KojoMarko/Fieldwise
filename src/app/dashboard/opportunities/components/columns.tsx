@@ -84,6 +84,9 @@ export const columns: ColumnDef<Opportunity>[] = [
                 <span>{probability}%</span>
             </div>
         )
+    },
+    meta: {
+        className: 'hidden lg:table-cell',
     }
   },
   {
@@ -100,6 +103,9 @@ export const columns: ColumnDef<Opportunity>[] = [
     cell: ({ row }) => {
         const date = new Date(row.getValue('closeDate'));
         return new Intl.DateTimeFormat('en-US').format(date);
+    },
+    meta: {
+        className: 'hidden md:table-cell',
     }
   },
   {

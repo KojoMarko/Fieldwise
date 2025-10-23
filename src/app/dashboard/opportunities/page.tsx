@@ -82,7 +82,7 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
 
 function PipelineView() {
   return (
-     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {pipelineStages.map(stage => {
             const stageOpportunities = opportunities.filter(o => o.stage === stage.name);
             const stageValue = stageOpportunities.reduce((sum, o) => sum + o.value, 0);
@@ -130,7 +130,7 @@ export default function OpportunitiesPage() {
         </div>
       </div>
 
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard title="Total Pipeline Value" value={`$${(totalPipelineValue/1000).toFixed(0)}K`} Icon={DollarSign} description="" />
             <KpiCard title="Weighted Value" value={`$${(weightedValue/1000).toFixed(0)}K`} Icon={DollarSign} description="" />
             <KpiCard title="Active Opportunities" value={activeOpportunities.toString()} Icon={Users} description="" />
@@ -138,7 +138,7 @@ export default function OpportunitiesPage() {
       </div>
 
       <Tabs defaultValue="pipeline">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-2 sm:w-auto">
           <TabsTrigger value="pipeline">
             <View className="mr-2" />
             Pipeline View

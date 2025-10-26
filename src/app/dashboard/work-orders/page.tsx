@@ -98,7 +98,7 @@ export default function WorkOrdersPage() {
   )
 
   const adminOrTechTabs = (
-      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+      <TabsList className="h-auto">
         <TabsTrigger value="all">All</TabsTrigger>
         <TabsTrigger value="active">Active</TabsTrigger>
         <TabsTrigger value="completed">Completed</TabsTrigger>
@@ -107,7 +107,7 @@ export default function WorkOrdersPage() {
   )
   
   const customerTabs = (
-       <TabsList className="grid w-full grid-cols-3">
+       <TabsList className="h-auto">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="active">Active</TabsTrigger>
             <TabsTrigger value="completed">Completed</TabsTrigger>

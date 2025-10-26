@@ -189,8 +189,8 @@ export default function ReportsPage() {
                       <ChartContainer config={lineChartConfig} className="min-h-[250px] w-full">
                           <ResponsiveContainer width="99%" height={250}>
                               <LineChart data={lineChartData}>
-                                  <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
-                                  <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value/1000}k`}/>
+                                  <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                                  <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`}/>
                                   <Tooltip content={<ChartTooltipContent />} />
                                   <Legend content={<ChartLegendContent />} />
                                   <Line dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
@@ -209,8 +209,8 @@ export default function ReportsPage() {
                       <ChartContainer config={barChartConfig} className="min-h-[250px] w-full">
                         <ResponsiveContainer width="99%" height={250}>
                           <BarChart data={barChartData}>
-                                <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
-                              <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value/1000}k`}/>
+                                <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                              <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`}/>
                                 <Tooltip content={<ChartTooltipContent />} />
                                 <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
                           </BarChart>

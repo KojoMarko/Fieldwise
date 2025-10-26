@@ -215,7 +215,7 @@ export default function WorkOrderDetailPage({
               <p className="text-sm text-muted-foreground">Work Order #{workOrder.id}</p>
           </div>
         </div>
-        <div className="sm:ml-auto">
+        <div className="ml-auto flex items-center gap-2">
             <Badge className={cn('w-fit text-base', statusStyles[workOrder.status])} variant="outline">{workOrder.status}</Badge>
         </div>
       </div>
@@ -375,7 +375,5 @@ export default function WorkOrderDetailPage({
     </div>
   );
 }
-
-    
 
     

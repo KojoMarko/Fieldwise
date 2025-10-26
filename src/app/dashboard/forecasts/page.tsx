@@ -191,7 +191,7 @@ export default function ForecastsPage() {
         </Card>
 
         <Tabs defaultValue="quarterly">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
+          <TabsList className="grid w-full sm:w-auto sm:grid-cols-3">
             <TabsTrigger value="quarterly">Quarterly Trend</TabsTrigger>
             <TabsTrigger value="monthly">Monthly Forecast</TabsTrigger>
             <TabsTrigger value="team">Team Performance</TabsTrigger>

@@ -179,43 +179,47 @@ export default function ReportsPage() {
               <ReportKpiCard title="Win Rate" value="68%" change="-3%" Icon={TrendingUp} changeType="decrease" />
               <ReportKpiCard title="Active Leads" value="156" change="+15%" Icon={Users} changeType="increase" />
             </div>
-            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-              <Card>
+            <div className="grid gap-6 md:grid-cols-2">
+                <Card>
                   <CardHeader>
-                      <CardTitle>Revenue vs Target</CardTitle>
-                      <CardDescription>Monthly revenue compared to targets</CardDescription>
+                    <CardTitle>Revenue vs Target</CardTitle>
+                    <CardDescription>Monthly revenue compared to targets</CardDescription>
                   </CardHeader>
-                  <CardContent className="pr-6">
-                      <ChartContainer config={lineChartConfig} className="h-[300px] w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={lineChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                                  <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                                  <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`}/>
-                                  <Tooltip content={<ChartTooltipContent />} />
-                                  <Legend content={<ChartLegendContent />} />
-                                  <Line dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
-                                  <Line dataKey="target" type="monotone" stroke="var(--color-target)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
-                              </LineChart>
-                          </ResponsiveContainer>
+                  <CardContent className="pr-6 overflow-visible">
+                    <div className="w-full min-h-[260px] sm:min-h-[300px]">
+                      <ChartContainer config={lineChartConfig} className="w-full h-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={lineChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                            <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                            <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value / 1000}k`} />
+                            <Tooltip content={<ChartTooltipContent />} />
+                            <Legend content={<ChartLegendContent />} />
+                            <Line dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
+                            <Line dataKey="target" type="monotone" stroke="var(--color-target)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
+                          </LineChart>
+                        </ResponsiveContainer>
                       </ChartContainer>
+                    </div>
                   </CardContent>
-              </Card>
-              <Card>
+                </Card>
+                <Card>
                   <CardHeader>
                       <CardTitle>Monthly Growth</CardTitle>
                       <CardDescription>Revenue growth over time</CardDescription>
                   </CardHeader>
-                  <CardContent className="pr-6">
-                      <ChartContainer config={barChartConfig} className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={barChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                                <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                              <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`}/>
-                                <Tooltip content={<ChartTooltipContent />} />
-                                <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </ChartContainer>
+                  <CardContent className="pr-6 overflow-visible">
+                      <div className="w-full min-h-[260px] sm:min-h-[300px]">
+                        <ChartContainer config={barChartConfig} className="w-full h-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={barChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                                  <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                                <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`}/>
+                                  <Tooltip content={<ChartTooltipContent />} />
+                                  <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </ChartContainer>
+                      </div>
                   </CardContent>
               </Card>
             </div>

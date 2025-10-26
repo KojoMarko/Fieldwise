@@ -148,7 +148,7 @@ export default function ReportsPage() {
             Track your sales performance and metrics
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch gap-2 shrink-0">
           <Select defaultValue="30">
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Last 30 days" />

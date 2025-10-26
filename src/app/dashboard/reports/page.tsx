@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -142,209 +141,215 @@ export default function ReportsPage() {
   return (
     <div className="w-full max-w-full overflow-hidden">
       <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reports &amp; Analytics</h1>
-          <p className="text-muted-foreground">
-            Track your sales performance and metrics
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row items-stretch gap-2 shrink-0">
-          <Select defaultValue="30">
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Last 30 days" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="30">Last 30 days</SelectItem>
-              <SelectItem value="90">Last 90 days</SelectItem>
-              <SelectItem value="365">Last year</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" className="w-full sm:w-auto">
-            <FileDown className="mr-2 h-4 w-4" />
-            Export Report
-          </Button>
-        </div>
-      </div>
-      
-      <Tabs defaultValue="revenue">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="revenue">Revenue</TabsTrigger>
-          <TabsTrigger value="leads">Leads</TabsTrigger>
-          <TabsTrigger value="deals">Deals</TabsTrigger>
-        </TabsList>
-        <TabsContent value="revenue" className="mt-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-            <ReportKpiCard title="Conversion Rate" value="24%" change="+12%" Icon={Target} changeType="increase" />
-            <ReportKpiCard title="Avg Deal Size" value="$52,400" change="+8%" Icon={DollarSign} changeType="increase" />
-            <ReportKpiCard title="Win Rate" value="68%" change="-3%" Icon={TrendingUp} changeType="decrease" />
-            <ReportKpiCard title="Active Leads" value="156" change="+15%" Icon={Users} changeType="increase" />
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Reports &amp; Analytics</h1>
+            <p className="text-muted-foreground">
+              Track your sales performance and metrics
+            </p>
           </div>
-           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-             <Card>
-                <CardHeader>
-                    <CardTitle>Revenue vs Target</CardTitle>
-                    <CardDescription>Monthly revenue compared to targets</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ChartContainer config={lineChartConfig} className="min-h-[250px] w-full">
-                        <LineChart data={lineChartData}>
-                            <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
-                            <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value/1000}k`}/>
-                            <Tooltip content={<ChartTooltipContent />} />
-                            <Legend content={<ChartLegendContent />} />
-                            <Line dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
-                            <Line dataKey="target" type="monotone" stroke="var(--color-target)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
-                        </LineChart>
-                    </ChartContainer>
-                </CardContent>
-             </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Monthly Growth</CardTitle>
-                    <CardDescription>Revenue growth over time</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ChartContainer config={barChartConfig} className="min-h-[250px] w-full">
-                       <BarChart data={barChartData}>
-                             <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
-                            <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value/1000}k`}/>
-                             <Tooltip content={<ChartTooltipContent />} />
-                             <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
-                       </BarChart>
-                    </ChartContainer>
-                </CardContent>
-             </Card>
-           </div>
-        </TabsContent>
-         <TabsContent value="leads" className="mt-4">
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 shrink-0">
+            <Select defaultValue="30">
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Last 30 days" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="30">Last 30 days</SelectItem>
+                <SelectItem value="90">Last 90 days</SelectItem>
+                <SelectItem value="365">Last year</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" className="w-full sm:w-auto">
+              <FileDown className="mr-2 h-4 w-4" />
+              Export Report
+            </Button>
+          </div>
+        </div>
+        
+        <Tabs defaultValue="revenue">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="revenue">Revenue</TabsTrigger>
+            <TabsTrigger value="leads">Leads</TabsTrigger>
+            <TabsTrigger value="deals">Deals</TabsTrigger>
+          </TabsList>
+          <TabsContent value="revenue" className="mt-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+              <ReportKpiCard title="Conversion Rate" value="24%" change="+12%" Icon={Target} changeType="increase" />
+              <ReportKpiCard title="Avg Deal Size" value="$52,400" change="+8%" Icon={DollarSign} changeType="increase" />
+              <ReportKpiCard title="Win Rate" value="68%" change="-3%" Icon={TrendingUp} changeType="decrease" />
+              <ReportKpiCard title="Active Leads" value="156" change="+15%" Icon={Users} changeType="increase" />
+            </div>
             <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Lead Source Distribution</CardTitle>
-                        <CardDescription>Where your leads are coming from</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ChartContainer
-                          config={leadSourceChartConfig}
-                          className="mx-auto aspect-square h-[250px]"
-                        >
-                            <PieChart>
-                                <ChartTooltipContent nameKey="value" hideLabel />
-                                <Pie 
-                                    data={leadSourceData} 
-                                    dataKey="value" 
-                                    nameKey="source" 
-                                    labelLine={false} 
-                                    label={({ cx, cy, midAngle, innerRadius, outerRadius, value, index }) => {
-                                        const RADIAN = Math.PI / 180;
-                                        const radius = 12 + outerRadius + (outerRadius - innerRadius) * 0.5;
-                                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                                        const percent = ((value / totalLeads) * 100).toFixed(0);
-
-                                        return (
-                                        <text
-                                            x={x}
-                                            y={y}
-                                            fill="hsl(var(--foreground))"
-                                            textAnchor={x > cx ? 'start' : 'end'}
-                                            dominantBaseline="central"
-                                            className="text-xs"
-                                        >
-                                            {leadSourceData[index].source} ({percent}%)
-                                        </text>
-                                        );
-                                    }}
-                                >
-                                {leadSourceData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                                ))}
-                                </Pie>
-                            </PieChart>
-                        </ChartContainer>
-                    </CardContent>
-                </Card>
-                <Card>
+              <Card>
                   <CardHeader>
-                    <CardTitle>Source Performance</CardTitle>
-                    <CardDescription>Lead volume by source</CardDescription>
+                      <CardTitle>Revenue vs Target</CardTitle>
+                      <CardDescription>Monthly revenue compared to targets</CardDescription>
                   </CardHeader>
-                  <CardContent className="grid gap-4">
-                    <ChartContainer
-                      config={leadSourceChartConfig}
-                      className="w-full"
-                    >
-                      <BarChart
-                        layout="vertical"
-                        data={leadSourceData}
-                        margin={{ left: 0, right: 40 }}
+                  <CardContent>
+                      <ChartContainer config={lineChartConfig} className="min-h-[250px] w-full">
+                          <ResponsiveContainer width="99%" height={250}>
+                              <LineChart data={lineChartData}>
+                                  <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                                  <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value/1000}k`}/>
+                                  <Tooltip content={<ChartTooltipContent />} />
+                                  <Legend content={<ChartLegendContent />} />
+                                  <Line dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
+                                  <Line dataKey="target" type="monotone" stroke="var(--color-target)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
+                              </LineChart>
+                          </ResponsiveContainer>
+                      </ChartContainer>
+                  </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Monthly Growth</CardTitle>
+                      <CardDescription>Revenue growth over time</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <ChartContainer config={barChartConfig} className="min-h-[250px] w-full">
+                        <ResponsiveContainer width="99%" height={250}>
+                          <BarChart data={barChartData}>
+                                <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                              <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value/1000}k`}/>
+                                <Tooltip content={<ChartTooltipContent />} />
+                                <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                  </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          <TabsContent value="leads" className="mt-4">
+              <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+                  <Card>
+                      <CardHeader>
+                          <CardTitle>Lead Source Distribution</CardTitle>
+                          <CardDescription>Where your leads are coming from</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                          <ChartContainer
+                            config={leadSourceChartConfig}
+                            className="mx-auto aspect-square h-[250px]"
+                          >
+                              <PieChart>
+                                  <ChartTooltipContent nameKey="value" hideLabel />
+                                  <Pie 
+                                      data={leadSourceData} 
+                                      dataKey="value" 
+                                      nameKey="source" 
+                                      labelLine={false} 
+                                      label={({ cx, cy, midAngle, innerRadius, outerRadius, value, index }) => {
+                                          const RADIAN = Math.PI / 180;
+                                          const radius = 12 + outerRadius + (outerRadius - innerRadius) * 0.5;
+                                          const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                          const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                          const percent = ((value / totalLeads) * 100).toFixed(0);
+
+                                          return (
+                                          <text
+                                              x={x}
+                                              y={y}
+                                              fill="hsl(var(--foreground))"
+                                              textAnchor={x > cx ? 'start' : 'end'}
+                                              dominantBaseline="central"
+                                              className="text-xs"
+                                          >
+                                              {leadSourceData[index].source} ({percent}%)
+                                          </text>
+                                          );
+                                      }}
+                                  >
+                                  {leadSourceData.map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                                  ))}
+                                  </Pie>
+                              </PieChart>
+                          </ChartContainer>
+                      </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Source Performance</CardTitle>
+                      <CardDescription>Lead volume by source</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4">
+                      <ChartContainer
+                        config={leadSourceChartConfig}
+                        className="w-full"
                       >
-                        <XAxis type="number" hide />
-                        <YAxis
-                          dataKey="source"
-                          type="category"
-                          tickLine={false}
-                          axisLine={false}
-                          tick={{
-                            fill: "hsl(var(--foreground))",
-                            fontSize: 12,
-                          }}
-                          className="w-20"
-                        />
-                        <Bar
-                          dataKey="value"
+                        <BarChart
                           layout="vertical"
-                          radius={4}
+                          data={leadSourceData}
+                          margin={{ left: 0, right: 40 }}
                         >
-                          {leadSourceData.map((entry) => (
-                            <Cell key={entry.source} fill={entry.fill} />
-                          ))}
-                           <LabelList 
-                                dataKey="value" 
-                                position="insideRight"
-                                offset={8}
-                                className="fill-background font-medium"
-                                formatter={(value: number) => `${((value / totalLeads) * 100).toFixed(0)}%`}
-                            />
-                        </Bar>
-                      </BarChart>
+                          <XAxis type="number" hide />
+                          <YAxis
+                            dataKey="source"
+                            type="category"
+                            tickLine={false}
+                            axisLine={false}
+                            tick={{
+                              fill: "hsl(var(--foreground))",
+                              fontSize: 12,
+                            }}
+                            className="w-20"
+                          />
+                          <Bar
+                            dataKey="value"
+                            layout="vertical"
+                            radius={4}
+                          >
+                            {leadSourceData.map((entry) => (
+                              <Cell key={entry.source} fill={entry.fill} />
+                            ))}
+                            <LabelList 
+                                  dataKey="value" 
+                                  position="insideRight"
+                                  offset={8}
+                                  className="fill-background font-medium"
+                                  formatter={(value: number) => `${((value / totalLeads) * 100).toFixed(0)}%`}
+                              />
+                          </Bar>
+                        </BarChart>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+              </div>
+          </TabsContent>
+          <TabsContent value="deals" className="mt-4">
+              <Card>
+                  <CardHeader>
+                    <CardTitle>Deal Activity</CardTitle>
+                    <CardDescription>Number of deals closed per month</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer config={dealActivityChartConfig} className="min-h-[250px] w-full">
+                        <ResponsiveContainer width="99%" height={250}>
+                          <BarChart accessibilityLayer data={dealActivityData}>
+                              <XAxis
+                                  dataKey="month"
+                                  tickLine={false}
+                                  tickMargin={10}
+                                  axisLine={false}
+                                  tickFormatter={(value) => value.slice(0, 3)}
+                              />
+                              <YAxis
+                                  tickLine={false}
+                                  axisLine={false}
+                                  tickMargin={10}
+                                  domain={[0, 28]}
+                              />
+                              <ChartTooltipContent hideLabel />
+                              <Bar dataKey="deals" fill="var(--color-deals)" radius={4} />
+                              <ChartLegend content={<ChartLegendContent />} />
+                        </BarChart>
+                        </ResponsiveContainer>
                     </ChartContainer>
                   </CardContent>
-                </Card>
-            </div>
-        </TabsContent>
-         <TabsContent value="deals" className="mt-4">
-            <Card>
-                <CardHeader>
-                  <CardTitle>Deal Activity</CardTitle>
-                  <CardDescription>Number of deals closed per month</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <ChartContainer config={dealActivityChartConfig} className="min-h-[250px] w-full">
-                       <BarChart accessibilityLayer data={dealActivityData}>
-                            <XAxis
-                                dataKey="month"
-                                tickLine={false}
-                                tickMargin={10}
-                                axisLine={false}
-                                tickFormatter={(value) => value.slice(0, 3)}
-                            />
-                             <YAxis
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={10}
-                                domain={[0, 28]}
-                             />
-                             <ChartTooltipContent hideLabel />
-                             <Bar dataKey="deals" fill="var(--color-deals)" radius={4} />
-                             <ChartLegend content={<ChartLegendContent />} />
-                       </BarChart>
-                   </ChartContainer>
-                </CardContent>
-            </Card>
-        </TabsContent>
-      </Tabs>
+              </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

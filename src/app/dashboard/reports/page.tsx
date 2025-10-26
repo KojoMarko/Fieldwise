@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -186,12 +185,12 @@ export default function ReportsPage() {
                       <CardTitle>Revenue vs Target</CardTitle>
                       <CardDescription>Monthly revenue compared to targets</CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pr-6">
                       <ChartContainer config={lineChartConfig} className="h-[300px] w-full">
                           <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={lineChartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                              <LineChart data={lineChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                                   <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                                  <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `${value/1000}k`}/>
+                                  <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`}/>
                                   <Tooltip content={<ChartTooltipContent />} />
                                   <Legend content={<ChartLegendContent />} />
                                   <Line dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
@@ -206,12 +205,12 @@ export default function ReportsPage() {
                       <CardTitle>Monthly Growth</CardTitle>
                       <CardDescription>Revenue growth over time</CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pr-6">
                       <ChartContainer config={barChartConfig} className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={barChartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                          <BarChart data={barChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                                 <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                              <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `${value/1000}k`}/>
+                              <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`}/>
                                 <Tooltip content={<ChartTooltipContent />} />
                                 <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
                           </BarChart>
@@ -355,5 +354,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
-    

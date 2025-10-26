@@ -154,7 +154,7 @@ function CustomerCell({ row }: { row: { original: WorkOrder }}) {
         return () => unsubscribe();
     }, [row.original.customerId, user?.companyId]);
     
-    return <div>{customerName}</div>;
+    return <div className="truncate max-w-[150px]">{customerName}</div>;
 }
 
 
@@ -182,7 +182,7 @@ function TechnicianCell({ row }: { row: { original: WorkOrder }}) {
         return () => unsubscribe();
     }, [row.original.technicianIds, user?.companyId]);
     
-    return techNames ? <div>{techNames}</div> : <div className="text-muted-foreground">Unassigned</div>;
+    return techNames ? <div className="truncate max-w-[150px]">{techNames}</div> : <div className="text-muted-foreground">Unassigned</div>;
 }
 
 
@@ -197,6 +197,7 @@ export const columns: ColumnDef<WorkOrder>[] = [
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
+        className="shrink-0"
       />
     ),
     cell: ({ row }) => (
@@ -204,24 +205,27 @@ export const columns: ColumnDef<WorkOrder>[] = [
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Select row"
+        className="shrink-0"
       />
     ),
     enableSorting: false,
     enableHiding: false,
+    size: 40,
   },
   {
     accessorKey: 'title',
     header: 'Title',
     cell: ({ row }) => {
       return (
-        <div>
-          <div className="font-medium">{row.original.title}</div>
-           <div className="text-sm text-muted-foreground md:hidden">
+        <div className="min-w-[120px] max-w-[200px]">
+          <div className="font-medium truncate">{row.original.title}</div>
+           <div className="text-sm text-muted-foreground md:hidden truncate">
               <CustomerCell row={row} />
             </div>
         </div>
       );
     },
+    size: 200,
   },
   {
     accessorKey: 'status',
@@ -229,11 +233,12 @@ export const columns: ColumnDef<WorkOrder>[] = [
     cell: ({ row }) => {
       const status = row.getValue('status') as WorkOrderStatus;
       return (
-        <Badge className={statusStyles[status]} variant="outline">
+        <Badge className={`${statusStyles[status]} whitespace-nowrap`} variant="outline">
           {status}
         </Badge>
       );
     },
+    size: 120,
   },
     {
     accessorKey: 'customerId',
@@ -242,6 +247,7 @@ export const columns: ColumnDef<WorkOrder>[] = [
      meta: {
       className: 'hidden md:table-cell',
     },
+    size: 150,
   },
   {
     accessorKey: 'priority',
@@ -254,11 +260,12 @@ export const columns: ColumnDef<WorkOrder>[] = [
           : priority === 'Medium'
           ? 'text-amber-600'
           : 'text-muted-foreground';
-      return <div className={priorityClass}>{priority}</div>;
+      return <div className={`${priorityClass} whitespace-nowrap`}>{priority}</div>;
     },
      meta: {
-      className: 'hidden xl:table-cell',
+      className: 'hidden lg:table-cell',
     },
+    size: 100,
   },
   {
     accessorKey: 'technicianIds',
@@ -267,20 +274,23 @@ export const columns: ColumnDef<WorkOrder>[] = [
      meta: {
       className: 'hidden lg:table-cell',
     },
+    size: 150,
   },
   {
     accessorKey: 'scheduledDate',
     header: 'Scheduled',
     cell: ({ row }) => {
       const date = new Date(row.getValue('scheduledDate'));
-      return new Intl.DateTimeFormat('en-US').format(date);
+      return <div className="whitespace-nowrap">{new Intl.DateTimeFormat('en-US').format(date)}</div>;
     },
      meta: {
       className: 'hidden xl:table-cell',
     },
+    size: 120,
   },
   {
     id: 'actions',
     cell: ActionsCell,
+    size: 60,
   },
 ];

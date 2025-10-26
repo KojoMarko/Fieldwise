@@ -191,12 +191,12 @@ export default function ForecastsPage() {
         </Card>
 
         <Tabs defaultValue="quarterly">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
-            <TabsTrigger value="quarterly">Quarterly Trend</TabsTrigger>
-            <TabsTrigger value="monthly">Monthly Forecast</TabsTrigger>
-            <TabsTrigger value="team">Team Performance</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 h-auto p-1">
+            <TabsTrigger value="quarterly" className="data-[state=active]:bg-background">Quarterly Trend</TabsTrigger>
+            <TabsTrigger value="monthly" className="data-[state=active]:bg-background">Monthly Forecast</TabsTrigger>
+            <TabsTrigger value="team" className="data-[state=active]:bg-background">Team Performance</TabsTrigger>
           </TabsList>
-          <TabsContent value="quarterly" className="mt-4">
+          <TabsContent value="quarterly" className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Quarterly Performance vs Forecast</CardTitle>
@@ -271,7 +271,7 @@ export default function ForecastsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="monthly" className="mt-4">
+          <TabsContent value="monthly" className="mt-6">
               <Card>
                   <CardHeader>
                       <CardTitle>3-Month Forecast Outlook</CardTitle>
@@ -309,7 +309,7 @@ export default function ForecastsPage() {
                   </CardContent>
               </Card>
           </TabsContent>
-          <TabsContent value="team" className="mt-4">
+          <TabsContent value="team" className="mt-6">
               <Card>
                   <CardHeader>
                       <CardTitle>Team Forecast Summary</CardTitle>

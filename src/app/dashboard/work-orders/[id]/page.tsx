@@ -200,8 +200,8 @@ export default function WorkOrderDetailPage({
 
 
   return (
-    <div className="w-full max-w-full overflow-hidden">
-      <div className="mx-auto grid w-full flex-1 auto-rows-max gap-4">
+    <div className="w-full max-w-full overflow-x-hidden px-4 sm:px-6">
+      <div className="mx-auto w-full max-w-7xl flex-1 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-4 min-w-0 flex-1">
             <Button variant="outline" size="icon" className="h-7 w-7 shrink-0" asChild>
@@ -227,13 +227,13 @@ export default function WorkOrderDetailPage({
               <TabsTrigger value="report" className="data-[state=active]:bg-background">Service Report</TabsTrigger>
             </TabsList>
             <TabsContent value="details" className="mt-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
-                      <Card>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full">
+                  <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 w-full min-w-0">
+                      <Card className="w-full overflow-hidden">
                           <CardHeader>
                               <CardTitle>Problem & Scope</CardTitle>
                           </CardHeader>
-                          <CardContent className="space-y-4">
+                          <CardContent className="space-y-4 overflow-hidden">
                               <div>
                                   <h3 className="font-semibold mb-2 text-sm">Problem Description (Reported Issue)</h3>
                                   <p className="text-sm text-muted-foreground bg-slate-50 p-3 rounded-md border break-words">
@@ -257,11 +257,11 @@ export default function WorkOrderDetailPage({
                               </div>
                           </CardContent>
                       </Card>
-                      <Card>
+                      <Card className="w-full overflow-hidden">
                           <CardHeader>
                               <CardTitle>Assignment & Safety</CardTitle>
                           </CardHeader>
-                          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-hidden">
                               <div className="space-y-4">
                                   <div className="space-y-1">
                                       <p className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Users className="h-4 w-4" />Assigned Engineers</p>
@@ -305,12 +305,12 @@ export default function WorkOrderDetailPage({
                           </CardContent>
                       </Card>
                   </div>
-                  <div className="grid auto-rows-max items-start gap-4 lg:col-span-1">
-                      <Card>
+                  <div className="grid auto-rows-max items-start gap-4 lg:col-span-1 w-full min-w-0">
+                      <Card className="w-full overflow-hidden">
                           <CardHeader>
                               <CardTitle>Asset & Customer</CardTitle>
                           </CardHeader>
-                          <CardContent className="space-y-4">
+                          <CardContent className="space-y-4 overflow-hidden">
                               <div className="space-y-1 text-sm min-w-0">
                                   <p className="font-medium text-muted-foreground">Asset</p>
                                   <Button variant="link" className="p-0 h-auto font-semibold text-left break-words whitespace-normal" asChild><Link href={`/dashboard/assets/${asset?.id}`}>{asset?.name} ({asset?.model})</Link></Button>
@@ -333,11 +333,11 @@ export default function WorkOrderDetailPage({
                               </div>
                           </CardContent>
                       </Card>
-                      <Card>
+                      <Card className="w-full overflow-hidden">
                           <CardHeader>
                               <CardTitle>Schedule</CardTitle>
                           </CardHeader>
-                          <CardContent className="space-y-4 text-sm">
+                          <CardContent className="space-y-4 text-sm overflow-hidden">
                               <div className="space-y-1">
                                   <p className="font-medium text-muted-foreground">Priority</p>
                                   <Badge className={cn('w-fit whitespace-nowrap', priorityStyles[workOrder.priority])} variant="destructive">{workOrder.priority}</Badge>

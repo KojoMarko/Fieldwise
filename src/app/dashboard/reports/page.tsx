@@ -140,7 +140,8 @@ export default function ReportsPage() {
   const totalLeads = leadSourceData.reduce((acc, curr) => acc + curr.value, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-full overflow-hidden">
+      <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Reports &amp; Analytics</h1>
@@ -345,6 +346,7 @@ export default function ReportsPage() {
             </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

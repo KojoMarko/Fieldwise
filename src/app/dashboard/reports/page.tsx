@@ -187,8 +187,8 @@ export default function ReportsPage() {
                     <CardDescription>Monthly revenue compared to targets</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ChartContainer config={lineChartConfig} className="min-h-[200px] w-full">
-                        <LineChart data={lineChartData} margin={{ left: 12, right: 12 }}>
+                    <ChartContainer config={lineChartConfig} className="min-h-[250px] w-full">
+                        <LineChart data={lineChartData}>
                             <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
                             <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value/1000}k`}/>
                             <Tooltip content={<ChartTooltipContent />} />
@@ -205,8 +205,8 @@ export default function ReportsPage() {
                     <CardDescription>Revenue growth over time</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ChartContainer config={barChartConfig} className="min-h-[200px] w-full">
-                       <BarChart data={barChartData} margin={{ left: 12, right: 12 }}>
+                    <ChartContainer config={barChartConfig} className="min-h-[250px] w-full">
+                       <BarChart data={barChartData}>
                              <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
                             <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(value) => `$${value/1000}k`}/>
                              <Tooltip content={<ChartTooltipContent />} />
@@ -321,7 +321,7 @@ export default function ReportsPage() {
                   <CardDescription>Number of deals closed per month</CardDescription>
                 </CardHeader>
                 <CardContent>
-                   <ChartContainer config={dealActivityChartConfig} className="min-h-[200px] w-full">
+                   <ChartContainer config={dealActivityChartConfig} className="min-h-[250px] w-full">
                        <BarChart accessibilityLayer data={dealActivityData}>
                             <XAxis
                                 dataKey="month"
@@ -334,7 +334,6 @@ export default function ReportsPage() {
                                 tickLine={false}
                                 axisLine={false}
                                 tickMargin={10}
-                                tickCount={5}
                                 domain={[0, 28]}
                              />
                              <ChartTooltipContent hideLabel />

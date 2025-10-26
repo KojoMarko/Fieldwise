@@ -31,28 +31,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { Target, DollarSign, TrendingUp, Briefcase, TrendingDown } from 'lucide-react';
-
-const kpiData = [
-  { title: 'Quota', value: '$80K', Icon: Target, description: '' },
-  {
-    title: 'Committed',
-    value: '$72K',
-    Icon: DollarSign,
-    description: '90% of quota',
-  },
-  {
-    title: 'Best Case',
-    value: '$95K',
-    Icon: TrendingUp,
-    description: '119% of quota',
-  },
-  {
-    title: 'Total Pipeline',
-    value: '$125K',
-    Icon: Briefcase,
-    description: '',
-  },
-];
+import { KpiCard } from '@/components/kpi-card';
 
 const quarterlyPerformanceData = [
   {
@@ -157,25 +136,17 @@ export default function ForecastsPage() {
             Track and predict your sales performance
           </p>
         </div>
-        <div className="text-right">
+        <div className="text-left sm:text-right">
           <p className="text-sm text-muted-foreground">Current Period</p>
           <p className="font-medium">Q4 2025</p>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {kpiData.map((kpi) => (
-          <Card key={kpi.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-              <kpi.Icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{kpi.value}</div>
-              <p className="text-xs text-muted-foreground">{kpi.description}</p>
-            </CardContent>
-          </Card>
-        ))}
+        <KpiCard title="Quota" value="$80K" Icon={Target} description="" />
+        <KpiCard title="Committed" value="$72K" Icon={DollarSign} description="90% of quota" />
+        <KpiCard title="Best Case" value="$95K" Icon={TrendingUp} description="119% of quota" />
+        <KpiCard title="Total Pipeline" value="$125K" Icon={Briefcase} description="" />
       </div>
 
       <Card>
@@ -220,7 +191,7 @@ export default function ForecastsPage() {
       </Card>
 
       <Tabs defaultValue="quarterly">
-        <TabsList className="grid grid-cols-1 sm:grid-cols-3 w-full sm:w-auto">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="quarterly">Quarterly Trend</TabsTrigger>
           <TabsTrigger value="monthly">Monthly Forecast</TabsTrigger>
           <TabsTrigger value="team">Team Performance</TabsTrigger>
@@ -233,70 +204,72 @@ export default function ForecastsPage() {
                 Actual performance compared to forecasts and quotas
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <ChartContainer
-                config={quarterlyChartConfig}
-                className="min-h-[300px] w-full"
-              >
-                <LineChart
-                  data={quarterlyPerformanceData}
-                  margin={{
-                    top: 5,
-                    right: 20,
-                    left: 20,
-                    bottom: 5,
-                  }}
-                >
-                  <XAxis
-                    dataKey="quarter"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={10}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={10}
-                    tickFormatter={(value) =>
-                      value >= 1000 ? `${value / 1000}` : value.toString()
-                    }
-                    domain={[70000, 280000]}
-                    ticks={[70000, 140000, 210000, 280000]}
-                  />
-                  <Tooltip
-                    content={
-                      <ChartTooltipContent
-                        formatter={(value) => value.toLocaleString()}
-                      />
-                    }
-                  />
-                  <Legend content={<ChartLegendContent />} />
-                  <Line
-                    type="monotone"
-                    dataKey="actual"
-                    stroke="var(--color-actual)"
-                    strokeWidth={2}
-                    activeDot={{ r: 6 }}
-                     dot={<CustomDot />}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="forecast"
-                    stroke="var(--color-forecast)"
-                    strokeWidth={2}
-                    activeDot={{ r: 6 }}
-                     dot={<CustomDot />}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="quota"
-                    stroke="var(--color-quota)"
-                    strokeWidth={2}
-                    strokeDasharray="3 3"
-                    dot={false}
-                  />
-                </LineChart>
-              </ChartContainer>
+            <CardContent className="pr-6">
+                <div className="w-full h-[300px]">
+                    <ChartContainer
+                        config={quarterlyChartConfig}
+                        className="w-full h-full"
+                    >
+                        <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                            data={quarterlyPerformanceData}
+                            margin={{
+                                top: 5,
+                                right: 10,
+                                left: 0,
+                                bottom: 5,
+                            }}
+                        >
+                            <XAxis
+                            dataKey="quarter"
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={10}
+                            />
+                            <YAxis
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={10}
+                            tickFormatter={(value) =>
+                                value >= 1000 ? `$${value / 1000}K` : value.toString()
+                            }
+                            />
+                            <Tooltip
+                            content={
+                                <ChartTooltipContent
+                                formatter={(value) => value.toLocaleString()}
+                                />
+                            }
+                            />
+                            <Legend content={<ChartLegendContent />} />
+                            <Line
+                            type="monotone"
+                            dataKey="actual"
+                            stroke="var(--color-actual)"
+                            strokeWidth={2}
+                            activeDot={{ r: 6 }}
+                            dot={<CustomDot />}
+                            />
+                            <Line
+                            type="monotone"
+                            dataKey="forecast"
+                            stroke="var(--color-forecast)"
+                            strokeWidth={2}
+                            activeDot={{ r: 6 }}
+                            dot={<CustomDot />}
+                            />
+                            <Line
+                            type="monotone"
+                            dataKey="quota"
+                            stroke="var(--color-quota)"
+                            strokeWidth={2}
+                            strokeDasharray="3 3"
+                            dot={false}
+                            />
+                        </LineChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -306,30 +279,37 @@ export default function ForecastsPage() {
                     <CardTitle>3-Month Forecast Outlook</CardTitle>
                     <CardDescription>Committed, best case, and pipeline projections</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <ChartContainer config={monthlyChartConfig} className="min-h-[300px] w-full">
-                        <BarChart data={monthlyForecastData}>
-                             <XAxis
-                                dataKey="month"
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={10}
-                              />
-                              <YAxis
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={10}
-                                tickFormatter={(value) => value.toLocaleString()}
-                                domain={[0, 100000]}
-                                ticks={[0, 25000, 50000, 75000, 100000]}
-                              />
-                             <Tooltip content={<ChartTooltipContent />} />
-                             <Legend content={<ChartLegendContent />} />
-                             <Bar dataKey="committed" fill="var(--color-committed)" radius={4} />
-                             <Bar dataKey="bestCase" fill="var(--color-bestCase)" radius={4} />
-                             <Bar dataKey="quota" fill="var(--color-quota)" radius={4} />
-                        </BarChart>
-                    </ChartContainer>
+                <CardContent className="pr-6">
+                     <div className="w-full h-[300px]">
+                        <ChartContainer config={monthlyChartConfig} className="w-full h-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={monthlyForecastData}  margin={{
+                                top: 5,
+                                right: 10,
+                                left: 0,
+                                bottom: 5,
+                            }}>
+                                    <XAxis
+                                        dataKey="month"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickMargin={10}
+                                    />
+                                    <YAxis
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickMargin={10}
+                                        tickFormatter={(value) => value.toLocaleString()}
+                                    />
+                                    <Tooltip content={<ChartTooltipContent />} />
+                                    <Legend content={<ChartLegendContent />} />
+                                    <Bar dataKey="committed" fill="var(--color-committed)" radius={4} />
+                                    <Bar dataKey="bestCase" fill="var(--color-bestCase)" radius={4} />
+                                    <Bar dataKey="quota" fill="var(--color-quota)" radius={4} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                     </div>
                 </CardContent>
             </Card>
         </TabsContent>
@@ -351,7 +331,7 @@ export default function ForecastsPage() {
                                     <span className="font-medium">{member.name}</span>
                                     <TrendIcon className={`h-4 w-4 ${trendColor}`} />
                                 </div>
-                                <div className="text-right">
+                                <div className="text-left md:text-right">
                                     <span className="font-semibold">${(member.committed / 1000).toFixed(0)}K</span>
                                     <span className="text-sm text-muted-foreground"> / ${(member.quota / 1000).toFixed(0)}K</span>
                                     <p className="text-xs text-muted-foreground">{percentage.toFixed(0)}% to quota</p>

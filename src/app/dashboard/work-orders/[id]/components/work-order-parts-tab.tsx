@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -38,6 +37,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Input } from '@/components/ui/input';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { cn } from '@/lib/utils';
 
 
 export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
@@ -175,7 +175,7 @@ export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
     <>
     <AddPartsDialog open={isAddPartsDialogOpen} onOpenChange={setAddPartsDialogOpen} onAddParts={handleAddParts}/>
     {partToVerify && <VerifyPartUsageDialog open={isVerifyDialogOpen} onOpenChange={setVerifyDialogOpen} part={partToVerify} onVerify={handleVerification} />}
-    <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3 mt-4">
+    <div className="grid gap-4 grid-cols-1 lg:grid-cols-3 mt-4">
       <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
         <Card>
           <CardHeader className='flex-row items-center justify-between'>
@@ -195,8 +195,8 @@ export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Part Name</TableHead>
-                        <TableHead className='w-[120px]'>Quantity</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className='hidden md:table-cell w-[120px]'>Quantity</TableHead>
+                        <TableHead className='hidden md:table-cell'>Status</TableHead>
                         <TableHead className='text-right'>Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -206,8 +206,25 @@ export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
                         <TableCell>
                             <div className="font-medium">{part.name}</div>
                             <div className="text-sm text-muted-foreground">{part.partNumber}</div>
+                             <div className="md:hidden mt-2 space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium text-xs">Qty:</span>
+                                    <Input
+                                        type="number"
+                                        value={part.quantity}
+                                        onChange={(e) => handleQuantityChange(part.id, parseInt(e.target.value, 10))}
+                                        disabled={part.status !== 'Allocated'}
+                                        className="w-20 h-8"
+                                        min={1}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                     <span className="font-medium text-xs">Status:</span>
+                                     {statusBadge[part.status]}
+                                </div>
+                            </div>
                         </TableCell>
-                         <TableCell>
+                         <TableCell className="hidden md:table-cell">
                             <Input
                                 type="number"
                                 value={part.quantity}
@@ -217,7 +234,7 @@ export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
                                 min={1}
                             />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                             <div className="flex items-center gap-2">
                                 {statusBadge[part.status]}
                                 {(part.status === 'With Engineer' || part.status === 'Returned' || part.status === 'Used') && part.verifiedBy && (
@@ -354,5 +371,3 @@ export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
     </>
   );
 }
-
-    

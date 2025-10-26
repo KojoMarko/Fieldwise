@@ -202,18 +202,20 @@ export default function WorkOrderDetailPage({
 
   return (
     <div className="mx-auto grid w-full flex-1 auto-rows-max gap-4">
-       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" className="h-7 w-7" asChild>
-          <Link href="/dashboard/work-orders">
-            <ChevronLeft className="h-4 w-4" />
-            <span className="sr-only">Back</span>
-          </Link>
-        </Button>
-        <div className="flex-1">
-            <h1 className="font-semibold text-xl md:text-2xl">{workOrder.title}</h1>
-            <p className="text-sm text-muted-foreground">Work Order #{workOrder.id}</p>
+       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+            <Link href="/dashboard/work-orders">
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Back</span>
+            </Link>
+          </Button>
+          <div className="flex-1">
+              <h1 className="font-semibold text-xl md:text-2xl">{workOrder.title}</h1>
+              <p className="text-sm text-muted-foreground">Work Order #{workOrder.id}</p>
+          </div>
         </div>
-        <div>
+        <div className="sm:ml-auto">
             <Badge className={cn('w-fit text-base', statusStyles[workOrder.status])} variant="outline">{workOrder.status}</Badge>
         </div>
       </div>
@@ -259,7 +261,7 @@ export default function WorkOrderDetailPage({
                         <CardHeader>
                             <CardTitle>Assignment & Safety</CardTitle>
                         </CardHeader>
-                        <CardContent className="grid md:grid-cols-2 gap-6">
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div className="space-y-1">
                                     <p className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Users className="h-4 w-4" />Assigned Engineers</p>
@@ -373,5 +375,7 @@ export default function WorkOrderDetailPage({
     </div>
   );
 }
+
+    
 
     

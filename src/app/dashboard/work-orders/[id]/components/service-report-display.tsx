@@ -366,14 +366,14 @@ export function ServiceReportDisplay({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2">
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
               <CardTitle>Service Report</CardTitle>
               <CardDescription>
                   Generated on {workOrder.completedDate ? format(parseISO(workOrder.completedDate), 'PPP p') : 'N/A'} by {reportData.workOrder?.performedBy || 'N/A'}
               </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={handleDownloadPdf}><Download className="mr-2" /> PDF</Button>
             {isEngineerView && <Button onClick={onRegenerate}><RefreshCw className="mr-2" /> Regenerate</Button>}
           </div>

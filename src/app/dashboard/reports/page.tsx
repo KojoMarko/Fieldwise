@@ -185,10 +185,10 @@ export default function ReportsPage() {
                       <CardTitle>Revenue vs Target</CardTitle>
                       <CardDescription>Monthly revenue compared to targets</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                      <ChartContainer config={lineChartConfig} className="min-h-[250px] w-full">
-                          <ResponsiveContainer width="99%" height={250}>
-                              <LineChart data={lineChartData}>
+                  <CardContent className="pl-2">
+                      <ChartContainer config={lineChartConfig} className="h-[250px] w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={lineChartData} margin={{ left: 12, right: 12 }}>
                                   <XAxis dataKey="month" tickLine={false} axisLine={false} />
                                   <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`}/>
                                   <Tooltip content={<ChartTooltipContent />} />
@@ -205,10 +205,10 @@ export default function ReportsPage() {
                       <CardTitle>Monthly Growth</CardTitle>
                       <CardDescription>Revenue growth over time</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                      <ChartContainer config={barChartConfig} className="min-h-[250px] w-full">
-                        <ResponsiveContainer width="99%" height={250}>
-                          <BarChart data={barChartData}>
+                  <CardContent className="pl-2">
+                      <ChartContainer config={barChartConfig} className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={barChartData} margin={{ left: 12, right: 12 }}>
                                 <XAxis dataKey="month" tickLine={false} axisLine={false} />
                               <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`}/>
                                 <Tooltip content={<ChartTooltipContent />} />
@@ -324,9 +324,9 @@ export default function ReportsPage() {
                     <CardDescription>Number of deals closed per month</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer config={dealActivityChartConfig} className="min-h-[250px] w-full">
-                        <ResponsiveContainer width="99%" height={250}>
-                          <BarChart accessibilityLayer data={dealActivityData}>
+                    <ChartContainer config={dealActivityChartConfig} className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart accessibilityLayer data={dealActivityData} margin={{ left: 12, right: 12 }}>
                               <XAxis
                                   dataKey="month"
                                   tickLine={false}

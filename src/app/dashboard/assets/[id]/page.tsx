@@ -214,16 +214,16 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        <div className="relative overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead className="hidden sm:table-cell">Technician</TableHead>
-              <TableHead className="hidden md:table-cell">Duration</TableHead>
-              <TableHead className="hidden md:table-cell">Cost</TableHead>
+              <TableHead>Technician</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead>Cost</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -254,7 +254,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                   <TableCell>
                     <p className="font-medium">{item.description}</p>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">
+                  <TableCell>
                     <div className="flex items-center gap-2">
                       {item.isManual ? (
                         <PenSquare className="h-4 w-4 text-muted-foreground" />
@@ -264,10 +264,10 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                       <span>{item.technician}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell>
                       {item.duration ? `${item.duration} hours` : 'N/A'}
                   </TableCell>
-                   <TableCell className="hidden md:table-cell">
+                   <TableCell>
                       {item.cost ? `$${item.cost.toLocaleString()}` : 'N/A'}
                   </TableCell>
                   <TableCell>

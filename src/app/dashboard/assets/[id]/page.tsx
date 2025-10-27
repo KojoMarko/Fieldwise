@@ -192,25 +192,25 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Wrench className="h-5 w-5" />
-            <CardTitle>Maintenance History</CardTitle>
-          </div>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+                <Wrench className="h-5 w-5" />
+                <CardTitle>Maintenance History</CardTitle>
+            </div>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+            </Button>
         </div>
-        <div className="flex items-center gap-4 pt-4">
-          <Input
-            placeholder="Search maintenance records..."
-            className="max-w-xs"
-          />
-          <Button variant="outline" size="sm" className="ml-auto">
-            <Filter className="h-4 w-4 mr-2" />
-            All Types
-          </Button>
+        <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
+            <Input
+                placeholder="Search maintenance records..."
+                className="w-full sm:max-w-xs"
+            />
+            <Button variant="outline" size="sm" className="w-full sm:w-auto sm:ml-auto">
+                <Filter className="h-4 w-4 mr-2" />
+                All Types
+            </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -221,9 +221,9 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
               <TableHead>Date</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Technician</TableHead>
-              <TableHead>Duration</TableHead>
-              <TableHead>Cost</TableHead>
+              <TableHead className="hidden sm:table-cell">Technician</TableHead>
+              <TableHead className="hidden md:table-cell">Duration</TableHead>
+              <TableHead className="hidden md:table-cell">Cost</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -254,7 +254,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                   <TableCell>
                     <p className="font-medium">{item.description}</p>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <div className="flex items-center gap-2">
                       {item.isManual ? (
                         <PenSquare className="h-4 w-4 text-muted-foreground" />
@@ -264,10 +264,10 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                       <span>{item.technician}</span>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                       {item.duration ? `${item.duration} hours` : 'N/A'}
                   </TableCell>
-                   <TableCell>
+                   <TableCell className="hidden md:table-cell">
                       {item.cost ? `$${item.cost.toLocaleString()}` : 'N/A'}
                   </TableCell>
                   <TableCell>
@@ -549,3 +549,4 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     
 
     
+

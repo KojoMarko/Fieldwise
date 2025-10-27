@@ -411,13 +411,15 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                 </SelectContent>
             </Select>
         </div>
-        <TabsList className="hidden sm:grid w-full grid-cols-4">
-            {TABS.map((tab) => (
-                <TabsTrigger key={tab.value} value={tab.value}>
-                    {tab.label}
-                </TabsTrigger>
-            ))}
-        </TabsList>
+        <div className="hidden sm:flex justify-center">
+            <TabsList>
+                {TABS.map((tab) => (
+                    <TabsTrigger key={tab.value} value={tab.value}>
+                        {tab.label}
+                    </TabsTrigger>
+                ))}
+            </TabsList>
+        </div>
         <TabsContent value="overview" className="mt-4">
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
              <KpiCard icon={TrendingUp} title="Machine Uptime" value="97.5%" footer={<><Progress value={97.5} className="h-2" /><p className="text-xs text-muted-foreground mt-2">Excellent performance this month</p></>} />

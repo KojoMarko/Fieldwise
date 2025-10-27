@@ -58,6 +58,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const statusStyles: Record<WorkOrderStatus, string> = {
   Draft: 'bg-gray-200 text-gray-800',
@@ -301,6 +302,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
   const [asset, setAsset] = useState<Asset | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const nextPpmDate = useMemo(() => {
     if (asset?.lastPpmDate && asset?.ppmFrequency) {
@@ -353,6 +355,13 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
   if (!asset) {
     return notFound();
   }
+  
+  const TABS = [
+    { value: "overview", label: "Overview" },
+    { value: "installation", label: "Installation" },
+    { value: "maintenance", label: "Maintenance" },
+    { value: "history", label: "History" },
+  ];
 
   return (
     <div className="mx-auto grid w-full flex-1 auto-rows-max gap-4">
@@ -387,12 +396,27 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="installation">Installation</TabsTrigger>
-          <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="block sm:hidden mb-4">
+            <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a tab" />
+                </SelectTrigger>
+                <SelectContent>
+                    {TABS.map((tab) => (
+                        <SelectItem key={tab.value} value={tab.value}>
+                            {tab.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+        <TabsList className="hidden sm:grid w-full grid-cols-4">
+            {TABS.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value}>
+                    {tab.label}
+                </TabsTrigger>
+            ))}
         </TabsList>
         <TabsContent value="overview" className="mt-4">
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -519,5 +543,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     </div>
   );
 }
+
+    
 
     

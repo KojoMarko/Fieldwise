@@ -338,7 +338,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                     />
                 </div>
                 <div className="space-y-4 rounded-lg border p-4">
-                <h3 className="text-md font-medium">Installation & Warranty</h3>
+                <h3 className="text-md font-medium">Installation &amp; Warranty</h3>
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                         <FormField
                             control={form.control}
@@ -502,7 +502,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                       </FormDescription>
                      {fields.map((field, index) => (
                         <div key={field.id} className="flex flex-col sm:flex-row items-start gap-2 rounded-md bg-muted p-3">
-                            <div className='flex flex-row sm:flex-col gap-2 w-full sm:w-auto'>
+                            <div className='flex flex-col gap-2 w-full sm:w-auto'>
                                 <FormField
                                         control={form.control}
                                         name={`lifecycleNotes.${index}.date`}

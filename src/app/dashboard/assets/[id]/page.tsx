@@ -202,19 +202,19 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                 Export
             </Button>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-4">
             <Input
                 placeholder="Search maintenance records..."
                 className="w-full sm:max-w-xs"
             />
-            <Button variant="outline" size="sm" className="w-full sm:w-auto sm:ml-auto">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto mt-1 sm:mt-0">
                 <Filter className="h-4 w-4 mr-2" />
                 All Types
             </Button>
         </div>
       </CardHeader>
-      <CardContent className="p-0 sm:p-6">
-        <div className="overflow-x-auto">
+      <CardContent className="p-2 sm:p-6">
+        <div className="overflow-x-auto hidden sm:block">
           <div className="inline-block min-w-full align-middle">
             <div className="overflow-hidden rounded-md border">
               <Table>
@@ -252,14 +252,12 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                         <TableCell className="text-xs sm:text-sm">
                           <p className="font-medium line-clamp-2">{item.description}</p>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell text-xs">
-                          {item.technician}
-                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-xs">{item.technician}</TableCell>
                         <TableCell className="hidden lg:table-cell text-xs whitespace-nowrap">
                           {item.duration ? `${item.duration}h` : 'N/A'}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-xs whitespace-nowrap">
-                          {item.cost ? `${item.cost.toLocaleString()}` : 'N/A'}
+                          {item.cost ? `$${item.cost.toLocaleString()}` : 'N/A'}
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -285,6 +283,50 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
               </Table>
             </div>
           </div>
+        </div>
+
+        {/* --- Responsive Card View for Mobile --- */}
+        <div className="block sm:hidden space-y-4">
+          {combinedHistory.length > 0 ? (
+            combinedHistory.map((item) => (
+              <div
+                key={item.id}
+                className="border rounded-lg p-3 shadow-sm bg-card"
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-xs",
+                      item.isManual
+                        ? manualEntryTypeStyles[item.type as LifecycleEvent['type']]
+                        : workOrderTypeStyles[item.type as WorkOrder['type']]
+                    )}
+                  >
+                    {item.type}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-xs",
+                      item.isManual ? 'bg-purple-100 text-purple-800' : statusStyles[item.status as WorkOrderStatus]
+                    )}
+                  >
+                    {item.status}
+                  </Badge>
+                </div>
+                <p className="font-medium text-sm mb-1">{item.description}</p>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>Date: {item.originalDate ? format(new Date(item.originalDate), 'MMM dd, yyyy') : 'N/A'}</p>
+                  <p>Technician: {item.technician}</p>
+                  <p>Duration: {item.duration ? `${item.duration}h` : 'N/A'}</p>
+                  <p>Cost: {item.cost ? `$${item.cost.toLocaleString()}` : 'N/A'}</p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground text-center">No maintenance history found for this asset.</p>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -539,3 +581,5 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     </div>
   );
 }
+
+  

@@ -252,7 +252,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <p className="font-medium">{item.description}</p>
+                    <p className="font-medium break-words">{item.description}</p>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
                     <div className="flex items-center gap-2">
@@ -261,7 +261,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                       ) : (
                         <UserIcon className="h-4 w-4 text-muted-foreground" />
                       )}
-                      <span>{item.technician}</span>
+                      <span className="break-words">{item.technician}</span>
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
@@ -545,8 +545,3 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     </div>
   );
 }
-
-    
-
-    
-

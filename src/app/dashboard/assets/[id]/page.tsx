@@ -233,14 +233,14 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                   {combinedHistory.length > 0 ? (
                     combinedHistory.map((item) => (
                       <TableRow key={item.id}>
-                        <TableCell className="text-xs sm:text-sm whitespace-nowrap">
+                        <TableCell className="whitespace-nowrap">
                           {item.originalDate ? format(new Date(item.originalDate), 'MM/dd/yy') : 'N/A'}
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
                             className={cn(
-                              "text-xs whitespace-nowrap",
+                              "whitespace-nowrap",
                               item.isManual
                                 ? manualEntryTypeStyles[item.type as LifecycleEvent['type']]
                                 : workOrderTypeStyles[item.type as WorkOrder['type']]
@@ -249,21 +249,21 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                             {item.type}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
+                        <TableCell>
                           <p className="font-medium line-clamp-2">{item.description}</p>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell text-xs">{item.technician}</TableCell>
-                        <TableCell className="hidden lg:table-cell text-xs whitespace-nowrap">
+                        <TableCell className="hidden sm:table-cell">{item.technician}</TableCell>
+                        <TableCell className="hidden lg:table-cell whitespace-nowrap">
                           {item.duration ? `${item.duration}h` : 'N/A'}
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell text-xs whitespace-nowrap">
+                        <TableCell className="hidden lg:table-cell whitespace-nowrap">
                           {item.cost ? `$${item.cost.toLocaleString()}` : 'N/A'}
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
                             className={cn(
-                              "text-xs whitespace-nowrap",
+                              "whitespace-nowrap",
                               item.isManual ? 'bg-purple-100 text-purple-800' : statusStyles[item.status as WorkOrderStatus]
                             )}
                           >
@@ -316,7 +316,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                   </Badge>
                 </div>
                 <p className="font-medium text-sm mb-1">{item.description}</p>
-                <div className="text-xs text-muted-foreground space-y-1">
+                <div className="text-sm text-muted-foreground space-y-1">
                   <p>Date: {item.originalDate ? format(new Date(item.originalDate), 'MMM dd, yyyy') : 'N/A'}</p>
                   <p>Technician: {item.technician}</p>
                   <p>Duration: {item.duration ? `${item.duration}h` : 'N/A'}</p>

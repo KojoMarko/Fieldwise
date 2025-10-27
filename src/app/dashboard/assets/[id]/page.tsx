@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, use } from 'react';
@@ -215,7 +214,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -550,4 +549,3 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     
 
     
-

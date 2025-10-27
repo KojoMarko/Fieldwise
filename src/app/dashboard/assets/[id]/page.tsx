@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, use } from 'react';
@@ -399,7 +400,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="block sm:hidden mb-4">
             <Select value={activeTab} onValueChange={setActiveTab}>
-                <SelectTrigger>
+                <SelectTrigger className="justify-center">
                     <SelectValue placeholder="Select a tab" />
                 </SelectTrigger>
                 <SelectContent>
@@ -549,3 +550,4 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     
 
     
+

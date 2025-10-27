@@ -388,14 +388,14 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="installation">Installation</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
              <KpiCard icon={TrendingUp} title="Machine Uptime" value="97.5%" footer={<><Progress value={97.5} className="h-2" /><p className="text-xs text-muted-foreground mt-2">Excellent performance this month</p></>} />
             <KpiCard icon={DollarSign} title="Total Maintenance Cost" value="$24,750" footer={<p className="text-xs text-muted-foreground">12% decrease from last month</p>} />
             <KpiCard icon={Clock} title="Maintenance Hours" value="186h" footer={<p className="text-xs text-muted-foreground">Total hours this year</p>} />
@@ -405,13 +405,13 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </TabsContent>
         <TabsContent value="installation" className="mt-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Installation Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Installation Date</p>
                     <p className="font-medium">{asset.installationDate ? format(new Date(asset.installationDate), 'PPP') : 'N/A'}</p>
@@ -436,7 +436,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="text-muted-foreground">Warranty Expiry</p>
                     <p className="font-medium">{asset.warrantyExpiry ? format(new Date(asset.warrantyExpiry), 'PPP') : 'N/A'}</p>
                   </div>
-                   <div className="col-span-2">
+                   <div className="col-span-1 sm:col-span-2">
                     <p className="text-muted-foreground">Serial Number</p>
                     <p className="font-medium font-mono">{asset.serialNumber}</p>
                   </div>

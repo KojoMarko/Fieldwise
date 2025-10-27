@@ -213,86 +213,78 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
             </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="min-w-[120px]">Date</TableHead>
-              <TableHead className="min-w-[100px]">Type</TableHead>
-              <TableHead className="min-w-[200px]">Description</TableHead>
-              <TableHead className="hidden sm:table-cell min-w-[120px]">Technician</TableHead>
-              <TableHead className="hidden md:table-cell min-w-[100px]">Duration</TableHead>
-              <TableHead className="hidden md:table-cell min-w-[100px]">Cost</TableHead>
-              <TableHead className="min-w-[120px]">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {combinedHistory.length > 0 ? (
-              combinedHistory.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-sm">
-                        {item.originalDate ? format(new Date(item.originalDate), 'yyyy-MM-dd') : 'Date N/A'}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "whitespace-nowrap",
-                        item.isManual
-                          ? manualEntryTypeStyles[item.type as LifecycleEvent['type']]
-                          : workOrderTypeStyles[item.type as WorkOrder['type']]
-                      )}
-                    >
-                      {item.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <p className="font-medium text-sm max-w-[300px]">{item.description}</p>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <div className="flex items-center gap-2">
-                      {item.isManual ? (
-                        <PenSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      ) : (
-                        <UserIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      )}
-                      <span className="text-sm">{item.technician}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell whitespace-nowrap text-sm">
-                      {item.duration ? `${item.duration} hours` : 'N/A'}
-                  </TableCell>
-                   <TableCell className="hidden md:table-cell whitespace-nowrap text-sm">
-                      {item.cost ? `$${item.cost.toLocaleString()}` : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                     <Badge
-                        variant="outline"
-                        className={cn(
-                            "whitespace-nowrap",
-                            item.isManual ? 'bg-purple-100 text-purple-800' : statusStyles[item.status as WorkOrderStatus]
-                        )}
-                        >
-                        {item.status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  No maintenance history found for this asset.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      <CardContent className="p-0 sm:p-6">
+        <div className="overflow-x-auto">
+          <div className="inline-block min-w-full align-middle">
+            <div className="overflow-hidden rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Date</TableHead>
+                    <TableHead className="w-[90px]">Type</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="hidden sm:table-cell w-[110px]">Technician</TableHead>
+                    <TableHead className="hidden lg:table-cell w-[90px]">Duration</TableHead>
+                    <TableHead className="hidden lg:table-cell w-[90px]">Cost</TableHead>
+                    <TableHead className="w-[110px]">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {combinedHistory.length > 0 ? (
+                    combinedHistory.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="text-xs sm:text-sm whitespace-nowrap">
+                          {item.originalDate ? format(new Date(item.originalDate), 'MM/dd/yy') : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-xs whitespace-nowrap",
+                              item.isManual
+                                ? manualEntryTypeStyles[item.type as LifecycleEvent['type']]
+                                : workOrderTypeStyles[item.type as WorkOrder['type']]
+                            )}
+                          >
+                            {item.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <p className="font-medium line-clamp-2">{item.description}</p>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-xs">
+                          {item.technician}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-xs whitespace-nowrap">
+                          {item.duration ? `${item.duration}h` : 'N/A'}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-xs whitespace-nowrap">
+                          {item.cost ? `${item.cost.toLocaleString()}` : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-xs whitespace-nowrap",
+                              item.isManual ? 'bg-purple-100 text-purple-800' : statusStyles[item.status as WorkOrderStatus]
+                            )}
+                          >
+                            {item.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center">
+                        No maintenance history found for this asset.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -214,27 +214,27 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="relative overflow-x-auto rounded-md border">
+        <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="hidden sm:table-cell">Technician</TableHead>
-              <TableHead className="hidden md:table-cell">Duration</TableHead>
-              <TableHead className="hidden md:table-cell">Cost</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="min-w-[120px]">Date</TableHead>
+              <TableHead className="min-w-[100px]">Type</TableHead>
+              <TableHead className="min-w-[200px]">Description</TableHead>
+              <TableHead className="hidden sm:table-cell min-w-[120px]">Technician</TableHead>
+              <TableHead className="hidden md:table-cell min-w-[100px]">Duration</TableHead>
+              <TableHead className="hidden md:table-cell min-w-[100px]">Cost</TableHead>
+              <TableHead className="min-w-[120px]">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {combinedHistory.length > 0 ? (
               combinedHistory.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>
+                      <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm">
                         {item.originalDate ? format(new Date(item.originalDate), 'yyyy-MM-dd') : 'Date N/A'}
                       </span>
                     </div>
@@ -243,6 +243,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                     <Badge
                       variant="outline"
                       className={cn(
+                        "whitespace-nowrap",
                         item.isManual
                           ? manualEntryTypeStyles[item.type as LifecycleEvent['type']]
                           : workOrderTypeStyles[item.type as WorkOrder['type']]
@@ -252,28 +253,29 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <p className="font-medium break-words">{item.description}</p>
+                    <p className="font-medium text-sm max-w-[300px]">{item.description}</p>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
                     <div className="flex items-center gap-2">
                       {item.isManual ? (
-                        <PenSquare className="h-4 w-4 text-muted-foreground" />
+                        <PenSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       ) : (
-                        <UserIcon className="h-4 w-4 text-muted-foreground" />
+                        <UserIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       )}
-                      <span className="break-words">{item.technician}</span>
+                      <span className="text-sm">{item.technician}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell className="hidden md:table-cell whitespace-nowrap text-sm">
                       {item.duration ? `${item.duration} hours` : 'N/A'}
                   </TableCell>
-                   <TableCell className="hidden md:table-cell">
+                   <TableCell className="hidden md:table-cell whitespace-nowrap text-sm">
                       {item.cost ? `$${item.cost.toLocaleString()}` : 'N/A'}
                   </TableCell>
                   <TableCell>
                      <Badge
                         variant="outline"
                         className={cn(
+                            "whitespace-nowrap",
                             item.isManual ? 'bg-purple-100 text-purple-800' : statusStyles[item.status as WorkOrderStatus]
                         )}
                         >

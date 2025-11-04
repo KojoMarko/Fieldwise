@@ -29,6 +29,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PartsUsageReportTab } from './components/parts-usage-report-tab';
 import { TransfersReportTab } from './components/transfers-report-tab';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 function PartIntelligence() {
@@ -241,18 +242,42 @@ function InventoryTab() {
 }
 
 export default function SparePartsPage() {
+    const [activeTab, setActiveTab] = useState('inventory');
+    const TABS = [
+        { value: 'inventory', label: 'Inventory' },
+        { value: 'transfers', label: 'Transfers' },
+        { value: 'usage_report', label: 'Usage Report' },
+    ];
   return (
     <>
       <div className="flex items-center mb-4">
         <h1 className="text-3xl font-bold tracking-tight">Spare Parts</h1>
       </div>
       
-      <Tabs defaultValue="inventory">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="transfers">Transfers</TabsTrigger>
-          <TabsTrigger value="usage_report">Usage Report</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
+         <div className="md:hidden mb-4">
+            <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a tab" />
+                </SelectTrigger>
+                <SelectContent>
+                    {TABS.map((tab) => (
+                        <SelectItem key={tab.value} value={tab.value}>
+                            {tab.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+        <div className="hidden md:block">
+             <TabsList className="grid w-full grid-cols-3">
+                {TABS.map((tab) => (
+                    <TabsTrigger key={tab.value} value={tab.value}>
+                        {tab.label}
+                    </TabsTrigger>
+                ))}
+             </TabsList>
+        </div>
         <TabsContent value="inventory">
           <InventoryTab />
         </TabsContent>

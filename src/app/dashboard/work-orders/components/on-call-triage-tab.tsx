@@ -47,8 +47,7 @@ export function OnCallTriageTab() {
 
     const logsQuery = query(
       collection(db, 'service-call-logs'),
-      where('companyId', '==', user.companyId),
-      orderBy('reportingTime', 'desc')
+      where('companyId', '==', user.companyId)
     );
 
     const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
@@ -56,6 +55,8 @@ export function OnCallTriageTab() {
       snapshot.forEach(doc => {
         logsData.push({ id: doc.id, ...doc.data() } as ServiceCallLog);
       });
+      // Sort on the client side to avoid needing a composite index
+      logsData.sort((a, b) => new Date(b.reportingTime).getTime() - new Date(a.reportingTime).getTime());
       setCallLogs(logsData);
       setIsLoading(false);
     }, (error) => {

@@ -164,6 +164,7 @@ export default function WorkOrdersPage() {
         <TabsContent value="work_orders" className="mt-4 space-y-4">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="w-full sm:w-auto">
+                    {/* Mobile Select */}
                     <div className="sm:hidden">
                         <Select value={workOrderSubTab} onValueChange={setWorkOrderSubTab}>
                             <SelectTrigger>
@@ -178,6 +179,7 @@ export default function WorkOrdersPage() {
                             </SelectContent>
                         </Select>
                     </div>
+                    {/* Desktop Tabs */}
                     <div className="hidden sm:block">
                         <Tabs value={workOrderSubTab} onValueChange={setWorkOrderSubTab}>
                              <TabsList className={`grid w-full ${isEngineerOrAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
@@ -190,7 +192,7 @@ export default function WorkOrdersPage() {
                         </Tabs>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 self-stretch sm:self-center justify-end">
+                <div className="flex items-center gap-2 self-stretch sm:self-center w-full justify-end">
                     {user?.role === 'Admin' && (
                         <Button size="sm" variant="outline" className="h-8 gap-1">
                             <File className="h-3.5 w-3.5" />
@@ -234,10 +236,10 @@ export default function WorkOrdersPage() {
                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                      <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                         <Input
-                        placeholder="Filter by customer, asset, problem..."
+                        placeholder="Filter by customer, asset..."
                         value={triageSearchFilter}
                         onChange={(e) => setTriageSearchFilter(e.target.value)}
-                        className="max-w-full sm:max-w-sm"
+                        className="max-w-full sm:max-w-xs"
                         />
                         <Select value={triageStatusFilter} onValueChange={(value) => setTriageStatusFilter(value as TriageStatusFilter)}>
                             <SelectTrigger className="w-full sm:w-[180px]">

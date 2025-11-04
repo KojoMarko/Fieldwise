@@ -37,12 +37,16 @@ import { LoaderCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { WorkOrderPartsTab } from './components/work-order-parts-tab';
-import { WorkOrderClientSection } from './components/work-order-client-section';
 import { useToast } from '@/hooks/use-toast';
-import { HoldWorkOrderDialog } from './components/hold-work-order-dialog';
-import { ServiceReportDisplay } from './components/service-report-display';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import dynamic from 'next/dynamic';
+
+const WorkOrderPartsTab = dynamic(() => import('./components/work-order-parts-tab').then(mod => mod.WorkOrderPartsTab), {
+  loading: () => <div className="flex items-center justify-center p-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>,
+});
+const WorkOrderClientSection = dynamic(() => import('./components/work-order-client-section').then(mod => mod.WorkOrderClientSection), {
+  loading: () => <div className="flex items-center justify-center p-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>,
+});
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {

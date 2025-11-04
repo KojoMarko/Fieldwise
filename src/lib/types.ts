@@ -196,4 +196,16 @@ export type SecurityRuleError = Error & {
   context: SecurityRuleContext;
 };
 
-    
+export type ServiceCallLog = {
+  id: string;
+  customerName: string;
+  reportingTime: string; // ISO string
+  complainant: string;
+  assetName: string;
+  problemReported: string;
+  immediateActionTaken: string;
+  caseResolved: boolean;
+  fieldVisitRequired: boolean;
+  priority: 'High' | 'Medium' | 'Low';
+  companyId: string;
+};

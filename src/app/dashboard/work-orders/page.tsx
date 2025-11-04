@@ -21,7 +21,7 @@ import type { WorkOrder } from '@/lib/types';
 import { customers } from '@/lib/data'; // Keep for customer role filtering
 import { LoaderCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
+import { OnCallTriageTab } from './components/on-call-triage-tab';
 
 export default function WorkOrdersPage() {
   const { user } = useAuth();
@@ -103,6 +103,7 @@ export default function WorkOrdersPage() {
       { value: 'active', label: 'Active' },
       { value: 'completed', label: 'Completed' },
       { value: 'draft', label: 'Draft' },
+      { value: 'on_call_triage', label: 'On-Call Triage' },
   ];
   
   const customerTabs = [
@@ -127,7 +128,7 @@ export default function WorkOrdersPage() {
                 </span>
             </Button>
           )}
-          {canCreateWorkOrder && (
+          {canCreateWorkOrder && activeTab !== 'on_call_triage' && (
             <Button size="sm" className="h-8 gap-1" asChild>
               <Link href="/dashboard/work-orders/new">
                 <PlusCircle className="h-3.5 w-3.5" />
@@ -155,7 +156,7 @@ export default function WorkOrdersPage() {
             </Select>
         </div>
         <div className="hidden md:block">
-             <TabsList className="grid w-full grid-cols-4">
+             <TabsList className="grid w-full grid-cols-5">
                 {TABS.map((tab) => (
                     <TabsTrigger key={tab.value} value={tab.value}>
                         {tab.label}
@@ -176,6 +177,11 @@ export default function WorkOrdersPage() {
       {(user?.role === 'Admin' || user?.role === 'Engineer') && (
         <TabsContent value="draft">
             {renderDataTable(draftOrders, 'Draft Work Orders', 'Work orders that are not yet scheduled.')}
+        </TabsContent>
+      )}
+       {(user?.role === 'Admin' || user?.role === 'Engineer') && (
+        <TabsContent value="on_call_triage">
+            <OnCallTriageTab />
         </TabsContent>
       )}
     </Tabs>

@@ -40,6 +40,7 @@ export default function WorkOrdersPage() {
   // State for triage filters, lifted up to the parent component
   const [triageSearchFilter, setTriageSearchFilter] = useState('');
   const [triageStatusFilter, setTriageStatusFilter] = useState<TriageStatusFilter>('all');
+  const [workOrderSearchFilter, setWorkOrderSearchFilter] = useState('');
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -99,17 +100,23 @@ export default function WorkOrdersPage() {
     };
   }, [user]);
 
+  const filteredWorkOrders = workOrders.filter(wo => {
+      const statusMatch = 
+          workOrderSubTab === 'all' ||
+          (workOrderSubTab === 'active' && ['Scheduled', 'In-Progress', 'On-Hold', 'Dispatched', 'On-Site'].includes(wo.status)) ||
+          (workOrderSubTab === 'completed' && ['Completed', 'Invoiced'].includes(wo.status)) ||
+          (workOrderSubTab === 'draft' && wo.status === 'Draft');
 
-  const activeOrders = workOrders.filter(
-    (wo) => wo.status === 'Scheduled' || wo.status === 'In-Progress' || wo.status === 'On-Hold'
-  );
-  const completedOrders = workOrders.filter(
-    (wo) => wo.status === 'Completed' || wo.status === 'Invoiced'
-  );
-  const draftOrders = workOrders.filter((wo) => wo.status === 'Draft');
+      const searchMatch = workOrderSearchFilter ?
+          wo.title.toLowerCase().includes(workOrderSearchFilter.toLowerCase()) : true;
+
+      return statusMatch && searchMatch;
+  });
 
   const canCreateWorkOrder = user?.role === 'Admin' || user?.role === 'Customer' || user?.role === 'Engineer';
   const createButtonText = user?.role === 'Customer' ? 'Request Service' : 'Create Work Order';
+
+  const isEngineerOrAdmin = user?.role === 'Admin' || user?.role === 'Engineer';
 
   const renderDataTable = (data: WorkOrder[], title: string, description: string) => (
      <Card>
@@ -126,24 +133,7 @@ export default function WorkOrdersPage() {
             ) : <DataTable columns={columns} data={data} />}
         </CardContent>
     </Card>
-  )
-
-  const adminOrTechSubTabs = [
-      { value: 'all', label: 'All' },
-      { value: 'active', label: 'Active' },
-      { value: 'completed', label: 'Completed' },
-      { value: 'draft', label: 'Draft' },
-  ];
-  
-  const customerSubTabs = [
-       { value: 'all', label: 'All' },
-       { value: 'active', label: 'Active' },
-       { value: 'completed', label: 'Completed' },
-  ];
-  
-  const SUB_TABS = user?.role === 'Admin' || user?.role === 'Engineer' ? adminOrTechSubTabs : customerSubTabs;
-  const isEngineerOrAdmin = user?.role === 'Admin' || user?.role === 'Engineer';
-
+  );
 
   return (
     <>
@@ -162,81 +152,53 @@ export default function WorkOrdersPage() {
         </div>
 
         <TabsContent value="work_orders" className="mt-4 space-y-4">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="w-full sm:w-auto">
-                    {/* Mobile Select */}
-                    <div className="sm:hidden">
-                        <Select value={workOrderSubTab} onValueChange={setWorkOrderSubTab}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a filter" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {SUB_TABS.map((tab) => (
-                                    <SelectItem key={tab.value} value={tab.value}>
-                                        {tab.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    {/* Desktop Tabs */}
-                    <div className="hidden sm:block">
-                        <Tabs value={workOrderSubTab} onValueChange={setWorkOrderSubTab}>
-                             <TabsList className={`grid w-full ${isEngineerOrAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                                {SUB_TABS.map((tab) => (
-                                    <TabsTrigger key={tab.value} value={tab.value}>
-                                        {tab.label}
-                                    </TabsTrigger>
-                                ))}
-                            </TabsList>
-                        </Tabs>
-                    </div>
+            <div className="flex justify-between items-start gap-4">
+                <div className="flex flex-col gap-2">
+                     <Input
+                        placeholder="Filter by title..."
+                        value={workOrderSearchFilter}
+                        onChange={(e) => setWorkOrderSearchFilter(e.target.value)}
+                        className="max-w-full sm:max-w-xs"
+                    />
+                    <Select value={workOrderSubTab} onValueChange={setWorkOrderSubTab}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                             <SelectItem value="all">All</SelectItem>
+                             <SelectItem value="active">Active</SelectItem>
+                             <SelectItem value="completed">Completed</SelectItem>
+                             {isEngineerOrAdmin && <SelectItem value="draft">Draft</SelectItem>}
+                        </SelectContent>
+                    </Select>
                 </div>
-                <div className="flex items-center gap-2 self-stretch sm:self-center w-full justify-end">
+                <div className="flex items-start gap-2">
                     {user?.role === 'Admin' && (
-                        <Button size="sm" variant="outline" className="h-8 gap-1">
-                            <File className="h-3.5 w-3.5" />
-                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                            Export
-                            </span>
+                        <Button size="icon" variant="outline" className="h-9 w-9">
+                            <File className="h-4 w-4" />
+                            <span className="sr-only">Export</span>
                         </Button>
                     )}
                     {canCreateWorkOrder && (
-                        <Button size="sm" className="h-8 gap-1" asChild>
+                        <Button size="icon" className="h-9 w-9" asChild>
                         <Link href="/dashboard/work-orders/new">
-                            <PlusCircle className="h-3.5 w-3.5" />
-                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                            {createButtonText}
-                            </span>
+                            <PlusCircle className="h-4 w-4" />
+                            <span className="sr-only">{createButtonText}</span>
                         </Link>
                         </Button>
                     )}
                 </div>
             </div>
-
-            <Tabs value={workOrderSubTab} onValueChange={setWorkOrderSubTab} className="w-full">
-                <TabsContent value="all">
-                    {renderDataTable(workOrders, 'All Work Orders', 'Manage all service jobs and assignments.')}
-                </TabsContent>
-                <TabsContent value="active">
-                    {renderDataTable(activeOrders, 'Active Work Orders', 'Work orders that are scheduled, in-progress, or on-hold.')}
-                </TabsContent>
-                <TabsContent value="completed">
-                    {renderDataTable(completedOrders, 'Completed Work Orders', 'Work orders that have been completed or invoiced.')}
-                </TabsContent>
-                {isEngineerOrAdmin && (
-                <TabsContent value="draft">
-                    {renderDataTable(draftOrders, 'Draft Work Orders', 'Work orders that are not yet scheduled.')}
-                </TabsContent>
-                )}
-            </Tabs>
+            
+            {renderDataTable(filteredWorkOrders, 'Work Orders', 'Manage all service jobs and assignments.')}
         </TabsContent>
+        
         {isEngineerOrAdmin && (
             <TabsContent value="on_call_triage" className="mt-4 space-y-4">
-                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                     <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                 <div className="flex justify-between items-start gap-4">
+                     <div className="flex flex-col gap-2">
                         <Input
-                        placeholder="Filter by customer, asset..."
+                        placeholder="Filter by customer, asset, problem..."
                         value={triageSearchFilter}
                         onChange={(e) => setTriageSearchFilter(e.target.value)}
                         className="max-w-full sm:max-w-xs"
@@ -252,12 +214,10 @@ export default function WorkOrdersPage() {
                             </SelectContent>
                         </Select>
                      </div>
-                    <div className="flex items-center gap-2 self-stretch sm:self-center justify-end">
-                        <Button size="sm" className="h-8 gap-1" onClick={() => setLogDialogOpen(true)}>
-                            <Phone className="h-3.5 w-3.5" />
-                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                            Log New Call
-                            </span>
+                    <div className="flex items-start">
+                        <Button size="icon" className="h-9 w-9" onClick={() => setLogDialogOpen(true)}>
+                            <Phone className="h-4 w-4" />
+                            <span className="sr-only">Log New Call</span>
                         </Button>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 
 'use client';
-import { File, PlusCircle } from 'lucide-react';
+import { File, PlusCircle, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,12 +22,15 @@ import { customers } from '@/lib/data'; // Keep for customer role filtering
 import { LoaderCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { OnCallTriageTab } from './components/on-call-triage-tab';
+import { CreateCallLogDialog } from './components/create-call-log-dialog';
 
 export default function WorkOrdersPage() {
   const { user } = useAuth();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all');
+  const [mainTab, setMainTab] = useState('work_orders');
+  const [workOrderSubTab, setWorkOrderSubTab] = useState('all');
+  const [isLogDialogOpen, setLogDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -98,29 +101,37 @@ export default function WorkOrdersPage() {
     </Card>
   )
 
-  const adminOrTechTabs = [
+  const adminOrTechSubTabs = [
       { value: 'all', label: 'All' },
       { value: 'active', label: 'Active' },
       { value: 'completed', label: 'Completed' },
       { value: 'draft', label: 'Draft' },
-      { value: 'on_call_triage', label: 'On-Call Triage' },
   ];
   
-  const customerTabs = [
+  const customerSubTabs = [
        { value: 'all', label: 'All' },
        { value: 'active', label: 'Active' },
        { value: 'completed', label: 'Completed' },
   ];
   
-  const TABS = user?.role === 'Admin' || user?.role === 'Engineer' ? adminOrTechTabs : customerTabs;
+  const SUB_TABS = user?.role === 'Admin' || user?.role === 'Engineer' ? adminOrTechSubTabs : customerSubTabs;
+  const isEngineerOrAdmin = user?.role === 'Admin' || user?.role === 'Engineer';
 
 
   return (
-    <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
+    <>
+    <CreateCallLogDialog open={isLogDialogOpen} onOpenChange={setLogDialogOpen} />
+    <Tabs defaultValue={mainTab} value={mainTab} onValueChange={setMainTab}>
       <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl">Work Orders</h1>
+        <h1 className="text-lg font-semibold md:text-2xl mr-4">Service Desk</h1>
+         <TabsList className="grid w-full grid-cols-2 max-w-[300px]">
+            <TabsTrigger value="work_orders">Work Orders</TabsTrigger>
+            {isEngineerOrAdmin && (
+              <TabsTrigger value="on_call_triage">On-Call Triage</TabsTrigger>
+            )}
+         </TabsList>
         <div className="ml-auto flex items-center gap-2">
-          {user?.role === 'Admin' && (
+          {user?.role === 'Admin' && mainTab === 'work_orders' && (
             <Button size="sm" variant="outline" className="h-8 gap-1">
                 <File className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
@@ -128,7 +139,7 @@ export default function WorkOrdersPage() {
                 </span>
             </Button>
           )}
-          {canCreateWorkOrder && activeTab !== 'on_call_triage' && (
+          {canCreateWorkOrder && mainTab === 'work_orders' && (
             <Button size="sm" className="h-8 gap-1" asChild>
               <Link href="/dashboard/work-orders/new">
                 <PlusCircle className="h-3.5 w-3.5" />
@@ -138,52 +149,66 @@ export default function WorkOrdersPage() {
               </Link>
             </Button>
           )}
+          {isEngineerOrAdmin && mainTab === 'on_call_triage' && (
+              <Button size="sm" className="h-8 gap-1" onClick={() => setLogDialogOpen(true)}>
+                <Phone className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  Log New Call
+                </span>
+              </Button>
+          )}
         </div>
       </div>
-       <div className="mt-4">
-        <div className="md:hidden mb-4">
-            <Select value={activeTab} onValueChange={setActiveTab}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Select a tab" />
-                </SelectTrigger>
-                <SelectContent>
-                    {TABS.map((tab) => (
-                        <SelectItem key={tab.value} value={tab.value}>
-                            {tab.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
-        <div className="hidden md:block">
-             <TabsList className="grid w-full grid-cols-5">
-                {TABS.map((tab) => (
-                    <TabsTrigger key={tab.value} value={tab.value}>
-                        {tab.label}
-                    </TabsTrigger>
-                ))}
-             </TabsList>
-        </div>
-       </div>
-      <TabsContent value="all">
-        {renderDataTable(workOrders, 'All Work Orders', 'Manage all service jobs and assignments.')}
+
+       <TabsContent value="work_orders" className="mt-4">
+        <Tabs defaultValue={workOrderSubTab} value={workOrderSubTab} onValueChange={setWorkOrderSubTab}>
+            <div className="mt-4">
+              <div className="md:hidden mb-4">
+                  <Select value={workOrderSubTab} onValueChange={setWorkOrderSubTab}>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Select a tab" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {SUB_TABS.map((tab) => (
+                              <SelectItem key={tab.value} value={tab.value}>
+                                  {tab.label}
+                              </SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+              </div>
+              <div className="hidden md:block">
+                  <TabsList className={`grid w-full ${isEngineerOrAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
+                      {SUB_TABS.map((tab) => (
+                          <TabsTrigger key={tab.value} value={tab.value}>
+                              {tab.label}
+                          </TabsTrigger>
+                      ))}
+                  </TabsList>
+              </div>
+            </div>
+            <TabsContent value="all" className="mt-4">
+              {renderDataTable(workOrders, 'All Work Orders', 'Manage all service jobs and assignments.')}
+            </TabsContent>
+            <TabsContent value="active" className="mt-4">
+              {renderDataTable(activeOrders, 'Active Work Orders', 'Work orders that are scheduled, in-progress, or on-hold.')}
+            </TabsContent>
+            <TabsContent value="completed" className="mt-4">
+              {renderDataTable(completedOrders, 'Completed Work Orders', 'Work orders that have been completed or invoiced.')}
+            </TabsContent>
+            {isEngineerOrAdmin && (
+              <TabsContent value="draft" className="mt-4">
+                  {renderDataTable(draftOrders, 'Draft Work Orders', 'Work orders that are not yet scheduled.')}
+              </TabsContent>
+            )}
+        </Tabs>
       </TabsContent>
-      <TabsContent value="active">
-        {renderDataTable(activeOrders, 'Active Work Orders', 'Work orders that are scheduled, in-progress, or on-hold.')}
-      </TabsContent>
-      <TabsContent value="completed">
-       {renderDataTable(completedOrders, 'Completed Work Orders', 'Work orders that have been completed or invoiced.')}
-      </TabsContent>
-      {(user?.role === 'Admin' || user?.role === 'Engineer') && (
-        <TabsContent value="draft">
-            {renderDataTable(draftOrders, 'Draft Work Orders', 'Work orders that are not yet scheduled.')}
-        </TabsContent>
-      )}
-       {(user?.role === 'Admin' || user?.role === 'Engineer') && (
-        <TabsContent value="on_call_triage">
+      {isEngineerOrAdmin && (
+        <TabsContent value="on_call_triage" className="mt-4">
             <OnCallTriageTab />
         </TabsContent>
       )}
     </Tabs>
+    </>
   );
 }

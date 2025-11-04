@@ -24,7 +24,6 @@ import { useEffect, useState } from 'react';
 import { LoaderCircle, PlusCircle, PhoneIncoming } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
-import { CreateCallLogDialog } from './create-call-log-dialog';
 
 const priorityStyles = {
   High: 'bg-red-100 text-red-800 border-red-200',
@@ -36,7 +35,6 @@ export function OnCallTriageTab() {
   const { user } = useAuth();
   const [callLogs, setCallLogs] = useState<ServiceCallLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLogDialogOpen, setLogDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -69,10 +67,6 @@ export function OnCallTriageTab() {
 
   return (
     <>
-      <CreateCallLogDialog
-        open={isLogDialogOpen}
-        onOpenChange={setLogDialogOpen}
-      />
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -80,10 +74,6 @@ export function OnCallTriageTab() {
               <CardTitle>On-Call Triage</CardTitle>
               <CardDescription>A log of all service calls received from customers.</CardDescription>
             </div>
-            <Button size="sm" onClick={() => setLogDialogOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Log New Call
-            </Button>
           </div>
         </CardHeader>
         <CardContent>

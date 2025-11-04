@@ -20,10 +20,11 @@ import { useAuth } from '@/hooks/use-auth';
 import type { ServiceCallLog } from '@/lib/types';
 import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { LoaderCircle, PlusCircle, PhoneIncoming } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
+import { Input } from '@/components/ui/input';
 
 const priorityStyles = {
   High: 'bg-red-100 text-red-800 border-red-200',
@@ -35,6 +36,7 @@ export function OnCallTriageTab() {
   const { user } = useAuth();
   const [callLogs, setCallLogs] = useState<ServiceCallLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -65,6 +67,17 @@ export function OnCallTriageTab() {
     return () => unsubscribe();
   }, [user?.companyId]);
 
+  const filteredData = useMemo(() => {
+    if (!filter) return callLogs;
+    const lowercasedFilter = filter.toLowerCase();
+    return callLogs.filter(log => 
+      log.customerName.toLowerCase().includes(lowercasedFilter) ||
+      log.complainant.toLowerCase().includes(lowercasedFilter) ||
+      log.assetName.toLowerCase().includes(lowercasedFilter) ||
+      log.problemReported.toLowerCase().includes(lowercasedFilter)
+    );
+  }, [callLogs, filter]);
+
   return (
     <>
       <Card>
@@ -74,6 +87,14 @@ export function OnCallTriageTab() {
               <CardTitle>On-Call Triage</CardTitle>
               <CardDescription>A log of all service calls received from customers.</CardDescription>
             </div>
+          </div>
+           <div className="mt-4">
+            <Input
+              placeholder="Filter by customer, asset, problem..."
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="max-w-full sm:max-w-sm"
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -95,8 +116,8 @@ export function OnCallTriageTab() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {callLogs.length > 0 ? (
-                    callLogs.map(log => (
+                  {filteredData.length > 0 ? (
+                    filteredData.map(log => (
                       <TableRow key={log.id}>
                         <TableCell>
                           <div className="font-medium">{log.customerName}</div>
@@ -126,7 +147,7 @@ export function OnCallTriageTab() {
                     <TableRow>
                       <TableCell colSpan={5} className="h-48 text-center">
                         <PhoneIncoming className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <p className="mt-4 font-semibold">No service calls logged yet.</p>
+                        <p className="mt-4 font-semibold">No service calls found.</p>
                         <p className="text-sm text-muted-foreground">Click "Log New Call" to add the first one.</p>
                       </TableCell>
                     </TableRow>

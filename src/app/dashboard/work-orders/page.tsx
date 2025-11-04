@@ -20,13 +20,14 @@ import { db } from '@/lib/firebase';
 import type { WorkOrder } from '@/lib/types';
 import { customers } from '@/lib/data'; // Keep for customer role filtering
 import { LoaderCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 export default function WorkOrdersPage() {
   const { user } = useAuth();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -97,26 +98,24 @@ export default function WorkOrdersPage() {
     </Card>
   )
 
-  const adminOrTechTabs = (
-      <TabsList className="h-auto">
-        <TabsTrigger value="all">All</TabsTrigger>
-        <TabsTrigger value="active">Active</TabsTrigger>
-        <TabsTrigger value="completed">Completed</TabsTrigger>
-        <TabsTrigger value="draft">Draft</TabsTrigger>
-      </TabsList>
-  )
+  const adminOrTechTabs = [
+      { value: 'all', label: 'All' },
+      { value: 'active', label: 'Active' },
+      { value: 'completed', label: 'Completed' },
+      { value: 'draft', label: 'Draft' },
+  ];
   
-  const customerTabs = (
-       <TabsList className="h-auto">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-        </TabsList>
-  )
+  const customerTabs = [
+       { value: 'all', label: 'All' },
+       { value: 'active', label: 'Active' },
+       { value: 'completed', label: 'Completed' },
+  ];
+  
+  const TABS = user?.role === 'Admin' || user?.role === 'Engineer' ? adminOrTechTabs : customerTabs;
 
 
   return (
-    <Tabs defaultValue="all">
+    <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
       <div className="flex items-center">
         <h1 className="text-lg font-semibold md:text-2xl">Work Orders</h1>
         <div className="ml-auto flex items-center gap-2">
@@ -141,7 +140,29 @@ export default function WorkOrdersPage() {
         </div>
       </div>
        <div className="mt-4">
-        {user?.role === 'Admin' || user?.role === 'Engineer' ? adminOrTechTabs : customerTabs}
+        <div className="md:hidden mb-4">
+            <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a tab" />
+                </SelectTrigger>
+                <SelectContent>
+                    {TABS.map((tab) => (
+                        <SelectItem key={tab.value} value={tab.value}>
+                            {tab.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+        <div className="hidden md:block">
+             <TabsList className="grid w-full grid-cols-4">
+                {TABS.map((tab) => (
+                    <TabsTrigger key={tab.value} value={tab.value}>
+                        {tab.label}
+                    </TabsTrigger>
+                ))}
+             </TabsList>
+        </div>
        </div>
       <TabsContent value="all">
         {renderDataTable(workOrders, 'All Work Orders', 'Manage all service jobs and assignments.')}

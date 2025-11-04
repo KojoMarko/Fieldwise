@@ -1,3 +1,4 @@
+
 'use client';
 import {
   ChevronLeft,
@@ -41,6 +42,7 @@ import { WorkOrderClientSection } from './components/work-order-client-section';
 import { useToast } from '@/hooks/use-toast';
 import { HoldWorkOrderDialog } from './components/hold-work-order-dialog';
 import { ServiceReportDisplay } from './components/service-report-display';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {
@@ -79,6 +81,7 @@ export default function WorkOrderDetailPage({
   
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
 
   useEffect(() => {
     if (!id) return;
@@ -198,6 +201,11 @@ export default function WorkOrderDetailPage({
   const isPartsTabDisabled = isEngineerView && workOrder.status === 'Draft';
   const isReportTabDisabled = isEngineerView && !['In-Progress', 'On-Hold', 'Completed', 'Invoiced'].includes(workOrder.status);
 
+  const TABS = [
+      { value: 'details', label: 'Details', disabled: false },
+      { value: 'parts', label: 'Parts & Tools', disabled: isPartsTabDisabled },
+      { value: 'report', label: 'Service Report', disabled: false },
+  ];
 
   return (
     <div className="w-full max-w-full overflow-x-hidden px-4 sm:px-6">
@@ -220,12 +228,29 @@ export default function WorkOrderDetailPage({
           </div>
         </div>
         
-        <Tabs defaultValue="details">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 h-auto p-1">
-              <TabsTrigger value="details" className="data-[state=active]:bg-background">Details</TabsTrigger>
-              <TabsTrigger value="parts" disabled={isPartsTabDisabled} className="data-[state=active]:bg-background">Parts & Tools</TabsTrigger>
-              <TabsTrigger value="report" className="data-[state=active]:bg-background">Service Report</TabsTrigger>
-            </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <div className="block sm:hidden mb-4">
+                <Select value={activeTab} onValueChange={setActiveTab}>
+                    <SelectTrigger className="justify-center">
+                        <SelectValue placeholder="Select a tab" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {TABS.map((tab) => (
+                            <SelectItem key={tab.value} value={tab.value} disabled={tab.disabled}>
+                                {tab.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="hidden sm:block">
+              <TabsList className="grid w-full grid-cols-3 gap-2 h-auto p-1">
+                {TABS.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value} disabled={tab.disabled} className="data-[state=active]:bg-background">{tab.label}</TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
+
             <TabsContent value="details" className="mt-6">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full">
                   <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 w-full min-w-0">

@@ -95,10 +95,10 @@ export function ServiceReportDisplay({
 
     // --- Safely get data and format dates ---
     const safe = (val: any, fallback = 'N/A') => val || fallback;
-    const formatDate = (date: any, includeTime = false) => {
+    const formatDate = (dateStr: any, includeTime = false) => {
         try {
-            if (!date) return 'N/A';
-            const d = date instanceof Date ? date : parseISO(date);
+            if (!dateStr) return 'N/A';
+            const d = new Date(dateStr);
             if (!isValid(d)) return 'N/A';
             return includeTime ? format(d, 'MMM dd, yyyy, p') : format(d, 'MMM dd, yyyy');
         } catch (e) { return 'N/A' }
@@ -363,6 +363,11 @@ export function ServiceReportDisplay({
   }
   
   const isEngineerView = user?.role === 'Engineer';
+  
+  const formatDateForDisplay = (dateStr: string) => {
+    if (!dateStr || !isValid(new Date(dateStr))) return 'N/A';
+    return format(new Date(dateStr), 'PPP p');
+  }
 
   return (
     <Card>
@@ -388,8 +393,8 @@ export function ServiceReportDisplay({
               'Final Instrument Condition': reportData.workOrder?.instrumentCondition,
           }}/>
           <Section title="Labor Information" data={{
-              'Service Start': reportData.labor?.[0]?.startDate ? format(parseISO(reportData.labor[0].startDate), 'PPP p') : 'N/A',
-              'Service End': reportData.labor?.[0]?.endDate ? format(parseISO(reportData.labor[0].endDate), 'PPP p') : 'N/A',
+              'Service Start': formatDateForDisplay(reportData.labor?.[0]?.startDate),
+              'Service End': formatDateForDisplay(reportData.labor?.[0]?.endDate),
               'Labor Hours': reportData.labor?.[0]?.hours,
               'Agreement Type': reportData.agreement?.type,
           }} />

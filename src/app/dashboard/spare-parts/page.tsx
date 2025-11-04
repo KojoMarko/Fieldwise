@@ -25,7 +25,9 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PartsUsageReportTab } from './components/parts-usage-report-tab';
 
 
 function PartIntelligence() {
@@ -117,8 +119,7 @@ function PartIntelligence() {
   );
 }
 
-
-export default function SparePartsPage() {
+function InventoryTab() {
   const { user } = useAuth();
   const [spareParts, setSpareParts] = useState<SparePart[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -174,27 +175,9 @@ export default function SparePartsPage() {
   }, [groupedAndFilteredParts])
 
   return (
-    <>
+     <>
       <AddPartDialog open={isAddPartDialogOpen} onOpenChange={setAddPartDialogOpen} />
-      <div className="flex items-center mb-4">
-        <h1 className="text-3xl font-bold tracking-tight">Spare Parts</h1>
-        <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-8 gap-1 ml-4">
-            <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Export
-            </span>
-          </Button>
-          <Button size="sm" className="h-8 gap-1" onClick={() => setAddPartDialogOpen(true)}>
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Add Part Manually
-            </span>
-          </Button>
-        </div>
-      </div>
-      
-       <div className='mb-6 grid gap-6 md:grid-cols-2'>
+      <div className='my-6 grid gap-6 md:grid-cols-2'>
         <PartIntelligence />
          <Card>
             <CardHeader>
@@ -204,11 +187,19 @@ export default function SparePartsPage() {
             </CardDescription>
             </CardHeader>
             <CardContent>
-                <Input
-                placeholder="Filter by part name, number, or machine model..."
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                />
+                <div className="flex items-center gap-2">
+                    <Input
+                    placeholder="Filter by part name, number, or machine model..."
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    />
+                    <Button size="sm" className="h-10 gap-1" onClick={() => setAddPartDialogOpen(true)}>
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        Add Part
+                        </span>
+                    </Button>
+                </div>
             </CardContent>
         </Card>
       </div>
@@ -244,6 +235,29 @@ export default function SparePartsPage() {
             </Card>
         )}
        </div>
+    </>
+  )
+}
+
+export default function SparePartsPage() {
+  return (
+    <>
+      <div className="flex items-center mb-4">
+        <h1 className="text-3xl font-bold tracking-tight">Spare Parts</h1>
+      </div>
+      
+      <Tabs defaultValue="inventory">
+        <TabsList>
+          <TabsTrigger value="inventory">Inventory</TabsTrigger>
+          <TabsTrigger value="usage_report">Parts Usage Report</TabsTrigger>
+        </TabsList>
+        <TabsContent value="inventory">
+          <InventoryTab />
+        </TabsContent>
+        <TabsContent value="usage_report">
+          <PartsUsageReportTab />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

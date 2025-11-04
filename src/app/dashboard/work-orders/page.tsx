@@ -17,12 +17,15 @@ import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { WorkOrder } from '@/lib/types';
+import type { WorkOrder, ServiceCallLog } from '@/lib/types';
 import { customers } from '@/lib/data'; // Keep for customer role filtering
 import { LoaderCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { OnCallTriageTab } from './components/on-call-triage-tab';
 import { CreateCallLogDialog } from './components/create-call-log-dialog';
+import { Input } from '@/components/ui/input';
+
+type TriageStatusFilter = 'all' | 'resolved' | 'unresolved';
 
 export default function WorkOrdersPage() {
   const { user } = useAuth();
@@ -31,24 +34,31 @@ export default function WorkOrdersPage() {
   const [mainTab, setMainTab] = useState('work_orders');
   const [workOrderSubTab, setWorkOrderSubTab] = useState('all');
   const [isLogDialogOpen, setLogDialogOpen] = useState(false);
+  const [callLogs, setCallLogs] = useState<ServiceCallLog[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+
+  // State for triage filters, lifted up to the parent component
+  const [triageSearchFilter, setTriageSearchFilter] = useState('');
+  const [triageStatusFilter, setTriageStatusFilter] = useState<TriageStatusFilter>('all');
 
   useEffect(() => {
     if (!user?.companyId) {
         setIsLoading(false);
+        setIsLoadingLogs(false);
         return;
-    };
+    }
 
     setIsLoading(true);
+    setIsLoadingLogs(true);
     
     const workOrdersQuery = query(collection(db, 'work-orders'), where('companyId', '==', user.companyId));
     
-    const unsubscribe = onSnapshot(workOrdersQuery, (snapshot) => {
+    const unsubWorkOrders = onSnapshot(workOrdersQuery, (snapshot) => {
         let fetchedWorkOrders: WorkOrder[] = [];
         snapshot.forEach((doc) => {
             fetchedWorkOrders.push({ ...doc.data(), id: doc.id } as WorkOrder);
         });
 
-        // Sort by creation date descending
         fetchedWorkOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         if (user.role === 'Admin' || user.role === 'Engineer') {
@@ -69,7 +79,24 @@ export default function WorkOrdersPage() {
         setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    const logsQuery = query(collection(db, 'service-call-logs'), where('companyId', '==', user.companyId));
+    const unsubLogs = onSnapshot(logsQuery, (snapshot) => {
+        const logsData: ServiceCallLog[] = [];
+        snapshot.forEach(doc => {
+            logsData.push({ id: doc.id, ...doc.data() } as ServiceCallLog);
+        });
+        logsData.sort((a, b) => new Date(b.reportingTime).getTime() - new Date(a.reportingTime).getTime());
+        setCallLogs(logsData);
+        setIsLoadingLogs(false);
+    }, (error) => {
+        console.error("Error fetching call logs:", error);
+        setIsLoadingLogs(false);
+    });
+
+    return () => {
+        unsubWorkOrders();
+        unsubLogs();
+    };
   }, [user]);
 
 
@@ -163,7 +190,7 @@ export default function WorkOrdersPage() {
                         </Tabs>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 self-end">
+                <div className="flex items-center gap-2 self-stretch sm:self-center justify-end">
                     {user?.role === 'Admin' && (
                         <Button size="sm" variant="outline" className="h-8 gap-1">
                             <File className="h-3.5 w-3.5" />
@@ -204,15 +231,40 @@ export default function WorkOrdersPage() {
         </TabsContent>
         {isEngineerOrAdmin && (
             <TabsContent value="on_call_triage" className="mt-4 space-y-4">
-                 <div className="flex justify-end">
-                    <Button size="sm" className="h-8 gap-1" onClick={() => setLogDialogOpen(true)}>
-                        <Phone className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Log New Call
-                        </span>
-                    </Button>
+                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                     <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                        <Input
+                        placeholder="Filter by customer, asset, problem..."
+                        value={triageSearchFilter}
+                        onChange={(e) => setTriageSearchFilter(e.target.value)}
+                        className="max-w-full sm:max-w-sm"
+                        />
+                        <Select value={triageStatusFilter} onValueChange={(value) => setTriageStatusFilter(value as TriageStatusFilter)}>
+                            <SelectTrigger className="w-full sm:w-[180px]">
+                                <SelectValue placeholder="Filter by status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                <SelectItem value="resolved">Resolved</SelectItem>
+                                <SelectItem value="unresolved">Unresolved</SelectItem>
+                            </SelectContent>
+                        </Select>
+                     </div>
+                    <div className="flex items-center gap-2 self-stretch sm:self-center justify-end">
+                        <Button size="sm" className="h-8 gap-1" onClick={() => setLogDialogOpen(true)}>
+                            <Phone className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                            Log New Call
+                            </span>
+                        </Button>
+                    </div>
                 </div>
-                <OnCallTriageTab />
+                <OnCallTriageTab 
+                    callLogs={callLogs} 
+                    isLoading={isLoadingLogs} 
+                    searchFilter={triageSearchFilter}
+                    statusFilter={triageStatusFilter}
+                />
             </TabsContent>
         )}
     </Tabs>

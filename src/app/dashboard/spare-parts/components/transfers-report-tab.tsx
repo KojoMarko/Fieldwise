@@ -33,8 +33,7 @@ export function TransfersReportTab() {
 
     const logsQuery = query(
       collection(db, 'transfer-log'),
-      where('companyId', '==', user.companyId),
-      orderBy('timestamp', 'desc')
+      where('companyId', '==', user.companyId)
     );
     
     const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
@@ -42,6 +41,8 @@ export function TransfersReportTab() {
       snapshot.forEach((doc) => {
         logsData.push({ id: doc.id, ...doc.data() } as TransferLogEvent);
       });
+      // Sort client-side to avoid composite index requirement
+      logsData.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setTransferLogs(logsData);
       setIsLoading(false);
     });

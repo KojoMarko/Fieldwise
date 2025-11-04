@@ -121,95 +121,100 @@ export default function WorkOrdersPage() {
   return (
     <>
     <CreateCallLogDialog open={isLogDialogOpen} onOpenChange={setLogDialogOpen} />
-     <div className="flex flex-col items-center mb-4 text-center">
+    <div className="flex flex-col items-center mb-4 text-center">
         <h1 className="text-lg font-semibold md:text-2xl">Service Desk</h1>
-      </div>
+    </div>
     <Tabs defaultValue={mainTab} value={mainTab} onValueChange={setMainTab}>
-      <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 mb-4">
-        <TabsList className={`grid w-full max-w-md ${isEngineerOrAdmin ? 'grid-cols-2' : 'grid-cols-1'}`}>
-          <TabsTrigger value="work_orders">Work Orders</TabsTrigger>
-          {isEngineerOrAdmin && (
-            <TabsTrigger value="on_call_triage">On-Call Triage</TabsTrigger>
-          )}
-        </TabsList>
-        <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto justify-end">
-          {user?.role === 'Admin' && mainTab === 'work_orders' && (
-            <Button size="sm" variant="outline" className="h-8 gap-1">
-                <File className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Export
-                </span>
-            </Button>
-          )}
-          {canCreateWorkOrder && mainTab === 'work_orders' && (
-            <Button size="sm" className="h-8 gap-1" asChild>
-              <Link href="/dashboard/work-orders/new">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  {createButtonText}
-                </span>
-              </Link>
-            </Button>
-          )}
-          {isEngineerOrAdmin && mainTab === 'on_call_triage' && (
-              <Button size="sm" className="h-8 gap-1" onClick={() => setLogDialogOpen(true)}>
-                <Phone className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  Log New Call
-                </span>
-              </Button>
-          )}
-        </div>
-      </div>
-
-       <TabsContent value="work_orders" className="mt-4">
-        <Tabs defaultValue={workOrderSubTab} value={workOrderSubTab} onValueChange={setWorkOrderSubTab}>
-            <div className="mt-4">
-              <div className="md:hidden mb-4">
-                  <Select value={workOrderSubTab} onValueChange={setWorkOrderSubTab}>
-                      <SelectTrigger>
-                          <SelectValue placeholder="Select a tab" />
-                      </SelectTrigger>
-                      <SelectContent>
-                          {SUB_TABS.map((tab) => (
-                              <SelectItem key={tab.value} value={tab.value}>
-                                  {tab.label}
-                              </SelectItem>
-                          ))}
-                      </SelectContent>
-                  </Select>
-              </div>
-              <div className="hidden md:block">
-                  <TabsList className={`grid w-full ${isEngineerOrAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                      {SUB_TABS.map((tab) => (
-                          <TabsTrigger key={tab.value} value={tab.value}>
-                              {tab.label}
-                          </TabsTrigger>
-                      ))}
-                  </TabsList>
-              </div>
-            </div>
-            <TabsContent value="all" className="mt-4">
-              {renderDataTable(workOrders, 'All Work Orders', 'Manage all service jobs and assignments.')}
-            </TabsContent>
-            <TabsContent value="active" className="mt-4">
-              {renderDataTable(activeOrders, 'Active Work Orders', 'Work orders that are scheduled, in-progress, or on-hold.')}
-            </TabsContent>
-            <TabsContent value="completed" className="mt-4">
-              {renderDataTable(completedOrders, 'Completed Work Orders', 'Work orders that have been completed or invoiced.')}
-            </TabsContent>
+        <div className="flex justify-center mb-4">
+            <TabsList className={`grid w-full max-w-md ${isEngineerOrAdmin ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <TabsTrigger value="work_orders">Work Orders</TabsTrigger>
             {isEngineerOrAdmin && (
-              <TabsContent value="draft" className="mt-4">
-                  {renderDataTable(draftOrders, 'Draft Work Orders', 'Work orders that are not yet scheduled.')}
-              </TabsContent>
+                <TabsTrigger value="on_call_triage">On-Call Triage</TabsTrigger>
             )}
-        </Tabs>
-      </TabsContent>
-      {isEngineerOrAdmin && (
-        <TabsContent value="on_call_triage" className="mt-4">
-            <OnCallTriageTab />
+            </TabsList>
+        </div>
+
+        <TabsContent value="work_orders" className="mt-4 space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="w-full sm:w-auto">
+                    <div className="sm:hidden">
+                        <Select value={workOrderSubTab} onValueChange={setWorkOrderSubTab}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a filter" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {SUB_TABS.map((tab) => (
+                                    <SelectItem key={tab.value} value={tab.value}>
+                                        {tab.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="hidden sm:block">
+                        <Tabs value={workOrderSubTab} onValueChange={setWorkOrderSubTab}>
+                             <TabsList className={`grid w-full ${isEngineerOrAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
+                                {SUB_TABS.map((tab) => (
+                                    <TabsTrigger key={tab.value} value={tab.value}>
+                                        {tab.label}
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
+                        </Tabs>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 self-end">
+                    {user?.role === 'Admin' && (
+                        <Button size="sm" variant="outline" className="h-8 gap-1">
+                            <File className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                            Export
+                            </span>
+                        </Button>
+                    )}
+                    {canCreateWorkOrder && (
+                        <Button size="sm" className="h-8 gap-1" asChild>
+                        <Link href="/dashboard/work-orders/new">
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                            {createButtonText}
+                            </span>
+                        </Link>
+                        </Button>
+                    )}
+                </div>
+            </div>
+
+            <Tabs value={workOrderSubTab} onValueChange={setWorkOrderSubTab} className="w-full">
+                <TabsContent value="all">
+                    {renderDataTable(workOrders, 'All Work Orders', 'Manage all service jobs and assignments.')}
+                </TabsContent>
+                <TabsContent value="active">
+                    {renderDataTable(activeOrders, 'Active Work Orders', 'Work orders that are scheduled, in-progress, or on-hold.')}
+                </TabsContent>
+                <TabsContent value="completed">
+                    {renderDataTable(completedOrders, 'Completed Work Orders', 'Work orders that have been completed or invoiced.')}
+                </TabsContent>
+                {isEngineerOrAdmin && (
+                <TabsContent value="draft">
+                    {renderDataTable(draftOrders, 'Draft Work Orders', 'Work orders that are not yet scheduled.')}
+                </TabsContent>
+                )}
+            </Tabs>
         </TabsContent>
-      )}
+        {isEngineerOrAdmin && (
+            <TabsContent value="on_call_triage" className="mt-4 space-y-4">
+                 <div className="flex justify-end">
+                    <Button size="sm" className="h-8 gap-1" onClick={() => setLogDialogOpen(true)}>
+                        <Phone className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        Log New Call
+                        </span>
+                    </Button>
+                </div>
+                <OnCallTriageTab />
+            </TabsContent>
+        )}
     </Tabs>
     </>
   );

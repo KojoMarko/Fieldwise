@@ -25,6 +25,13 @@ import { LoaderCircle, PlusCircle, PhoneIncoming } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const priorityStyles = {
   High: 'bg-red-100 text-red-800 border-red-200',
@@ -32,11 +39,14 @@ const priorityStyles = {
   Low: 'bg-gray-200 text-gray-800',
 };
 
+type TriageStatusFilter = 'all' | 'resolved' | 'unresolved';
+
 export function OnCallTriageTab() {
   const { user } = useAuth();
   const [callLogs, setCallLogs] = useState<ServiceCallLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<TriageStatusFilter>('all');
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -68,15 +78,23 @@ export function OnCallTriageTab() {
   }, [user?.companyId]);
 
   const filteredData = useMemo(() => {
-    if (!filter) return callLogs;
-    const lowercasedFilter = filter.toLowerCase();
-    return callLogs.filter(log => 
-      log.customerName.toLowerCase().includes(lowercasedFilter) ||
-      log.complainant.toLowerCase().includes(lowercasedFilter) ||
-      log.assetName.toLowerCase().includes(lowercasedFilter) ||
-      log.problemReported.toLowerCase().includes(lowercasedFilter)
-    );
-  }, [callLogs, filter]);
+    return callLogs.filter(log => {
+      // Status Filter
+      if (statusFilter === 'resolved' && !log.caseResolved) return false;
+      if (statusFilter === 'unresolved' && log.caseResolved) return false;
+      
+      // Search Filter
+      const searchString = filter.toLowerCase();
+      if (!searchString) return true;
+
+      return (
+        log.customerName.toLowerCase().includes(searchString) ||
+        log.complainant.toLowerCase().includes(searchString) ||
+        log.assetName.toLowerCase().includes(searchString) ||
+        log.problemReported.toLowerCase().includes(searchString)
+      );
+    });
+  }, [callLogs, filter, statusFilter]);
 
   return (
     <>
@@ -88,13 +106,23 @@ export function OnCallTriageTab() {
               <CardDescription>A log of all service calls received from customers.</CardDescription>
             </div>
           </div>
-           <div className="mt-4">
+           <div className="mt-4 flex flex-col sm:flex-row gap-4">
             <Input
               placeholder="Filter by customer, asset, problem..."
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className="max-w-full sm:max-w-sm"
             />
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as TriageStatusFilter)}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                    <SelectItem value="unresolved">Unresolved</SelectItem>
+                </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent>

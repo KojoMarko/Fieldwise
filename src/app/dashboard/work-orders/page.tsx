@@ -121,18 +121,18 @@ export default function WorkOrdersPage() {
   return (
     <>
     <CreateCallLogDialog open={isLogDialogOpen} onOpenChange={setLogDialogOpen} />
+     <div className="flex flex-col items-center mb-4 text-center">
+        <h1 className="text-lg font-semibold md:text-2xl">Service Desk</h1>
+      </div>
     <Tabs defaultValue={mainTab} value={mainTab} onValueChange={setMainTab}>
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-semibold md:text-2xl">Service Desk</h1>
-            <TabsList className="grid w-full grid-cols-2 max-w-[300px]">
-              <TabsTrigger value="work_orders">Work Orders</TabsTrigger>
-              {isEngineerOrAdmin && (
-                <TabsTrigger value="on_call_triage">On-Call Triage</TabsTrigger>
-              )}
-            </TabsList>
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 mb-4">
+        <TabsList className={`grid w-full max-w-md ${isEngineerOrAdmin ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <TabsTrigger value="work_orders">Work Orders</TabsTrigger>
+          {isEngineerOrAdmin && (
+            <TabsTrigger value="on_call_triage">On-Call Triage</TabsTrigger>
+          )}
+        </TabsList>
+        <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto justify-end">
           {user?.role === 'Admin' && mainTab === 'work_orders' && (
             <Button size="sm" variant="outline" className="h-8 gap-1">
                 <File className="h-3.5 w-3.5" />

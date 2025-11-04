@@ -5,8 +5,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { SparePart } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { MoreHorizontal, Trash2, ArrowRightLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { AdjustStockDialog } from './adjust-stock-dialog';
@@ -23,10 +23,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { deleteSparePart } from '@/ai/flows/delete-spare-part';
+import { TransferStockDialog } from './transfer-stock-dialog';
 
 function ActionsCell({ part }: { part: SparePart }) {
   const { toast } = useToast();
   const [isAdjustStockOpen, setAdjustStockOpen] = useState(false);
+  const [isTransferStockOpen, setTransferStockOpen] = useState(false);
   const [isViewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -53,6 +55,11 @@ function ActionsCell({ part }: { part: SparePart }) {
       <AdjustStockDialog
         open={isAdjustStockOpen}
         onOpenChange={setAdjustStockOpen}
+        part={part}
+      />
+      <TransferStockDialog
+        open={isTransferStockOpen}
+        onOpenChange={setTransferStockOpen}
         part={part}
       />
       <ViewPartDetailsDialog
@@ -83,12 +90,17 @@ function ActionsCell({ part }: { part: SparePart }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => setAdjustStockOpen(true)}>
-            Adjust Stock
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setViewDetailsOpen(true)}>
             View Details
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setAdjustStockOpen(true)}>
+            Adjust Stock
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTransferStockOpen(true)}>
+            <ArrowRightLeft className="mr-2 h-4 w-4" />
+            Transfer Stock
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
            <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => setDeleteDialogOpen(true)}
@@ -144,7 +156,7 @@ export const sparePartsColumns: ColumnDef<SparePart>[] = [
   },
   {
     accessorKey: 'quantity',
-    header: 'Quantity',
+    header: 'Central Stock',
     cell: ({ row }) => {
         const quantity = row.original.quantity;
         let badgeClass = '';

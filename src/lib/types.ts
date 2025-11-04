@@ -55,14 +55,21 @@ export type Asset = {
   }
 };
 
+export type FacilityStock = {
+  facilityId: string;
+  facilityName: string;
+  quantity: number;
+}
+
 export type SparePart = {
     id: string;
     name: string;
     partNumber: string;
-    quantity: number;
+    quantity: number; // This now represents central warehouse stock
     location: string;
     assetModel: string;
     companyId: string;
+    facilityStock?: FacilityStock[]; // Stock held at different facilities
 }
 
 export type AllocatedPart = SparePart & { 
@@ -143,13 +150,29 @@ export type Notification = {
   recipientRole?: 'Admin' | 'Engineer' | 'All' | 'Sales Rep';
 };
 
+export type TransferLogEvent = {
+  id: string;
+  partId: string;
+  partName: string;
+  partNumber: string;
+  quantity: number;
+  fromLocation: string;
+  toFacilityId: string;
+  toFacilityName: string;
+  transferredBy: string;
+  transferredById: string;
+  timestamp: string;
+  companyId: string;
+};
+
+
 export type AuditLogEvent = {
   id: string;
   user: {
     id: string;
     name: string;
   };
-  action: 'CREATE' | 'UPDATE' | 'DELETE';
+  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'TRANSFER';
   entity: 'Asset' | 'Work Order' | 'Resource' | 'Spare Part' | 'Customer' | 'User' | 'Company';
   entityId: string;
   entityName: string;

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PartsUsageReportTab } from './components/parts-usage-report-tab';
+import { TransfersReportTab } from './components/transfers-report-tab';
 
 
 function PartIntelligence() {
@@ -247,12 +248,16 @@ export default function SparePartsPage() {
       </div>
       
       <Tabs defaultValue="inventory">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="usage_report">Parts Usage Report</TabsTrigger>
+          <TabsTrigger value="transfers">Transfers</TabsTrigger>
+          <TabsTrigger value="usage_report">Usage Report</TabsTrigger>
         </TabsList>
         <TabsContent value="inventory">
           <InventoryTab />
+        </TabsContent>
+         <TabsContent value="transfers">
+          <TransfersReportTab />
         </TabsContent>
         <TabsContent value="usage_report">
           <PartsUsageReportTab />

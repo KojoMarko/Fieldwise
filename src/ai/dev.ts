@@ -26,3 +26,4 @@ import '@/ai/flows/extract-and-log-maintenance.ts';
 import '@/ai/flows/extract-and-create-assets.ts';
 import '@/ai/flows/update-asset-model.ts';
 import '@/ai/flows/update-asset-name-for-model.ts';
+import '@/ai/flows/transfer-spare-part.ts';

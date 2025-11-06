@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { LoaderCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface AddPartsDialogProps {
   open: boolean;
@@ -110,32 +111,70 @@ export function AddPartsDialog({
                     <LoaderCircle className="h-8 w-8 animate-spin" />
                 </div>
             ) : (
-            <div className="relative w-full overflow-auto">
-              <Table>
-                  <TableHeader>
-                      <TableRow>
-                          <TableHead className='w-[50px]'></TableHead>
-                          <TableHead>Part</TableHead>
-                          <TableHead>In Stock</TableHead>
-                          <TableHead>Location</TableHead>
-                      </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                      {filteredParts.map((part) => (
-                          <TableRow key={part.id} onClick={() => setSelectedParts(prev => ({...prev, [part.id]: !prev[part.id]}))} className='cursor-pointer'>
-                            <TableCell>
-                                <Checkbox checked={selectedParts[part.id] || false} onCheckedChange={(checked) => setSelectedParts(prev => ({...prev, [part.id]: !!checked}))}/>
-                            </TableCell>
-                            <TableCell>
-                                  <div className="font-medium">{part.name}</div>
-                                  <div className="text-sm text-muted-foreground">{part.partNumber}</div>
-                            </TableCell>
-                            <TableCell>{part.quantity}</TableCell>
-                            <TableCell>{part.location}</TableCell>
+            <div className="w-full">
+              {/* --- Responsive Card View for Mobile --- */}
+              <div className="block sm:hidden">
+                {filteredParts.length > 0 ? (
+                  filteredParts.map(part => (
+                    <div 
+                      key={part.id} 
+                      className="flex items-start gap-4 p-4 border-b last:border-b-0 cursor-pointer"
+                      onClick={() => setSelectedParts(prev => ({...prev, [part.id]: !prev[part.id]}))}
+                    >
+                      <Checkbox 
+                        checked={selectedParts[part.id] || false} 
+                        onCheckedChange={(checked) => setSelectedParts(prev => ({...prev, [part.id]: !!checked}))}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium">{part.name}</p>
+                        <p className="text-sm text-muted-foreground">{part.partNumber}</p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
+                           <span>Stock: <Badge variant="secondary">{part.quantity}</Badge></span>
+                           <span>Location: {part.location}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="p-8 text-center text-sm text-muted-foreground">No parts found.</p>
+                )}
+              </div>
+              
+              {/* --- Table View for Desktop --- */}
+              <div className="hidden sm:block">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className='w-[50px]'></TableHead>
+                            <TableHead>Part</TableHead>
+                            <TableHead>In Stock</TableHead>
+                            <TableHead>Location</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {filteredParts.length > 0 ? (
+                            filteredParts.map((part) => (
+                              <TableRow key={part.id} onClick={() => setSelectedParts(prev => ({...prev, [part.id]: !prev[part.id]}))} className='cursor-pointer'>
+                                <TableCell>
+                                    <Checkbox checked={selectedParts[part.id] || false} onCheckedChange={(checked) => setSelectedParts(prev => ({...prev, [part.id]: !!checked}))}/>
+                                </TableCell>
+                                <TableCell>
+                                      <div className="font-medium">{part.name}</div>
+                                      <div className="text-sm text-muted-foreground">{part.partNumber}</div>
+                                </TableCell>
+                                <TableCell>{part.quantity}</TableCell>
+                                <TableCell>{part.location}</TableCell>
+                              </TableRow>
+                            ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="h-48 text-center">No parts found.</TableCell>
                           </TableRow>
-                      ))}
-                  </TableBody>
-              </Table>
+                        )}
+                    </TableBody>
+                </Table>
+              </div>
             </div>
             )}
           </div>

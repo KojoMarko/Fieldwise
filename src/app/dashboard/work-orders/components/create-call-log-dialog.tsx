@@ -26,18 +26,26 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import type { ServiceCallLog } from '@/lib/types';
-import { addDoc, collection } from 'firebase/firestore';
+import type { ServiceCallLog, Customer, Asset } from '@/lib/types';
+import { addDoc, collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { formatISO } from 'date-fns';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { createWorkOrder } from '@/ai/flows/create-work-order';
 
 const CallLogSchema = z.object({
-  customerName: z.string().min(1, 'Customer name is required'),
+  customerId: z.string().min(1, 'Customer is required'),
+  assetId: z.string().min(1, 'Asset/Equipment is required'),
   complainant: z.string().min(1, 'Complainant name is required'),
-  assetName: z.string().min(1, 'Asset/Equipment name is required'),
   problemReported: z.string().min(1, 'Problem description is required'),
   immediateActionTaken: z.string().min(1, 'Action taken is required'),
   caseResolved: z.boolean().default(false),
@@ -55,19 +63,54 @@ export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogP
   const { toast } = useToast();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const form = useForm<CallLogFormValues>({
     resolver: zodResolver(CallLogSchema),
     defaultValues: {
-      customerName: '',
+      customerId: '',
+      assetId: '',
       complainant: '',
-      assetName: '',
       problemReported: '',
       immediateActionTaken: '',
       caseResolved: false,
       fieldVisitRequired: false,
     },
   });
+
+  const watchedCustomerId = form.watch('customerId');
+
+  useEffect(() => {
+    if (!user?.companyId || !open) {
+      setIsLoading(false);
+      return;
+    }
+    
+    setIsLoading(true);
+    const customerQuery = query(collection(db, "customers"), where("companyId", "==", user.companyId));
+    const assetQuery = query(collection(db, "assets"), where("companyId", "==", user.companyId));
+
+    const unsubscribeCustomers = onSnapshot(customerQuery, (snapshot) => {
+      const customersData: Customer[] = [];
+      snapshot.forEach((doc) => customersData.push({ id: doc.id, ...doc.data() } as Customer));
+      setCustomers(customersData);
+      setIsLoading(false);
+    });
+
+    const unsubscribeAssets = onSnapshot(assetQuery, (snapshot) => {
+      const assetsData: Asset[] = [];
+      snapshot.forEach((doc) => assetsData.push({ id: doc.id, ...doc.data() } as Asset));
+      setAssets(assetsData);
+    });
+
+    return () => {
+      unsubscribeCustomers();
+      unsubscribeAssets();
+    }
+  }, [user?.companyId, open]);
+
 
   async function onSubmit(data: CallLogFormValues) {
     if (!user?.companyId) {
@@ -76,11 +119,23 @@ export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogP
     }
 
     setIsSubmitting(true);
+    
+    const selectedCustomer = customers.find(c => c.id === data.customerId);
+    const selectedAsset = assets.find(a => a.id === data.assetId);
+
+    if (!selectedCustomer || !selectedAsset) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Selected customer or asset not found.' });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const priority = data.fieldVisitRequired ? 'High' : 'Medium';
       
       const newLog: Omit<ServiceCallLog, 'id'> = {
         ...data,
+        customerName: selectedCustomer.name,
+        assetName: selectedAsset.name,
         reportingTime: formatISO(new Date()),
         priority,
         companyId: user.companyId,
@@ -90,8 +145,28 @@ export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogP
 
       toast({
         title: 'Call Logged Successfully',
-        description: `A new service call for ${data.customerName} has been recorded.`,
+        description: `A new service call for ${selectedCustomer.name} has been recorded.`,
       });
+
+      // Automatically create a work order if needed
+      if (data.fieldVisitRequired && !data.caseResolved) {
+        await createWorkOrder({
+          title: `Service Request for ${selectedAsset.name}`,
+          description: data.problemReported,
+          customerId: data.customerId,
+          assetId: data.assetId,
+          priority: 'High',
+          type: 'Corrective',
+          scheduledDate: new Date(),
+          companyId: user.companyId,
+          status: 'Draft',
+        });
+        toast({
+          title: 'Work Order Created',
+          description: 'A new work order has been automatically created from the call log.',
+        });
+      }
+
       form.reset();
       onOpenChange(false);
     } catch (error) {
@@ -105,6 +180,9 @@ export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogP
       setIsSubmitting(false);
     }
   }
+  
+  const filteredAssets = assets.filter(asset => asset.customerId === watchedCustomerId);
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -118,22 +196,40 @@ export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogP
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="customerName"
+                name="customerId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Customer Name</FormLabel>
-                    <FormControl><Input placeholder="e.g., Korle Bu Teaching Hospital" {...field} /></FormControl>
+                    <Select onValueChange={(value) => { field.onChange(value); form.resetField('assetId'); }} value={field.value} disabled={isLoading}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={isLoading ? "Loading..." : "Select a customer"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="complainant"
+                name="assetId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Complainant</FormLabel>
-                    <FormControl><Input placeholder="e.g., Dr. Ama" {...field} /></FormControl>
+                    <FormLabel>Asset / Equipment</FormLabel>
+                     <Select onValueChange={field.onChange} value={field.value} disabled={!watchedCustomerId}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={!watchedCustomerId ? "Select a customer first" : "Select an asset"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {filteredAssets.map(a => <SelectItem key={a.id} value={a.id}>{a.name} ({a.serialNumber})</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -141,11 +237,11 @@ export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogP
             </div>
             <FormField
               control={form.control}
-              name="assetName"
+              name="complainant"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Asset / Equipment</FormLabel>
-                  <FormControl><Input placeholder="e.g., Vitros 5600 Analyzer" {...field} /></FormControl>
+                  <FormLabel>Complainant</FormLabel>
+                  <FormControl><Input placeholder="e.g., Dr. Ama" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}

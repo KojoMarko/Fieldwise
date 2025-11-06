@@ -198,10 +198,12 @@ export type SecurityRuleError = Error & {
 
 export type ServiceCallLog = {
   id: string;
+  customerId: string;
+  assetId: string;
   customerName: string;
+  assetName: string;
   reportingTime: string; // ISO string
   complainant: string;
-  assetName: string;
   problemReported: string;
   immediateActionTaken: string;
   caseResolved: boolean;

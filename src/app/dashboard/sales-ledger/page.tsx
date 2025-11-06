@@ -19,12 +19,13 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, File, Search, PlusCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, File, Search, PlusCircle, Edit } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { KpiCard } from '@/components/kpi-card';
 import { DollarSign, CheckCircle, Clock } from 'lucide-react';
 import { AddTransactionDialog } from './components/add-transaction-dialog';
+import { UpdatePaymentDialog } from './components/update-payment-dialog';
 
 export type Product = {
   id: string;
@@ -60,7 +61,7 @@ const statusColors: Record<Transaction['paymentStatus'], string> = {
 };
 
 
-function TransactionRow({ transaction }: { transaction: Transaction }) {
+function TransactionRow({ transaction, onUpdateClick }: { transaction: Transaction, onUpdateClick: () => void }) {
     const [isOpen, setIsOpen] = useState(false);
     const balance = transaction.total - transaction.amountPaid;
     
@@ -76,11 +77,10 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
                         </CollapsibleTrigger>
                         <div>
                             <div>{transaction.customerName}</div>
-                            <div className="text-xs text-muted-foreground">{transaction.customerId}</div>
+                            <div className="text-xs text-muted-foreground">{transaction.transactionId}</div>
                         </div>
                     </div>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">{transaction.transactionId}</TableCell>
                 <TableCell className="hidden sm:table-cell">{transaction.date}</TableCell>
                 <TableCell className="text-right">
                     <div>GH₵{transaction.total.toLocaleString()}</div>
@@ -90,6 +90,11 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
                 </TableCell>
                 <TableCell>
                     <Badge variant="outline" className={statusColors[transaction.paymentStatus]}>{transaction.paymentStatus}</Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                    <Button variant="outline" size="sm" onClick={onUpdateClick}>
+                        <Edit className="h-3 w-3 mr-1"/> Update Payment
+                    </Button>
                 </TableCell>
             </TableRow>
             <CollapsibleContent asChild>
@@ -128,7 +133,9 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
 export default function SalesLedgerPage() {
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
-    
+  const [isUpdateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
   const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0);
   const paidRevenue = transactions.reduce((sum, t) => sum + t.amountPaid, 0);
   const pendingRevenue = totalRevenue - paidRevenue;
@@ -143,6 +150,27 @@ export default function SalesLedgerPage() {
     };
     setTransactions(prev => [newTransaction, ...prev]);
   };
+  
+  const handleOpenUpdateDialog = (transaction: Transaction) => {
+      setSelectedTransaction(transaction);
+      setUpdateDialogOpen(true);
+  }
+
+  const handleUpdatePayment = (transactionId: string, newPayment: number) => {
+    setTransactions(prev => prev.map(t => {
+      if (t.id === transactionId) {
+        const updatedAmountPaid = t.amountPaid + newPayment;
+        let newStatus: Transaction['paymentStatus'] = 'Partial Payment';
+        if (updatedAmountPaid >= t.total) {
+          newStatus = 'Fully Paid';
+        } else if (updatedAmountPaid === 0) {
+          newStatus = 'Pending';
+        }
+        return { ...t, amountPaid: updatedAmountPaid, paymentStatus: newStatus };
+      }
+      return t;
+    }));
+  };
 
   return (
     <>
@@ -151,6 +179,14 @@ export default function SalesLedgerPage() {
       onOpenChange={setAddDialogOpen}
       onAddTransaction={handleAddTransaction}
     />
+    {selectedTransaction && (
+      <UpdatePaymentDialog
+        open={isUpdateDialogOpen}
+        onOpenChange={setUpdateDialogOpen}
+        transaction={selectedTransaction}
+        onUpdatePayment={handleUpdatePayment}
+      />
+    )}
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -202,16 +238,16 @@ export default function SalesLedgerPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[300px]">Customer</TableHead>
-                  <TableHead className="hidden md:table-cell">Transaction ID</TableHead>
                   <TableHead className="hidden sm:table-cell">Date</TableHead>
                   <TableHead className="text-right">Total Value</TableHead>
                   <TableHead>Payment Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {transactions.map(transaction => (
                    <Collapsible asChild key={transaction.id}>
-                     <TransactionRow transaction={transaction} />
+                     <TransactionRow transaction={transaction} onUpdateClick={() => handleOpenUpdateDialog(transaction)} />
                    </Collapsible>
                 ))}
               </TableBody>

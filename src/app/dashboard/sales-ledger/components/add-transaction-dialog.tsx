@@ -245,13 +245,13 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                 )}
               />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <FormField
+              <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem>
                     <FormLabel>Transaction Date</FormLabel>
-                    <Popover>
+                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -367,5 +367,3 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
     </>
   );
 }
-
-    

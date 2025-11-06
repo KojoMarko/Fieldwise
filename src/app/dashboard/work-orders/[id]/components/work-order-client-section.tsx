@@ -17,7 +17,7 @@ import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import type { ServiceReportQuestionnaire } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import type { WorkOrder, Customer, User, Asset, Company, WorkOrderStatus, AllocatedPart } from '@/lib/types';
-import { format, parseISO, differenceInMinutes, isValid } from 'date-fns';
+import { format, parseISO, differenceInMinutes, isValid, formatISO } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Dialog,
@@ -261,12 +261,24 @@ export function WorkOrderClientSection({
         preparedBy: technician?.name || user?.name || 'N/A',
         completionDate: format(new Date(), 'yyyy-MM-dd HH:mm'),
       });
+      
+      const completedDate = new Date();
+
+      // If it's a preventive maintenance, update the asset's last PPM date
+      if (workOrder.type === 'Preventive' && asset) {
+          const assetRef = doc(db, 'assets', asset.id);
+          await updateDoc(assetRef, { lastPpmDate: formatISO(completedDate) });
+          toast({
+              title: 'PPM Calendar Updated',
+              description: `Last PPM date for asset ${asset.name} has been updated.`,
+          });
+      }
 
       const workOrderRef = doc(db, 'work-orders', workOrder.id);
       await updateDoc(workOrderRef, {
         status: 'Completed',
         technicianNotes: result.report,
-        completedDate: new Date().toISOString(),
+        completedDate: formatISO(completedDate),
       });
 
       toast({
@@ -557,3 +569,5 @@ export function WorkOrderClientSection({
     </>
   );
 }
+
+    

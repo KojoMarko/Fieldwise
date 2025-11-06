@@ -64,7 +64,7 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
       <CardContent className="p-4 pt-0 space-y-3">
         <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Value</span>
-            <span className="font-semibold">${opportunity.value.toLocaleString()}</span>
+            <span className="font-semibold">GH₵{opportunity.value.toLocaleString()}</span>
         </div>
         <div className="space-y-1">
             <div className="flex justify-between text-sm">
@@ -98,7 +98,7 @@ function PipelineView() {
                             {stageOpportunities.length}
                         </span>
                         <span className="ml-auto text-sm text-muted-foreground whitespace-nowrap">
-                            ${(stageValue / 1000).toFixed(0)}K
+                            GH₵{(stageValue / 1000).toFixed(0)}K
                         </span>
                     </div>
                     <div className="space-y-4">
@@ -144,13 +144,13 @@ export default function OpportunitiesPage() {
         <div className="grid grid-cols-1 min-[500px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <KpiCard 
             title="Total Pipeline Value" 
-            value={`$${(totalPipelineValue/1000).toFixed(0)}K`} 
+            value={`GH₵${(totalPipelineValue/1000).toFixed(0)}K`} 
             Icon={DollarSign} 
             description="" 
           />
           <KpiCard 
             title="Weighted Value" 
-            value={`$${(weightedValue/1000).toFixed(0)}K`} 
+            value={`GH₵${(weightedValue/1000).toFixed(0)}K`} 
             Icon={DollarSign} 
             description="" 
           />
@@ -162,7 +162,7 @@ export default function OpportunitiesPage() {
           />
           <KpiCard 
             title="Avg. Deal Size" 
-            value={`$${(avgDealSize/1000).toFixed(0)}K`} 
+            value={`GH₵${(avgDealSize/1000).toFixed(0)}K`} 
             Icon={DollarSign} 
             description="" 
           />

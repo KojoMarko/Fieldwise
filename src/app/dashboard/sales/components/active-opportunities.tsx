@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -54,7 +55,7 @@ export function ActiveOpportunitiesTable() {
                     <div className="font-medium">{opp.company}</div>
                     <div className="text-sm text-muted-foreground">{opp.contact}</div>
                 </TableCell>
-                <TableCell>${opp.amount.toLocaleString()}</TableCell>
+                <TableCell>GH₵{opp.amount.toLocaleString()}</TableCell>
                 <TableCell>
                     <Badge variant="outline" className={stageColors[opp.stage]}>{opp.stage}</Badge>
                 </TableCell>

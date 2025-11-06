@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -47,7 +48,7 @@ export default function SalesDashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Total Revenue"
-          value="$124,580"
+          value="GH₵124,580"
           description="+12.5% from last month"
           Icon={DollarSign}
         />

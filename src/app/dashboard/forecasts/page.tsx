@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -143,10 +144,10 @@ export default function ForecastsPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <KpiCard title="Quota" value="$80K" Icon={Target} description="" />
-          <KpiCard title="Committed" value="$72K" Icon={DollarSign} description="90% of quota" />
-          <KpiCard title="Best Case" value="$95K" Icon={TrendingUp} description="119% of quota" />
-          <KpiCard title="Total Pipeline" value="$125K" Icon={Briefcase} description="" />
+          <KpiCard title="Quota" value="GH₵80K" Icon={Target} description="" />
+          <KpiCard title="Committed" value="GH₵72K" Icon={DollarSign} description="90% of quota" />
+          <KpiCard title="Best Case" value="GH₵95K" Icon={TrendingUp} description="119% of quota" />
+          <KpiCard title="Total Pipeline" value="GH₵125K" Icon={Briefcase} description="" />
         </div>
 
         <Card>
@@ -159,14 +160,14 @@ export default function ForecastsPage() {
               <div>
                 <div className="flex justify-between items-center mb-1 text-sm">
                   <span className="font-medium">Committed (High Confidence)</span>
-                  <span className="text-muted-foreground">$72K / $80K</span>
+                  <span className="text-muted-foreground">GH₵72K / GH₵80K</span>
                 </div>
                 <Progress value={committedPercentage} />
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1 text-sm">
                   <span className="font-medium">Best Case Scenario</span>
-                  <span className="text-muted-foreground">$95K / $80K</span>
+                  <span className="text-muted-foreground">GH₵95K / GH₵80K</span>
                 </div>
                 <Progress value={bestCasePercentage} indicatorClassName="bg-primary/70"/>
               </div>
@@ -174,7 +175,7 @@ export default function ForecastsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
               <div>
                 <p className="text-sm text-muted-foreground">Gap to Quota</p>
-                <p className="text-xl font-bold">$8K</p>
+                <p className="text-xl font-bold">GH₵8K</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Forecast Confidence</p>
@@ -230,7 +231,7 @@ export default function ForecastsPage() {
                           axisLine={false}
                           tickMargin={10}
                           tickFormatter={(value) =>
-                              value >= 1000 ? `$${value / 1000}K` : value.toString()
+                              value >= 1000 ? `GH₵${value / 1000}K` : value.toString()
                           }
                           />
                           <Tooltip
@@ -328,8 +329,8 @@ export default function ForecastsPage() {
                                       <TrendIcon className={`h-4 w-4 ${trendColor}`} />
                                   </div>
                                   <div className="text-left md:text-right">
-                                      <span className="font-semibold">${(member.committed / 1000).toFixed(0)}K</span>
-                                      <span className="text-sm text-muted-foreground"> / ${(member.quota / 1000).toFixed(0)}K</span>
+                                      <span className="font-semibold">GH₵{(member.committed / 1000).toFixed(0)}K</span>
+                                      <span className="text-sm text-muted-foreground"> / GH₵{(member.quota / 1000).toFixed(0)}K</span>
                                       <p className="text-xs text-muted-foreground">{percentage.toFixed(0)}% to quota</p>
                                   </div>
                                   <div className="md:col-span-2">

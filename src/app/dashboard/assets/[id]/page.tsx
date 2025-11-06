@@ -257,7 +257,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                           {item.duration ? `${item.duration}h` : 'N/A'}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell whitespace-nowrap">
-                          {item.cost ? `$${item.cost.toLocaleString()}` : 'N/A'}
+                          {item.cost ? `GH₵${item.cost.toLocaleString()}` : 'N/A'}
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -320,7 +320,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
                   <p>Date: {item.originalDate ? format(new Date(item.originalDate), 'MMM dd, yyyy') : 'N/A'}</p>
                   <p>Technician: {item.technician}</p>
                   <p>Duration: {item.duration ? `${item.duration}h` : 'N/A'}</p>
-                  <p>Cost: {item.cost ? `$${item.cost.toLocaleString()}` : 'N/A'}</p>
+                  <p>Cost: {item.cost ? `GH₵${item.cost.toLocaleString()}` : 'N/A'}</p>
                 </div>
               </div>
             ))
@@ -459,7 +459,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
         <TabsContent value="overview" className="mt-4">
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
              <KpiCard icon={TrendingUp} title="Machine Uptime" value="97.5%" footer={<><Progress value={97.5} className="h-2" /><p className="text-xs text-muted-foreground mt-2">Excellent performance this month</p></>} />
-            <KpiCard icon={DollarSign} title="Total Maintenance Cost" value="$24,750" footer={<p className="text-xs text-muted-foreground">12% decrease from last month</p>} />
+            <KpiCard icon={DollarSign} title="Total Maintenance Cost" value="GH₵24,750" footer={<p className="text-xs text-muted-foreground">12% decrease from last month</p>} />
             <KpiCard icon={Clock} title="Maintenance Hours" value="186h" footer={<p className="text-xs text-muted-foreground">Total hours this year</p>} />
             <KpiCard icon={Calendar} title="Last Maintenance" value={asset.lastPpmDate ? format(new Date(asset.lastPpmDate), 'PPP') : 'N/A'} footer={<p className="text-xs text-muted-foreground">Preventive maintenance completed</p>} />
             <KpiCard icon={Calendar} title="Next Scheduled" value={nextPpmDate ? format(nextPpmDate, 'PPP') : 'N/A'} footer={<p className="text-xs text-muted-foreground">Routine inspection due</p>} />

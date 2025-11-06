@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -175,7 +176,7 @@ export default function ReportsPage() {
           <TabsContent value="revenue" className="mt-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
               <ReportKpiCard title="Conversion Rate" value="24%" change="+12%" Icon={Target} changeType="increase" />
-              <ReportKpiCard title="Avg Deal Size" value="$52,400" change="+8%" Icon={DollarSign} changeType="increase" />
+              <ReportKpiCard title="Avg Deal Size" value="GH₵52,400" change="+8%" Icon={DollarSign} changeType="increase" />
               <ReportKpiCard title="Win Rate" value="68%" change="-3%" Icon={TrendingUp} changeType="decrease" />
               <ReportKpiCard title="Active Leads" value="156" change="+15%" Icon={Users} changeType="increase" />
             </div>
@@ -191,7 +192,7 @@ export default function ReportsPage() {
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={lineChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                             <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                            <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value / 1000}k`} />
+                            <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `GH₵${value / 1000}k`} />
                             <Tooltip content={<ChartTooltipContent />} />
                             <Legend content={<ChartLegendContent />} />
                             <Line dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
@@ -213,7 +214,7 @@ export default function ReportsPage() {
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={barChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                                   <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                                <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`}/>
+                                <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `GH₵${value/1000}k`}/>
                                   <Tooltip content={<ChartTooltipContent />} />
                                   <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
                             </BarChart>

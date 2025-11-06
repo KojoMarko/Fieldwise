@@ -65,9 +65,9 @@ export const columns: ColumnDef<Opportunity>[] = [
     </div>,
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue('value'));
-      const formatted = new Intl.NumberFormat('en-US', {
+      const formatted = new Intl.NumberFormat('en-GH', {
         style: 'currency',
-        currency: 'USD',
+        currency: 'GHS',
       }).format(amount);
 
       return <div className="text-right font-medium">{formatted}</div>;

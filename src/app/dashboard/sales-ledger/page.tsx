@@ -80,7 +80,7 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{transaction.transactionId}</TableCell>
                 <TableCell className="hidden sm:table-cell">{transaction.date}</TableCell>
-                <TableCell className="text-right">${transaction.total.toLocaleString()}</TableCell>
+                <TableCell className="text-right">GH₵{transaction.total.toLocaleString()}</TableCell>
                 <TableCell>
                     <Badge variant="outline" className={statusColors[transaction.paymentStatus]}>{transaction.paymentStatus}</Badge>
                 </TableCell>
@@ -104,8 +104,8 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
                                         <TableRow key={p.id}>
                                             <TableCell>{p.name}</TableCell>
                                             <TableCell className="text-center">{p.quantity}</TableCell>
-                                            <TableCell className="text-right">${p.unitPrice.toLocaleString()}</TableCell>
-                                            <TableCell className="text-right">${(p.quantity * p.unitPrice).toLocaleString()}</TableCell>
+                                            <TableCell className="text-right">GH₵{p.unitPrice.toLocaleString()}</TableCell>
+                                            <TableCell className="text-right">GH₵{(p.quantity * p.unitPrice).toLocaleString()}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -158,19 +158,19 @@ export default function SalesLedgerPage() {
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <KpiCard
           title="Total Revenue"
-          value={`$${totalRevenue.toLocaleString()}`}
+          value={`GH₵${totalRevenue.toLocaleString()}`}
           description="All recorded transactions"
           Icon={DollarSign}
         />
         <KpiCard
           title="Revenue Collected"
-          value={`$${paidRevenue.toLocaleString()}`}
+          value={`GH₵${paidRevenue.toLocaleString()}`}
           description="Sum of all fully paid transactions"
           Icon={CheckCircle}
         />
         <KpiCard
           title="Pending Revenue"
-          value={`$${pendingRevenue.toLocaleString()}`}
+          value={`GH₵${pendingRevenue.toLocaleString()}`}
           description="Partial and pending payments"
           Icon={Clock}
         />

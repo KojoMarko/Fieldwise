@@ -174,22 +174,24 @@ export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
 
   return (
     <>
-    <AddPartsDialog open={isAddPartsDialogOpen} onOpenChange={setAddPartsDialogOpen} onAddParts={handleAddParts} workOrder={workOrder} />
+    <AddPartsDialog open={isAddPartsDialogOpen} onOpenChange={setAddPartsDialogOpen} workOrder={workOrder} />
     {partToVerify && <VerifyPartUsageDialog open={isVerifyDialogOpen} onOpenChange={setVerifyDialogOpen} part={partToVerify} onVerify={handleVerification} />}
     <div className="grid gap-4 grid-cols-1 lg:grid-cols-3 mt-4">
       <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between">
-                <div>
-                    <CardTitle>Parts for Work Order</CardTitle>
-                    <CardDescription>
-                        Manage spare parts allocated to this job.
-                    </CardDescription>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="text-center sm:text-left">
+                <CardTitle>Parts for Work Order</CardTitle>
+                <CardDescription>
+                  Manage spare parts allocated to this job.
+                </CardDescription>
+              </div>
+              <div className="w-full sm:w-auto flex justify-end">
                 <Button size="sm" onClick={() => setAddPartsDialogOpen(true)}>
-                    <PlusCircle className="mr-2" /> Add Parts
+                  <PlusCircle className="mr-2" /> Add Parts
                 </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>

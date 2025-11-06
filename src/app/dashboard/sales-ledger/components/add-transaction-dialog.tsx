@@ -294,7 +294,7 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                                     name={`products.${index}.unitPrice`}
                                     render={({ field }) => (
                                     <FormItem className="flex-1">
-                                        <FormLabel className="sr-only">Price</FormLabel>
+                                        <FormLabel className="sr-only">Unit Price</FormLabel>
                                         <FormControl><Input type="number" step="0.01" placeholder="Unit Price" {...field} /></FormControl>
                                         <FormMessage />
                                     </FormItem>

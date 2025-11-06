@@ -22,6 +22,7 @@ import { LoaderCircle } from 'lucide-react';
 export default function CustomersPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'Admin';
+  const canAddCustomers = user?.role === 'Admin' || user?.role === 'Sales Rep';
   const [isAddCustomerDialogOpen, setAddCustomerDialogOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,13 +61,14 @@ export default function CustomersPage() {
         <h1 className="text-lg font-semibold md:text-2xl">Customers</h1>
         <div className="ml-auto flex items-center gap-2">
           {isAdmin && (
-            <>
               <Button size="sm" variant="outline" className="h-8 gap-1">
                 <File className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                   Export
                 </span>
               </Button>
+          )}
+          {canAddCustomers && (
               <Button
                 size="sm"
                 className="h-8 gap-1"
@@ -77,7 +79,6 @@ export default function CustomersPage() {
                   Add Customer
                 </span>
               </Button>
-            </>
           )}
         </div>
       </div>

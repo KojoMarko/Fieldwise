@@ -173,7 +173,7 @@ export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
 
   return (
     <>
-    <AddPartsDialog open={isAddPartsDialogOpen} onOpenChange={setAddPartsDialogOpen} onAddParts={handleAddParts}/>
+    <AddPartsDialog open={isAddPartsDialogOpen} onOpenChange={setAddPartsDialogOpen} onAddParts={handleAddParts} workOrder={workOrder} />
     {partToVerify && <VerifyPartUsageDialog open={isVerifyDialogOpen} onOpenChange={setVerifyDialogOpen} part={partToVerify} onVerify={handleVerification} />}
     <div className="grid gap-4 grid-cols-1 lg:grid-cols-3 mt-4">
       <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">

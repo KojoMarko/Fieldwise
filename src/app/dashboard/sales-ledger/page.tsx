@@ -19,20 +19,21 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, File, Search } from 'lucide-react';
+import { ChevronDown, ChevronRight, File, Search, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { KpiCard } from '@/components/kpi-card';
 import { DollarSign, CheckCircle, Clock } from 'lucide-react';
+import { AddTransactionDialog } from './components/add-transaction-dialog';
 
-type Product = {
+export type Product = {
   id: string;
   name: string;
   quantity: number;
   unitPrice: number;
 };
 
-type Transaction = {
+export type Transaction = {
   id: string;
   transactionId: string;
   customerName: string;
@@ -43,7 +44,7 @@ type Transaction = {
   products: Product[];
 };
 
-const transactions: Transaction[] = [
+const initialTransactions: Transaction[] = [
   { id: '1', transactionId: 'TRN-2024-001', customerName: 'Acme Corp', customerId: 'CUST-001', date: '2024-07-20', total: 4500, paymentStatus: 'Fully Paid', products: [{ id: 'P-01', name: 'Enterprise Software License', quantity: 1, unitPrice: 4500 }] },
   { id: '2', transactionId: 'TRN-2024-002', customerName: 'TechStart Inc', customerId: 'CUST-002', date: '2024-07-18', total: 1200, paymentStatus: 'Pending', products: [{ id: 'P-02', name: 'Basic Cloud Hosting', quantity: 12, unitPrice: 100 }] },
   { id: '3', transactionId: 'TRN-2024-003', customerName: 'Global Systems', customerId: 'CUST-003', date: '2024-07-15', total: 8000, paymentStatus: 'Partial Payment', products: [{ id: 'P-03', name: 'Advanced AI Module', quantity: 1, unitPrice: 5000 }, { id: 'P-04', name: 'Priority Support Contract', quantity: 1, unitPrice: 3000 }] },
@@ -118,18 +119,40 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
 }
 
 export default function SalesLedgerPage() {
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const [isAddDialogOpen, setAddDialogOpen] = useState(false);
     
   const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0);
   const paidRevenue = transactions.filter(t => t.paymentStatus === 'Fully Paid').reduce((sum, t) => sum + t.total, 0);
   const pendingRevenue = transactions.filter(t => t.paymentStatus !== 'Fully Paid').reduce((sum, t) => sum + t.total, 0);
+  
+  const handleAddTransaction = (newTransactionData: Omit<Transaction, 'id' | 'transactionId' | 'total'>) => {
+    const total = newTransactionData.products.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
+    const newTransaction: Transaction = {
+      ...newTransactionData,
+      id: (transactions.length + 1).toString(),
+      transactionId: `TRN-2024-${String(transactions.length + 1).padStart(3, '0')}`,
+      total: total,
+    };
+    setTransactions(prev => [newTransaction, ...prev]);
+  };
 
   return (
+    <>
+    <AddTransactionDialog 
+      open={isAddDialogOpen} 
+      onOpenChange={setAddDialogOpen}
+      onAddTransaction={handleAddTransaction}
+    />
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Sales Ledger</h1>
           <p className="text-muted-foreground">A chronological record of all sales transactions.</p>
         </div>
+        <Button onClick={() => setAddDialogOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" /> New Transaction
+        </Button>
       </div>
       
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -190,5 +213,6 @@ export default function SalesLedgerPage() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

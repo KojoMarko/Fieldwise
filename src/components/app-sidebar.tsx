@@ -26,6 +26,7 @@ import {
   Activity,
   Briefcase,
   TrendingUp,
+  ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -37,7 +38,7 @@ import { db } from '@/lib/firebase';
 
 const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
-  { href: '/dashboard/sales-ledger', icon: TrendingUp, label: 'Sales Ledger' },
+  { href: '/dashboard/sales-ledger', icon: ClipboardList, label: 'Sales Ledger' },
   { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
   { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
   { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
@@ -63,7 +64,7 @@ const engineerNavItems = [
 
 const salesRepNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
-    { href: '/dashboard/sales-ledger', icon: TrendingUp, label: 'Sales Ledger' },
+    { href: '/dashboard/sales-ledger', icon: ClipboardList, label: 'Sales Ledger' },
     { href: '/dashboard/leads', icon: Users, label: 'Leads' },
     { href: '/dashboard/opportunities', icon: Briefcase, label: 'Opportunities' },
     { href: '/dashboard/reports', icon: FileText, label: 'Reports' },

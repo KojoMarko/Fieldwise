@@ -87,7 +87,7 @@ const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: D
           className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, 'PPP p') : <span>Pick a date & time</span>}
+          {date && isValid(date) ? format(date, 'PPP p') : <span>Pick a date & time</span>}
         </Button>
       </PopoverTrigger>
 

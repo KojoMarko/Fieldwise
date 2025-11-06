@@ -35,7 +35,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { LoaderCircle, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
-import { Transaction } from '../page';
+import { Transaction, Product } from '../page';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -45,8 +45,9 @@ import { db } from '@/lib/firebase';
 import { AddCustomerDialog } from '../../customers/components/add-customer-dialog';
 
 
-const ProductSchema = z.object({
-    name: z.string().min(1, 'Product name is required'),
+const ProductLineSchema = z.object({
+    productId: z.string().min(1, 'Product must be selected'),
+    productName: z.string(), // Keep for display purposes
     quantity: z.coerce.number().min(1, 'Quantity must be at least 1'),
     unitPrice: z.coerce.number().min(0.01, 'Price must be positive'),
 });
@@ -55,7 +56,7 @@ const AddTransactionSchema = z.object({
   customerId: z.string().min(1, 'Customer is required'),
   date: z.date({ required_error: "A date is required." }),
   amountPaid: z.coerce.number().min(0, 'Amount paid cannot be negative').optional(),
-  products: z.array(ProductSchema).min(1, 'At least one product is required'),
+  products: z.array(ProductLineSchema).min(1, 'At least one product is required'),
 });
 
 type AddTransactionFormValues = z.infer<typeof AddTransactionSchema>;
@@ -71,7 +72,8 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddCustomerOpen, setAddCustomerOpen] = useState(false);
 
   const form = useForm<AddTransactionFormValues>({
@@ -80,33 +82,44 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
       customerId: '',
       date: new Date(),
       amountPaid: 0,
-      products: [{ name: '', quantity: 1, unitPrice: 0 }],
+      products: [],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray({
     control: form.control,
     name: "products"
   });
 
   useEffect(() => {
     if (!user?.companyId || !open) {
-      setIsLoadingCustomers(false);
+      setIsLoading(false);
       return;
     }
 
-    setIsLoadingCustomers(true);
+    setIsLoading(true);
     const customerQuery = query(collection(db, "customers"), where("companyId", "==", user.companyId));
-    const unsubscribe = onSnapshot(customerQuery, (snapshot) => {
+    const productsQuery = query(collection(db, "products"), where("companyId", "==", user.companyId));
+    
+    const unsubscribeCustomers = onSnapshot(customerQuery, (snapshot) => {
         const customersData: Customer[] = [];
-        snapshot.forEach((doc) => {
-            customersData.push({ id: doc.id, ...doc.data() } as Customer);
-        });
+        snapshot.forEach((doc) => customersData.push({ id: doc.id, ...doc.data() } as Customer));
         setCustomers(customersData);
-        setIsLoadingCustomers(false);
+        if (!products.length) setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
+        const productsData: Product[] = [];
+        snapshot.forEach((doc) => productsData.push({ id: doc.id, ...doc.data() } as Product));
+        setProducts(productsData);
+        if (!customers.length) setIsLoading(false);
+    });
+
+
+    return () => {
+      unsubscribeCustomers();
+      unsubscribeProducts();
+    }
   }, [user?.companyId, open]);
 
   async function onSubmit(data: AddTransactionFormValues) {
@@ -134,7 +147,7 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
             customerId: selectedCustomer.id,
             date: format(data.date, 'yyyy-MM-dd'),
             amountPaid: amountPaid,
-            products: data.products.map(p => ({...p, id: `prod-${Math.random()}`})),
+            products: data.products.map(p => ({id: p.productId, name: p.productName, quantity: p.quantity, unitPrice: p.unitPrice})),
             paymentStatus,
         };
 
@@ -158,9 +171,20 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
   }
 
   const handleCustomerCreated = (newCustomerId: string, newCustomerName?: string) => {
-    // We don't need to add to the customer list here, the snapshot listener will do it.
     form.setValue('customerId', newCustomerId);
   };
+  
+  const handleProductSelect = (productId: string, index: number) => {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+          update(index, {
+              productId: product.id,
+              productName: product.name,
+              quantity: 1,
+              unitPrice: product.unitPrice
+          });
+      }
+  }
 
   return (
     <>
@@ -194,11 +218,11 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                           }
                       }}
                       value={field.value}
-                      disabled={isLoadingCustomers}
+                      disabled={isLoading}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={isLoadingCustomers ? "Loading customers..." : "Select a customer"} />
+                          <SelectValue placeholder={isLoading ? "Loading customers..." : "Select a customer"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -221,11 +245,11 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                 )}
               />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
+               <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Transaction Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -269,11 +293,24 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                            <div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
                              <FormField
                                 control={form.control}
-                                name={`products.${index}.name`}
+                                name={`products.${index}.productId`}
                                 render={({ field }) => (
                                 <FormItem className="sm:col-span-2">
                                     <FormLabel className="text-xs text-muted-foreground">Product Name</FormLabel>
-                                    <FormControl><Input placeholder="e.g., Enterprise License" {...field} /></FormControl>
+                                     <Select onValueChange={(value) => handleProductSelect(value, index)} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                            <SelectValue placeholder="Select a product" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {products.map((p) => (
+                                            <SelectItem key={p.id} value={p.id}>
+                                                {p.name}
+                                            </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                                 )}
@@ -297,7 +334,7 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                                 render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-xs text-muted-foreground">Unit Price (GH₵)</FormLabel>
-                                    <FormControl><Input type="number" step="0.01" placeholder="5000.00" {...field} /></FormControl>
+                                    <FormControl><Input type="number" step="0.01" placeholder="5000.00" {...field} disabled /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                                 )}
@@ -308,7 +345,7 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                            </div>
                         </div>
                     ))}
-                    <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', quantity: 1, unitPrice: 0 })}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => append({ productId: '', productName: '', quantity: 1, unitPrice: 0 })}>
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Product
                     </Button>
                 </div>

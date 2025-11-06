@@ -211,3 +211,11 @@ export type ServiceCallLog = {
   priority: 'High' | 'Medium' | 'Low';
   companyId: string;
 };
+
+export type Product = {
+  id: string;
+  name: string;
+  category: 'Software License' | 'Hardware' | 'Service' | 'Other';
+  unitPrice: number;
+  companyId: string;
+}

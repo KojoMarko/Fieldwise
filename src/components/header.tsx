@@ -48,6 +48,7 @@ import {
   Briefcase,
   TrendingUp,
   ClipboardList,
+  ShoppingCart,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
@@ -143,6 +144,9 @@ const engineerNavItems = [
 const salesRepNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/dashboard/sales-ledger', icon: ClipboardList, label: 'Sales Ledger' },
+    { href: '/dashboard/products', icon: ShoppingCart, label: 'Products' },
+    { href: '/dashboard/customers', icon: Building, label: 'Customers' },
+    { href: '/dashboard/assets', icon: Package, label: 'Assets' },
     { href: '/dashboard/leads', icon: Users, label: 'Leads' },
     { href: '/dashboard/opportunities', icon: Briefcase, label: 'Opportunities' },
     { href: '/dashboard/reports', icon: FileText, label: 'Reports' },

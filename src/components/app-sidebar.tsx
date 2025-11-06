@@ -27,6 +27,7 @@ import {
   Briefcase,
   TrendingUp,
   ClipboardList,
+  ShoppingCart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -65,6 +66,7 @@ const engineerNavItems = [
 const salesRepNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/dashboard/sales-ledger', icon: ClipboardList, label: 'Sales Ledger' },
+    { href: '/dashboard/products', icon: ShoppingCart, label: 'Products' },
     { href: '/dashboard/customers', icon: Building, label: 'Customers' },
     { href: '/dashboard/assets', icon: Package, label: 'Assets' },
     { href: '/dashboard/leads', icon: Users, label: 'Leads' },

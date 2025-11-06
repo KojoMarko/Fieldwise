@@ -135,3 +135,10 @@ export const UpdateSparePartInputSchema = z.object({
 export const DeleteSparePartInputSchema = z.object({
     partId: z.string().min(1, 'Part ID is required'),
 });
+
+export const CreateProductInputSchema = z.object({
+  name: z.string().min(1, 'Product name is required'),
+  category: z.enum(['Software License', 'Hardware', 'Service', 'Other']),
+  unitPrice: z.coerce.number().min(0.01, 'Unit price must be positive'),
+  companyId: z.string().min(1, 'Company ID is required'),
+});

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -33,7 +34,7 @@ export function SalesPipeline() {
                 </div>
                  <Progress value={item.progress} className="h-2" />
                 <p className="text-xs text-muted-foreground mt-1">
-                    {item.opportunities} opportunities &bull; ${item.value.toLocaleString()}
+                    {item.opportunities} opportunities &bull; GH₵{item.value.toLocaleString()}
                 </p>
             </div>
         ))}

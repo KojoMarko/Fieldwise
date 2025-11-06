@@ -1,10 +1,11 @@
+
 import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 
 let adminApp: App;
 
-if (!getApps().length) {
+if (getApps().length === 0) {
   // Construct the service account object from individual environment variables
   const serviceAccount = {
     type: process.env.FIREBASE_TYPE,

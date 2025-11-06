@@ -28,15 +28,22 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectSeparator,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LoaderCircle, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
 import { Transaction } from '../page';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
+import type { Customer } from '@/lib/types';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { AddCustomerDialog } from '../../customers/components/add-customer-dialog';
+
 
 const ProductSchema = z.object({
     name: z.string().min(1, 'Product name is required'),
@@ -45,10 +52,9 @@ const ProductSchema = z.object({
 });
 
 const AddTransactionSchema = z.object({
-  customerName: z.string().min(1, 'Customer name is required'),
-  customerId: z.string().min(1, 'Customer ID is required'),
+  customerId: z.string().min(1, 'Customer is required'),
   date: z.date({ required_error: "A date is required." }),
-  paymentStatus: z.enum(['Fully Paid', 'Partial Payment', 'Pending']),
+  amountPaid: z.coerce.number().min(0, 'Amount paid cannot be negative').optional(),
   products: z.array(ProductSchema).min(1, 'At least one product is required'),
 });
 
@@ -57,20 +63,23 @@ type AddTransactionFormValues = z.infer<typeof AddTransactionSchema>;
 interface AddTransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddTransaction: (data: Omit<Transaction, 'id' | 'transactionId' | 'total'>) => void;
+  onAddTransaction: (data: Omit<Transaction, 'id' | 'transactionId' | 'total' | 'paymentStatus'> & { paymentStatus: 'Fully Paid' | 'Partial Payment' | 'Pending' }) => void;
 }
 
 export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: AddTransactionDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
+  const [isAddCustomerOpen, setAddCustomerOpen] = useState(false);
 
   const form = useForm<AddTransactionFormValues>({
     resolver: zodResolver(AddTransactionSchema),
     defaultValues: {
-      customerName: '',
       customerId: '',
       date: new Date(),
-      paymentStatus: 'Pending',
+      amountPaid: 0,
       products: [{ name: '', quantity: 1, unitPrice: 0 }],
     },
   });
@@ -80,18 +89,59 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
     name: "products"
   });
 
+  useEffect(() => {
+    if (!user?.companyId || !open) {
+      setIsLoadingCustomers(false);
+      return;
+    }
+
+    setIsLoadingCustomers(true);
+    const customerQuery = query(collection(db, "customers"), where("companyId", "==", user.companyId));
+    const unsubscribe = onSnapshot(customerQuery, (snapshot) => {
+        const customersData: Customer[] = [];
+        snapshot.forEach((doc) => {
+            customersData.push({ id: doc.id, ...doc.data() } as Customer);
+        });
+        setCustomers(customersData);
+        setIsLoadingCustomers(false);
+    });
+
+    return () => unsubscribe();
+  }, [user?.companyId, open]);
+
   async function onSubmit(data: AddTransactionFormValues) {
     setIsSubmitting(true);
     try {
+        const selectedCustomer = customers.find(c => c.id === data.customerId);
+        if (!selectedCustomer) {
+            throw new Error("Customer not found");
+        }
+
+        const total = data.products.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
+        const amountPaid = data.amountPaid || 0;
+        let paymentStatus: 'Fully Paid' | 'Partial Payment' | 'Pending';
+
+        if (amountPaid >= total) {
+            paymentStatus = 'Fully Paid';
+        } else if (amountPaid > 0) {
+            paymentStatus = 'Partial Payment';
+        } else {
+            paymentStatus = 'Pending';
+        }
+
         const transactionData = {
-            ...data,
+            customerName: selectedCustomer.name,
+            customerId: selectedCustomer.id,
             date: format(data.date, 'yyyy-MM-dd'),
-            products: data.products.map(p => ({...p, id: `prod-${Math.random()}`}))
+            amountPaid: amountPaid,
+            products: data.products.map(p => ({...p, id: `prod-${Math.random()}`})),
+            paymentStatus,
         };
+
       onAddTransaction(transactionData);
       toast({
         title: 'Transaction Added',
-        description: `New sale for ${data.customerName} has been logged.`,
+        description: `New sale for ${transactionData.customerName} has been logged.`,
       });
       form.reset();
       onOpenChange(false);
@@ -107,7 +157,18 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
     }
   }
 
+  const handleCustomerCreated = (newCustomerId: string, newCustomerName?: string) => {
+    // We don't need to add to the customer list here, the snapshot listener will do it.
+    form.setValue('customerId', newCustomerId);
+  };
+
   return (
+    <>
+    <AddCustomerDialog
+        open={isAddCustomerOpen}
+        onOpenChange={setAddCustomerOpen}
+        onCustomerCreated={handleCustomerCreated}
+      />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
@@ -118,30 +179,47 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto p-1">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                control={form.control}
-                name="customerName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Customer Name</FormLabel>
-                    <FormControl><Input placeholder="e.g., Acme Corp" {...field} /></FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                 <FormField
+             <FormField
                 control={form.control}
                 name="customerId"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Customer ID</FormLabel>
-                    <FormControl><Input placeholder="e.g., CUST-001" {...field} /></FormControl>
+                  <FormItem>
+                    <FormLabel>Customer</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                          if (value === 'add_new_customer') {
+                            setAddCustomerOpen(true);
+                          } else {
+                            field.onChange(value);
+                          }
+                      }}
+                      value={field.value}
+                      disabled={isLoadingCustomers}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={isLoadingCustomers ? "Loading customers..." : "Select a customer"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {customers.map((customer) => (
+                          <SelectItem key={customer.id} value={customer.id}>
+                            {customer.name}
+                          </SelectItem>
+                        ))}
+                         <SelectSeparator />
+                        <SelectItem value="add_new_customer" className="text-primary focus:text-primary-foreground focus:bg-primary">
+                            <div className='flex items-center gap-2'>
+                                <PlusCircle className="h-4 w-4" />
+                                <span>Add New Customer...</span>
+                            </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-            </div>
+              />
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                     control={form.control}
@@ -169,22 +247,15 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                     </FormItem>
                     )}
                 />
-                <FormField
+                 <FormField
                     control={form.control}
-                    name="paymentStatus"
+                    name="amountPaid"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Payment Status</FormLabel>
-                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value="Pending">Pending</SelectItem>
-                                <SelectItem value="Partial Payment">Partial Payment</SelectItem>
-                                <SelectItem value="Fully Paid">Fully Paid</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <FormLabel>Amount Paid (GH₵)</FormLabel>
+                        <FormControl>
+                            <Input type="number" step="0.01" placeholder="e.g., 500" {...field} />
+                        </FormControl>
                         <FormMessage />
                     </FormItem>
                     )}
@@ -254,6 +325,6 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
         </Form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
-

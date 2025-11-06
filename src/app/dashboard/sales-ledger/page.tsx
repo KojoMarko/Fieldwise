@@ -40,16 +40,17 @@ export type Transaction = {
   customerId: string;
   date: string;
   total: number;
+  amountPaid: number;
   paymentStatus: 'Fully Paid' | 'Partial Payment' | 'Pending';
   products: Product[];
 };
 
 const initialTransactions: Transaction[] = [
-  { id: '1', transactionId: 'TRN-2024-001', customerName: 'Acme Corp', customerId: 'CUST-001', date: '2024-07-20', total: 4500, paymentStatus: 'Fully Paid', products: [{ id: 'P-01', name: 'Enterprise Software License', quantity: 1, unitPrice: 4500 }] },
-  { id: '2', transactionId: 'TRN-2024-002', customerName: 'TechStart Inc', customerId: 'CUST-002', date: '2024-07-18', total: 1200, paymentStatus: 'Pending', products: [{ id: 'P-02', name: 'Basic Cloud Hosting', quantity: 12, unitPrice: 100 }] },
-  { id: '3', transactionId: 'TRN-2024-003', customerName: 'Global Systems', customerId: 'CUST-003', date: '2024-07-15', total: 8000, paymentStatus: 'Partial Payment', products: [{ id: 'P-03', name: 'Advanced AI Module', quantity: 1, unitPrice: 5000 }, { id: 'P-04', name: 'Priority Support Contract', quantity: 1, unitPrice: 3000 }] },
-  { id: '4', transactionId: 'TRN-2024-004', customerName: 'Innovate LLC', customerId: 'CUST-004', date: '2024-07-12', total: 250, paymentStatus: 'Fully Paid', products: [{ id: 'P-05', name: 'Consulting Hour', quantity: 2, unitPrice: 125 }] },
-  { id: '5', transactionId: 'TRN-2024-005', customerName: 'Enterprise Co', customerId: 'CUST-005', date: '2024-07-10', total: 15000, paymentStatus: 'Pending', products: [{ id: 'P-01', name: 'Enterprise Software License', quantity: 3, unitPrice: 5000 }] },
+  { id: '1', transactionId: 'TRN-2024-001', customerName: 'Acme Corp', customerId: 'CUST-001', date: '2024-07-20', total: 4500, amountPaid: 4500, paymentStatus: 'Fully Paid', products: [{ id: 'P-01', name: 'Enterprise Software License', quantity: 1, unitPrice: 4500 }] },
+  { id: '2', transactionId: 'TRN-2024-002', customerName: 'TechStart Inc', customerId: 'CUST-002', date: '2024-07-18', total: 1200, amountPaid: 0, paymentStatus: 'Pending', products: [{ id: 'P-02', name: 'Basic Cloud Hosting', quantity: 12, unitPrice: 100 }] },
+  { id: '3', transactionId: 'TRN-2024-003', customerName: 'Global Systems', customerId: 'CUST-003', date: '2024-07-15', total: 8000, amountPaid: 4000, paymentStatus: 'Partial Payment', products: [{ id: 'P-03', name: 'Advanced AI Module', quantity: 1, unitPrice: 5000 }, { id: 'P-04', name: 'Priority Support Contract', quantity: 1, unitPrice: 3000 }] },
+  { id: '4', transactionId: 'TRN-2024-004', customerName: 'Innovate LLC', customerId: 'CUST-004', date: '2024-07-12', total: 250, amountPaid: 250, paymentStatus: 'Fully Paid', products: [{ id: 'P-05', name: 'Consulting Hour', quantity: 2, unitPrice: 125 }] },
+  { id: '5', transactionId: 'TRN-2024-005', customerName: 'Enterprise Co', customerId: 'CUST-005', date: '2024-07-10', total: 15000, amountPaid: 0, paymentStatus: 'Pending', products: [{ id: 'P-01', name: 'Enterprise Software License', quantity: 3, unitPrice: 5000 }] },
 ];
 
 const statusColors: Record<Transaction['paymentStatus'], string> = {
@@ -61,6 +62,7 @@ const statusColors: Record<Transaction['paymentStatus'], string> = {
 
 function TransactionRow({ transaction }: { transaction: Transaction }) {
     const [isOpen, setIsOpen] = useState(false);
+    const balance = transaction.total - transaction.amountPaid;
     
     return (
         <Fragment>
@@ -80,7 +82,12 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{transaction.transactionId}</TableCell>
                 <TableCell className="hidden sm:table-cell">{transaction.date}</TableCell>
-                <TableCell className="text-right">GH₵{transaction.total.toLocaleString()}</TableCell>
+                <TableCell className="text-right">
+                    <div>GH₵{transaction.total.toLocaleString()}</div>
+                    {transaction.paymentStatus !== 'Fully Paid' && balance > 0 && (
+                        <div className="text-xs text-red-500">Balance: GH₵{balance.toLocaleString()}</div>
+                    )}
+                </TableCell>
                 <TableCell>
                     <Badge variant="outline" className={statusColors[transaction.paymentStatus]}>{transaction.paymentStatus}</Badge>
                 </TableCell>
@@ -123,8 +130,8 @@ export default function SalesLedgerPage() {
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
     
   const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0);
-  const paidRevenue = transactions.filter(t => t.paymentStatus === 'Fully Paid').reduce((sum, t) => sum + t.total, 0);
-  const pendingRevenue = transactions.filter(t => t.paymentStatus !== 'Fully Paid').reduce((sum, t) => sum + t.total, 0);
+  const paidRevenue = transactions.reduce((sum, t) => sum + t.amountPaid, 0);
+  const pendingRevenue = totalRevenue - paidRevenue;
   
   const handleAddTransaction = (newTransactionData: Omit<Transaction, 'id' | 'transactionId' | 'total'>) => {
     const total = newTransactionData.products.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
@@ -165,11 +172,11 @@ export default function SalesLedgerPage() {
         <KpiCard
           title="Revenue Collected"
           value={`GH₵${paidRevenue.toLocaleString()}`}
-          description="Sum of all fully paid transactions"
+          description="Sum of all paid amounts"
           Icon={CheckCircle}
         />
         <KpiCard
-          title="Pending Revenue"
+          title="Outstanding Revenue"
           value={`GH₵${pendingRevenue.toLocaleString()}`}
           description="Partial and pending payments"
           Icon={Clock}

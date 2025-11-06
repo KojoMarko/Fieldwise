@@ -265,49 +265,51 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                 <FormLabel>Products Sold</FormLabel>
                 <div className="space-y-3 mt-2">
                     {fields.map((field, index) => (
-                        <div key={field.id} className="flex flex-col md:flex-row gap-2 items-start rounded-md border p-3">
-                            <FormField
+                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 rounded-md border p-3">
+                           <div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
+                             <FormField
                                 control={form.control}
                                 name={`products.${index}.name`}
                                 render={({ field }) => (
-                                <FormItem className="flex-1">
-                                    <FormLabel className="sr-only">Product Name</FormLabel>
-                                    <FormControl><Input placeholder="Product Name" {...field} /></FormControl>
+                                <FormItem className="sm:col-span-2">
+                                    <FormLabel className="text-xs text-muted-foreground">Product Name</FormLabel>
+                                    <FormControl><Input placeholder="e.g., Enterprise License" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                                 )}
                             />
-                            <div className="flex gap-2 w-full md:w-auto">
-                                <FormField
-                                    control={form.control}
-                                    name={`products.${index}.quantity`}
-                                    render={({ field }) => (
-                                    <FormItem className="w-20">
-                                        <FormLabel className="sr-only">Qty</FormLabel>
-                                        <FormControl><Input type="number" placeholder="Qty" {...field} /></FormControl>
-                                         <FormMessage />
-                                    </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name={`products.${index}.unitPrice`}
-                                    render={({ field }) => (
-                                    <FormItem className="flex-1">
-                                        <FormLabel className="sr-only">Unit Price</FormLabel>
-                                        <FormControl><Input type="number" step="0.01" placeholder="Unit Price" {...field} /></FormControl>
+                            <FormField
+                                control={form.control}
+                                name={`products.${index}.quantity`}
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-xs text-muted-foreground">Qty</FormLabel>
+                                    <FormControl><Input type="number" placeholder="1" {...field} /></FormControl>
                                         <FormMessage />
-                                    </FormItem>
-                                    )}
-                                />
-                                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
+                                </FormItem>
+                                )}
+                            />
+                           </div>
+                           <div className='grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-end'>
+                             <FormField
+                                control={form.control}
+                                name={`products.${index}.unitPrice`}
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-xs text-muted-foreground">Unit Price (GH₵)</FormLabel>
+                                    <FormControl><Input type="number" step="0.01" placeholder="5000.00" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                           </div>
                         </div>
                     ))}
                     <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', quantity: 1, unitPrice: 0 })}>
-                        <PlusCircle className="mr-2" /> Add Product
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Product
                     </Button>
                 </div>
              </div>

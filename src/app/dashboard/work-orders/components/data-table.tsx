@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -23,13 +24,15 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
+import type { WorkOrder } from '@/lib/types';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends { id: string }, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
@@ -38,6 +41,14 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
+  const router = useRouter();
+
+  const handleRowDoubleClick = (row: { original: TData }) => {
+    const workOrderId = row.original.id;
+    if (workOrderId) {
+      router.push(`/dashboard/work-orders/${workOrderId}`);
+    }
+  };
 
   const table = useReactTable({
     data,
@@ -94,6 +105,8 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
+                  className="cursor-pointer"
+                  onDoubleClick={() => handleRowDoubleClick(row)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} meta={cell.column.columnDef.meta}>

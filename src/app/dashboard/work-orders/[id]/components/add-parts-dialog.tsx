@@ -27,7 +27,7 @@ interface AddPartsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddParts: (parts: SparePart[]) => void;
-  workOrder: WorkOrder;
+  workOrder?: WorkOrder;
 }
 
 export function AddPartsDialog({
@@ -96,8 +96,12 @@ export function AddPartsDialog({
   }, [spareParts, filter]);
 
   const getFacilityStock = (part: SparePart) => {
-    if (!workOrder.customerId || !part.facilityStock) return null;
+    if (!workOrder?.customerId || !part.facilityStock) return null;
     return part.facilityStock.find(stock => stock.facilityId === workOrder.customerId);
+  }
+
+  if (!workOrder) {
+    return null;
   }
 
   return (

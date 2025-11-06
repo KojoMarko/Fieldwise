@@ -183,11 +183,11 @@ export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-grow space-y-1">
                 <CardTitle className="text-center sm:text-left">Parts for Work Order</CardTitle>
-                <CardDescription className="text-center sm:text-left">
+                <CardDescription className="text-left">
                   Manage spare parts allocated to this job.
                 </CardDescription>
               </div>
-              <div className="w-full sm:w-auto flex justify-center sm:justify-end">
+              <div className="w-full sm:w-auto flex justify-end">
                 <Button size="sm" onClick={() => setAddPartsDialogOpen(true)}>
                   <PlusCircle className="mr-2" /> Add Parts
                 </Button>

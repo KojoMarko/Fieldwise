@@ -10,8 +10,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import type { SparePart } from '@/lib/types';
-import { useState, useEffect } from 'react';
+import type { SparePart, WorkOrder } from '@/lib/types';
+import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,17 +21,20 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { LoaderCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Building } from 'lucide-react';
 
 interface AddPartsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddParts: (parts: SparePart[]) => void;
+  workOrder: WorkOrder;
 }
 
 export function AddPartsDialog({
   open,
   onOpenChange,
   onAddParts,
+  workOrder,
 }: AddPartsDialogProps) {
   const { user } = useAuth();
   const [spareParts, setSpareParts] = useState<SparePart[]>([]);
@@ -88,7 +91,14 @@ export function AddPartsDialog({
     onOpenChange(false);
   };
 
-  const filteredParts = spareParts.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()) || p.partNumber.toLowerCase().includes(filter.toLowerCase()));
+  const filteredParts = useMemo(() => {
+    return spareParts.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()) || p.partNumber.toLowerCase().includes(filter.toLowerCase()));
+  }, [spareParts, filter]);
+
+  const getFacilityStock = (part: SparePart) => {
+    if (!workOrder.customerId || !part.facilityStock) return null;
+    return part.facilityStock.find(stock => stock.facilityId === workOrder.customerId);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -115,27 +125,34 @@ export function AddPartsDialog({
               {/* --- Responsive Card View for Mobile --- */}
               <div className="block sm:hidden">
                 {filteredParts.length > 0 ? (
-                  filteredParts.map(part => (
-                    <div 
-                      key={part.id} 
-                      className="flex items-start gap-4 p-4 border-b last:border-b-0 cursor-pointer"
-                      onClick={() => setSelectedParts(prev => ({...prev, [part.id]: !prev[part.id]}))}
-                    >
-                      <Checkbox 
-                        checked={selectedParts[part.id] || false} 
-                        onCheckedChange={(checked) => setSelectedParts(prev => ({...prev, [part.id]: !!checked}))}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium">{part.name}</p>
-                        <p className="text-sm text-muted-foreground">{part.partNumber}</p>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
-                           <span>Stock: <Badge variant="secondary">{part.quantity}</Badge></span>
-                           <span>Location: {part.location}</span>
+                  filteredParts.map(part => {
+                    const facilityStock = getFacilityStock(part);
+                    return (
+                        <div 
+                        key={part.id} 
+                        className="flex items-start gap-4 p-4 border-b last:border-b-0 cursor-pointer"
+                        onClick={() => setSelectedParts(prev => ({...prev, [part.id]: !prev[part.id]}))}
+                        >
+                        <Checkbox 
+                            checked={selectedParts[part.id] || false} 
+                            onCheckedChange={(checked) => setSelectedParts(prev => ({...prev, [part.id]: !!checked}))}
+                            className="mt-1"
+                        />
+                        <div className="flex-1">
+                            <p className="font-medium">{part.name}</p>
+                            <p className="text-sm text-muted-foreground">{part.partNumber}</p>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
+                                <span>Warehouse: <Badge variant="secondary">{part.quantity}</Badge></span>
+                                {facilityStock && facilityStock.quantity > 0 && (
+                                  <span className="flex items-center gap-1">
+                                      <Building className="h-3 w-3"/> Facility: <Badge variant="default" className="bg-blue-500">{facilityStock.quantity}</Badge>
+                                  </span>
+                                )}
+                            </div>
                         </div>
-                      </div>
-                    </div>
-                  ))
+                        </div>
+                    )
+                })
                 ) : (
                   <p className="p-8 text-center text-sm text-muted-foreground">No parts found.</p>
                 )}
@@ -148,25 +165,34 @@ export function AddPartsDialog({
                         <TableRow>
                             <TableHead className='w-[50px]'></TableHead>
                             <TableHead>Part</TableHead>
-                            <TableHead>In Stock</TableHead>
-                            <TableHead>Location</TableHead>
+                            <TableHead>Central Stock</TableHead>
+                            <TableHead>Facility Stock</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filteredParts.length > 0 ? (
-                            filteredParts.map((part) => (
-                              <TableRow key={part.id} onClick={() => setSelectedParts(prev => ({...prev, [part.id]: !prev[part.id]}))} className='cursor-pointer'>
-                                <TableCell>
-                                    <Checkbox checked={selectedParts[part.id] || false} onCheckedChange={(checked) => setSelectedParts(prev => ({...prev, [part.id]: !!checked}))}/>
-                                </TableCell>
-                                <TableCell>
-                                      <div className="font-medium">{part.name}</div>
-                                      <div className="text-sm text-muted-foreground">{part.partNumber}</div>
-                                </TableCell>
-                                <TableCell>{part.quantity}</TableCell>
-                                <TableCell>{part.location}</TableCell>
-                              </TableRow>
-                            ))
+                            filteredParts.map((part) => {
+                              const facilityStock = getFacilityStock(part);
+                              return (
+                                <TableRow key={part.id} onClick={() => setSelectedParts(prev => ({...prev, [part.id]: !prev[part.id]}))} className='cursor-pointer'>
+                                    <TableCell>
+                                        <Checkbox checked={selectedParts[part.id] || false} onCheckedChange={(checked) => setSelectedParts(prev => ({...prev, [part.id]: !!checked}))}/>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="font-medium">{part.name}</div>
+                                        <div className="text-sm text-muted-foreground">{part.partNumber}</div>
+                                    </TableCell>
+                                    <TableCell>{part.quantity}</TableCell>
+                                    <TableCell>
+                                      {facilityStock && facilityStock.quantity > 0 ? (
+                                        <Badge variant="default" className="bg-blue-500">{facilityStock.quantity} in stock</Badge>
+                                      ) : (
+                                        <span className="text-muted-foreground">0</span>
+                                      )}
+                                    </TableCell>
+                                </TableRow>
+                              )
+                            })
                         ) : (
                           <TableRow>
                             <TableCell colSpan={4} className="h-48 text-center">No parts found.</TableCell>

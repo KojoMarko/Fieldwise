@@ -26,7 +26,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useSearchParams } from 'next/navigation';
 import type { WorkOrder, WorkOrderStatus, Customer, Asset, User, WorkOrderPriority, AllocatedPart, Company } from '@/lib/types';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
@@ -76,6 +76,7 @@ export default function WorkOrderDetailPage({
   const { id } = use(params);
   const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -85,7 +86,7 @@ export default function WorkOrderDetailPage({
   
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'details');
 
   useEffect(() => {
     if (!id) return;

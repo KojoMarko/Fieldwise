@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -178,16 +179,18 @@ export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
     <div className="grid gap-4 grid-cols-1 lg:grid-cols-3 mt-4">
       <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
         <Card>
-          <CardHeader className='flex-row items-center justify-between'>
-            <div>
-              <CardTitle>Parts for Work Order</CardTitle>
-              <CardDescription>
-                Manage spare parts allocated to this job.
-              </CardDescription>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+                <div>
+                    <CardTitle>Parts for Work Order</CardTitle>
+                    <CardDescription>
+                        Manage spare parts allocated to this job.
+                    </CardDescription>
+                </div>
+                <Button size="sm" onClick={() => setAddPartsDialogOpen(true)}>
+                    <PlusCircle className="mr-2" /> Add Parts
+                </Button>
             </div>
-            <Button size="sm" onClick={() => setAddPartsDialogOpen(true)}>
-              <PlusCircle className="mr-2" /> Add Parts
-            </Button>
           </CardHeader>
           <CardContent>
              <div className="overflow-x-auto">

@@ -278,7 +278,7 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                   <FormItem>
                     <FormLabel>Amount Paid (GH₵)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g., 500.00" {...field} />
+                      <Input type="number" step="0.01" placeholder="500.00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -367,3 +367,5 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
     </>
   );
 }
+
+    

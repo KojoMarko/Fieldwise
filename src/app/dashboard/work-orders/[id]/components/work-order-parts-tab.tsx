@@ -181,7 +181,7 @@ export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div className="flex-grow">
+              <div className="flex-grow space-y-1">
                 <CardTitle className="text-center sm:text-left">Parts for Work Order</CardTitle>
                 <CardDescription className="text-center sm:text-left">
                   Manage spare parts allocated to this job.

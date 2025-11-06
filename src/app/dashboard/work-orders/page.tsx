@@ -153,7 +153,7 @@ export default function WorkOrdersPage() {
 
         <TabsContent value="work_orders" className="mt-4 space-y-4">
             <div className="flex justify-between items-start gap-4">
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col md:flex-row gap-2">
                      <Input
                         placeholder="Filter by title..."
                         value={workOrderSearchFilter}
@@ -196,7 +196,7 @@ export default function WorkOrdersPage() {
         {isEngineerOrAdmin && (
             <TabsContent value="on_call_triage" className="mt-4 space-y-4">
                  <div className="flex justify-between items-start gap-4">
-                     <div className="flex flex-col gap-2">
+                     <div className="flex flex-col md:flex-row gap-2">
                         <Input
                         placeholder="Filter by customer, asset, problem..."
                         value={triageSearchFilter}

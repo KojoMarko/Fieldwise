@@ -114,7 +114,7 @@ export default function WorkOrdersPage() {
   });
 
   const canCreateWorkOrder = user?.role === 'Admin' || user?.role === 'Customer' || user?.role === 'Engineer';
-  const createButtonText = user?.role === 'Customer' ? 'Request Service' : 'Create Work Order';
+  const createButtonText = user?.role === 'Customer' ? 'Request Service' : 'New Work Order';
 
   const isEngineerOrAdmin = user?.role === 'Admin' || user?.role === 'Engineer';
 
@@ -174,16 +174,16 @@ export default function WorkOrdersPage() {
                 </div>
                 <div className="flex items-start gap-2">
                     {user?.role === 'Admin' && (
-                        <Button size="icon" variant="outline" className="h-9 w-9">
+                        <Button size="sm" variant="outline" className="h-9 gap-1">
                             <File className="h-4 w-4" />
-                            <span className="sr-only">Export</span>
+                            <span className="sr-only sm:not-sr-only">Export</span>
                         </Button>
                     )}
                     {canCreateWorkOrder && (
-                        <Button size="icon" className="h-9 w-9" asChild>
+                        <Button size="sm" className="h-9 gap-1" asChild>
                         <Link href="/dashboard/work-orders/new">
                             <PlusCircle className="h-4 w-4" />
-                            <span className="sr-only">{createButtonText}</span>
+                            <span className="sr-only sm:not-sr-only">{createButtonText}</span>
                         </Link>
                         </Button>
                     )}
@@ -215,9 +215,9 @@ export default function WorkOrdersPage() {
                         </Select>
                      </div>
                     <div className="flex items-start">
-                        <Button size="icon" className="h-9 w-9" onClick={() => setLogDialogOpen(true)}>
+                        <Button size="sm" className="h-9 gap-1" onClick={() => setLogDialogOpen(true)}>
                             <Phone className="h-4 w-4" />
-                            <span className="sr-only">Log New Call</span>
+                            <span className="sr-only sm:not-sr-only">Log New Call</span>
                         </Button>
                     </div>
                 </div>

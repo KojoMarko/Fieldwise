@@ -174,15 +174,20 @@ export function WorkOrderPartsTab({ workOrder }: { workOrder: WorkOrder }) {
 
   return (
     <>
-    <AddPartsDialog open={isAddPartsDialogOpen} onOpenChange={setAddPartsDialogOpen} workOrder={workOrder} />
+    <AddPartsDialog 
+        open={isAddPartsDialogOpen} 
+        onOpenChange={setAddPartsDialogOpen} 
+        onAddParts={handleAddParts}
+        workOrder={workOrder} 
+    />
     {partToVerify && <VerifyPartUsageDialog open={isVerifyDialogOpen} onOpenChange={setVerifyDialogOpen} part={partToVerify} onVerify={handleVerification} />}
     <div className="grid gap-4 grid-cols-1 lg:grid-cols-3 mt-4">
       <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div className="flex-grow space-y-1">
-                <CardTitle className="text-center sm:text-left">Parts for Work Order</CardTitle>
+              <div className="flex-grow space-y-1 text-center sm:text-left">
+                <CardTitle>Parts for Work Order</CardTitle>
                 <CardDescription className="text-left">
                   Manage spare parts allocated to this job.
                 </CardDescription>

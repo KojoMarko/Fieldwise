@@ -110,31 +110,33 @@ export function AddPartsDialog({
                     <LoaderCircle className="h-8 w-8 animate-spin" />
                 </div>
             ) : (
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className='w-[50px]'></TableHead>
-                        <TableHead>Part</TableHead>
-                        <TableHead>In Stock</TableHead>
-                        <TableHead>Location</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {filteredParts.map((part) => (
-                        <TableRow key={part.id} onClick={() => setSelectedParts(prev => ({...prev, [part.id]: !prev[part.id]}))} className='cursor-pointer'>
-                           <TableCell>
-                               <Checkbox checked={selectedParts[part.id] || false} onCheckedChange={(checked) => setSelectedParts(prev => ({...prev, [part.id]: !!checked}))}/>
-                           </TableCell>
-                           <TableCell>
-                                <div className="font-medium">{part.name}</div>
-                                <div className="text-sm text-muted-foreground">{part.partNumber}</div>
-                           </TableCell>
-                           <TableCell>{part.quantity}</TableCell>
-                           <TableCell>{part.location}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+            <div className="relative w-full overflow-auto">
+              <Table>
+                  <TableHeader>
+                      <TableRow>
+                          <TableHead className='w-[50px]'></TableHead>
+                          <TableHead>Part</TableHead>
+                          <TableHead>In Stock</TableHead>
+                          <TableHead>Location</TableHead>
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {filteredParts.map((part) => (
+                          <TableRow key={part.id} onClick={() => setSelectedParts(prev => ({...prev, [part.id]: !prev[part.id]}))} className='cursor-pointer'>
+                            <TableCell>
+                                <Checkbox checked={selectedParts[part.id] || false} onCheckedChange={(checked) => setSelectedParts(prev => ({...prev, [part.id]: !!checked}))}/>
+                            </TableCell>
+                            <TableCell>
+                                  <div className="font-medium">{part.name}</div>
+                                  <div className="text-sm text-muted-foreground">{part.partNumber}</div>
+                            </TableCell>
+                            <TableCell>{part.quantity}</TableCell>
+                            <TableCell>{part.location}</TableCell>
+                          </TableRow>
+                      ))}
+                  </TableBody>
+              </Table>
+            </div>
             )}
           </div>
         </div>

@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 
 
-function NewWorkOrderPageContent() {
+export default function NewWorkOrderPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
@@ -57,39 +57,34 @@ function NewWorkOrderPageContent() {
   }
 
   return (
-    <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-4">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" className="h-7 w-7" asChild>
-          <Link href="/dashboard/work-orders">
-            <ChevronLeft className="h-4 w-4" />
-            <span className="sr-only">Back</span>
-          </Link>
-        </Button>
-        <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-          {pageTitle}
-        </h1>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {cardTitle}
-          </CardTitle>
-          <CardDescription>
-            {cardDescription}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <WorkOrderForm />
-        </CardContent>
-      </Card>
-    </div>
+    // Wrap the component that uses useSearchParams in Suspense
+    <Suspense fallback={<div>Loading...</div>}>
+        <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-4">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+              <Link href="/dashboard/work-orders">
+                <ChevronLeft className="h-4 w-4" />
+                <span className="sr-only">Back</span>
+              </Link>
+            </Button>
+            <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
+              {pageTitle}
+            </h1>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {cardTitle}
+              </CardTitle>
+              <CardDescription>
+                {cardDescription}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WorkOrderForm />
+            </CardContent>
+          </Card>
+        </div>
+    </Suspense>
   );
-}
-
-export default function NewWorkOrderPage() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <NewWorkOrderPageContent />
-        </Suspense>
-    )
 }

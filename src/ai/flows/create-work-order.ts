@@ -23,6 +23,7 @@ const CreateWorkOrderInputSchema = z.object({
   scheduledDate: z.any().transform((val) => (val ? new Date(val) : new Date())),
   companyId: z.string().min(1, 'Company ID is required'),
   status: z.enum(['Scheduled', 'Draft']),
+  technicianIds: z.array(z.string()).optional(),
 });
 
 export type CreateWorkOrderInput = z.infer<typeof CreateWorkOrderInputSchema>;
@@ -44,14 +45,22 @@ const createWorkOrderFlow = ai.defineFlow(
   },
   async (input) => {
     const workOrderRef = db.collection('work-orders').doc();
-    const newWorkOrder: WorkOrder = {
+    const newWorkOrder: Omit<WorkOrder, 'id'> = {
         ...input,
         id: workOrderRef.id,
         scheduledDate: formatISO(input.scheduledDate),
         createdAt: formatISO(new Date()),
     };
 
-    await workOrderRef.set(newWorkOrder);
+    // Firestore does not accept 'undefined' values.
+    if (!newWorkOrder.technicianIds) {
+        delete (newWorkOrder as Partial<WorkOrder>).technicianIds;
+    }
+    if (!newWorkOrder.description) {
+        delete (newWorkOrder as Partial<WorkOrder>).description;
+    }
+
+    await workOrderRef.set({ ...newWorkOrder, id: workOrderRef.id});
     
     return {
       id: workOrderRef.id,

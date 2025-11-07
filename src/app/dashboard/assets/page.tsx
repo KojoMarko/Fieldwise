@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { extractAndLogMaintenance } from '@/ai/flows/extract-and-log-maintenance';
 import { extractAndCreateAssets } from '@/ai/flows/extract-and-create-assets';
 import { Input } from '@/components/ui/input';
+import * as xlsx from 'xlsx';
 
 function AiAssetImporter() {
   const { user } = useAuth();
@@ -226,27 +227,39 @@ export default function AssetsPage() {
 
     return () => unsubscribe();
   }, [user?.companyId]);
+  
+  const handleExport = () => {
+    const worksheet = xlsx.utils.json_to_sheet(assets);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Assets");
+    xlsx.writeFile(workbook, "Asset_Inventory.xlsx");
+  };
 
+  const canAddAssets = user?.role === 'Admin' || user?.role === 'Engineer';
 
   return (
     <>
       <div className="flex items-center mb-4">
         <h1 className="text-lg font-semibold md:text-2xl">Assets</h1>
         <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-8 gap-1">
-            <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Export
-            </span>
-          </Button>
-           <Button size="sm" className="h-8 gap-1" asChild>
-                <Link href="/dashboard/assets/new">
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Add Asset
-                    </span>
-                </Link>
+          {user?.role === 'Admin' && (
+            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
+              <File className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Export
+              </span>
             </Button>
+          )}
+           {canAddAssets && (
+             <Button size="sm" className="h-8 gap-1" asChild>
+                  <Link href="/dashboard/assets/new">
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                      Add Asset
+                      </span>
+                  </Link>
+              </Button>
+           )}
         </div>
       </div>
        <div className='mb-6 grid gap-6 md:grid-cols-2'>

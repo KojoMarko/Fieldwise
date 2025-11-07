@@ -140,11 +140,13 @@ export function WorkOrderForm() {
 
     setIsSubmitting(true);
     try {
-        await createWorkOrder({
+        const payload = {
             ...data,
             companyId: user.companyId,
             status: user.role === 'Admin' || user.role === 'Engineer' ? 'Scheduled' : 'Draft',
-        });
+            technicianIds: user.role === 'Engineer' ? [user.id] : [],
+        };
+        await createWorkOrder(payload);
         toast({
         title: user?.role === 'Customer' ? 'Service Request Submitted' : 'Work Order Created',
         description: `The request "${data.title}" has been successfully submitted.`,
@@ -408,5 +410,3 @@ export function WorkOrderForm() {
     </>
   );
 }
-
-    

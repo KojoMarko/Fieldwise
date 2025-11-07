@@ -22,7 +22,7 @@ import { LoaderCircle } from 'lucide-react';
 export default function CustomersPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'Admin';
-  const canAddCustomers = user?.role === 'Admin' || user?.role === 'Sales Rep';
+  const canAddCustomers = user?.role === 'Admin' || user?.role === 'Engineer';
   const [isAddCustomerDialogOpen, setAddCustomerDialogOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);

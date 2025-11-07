@@ -14,6 +14,7 @@ import type { User } from '@/lib/types';
 import { CreateUserInputSchema } from '@/lib/schemas';
 import { db, auth as adminAuthService } from '@/lib/firebase-admin';
 import { sendEmail } from '@/lib/email/send-email';
+import type { CreateRequest } from 'firebase-admin/auth';
 
 export type CreateUserInput = z.infer<typeof CreateUserInputSchema>;
 
@@ -50,12 +51,18 @@ const createUserFlow = ai.defineFlow(
         const tempPassword = Math.random().toString(36).slice(-8);
         
         // 3. Create the user in Firebase Auth
-        const userRecord = await adminAuthService.createUser({
+        const authRequest: CreateRequest = {
             email: input.email,
             password: tempPassword,
             displayName: input.name,
-            phoneNumber: input.phone,
-        });
+        };
+
+        if (input.phone) {
+            authRequest.phoneNumber = input.phone;
+        }
+
+        const userRecord = await adminAuthService.createUser(authRequest);
+
 
         // 4. Create the user profile in Firestore
         const userDocRef = db.collection('users').doc(userRecord.uid);
@@ -63,11 +70,14 @@ const createUserFlow = ai.defineFlow(
             id: userRecord.uid,
             name: input.name,
             email: input.email,
-            phone: input.phone,
             role: input.role,
             companyId: input.companyId,
             avatarUrl: `https://picsum.photos/seed/${userRecord.uid}/100/100`, // Generate a consistent avatar
         };
+        
+        if (input.phone) {
+            newUser.phone = input.phone;
+        }
 
         await userDocRef.set(newUser);
         

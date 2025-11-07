@@ -8,6 +8,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
+  phone?: string; // Added phone number
   role: UserRole;
   avatarUrl: string;
   companyId: string; // New field

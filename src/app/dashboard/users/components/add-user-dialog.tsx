@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -34,7 +35,8 @@ import { CreateUserInputSchema } from '@/lib/schemas';
 import type { z } from 'zod';
 import { createUser } from '@/ai/flows/create-user';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Server, CheckCircle } from 'lucide-react';
+import { Server, CheckCircle, Mail, MessageSquare } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 type AddUserFormValues = z.infer<typeof CreateUserInputSchema>;
 
@@ -54,10 +56,14 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
     defaultValues: {
       name: '',
       email: '',
+      phone: '',
       role: 'Engineer',
       companyId: adminUser?.companyId,
+      deliveryMethod: 'email',
     },
   });
+
+  const deliveryMethod = form.watch('deliveryMethod');
 
   async function onSubmit(data: AddUserFormValues) {
     if (!adminUser) {
@@ -65,6 +71,14 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         return;
     }
     
+    if (data.deliveryMethod === 'whatsapp' && !data.phone) {
+        form.setError('phone', {
+            type: 'manual',
+            message: 'Phone number is required for WhatsApp delivery.'
+        });
+        return;
+    }
+
     setIsSubmitting(true);
     try {
         const result = await createUser({
@@ -74,7 +88,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 
         toast({
             title: 'User Created Successfully',
-            description: `An account for ${result.email} has been created and their credentials have been emailed to them.`,
+            description: `An account for ${result.email} has been created and their credentials have been sent.`,
         });
 
         setNewUser({
@@ -116,7 +130,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         {newUser ? (
             <div className='py-4 space-y-4 text-center'>
                 <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
-                <p>The new user will receive an email shortly with instructions on how to log in.</p>
+                <p>The new user will receive their login credentials shortly.</p>
                 <DialogFooter>
                     <Button onClick={handleClose}>Done</Button>
                 </DialogFooter>
@@ -173,6 +187,52 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
                         </FormItem>
                     )}
                     />
+                    <FormField
+                        control={form.control}
+                        name="deliveryMethod"
+                        render={({ field }) => (
+                            <FormItem className="space-y-3">
+                            <FormLabel>Send Credentials Via</FormLabel>
+                            <FormControl>
+                                <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex space-x-4"
+                                >
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl>
+                                    <RadioGroupItem value="email" id="r1" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal flex items-center gap-2"><Mail /> Email</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl>
+                                    <RadioGroupItem value="whatsapp" id="r2" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal flex items-center gap-2"><MessageSquare /> WhatsApp</FormLabel>
+                                </FormItem>
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    {deliveryMethod === 'whatsapp' && (
+                        <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Phone Number</FormLabel>
+                                <FormControl>
+                                    <Input type="tel" placeholder="e.g., +233244123456" {...field} />
+                                </FormControl>
+                                <FormDescription>Include country code (e.g., +233).</FormDescription>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
                      <DialogFooter className='pt-4'>
                         <Button variant="outline" type="button" onClick={handleClose}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting}>

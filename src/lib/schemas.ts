@@ -25,8 +25,10 @@ export const ServiceReportQuestionnaireSchema = z.object({
 export const CreateUserInputSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     email: z.string().email('Invalid email address'),
+    phone: z.string().optional(),
     role: z.enum(['Engineer', 'Customer', 'Admin', 'Sales Rep']),
     companyId: z.string().min(1, 'Company ID is required'),
+    deliveryMethod: z.enum(['email', 'whatsapp']).default('email'),
 });
 
 export const UpdateUserInputSchema = z.object({

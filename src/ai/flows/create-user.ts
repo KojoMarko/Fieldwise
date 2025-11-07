@@ -54,6 +54,7 @@ const createUserFlow = ai.defineFlow(
             email: input.email,
             password: tempPassword,
             displayName: input.name,
+            phoneNumber: input.phone,
         });
 
         // 4. Create the user profile in Firestore
@@ -62,6 +63,7 @@ const createUserFlow = ai.defineFlow(
             id: userRecord.uid,
             name: input.name,
             email: input.email,
+            phone: input.phone,
             role: input.role,
             companyId: input.companyId,
             avatarUrl: `https://picsum.photos/seed/${userRecord.uid}/100/100`, // Generate a consistent avatar
@@ -69,13 +71,21 @@ const createUserFlow = ai.defineFlow(
 
         await userDocRef.set(newUser);
         
-        // 5. Send welcome email with credentials
-        await sendEmail(
-            newUser.email,
-            "Welcome to FieldWise - Your Account is Ready",
-            newUser.name,
-            tempPassword
-        );
+        // 5. Send welcome credentials
+        if (input.deliveryMethod === 'email') {
+             await sendEmail(
+                newUser.email,
+                "Welcome to FieldWise - Your Account is Ready",
+                newUser.name,
+                tempPassword
+            );
+        } else if (input.deliveryMethod === 'whatsapp') {
+            if (!input.phone) {
+                throw new Error("Phone number is required to send credentials via WhatsApp.");
+            }
+            // TODO: Implement WhatsApp integration here
+            console.log(`TODO: Send WhatsApp message to ${input.phone} with password: ${tempPassword}`);
+        }
 
 
         return {

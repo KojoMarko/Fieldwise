@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { OnCallTriageTab } from './components/on-call-triage-tab';
 import { CreateCallLogDialog } from './components/create-call-log-dialog';
 import { Input } from '@/components/ui/input';
+import * as xlsx from 'xlsx';
 
 type TriageStatusFilter = 'all' | 'resolved' | 'unresolved';
 
@@ -118,6 +119,35 @@ export default function WorkOrdersPage() {
 
   const isEngineerOrAdmin = user?.role === 'Admin' || user?.role === 'Engineer';
 
+  const handleExport = () => {
+    const dataToExport = filteredWorkOrders.map(wo => ({
+        'Work Order ID': wo.id,
+        'Title': wo.title,
+        'Status': wo.status,
+        'Priority': wo.priority,
+        'Type': wo.type,
+        'Customer ID': wo.customerId,
+        'Asset ID': wo.assetId,
+        'Scheduled Date': wo.scheduledDate,
+        'Created At': wo.createdAt,
+    }));
+
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "WorkOrders");
+
+    const excelBuffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+
+    const url = URL.createObjectURL(data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'Work_Orders.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const renderDataTable = (data: WorkOrder[], title: string, description: string) => (
      <Card>
         <CardHeader>
@@ -174,7 +204,7 @@ export default function WorkOrdersPage() {
                 </div>
                 <div className="flex items-start gap-2">
                     {user?.role === 'Admin' && (
-                        <Button size="sm" variant="outline" className="h-9 gap-1">
+                        <Button size="sm" variant="outline" className="h-9 gap-1" onClick={handleExport}>
                             <File className="h-4 w-4" />
                             <span className="sr-only sm:not-sr-only">Export</span>
                         </Button>

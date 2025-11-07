@@ -34,8 +34,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { CreateUserInputSchema } from '@/lib/schemas';
 import type { z } from 'zod';
 import { createUser } from '@/ai/flows/create-user';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Server, CheckCircle, Mail, MessageSquare } from 'lucide-react';
+import { CheckCircle, Mail, MessageSquare } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 type AddUserFormValues = z.infer<typeof CreateUserInputSchema>;
@@ -123,7 +122,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         <DialogHeader>
           <DialogTitle>{newUser ? 'User Created Successfully' : 'Add a New User'}</DialogTitle>
            <DialogDescription>
-            {newUser ? `An email with login credentials has been sent to ${newUser.email}.` : 'Enter the details for the new user account.'}
+            {newUser ? `The new user's credentials have been sent.` : 'Enter the details for the new user account.'}
           </DialogDescription>
         </DialogHeader>
 

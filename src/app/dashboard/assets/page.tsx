@@ -229,7 +229,18 @@ export default function AssetsPage() {
   }, [user?.companyId]);
   
   const handleExport = () => {
-    const worksheet = xlsx.utils.json_to_sheet(assets);
+    const worksheet = xlsx.utils.json_to_sheet(assets.map(asset => ({
+        ID: asset.id,
+        Name: asset.name,
+        Model: asset.model,
+        'Serial Number': asset.serialNumber,
+        'Customer ID': asset.customerId,
+        Location: asset.location,
+        Status: asset.status,
+        'Installation Date': asset.installationDate,
+        'Last PPM Date': asset.lastPpmDate,
+        'PPM Frequency (Months)': asset.ppmFrequency,
+    })));
     const workbook = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(workbook, worksheet, "Assets");
     xlsx.writeFile(workbook, "Asset_Inventory.xlsx");

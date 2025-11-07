@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { FirebaseError } from 'firebase/app';
 
 function SignupForm() {
   const { signup, user, isLoading } = useAuth();
@@ -34,12 +35,19 @@ function SignupForm() {
       router.push('/dashboard');
     } catch (error) {
       console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Signup Failed',
-        description:
-          'Could not create an account. The email might already be in use.',
-      });
+      if (error instanceof FirebaseError && error.code === 'auth/email-already-in-use') {
+        toast({
+            variant: 'destructive',
+            title: 'Signup Failed',
+            description: 'This email address is already registered. Please try logging in instead.',
+        });
+      } else {
+        toast({
+            variant: 'destructive',
+            title: 'Signup Failed',
+            description: 'An unexpected error occurred. Please try again.',
+        });
+      }
     }
   };
 

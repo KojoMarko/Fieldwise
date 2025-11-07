@@ -49,17 +49,28 @@ export default function CustomersPage() {
   }, [user?.companyId]);
   
   const handleExport = () => {
-    const worksheet = xlsx.utils.json_to_sheet(customers.map(c => ({
+    const dataToExport = customers.map(c => ({
         'Customer ID': c.id,
         'Customer Name': c.name,
         'Contact Person': c.contactPerson,
         'Contact Email': c.contactEmail,
         'Phone': c.phone,
         'Address': c.address,
-    })));
+    }));
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
     const workbook = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(workbook, worksheet, "Customers");
-    xlsx.writeFileXLSX(workbook, "Customer_List.xlsx");
+    
+    const excelBuffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+
+    const url = URL.createObjectURL(data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'Customer_List.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
 

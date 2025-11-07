@@ -48,16 +48,27 @@ export default function UsersPage() {
   }, [user?.companyId]);
   
   const handleExport = () => {
-    const worksheet = xlsx.utils.json_to_sheet(users.map(u => ({
+    const dataToExport = users.map(u => ({
         'User ID': u.id,
         'Name': u.name,
         'Email': u.email,
         'Role': u.role,
         'Phone': u.phone || 'N/A',
-    })));
+    }));
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
     const workbook = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(workbook, worksheet, "Users");
-    xlsx.writeFileXLSX(workbook, "User_List.xlsx");
+    
+    const excelBuffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+
+    const url = URL.createObjectURL(data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'User_List.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
 

@@ -229,21 +229,37 @@ export default function AssetsPage() {
   }, [user?.companyId]);
   
   const handleExport = () => {
-    const worksheet = xlsx.utils.json_to_sheet(assets.map(asset => ({
-        ID: asset.id,
-        Name: asset.name,
-        Model: asset.model,
+    const dataToExport = assets.map(asset => ({
+        'Asset ID': asset.id,
+        'Asset Name': asset.name,
+        'Model': asset.model,
         'Serial Number': asset.serialNumber,
         'Customer ID': asset.customerId,
-        Location: asset.location,
-        Status: asset.status,
+        'Location': asset.location,
+        'Status': asset.status,
         'Installation Date': asset.installationDate,
-        'Last PPM Date': asset.lastPpmDate,
-        'PPM Frequency (Months)': asset.ppmFrequency,
-    })));
+        'Last PPM Date': asset.lastPpmDate || 'N/A',
+        'PPM Frequency (Months)': asset.ppmFrequency || 'N/A',
+    }));
+
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
     const workbook = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(workbook, worksheet, "Assets");
-    xlsx.writeFileXLSX(workbook, "Asset_Inventory.xlsx");
+
+    // Generate buffer
+    const excelBuffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'array' });
+    
+    // Create a Blob
+    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-T-8' });
+
+    // Create a URL and trigger the download
+    const url = URL.createObjectURL(data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'Asset_Inventory.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const canAddAssets = user?.role === 'Admin' || user?.role === 'Engineer';

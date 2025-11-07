@@ -18,6 +18,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from '@/lib/types';
 import { LoaderCircle } from 'lucide-react';
+import * as xlsx from 'xlsx';
 
 export default function UsersPage() {
   const { user } = useAuth();
@@ -45,6 +46,19 @@ export default function UsersPage() {
 
     return () => unsubscribe();
   }, [user?.companyId]);
+  
+  const handleExport = () => {
+    const worksheet = xlsx.utils.json_to_sheet(users.map(u => ({
+        'User ID': u.id,
+        'Name': u.name,
+        'Email': u.email,
+        'Role': u.role,
+        'Phone': u.phone || 'N/A',
+    })));
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Users");
+    xlsx.writeFileXLSX(workbook, "User_List.xlsx");
+  };
 
 
   return (
@@ -58,7 +72,7 @@ export default function UsersPage() {
         <div className="ml-auto flex items-center gap-2">
           {isAdmin && (
             <>
-              <Button size="sm" variant="outline" className="h-8 gap-1">
+              <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
                 <File className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                   Export

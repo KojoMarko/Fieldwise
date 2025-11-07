@@ -243,7 +243,7 @@ export default function AssetsPage() {
     })));
     const workbook = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(workbook, worksheet, "Assets");
-    xlsx.writeFile(workbook, "Asset_Inventory.xlsx");
+    xlsx.writeFileXLSX(workbook, "Asset_Inventory.xlsx");
   };
 
   const canAddAssets = user?.role === 'Admin' || user?.role === 'Engineer';

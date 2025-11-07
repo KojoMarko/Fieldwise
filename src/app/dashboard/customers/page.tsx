@@ -18,6 +18,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Customer } from '@/lib/types';
 import { LoaderCircle } from 'lucide-react';
+import * as xlsx from 'xlsx';
 
 export default function CustomersPage() {
   const { user } = useAuth();
@@ -46,6 +47,20 @@ export default function CustomersPage() {
 
     return () => unsubscribe();
   }, [user?.companyId]);
+  
+  const handleExport = () => {
+    const worksheet = xlsx.utils.json_to_sheet(customers.map(c => ({
+        'Customer ID': c.id,
+        'Customer Name': c.name,
+        'Contact Person': c.contactPerson,
+        'Contact Email': c.contactEmail,
+        'Phone': c.phone,
+        'Address': c.address,
+    })));
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Customers");
+    xlsx.writeFileXLSX(workbook, "Customer_List.xlsx");
+  };
 
 
   return (
@@ -61,7 +76,7 @@ export default function CustomersPage() {
         <h1 className="text-lg font-semibold md:text-2xl">Customers</h1>
         <div className="ml-auto flex items-center gap-2">
           {isAdmin && (
-              <Button size="sm" variant="outline" className="h-8 gap-1">
+              <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
                 <File className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                   Export

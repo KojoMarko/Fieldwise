@@ -220,3 +220,38 @@ export type Product = {
   unitPrice: number;
   companyId: string;
 }
+
+export type Lead = {
+  id: string;
+  company: string;
+  contact: string;
+  email: string;
+  phone: string;
+  value: number;
+  status: 'Qualified' | 'Contacted' | 'New' | 'Converted';
+  source: string;
+  lastContact: string;
+  companyId: string;
+};
+
+export type Opportunity = {
+  id: string;
+  name: string;
+  company: string;
+  value: number;
+  probability: number;
+  stage: 'Discovery' | 'Qualification' | 'Proposal' | 'Negotiation' | 'Closing';
+  closeDate: string;
+  companyId: string;
+};
+
+export type Activity = {
+  id: string;
+  type: 'call' | 'email' | 'meeting' | 'task';
+  title: string;
+  description: string;
+  time: string; // ISO string
+  company: string;
+  status: 'today' | 'upcoming' | 'overdue' | 'completed';
+  companyId: string;
+};

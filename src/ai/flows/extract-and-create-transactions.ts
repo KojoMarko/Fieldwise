@@ -81,20 +81,25 @@ const extractAndCreateTransactionsFlow = ai.defineFlow(
     const mimeType = fileDataUri.substring(fileDataUri.indexOf(':') + 1, fileDataUri.indexOf(';'));
     const base64Data = fileDataUri.substring(fileDataUri.indexOf(',') + 1);
 
-    if (
-        mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
-        mimeType === 'application/vnd.ms-excel' // .xls
-    ) {
-        const buffer = Buffer.from(base64Data, 'base64');
-        const workbook = xlsx.read(buffer, { type: 'buffer' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const documentText = xlsx.utils.sheet_to_csv(worksheet);
-        const result = await textPrompt({ documentText });
-        output = result.output;
-    } else {
-        const result = await mediaPrompt({ fileDataUri });
-        output = result.output;
+    try {
+        if (
+            mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
+            mimeType === 'application/vnd.ms-excel' // .xls
+        ) {
+            const buffer = Buffer.from(base64Data, 'base64');
+            const workbook = xlsx.read(buffer, { type: 'buffer' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const documentText = xlsx.utils.sheet_to_csv(worksheet);
+            const result = await textPrompt({ documentText });
+            output = result.output;
+        } else {
+            const result = await mediaPrompt({ fileDataUri });
+            output = result.output;
+        }
+    } catch (error: any) {
+        console.error(`[AI Transaction Extraction Error]: ${error.message}`);
+        throw new Error("The AI model is currently overloaded or unavailable. Please try again in a few moments.");
     }
     
     if (!output || !output.transactions || output.transactions.length === 0) {

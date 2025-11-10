@@ -1,7 +1,7 @@
 
 'use client';
 
-import { DollarSign, Filter, List, MoreHorizontal, PlusCircle, User, Users, View } from 'lucide-react';
+import { DollarSign, Filter, List, MoreHorizontal, PlusCircle, User, Users, View, LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { KpiCard } from '@/components/kpi-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,9 +11,9 @@ import { DataTable } from './components/data-table';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from '@/components/ui/card';
 import {
   DropdownMenu,
@@ -22,14 +22,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
-
-const opportunities: Opportunity[] = [
-  { id: 'opp-1', name: 'Starter Package - Innovation...', company: 'Innovation Co', value: 21000, probability: 40, closeDate: '2025-12-10', stage: 'Discovery' },
-  { id: 'opp-2', name: 'Professional Plan - TechStart', company: 'TechStart Inc.', value: 32000, probability: 60, closeDate: '2025-11-30', stage: 'Proposal' },
-  { id: 'opp-3', name: 'Enterprise Package - Acme Corp', company: 'Acme Corp', value: 45000, probability: 80, closeDate: '2025-11-15', stage: 'Negotiation' },
-  { id: 'opp-4', name: 'Custom Solution - Global Systems', company: 'Global Systems', value: 78000, probability: 90, closeDate: '2025-10-25', stage: 'Closing' },
-  { id: 'opp-5', name: 'Enterprise Suite - Enterprise Co', company: 'Enterprise Co', value: 95000, probability: 75, closeDate: '2025-11-20', stage: 'Negotiation' },
-];
+import { useAuth } from '@/hooks/use-auth';
+import { useEffect, useState, useMemo } from 'react';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const pipelineStages: { name: Opportunity['stage'], color: string }[] = [
     { name: 'Discovery', color: 'bg-blue-500' },
@@ -82,7 +78,7 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
   )
 }
 
-function PipelineView() {
+function PipelineView({ opportunities }: { opportunities: Opportunity[] }) {
   return (
      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
         {pipelineStages.map(stage => {
@@ -118,6 +114,25 @@ function PipelineView() {
 }
 
 export default function OpportunitiesPage() {
+  const { user } = useAuth();
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.companyId) {
+        setIsLoading(false);
+        return;
+    }
+    const oppsQuery = query(collection(db, 'opportunities'), where('companyId', '==', user.companyId));
+    const unsubscribe = onSnapshot(oppsQuery, (snapshot) => {
+        const oppsData: Opportunity[] = [];
+        snapshot.forEach(doc => oppsData.push({ id: doc.id, ...doc.data() } as Opportunity));
+        setOpportunities(oppsData);
+        setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [user?.companyId]);
+
     const totalPipelineValue = opportunities.reduce((sum, opp) => sum + opp.value, 0);
     const weightedValue = opportunities.reduce((sum, opp) => sum + (opp.value * (opp.probability / 100)), 0);
     const activeOpportunities = opportunities.filter(o => o.stage !== 'Closing').length;
@@ -184,9 +199,13 @@ export default function OpportunitiesPage() {
           </TabsList>
           
           <TabsContent value="pipeline" className="pt-4 w-full">
-            <div className="overflow-x-auto pb-4">
-              <PipelineView />
-            </div>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
+            ) : (
+              <div className="overflow-x-auto pb-4">
+                <PipelineView opportunities={opportunities} />
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="list" className="pt-4 w-full">
@@ -198,9 +217,13 @@ export default function OpportunitiesPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="w-full overflow-x-auto">
-                  <DataTable columns={columns} data={opportunities} />
-                </div>
+                {isLoading ? (
+                  <div className="flex justify-center items-center py-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
+                ) : (
+                  <div className="w-full overflow-x-auto">
+                    <DataTable columns={columns} data={opportunities} />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

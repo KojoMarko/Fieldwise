@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, Fragment } from 'react';
+import { useState, Fragment, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -23,9 +23,13 @@ import { ChevronDown, ChevronRight, File, Search, PlusCircle, Edit } from 'lucid
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { KpiCard } from '@/components/kpi-card';
-import { DollarSign, CheckCircle, Clock } from 'lucide-react';
+import { DollarSign, CheckCircle, Clock, LoaderCircle } from 'lucide-react';
 import { AddTransactionDialog } from './components/add-transaction-dialog';
 import { UpdatePaymentDialog } from './components/update-payment-dialog';
+import { useAuth } from '@/hooks/use-auth';
+import { collection, onSnapshot, query, where, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { formatISO } from 'date-fns';
 
 export type Product = {
   id: string;
@@ -44,15 +48,9 @@ export type Transaction = {
   amountPaid: number;
   paymentStatus: 'Fully Paid' | 'Partial Payment' | 'Pending';
   products: Product[];
+  companyId: string;
 };
 
-const initialTransactions: Transaction[] = [
-  { id: '1', transactionId: 'TRN-2024-001', customerName: 'Acme Corp', customerId: 'CUST-001', date: '2024-07-20', total: 4500, amountPaid: 4500, paymentStatus: 'Fully Paid', products: [{ id: 'P-01', name: 'Enterprise Software License', quantity: 1, unitPrice: 4500 }] },
-  { id: '2', transactionId: 'TRN-2024-002', customerName: 'TechStart Inc', customerId: 'CUST-002', date: '2024-07-18', total: 1200, amountPaid: 0, paymentStatus: 'Pending', products: [{ id: 'P-02', name: 'Basic Cloud Hosting', quantity: 12, unitPrice: 100 }] },
-  { id: '3', transactionId: 'TRN-2024-003', customerName: 'Global Systems', customerId: 'CUST-003', date: '2024-07-15', total: 8000, amountPaid: 4000, paymentStatus: 'Partial Payment', products: [{ id: 'P-03', name: 'Advanced AI Module', quantity: 1, unitPrice: 5000 }, { id: 'P-04', name: 'Priority Support Contract', quantity: 1, unitPrice: 3000 }] },
-  { id: '4', transactionId: 'TRN-2024-004', customerName: 'Innovate LLC', customerId: 'CUST-004', date: '2024-07-12', total: 250, amountPaid: 250, paymentStatus: 'Fully Paid', products: [{ id: 'P-05', name: 'Consulting Hour', quantity: 2, unitPrice: 125 }] },
-  { id: '5', transactionId: 'TRN-2024-005', customerName: 'Enterprise Co', customerId: 'CUST-005', date: '2024-07-10', total: 15000, amountPaid: 0, paymentStatus: 'Pending', products: [{ id: 'P-01', name: 'Enterprise Software License', quantity: 3, unitPrice: 5000 }] },
-];
 
 const statusColors: Record<Transaction['paymentStatus'], string> = {
   'Fully Paid': 'bg-green-100 text-green-800 border-green-300',
@@ -92,7 +90,7 @@ function TransactionRow({ transaction, onUpdateClick }: { transaction: Transacti
                     <Badge variant="outline" className={statusColors[transaction.paymentStatus]}>{transaction.paymentStatus}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={onUpdateClick}>
+                    <Button variant="outline" size="sm" onClick={onUpdateClick} disabled={balance <= 0}>
                         <Edit className="h-3 w-3 mr-1"/> Update Payment
                     </Button>
                 </TableCell>
@@ -131,24 +129,44 @@ function TransactionRow({ transaction, onUpdateClick }: { transaction: Transacti
 }
 
 export default function SalesLedgerPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [searchFilter, setSearchFilter] = useState('');
 
-  const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0);
-  const paidRevenue = transactions.reduce((sum, t) => sum + t.amountPaid, 0);
-  const pendingRevenue = totalRevenue - paidRevenue;
-  
-  const handleAddTransaction = (newTransactionData: Omit<Transaction, 'id' | 'transactionId' | 'total'>) => {
+  useEffect(() => {
+    if (!user?.companyId) {
+        setIsLoading(false);
+        return;
+    }
+    const transactionsQuery = query(collection(db, "transactions"), where("companyId", "==", user.companyId));
+    const unsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
+        const transData: Transaction[] = [];
+        snapshot.forEach(doc => transData.push({ id: doc.id, ...doc.data() } as Transaction));
+        transData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setTransactions(transData);
+        setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [user?.companyId]);
+
+
+  const handleAddTransaction = async (newTransactionData: Omit<Transaction, 'id' | 'transactionId' | 'total' | 'companyId'>) => {
+    if (!user?.companyId) return;
+
     const total = newTransactionData.products.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
-    const newTransaction: Transaction = {
+    const transactionCount = transactions.length + 1;
+    const newTransaction: Omit<Transaction, 'id'> = {
       ...newTransactionData,
-      id: (transactions.length + 1).toString(),
-      transactionId: `TRN-2024-${String(transactions.length + 1).padStart(3, '0')}`,
+      transactionId: `TRN-2024-${String(transactionCount).padStart(3, '0')}`,
       total: total,
+      companyId: user.companyId
     };
-    setTransactions(prev => [newTransaction, ...prev]);
+
+    await addDoc(collection(db, 'transactions'), newTransaction);
   };
   
   const handleOpenUpdateDialog = (transaction: Transaction) => {
@@ -156,21 +174,33 @@ export default function SalesLedgerPage() {
       setUpdateDialogOpen(true);
   }
 
-  const handleUpdatePayment = (transactionId: string, newPayment: number) => {
-    setTransactions(prev => prev.map(t => {
-      if (t.id === transactionId) {
-        const updatedAmountPaid = t.amountPaid + newPayment;
-        let newStatus: Transaction['paymentStatus'] = 'Partial Payment';
-        if (updatedAmountPaid >= t.total) {
-          newStatus = 'Fully Paid';
-        } else if (updatedAmountPaid === 0) {
-          newStatus = 'Pending';
-        }
-        return { ...t, amountPaid: updatedAmountPaid, paymentStatus: newStatus };
-      }
-      return t;
-    }));
+  const handleUpdatePayment = async (transactionId: string, newPayment: number) => {
+    const transactionRef = doc(db, 'transactions', transactionId);
+    const currentTransaction = transactions.find(t => t.id === transactionId);
+    if (!currentTransaction) return;
+
+    const updatedAmountPaid = currentTransaction.amountPaid + newPayment;
+    let newStatus: Transaction['paymentStatus'] = 'Partial Payment';
+    if (updatedAmountPaid >= currentTransaction.total) {
+      newStatus = 'Fully Paid';
+    }
+
+    await updateDoc(transactionRef, {
+        amountPaid: updatedAmountPaid,
+        paymentStatus: newStatus
+    });
   };
+
+  const filteredTransactions = useMemo(() => {
+      return transactions.filter(t => 
+        t.customerName.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        t.transactionId.toLowerCase().includes(searchFilter.toLowerCase())
+      )
+  }, [transactions, searchFilter]);
+
+  const totalRevenue = filteredTransactions.reduce((sum, t) => sum + t.total, 0);
+  const paidRevenue = filteredTransactions.reduce((sum, t) => sum + t.amountPaid, 0);
+  const pendingRevenue = totalRevenue - paidRevenue;
 
   return (
     <>
@@ -226,7 +256,12 @@ export default function SalesLedgerPage() {
              <div className="flex gap-2">
                 <div className="relative w-full sm:w-auto">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search transactions..." className="pl-8 sm:w-64" />
+                    <Input 
+                        placeholder="Search transactions..." 
+                        className="pl-8 sm:w-64"
+                        value={searchFilter}
+                        onChange={e => setSearchFilter(e.target.value)}
+                    />
                 </div>
                  <Button variant="outline"><File className="mr-2 h-4 w-4" /> Export</Button>
             </div>
@@ -234,24 +269,28 @@ export default function SalesLedgerPage() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[300px]">Customer</TableHead>
-                  <TableHead className="hidden sm:table-cell">Date</TableHead>
-                  <TableHead className="text-right">Total Value</TableHead>
-                  <TableHead>Payment Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.map(transaction => (
-                   <Collapsible asChild key={transaction.id}>
-                     <TransactionRow transaction={transaction} onUpdateClick={() => handleOpenUpdateDialog(transaction)} />
-                   </Collapsible>
-                ))}
-              </TableBody>
-            </Table>
+            {isLoading ? (
+                <div className="flex items-center justify-center p-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
+            ) : (
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead className="w-[300px]">Customer</TableHead>
+                    <TableHead className="hidden sm:table-cell">Date</TableHead>
+                    <TableHead className="text-right">Total Value</TableHead>
+                    <TableHead>Payment Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {filteredTransactions.map(transaction => (
+                    <Collapsible asChild key={transaction.id}>
+                        <TransactionRow transaction={transaction} onUpdateClick={() => handleOpenUpdateDialog(transaction)} />
+                    </Collapsible>
+                    ))}
+                </TableBody>
+                </Table>
+            )}
           </div>
         </CardContent>
       </Card>

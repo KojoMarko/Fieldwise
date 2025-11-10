@@ -1,4 +1,5 @@
 
+
 import type { z } from 'zod';
 import type { ServiceReportQuestionnaireSchema } from './schemas';
 
@@ -219,7 +220,26 @@ export type Product = {
   category: 'Software License' | 'Hardware' | 'Service' | 'Other';
   unitPrice: number;
   companyId: string;
-}
+};
+
+export type Transaction = {
+  id: string;
+  transactionId: string;
+  customerName: string;
+  customerId: string;
+  date: string; // ISO String
+  total: number;
+  amountPaid: number;
+  paymentStatus: 'Fully Paid' | 'Partial Payment' | 'Pending';
+  products: {
+      id: string,
+      name: string,
+      quantity: number,
+      unitPrice: number
+  }[];
+  companyId: string;
+};
+
 
 export type Lead = {
   id: string;

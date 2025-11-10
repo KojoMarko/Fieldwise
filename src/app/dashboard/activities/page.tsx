@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -20,6 +20,7 @@ import {
   Mail,
   Users,
   Briefcase,
+  LoaderCircle,
 } from 'lucide-react';
 import { KpiCard } from '@/components/kpi-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -43,72 +44,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-const initialActivities = [
-  {
-    id: '1',
-    type: 'call',
-    title: 'Follow up call with Acme Corp',
-    description: 'Discuss enterprise package pricing and implementation timeline',
-    time: '10:00 AM',
-    company: 'Acme Corp',
-    status: 'today',
-  },
-  {
-    id: '2',
-    type: 'email',
-    title: 'Send proposal to TechStart',
-    description: 'Professional plan proposal with custom pricing',
-    time: '11:30 AM',
-    company: 'TechStart Inc',
-    status: 'today',
-  },
-  {
-    id: '3',
-    type: 'meeting',
-    title: 'Demo presentation - Global Systems',
-    description: 'Product demo and Q&A session',
-    time: '2:00 PM',
-    company: 'Global Systems',
-    status: 'today',
-  },
-   {
-    id: '4',
-    type: 'task',
-    title: 'Prepare slides for tomorrow\'s pitch',
-    description: 'Finalize the presentation for the new client.',
-    time: '4:00 PM',
-    company: 'Internal',
-    status: 'today',
-  },
-  {
-    id: '5',
-    type: 'meeting',
-    title: 'Quarterly review with Enterprise Co',
-    description: 'Review performance and discuss next quarter goals.',
-    time: 'Tomorrow, 10:00 AM',
-    company: 'Enterprise Co',
-    status: 'upcoming',
-  },
-   {
-    id: '6',
-    type: 'call',
-    title: 'Check in with MegaCorp Industries',
-    description: 'Follow up on the signed contract and next steps.',
-    time: 'Yesterday, 3:00 PM',
-    company: 'MegaCorp Industries',
-    status: 'overdue',
-  },
-   {
-    id: '7',
-    type: 'email',
-    title: 'Send invoice to StartUp Studios',
-    description: 'Invoice for the completed project phase.',
-    time: 'Last week',
-    company: 'StartUp Studios',
-    status: 'completed',
-  },
-];
+import { useAuth } from '@/hooks/use-auth';
+import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Activity } from '@/lib/types';
+import { formatISO, parseISO, isToday, isFuture, isPast } from 'date-fns';
 
 const activityIcons: Record<string, React.ElementType> = {
   call: Phone,
@@ -118,29 +58,33 @@ const activityIcons: Record<string, React.ElementType> = {
   deadline: Briefcase,
 };
 
-type Activity = (typeof initialActivities)[0];
-
-function ActivityItem({ activity }: { activity: Activity }) {
+function ActivityItem({ activity, onToggle }: { activity: Activity, onToggle: (id: string, completed: boolean) => void }) {
   const Icon = activityIcons[activity.type] || CheckCircle;
+  const isCompleted = activity.status === 'completed';
   return (
     <div className="flex items-start gap-4 rounded-lg border p-4">
-      <Checkbox id={`task-${activity.id}`} className="mt-1" />
+      <Checkbox 
+        id={`task-${activity.id}`} 
+        className="mt-1" 
+        checked={isCompleted}
+        onCheckedChange={(checked) => onToggle(activity.id, !!checked)}
+      />
       <div className="flex-1 space-y-1">
         <div className="flex items-center justify-between">
           <label
             htmlFor={`task-${activity.id}`}
-            className="flex items-center gap-2 font-medium"
+            className={cn("flex items-center gap-2 font-medium", isCompleted && "line-through text-muted-foreground")}
           >
             <Icon className="h-4 w-4 text-muted-foreground" />
             {activity.title}
           </label>
           <Badge variant="outline" className="text-muted-foreground">
-            pending
+            {activity.status}
           </Badge>
         </div>
-        <p className="text-sm text-muted-foreground">{activity.description}</p>
+        <p className={cn("text-sm text-muted-foreground", isCompleted && "line-through")}>{activity.description}</p>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span>{activity.time}</span>
+          <span>{format(parseISO(activity.time), 'p')}</span>
           <span>{activity.company}</span>
         </div>
       </div>
@@ -148,7 +92,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
   );
 }
 
-function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolean, onOpenChange: (open: boolean) => void, onAddActivity: (activity: Omit<Activity, 'id' | 'status'>) => void }) {
+function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolean, onOpenChange: (open: boolean) => void, onAddActivity: (activity: Omit<Activity, 'id' | 'status' | 'companyId'>) => void }) {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [type, setType] = useState('task');
@@ -156,8 +100,12 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
     const [time, setTime] = useState('');
 
     const handleSubmit = () => {
-        if (!title) return;
-        onAddActivity({ title, description, type, company, time });
+        if (!title || !time) return;
+        const [hour, minute] = time.split(':').map(Number);
+        const activityDate = new Date();
+        activityDate.setHours(hour, minute);
+
+        onAddActivity({ title, description, type, company, time: formatISO(activityDate) });
         onOpenChange(false);
         // Reset form
         setTitle('');
@@ -200,7 +148,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="time">Time</Label>
-                            <Input id="time" value={time} onChange={(e) => setTime(e.target.value)} placeholder="e.g., 2:30 PM" />
+                            <Input id="time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
                         </div>
                     </div>
                     <div className="space-y-2">
@@ -218,22 +166,50 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
 }
 
 export default function ActivitiesPage() {
-  const [date, setDate] = useState<Date | undefined>(new Date('2025-10-22'));
-  const [activities, setActivities] = useState<Activity[]>(initialActivities);
+  const { user } = useAuth();
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
 
-  const handleAddActivity = (newActivityData: Omit<Activity, 'id' | 'status'>) => {
-      const newActivity: Activity = {
+  useEffect(() => {
+    if (!user?.companyId) {
+        setIsLoading(false);
+        return;
+    }
+    const activitiesQuery = query(collection(db, 'activities'), where('companyId', '==', user.companyId));
+    const unsubscribe = onSnapshot(activitiesQuery, (snapshot) => {
+        const activitiesData: Activity[] = [];
+        snapshot.forEach(doc => activitiesData.push({ id: doc.id, ...doc.data() } as Activity));
+        setActivities(activitiesData);
+        setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [user?.companyId]);
+
+  const handleAddActivity = async (newActivityData: Omit<Activity, 'id' | 'status' | 'companyId'>) => {
+      if (!user?.companyId) return;
+
+      const activityDate = parseISO(newActivityData.time);
+      let status: Activity['status'] = 'today';
+      if(isFuture(activityDate) && !isToday(activityDate)) status = 'upcoming';
+
+      const newActivity: Omit<Activity, 'id'> = {
           ...newActivityData,
-          id: `act-${Date.now()}`,
-          status: 'today', // For simplicity, all new activities are for today
+          status,
+          companyId: user.companyId,
       };
-      setActivities(prev => [newActivity, ...prev]);
+      await addDoc(collection(db, 'activities'), newActivity);
+  };
+  
+  const handleToggleComplete = async (id: string, completed: boolean) => {
+      // This is a placeholder for updating the status in Firestore
+      console.log(`Toggling activity ${id} to ${completed ? 'completed' : 'today'}`);
   };
 
-  const todayActivities = activities.filter((a) => a.status === 'today');
-  const upcomingActivities = activities.filter((a) => a.status === 'upcoming');
-  const overdueActivities = activities.filter((a) => a.status === 'overdue');
+  const todayActivities = activities.filter((a) => isToday(parseISO(a.time)) && a.status !== 'completed');
+  const upcomingActivities = activities.filter((a) => isFuture(parseISO(a.time)) && !isToday(parseISO(a.time)) && a.status !== 'completed');
+  const overdueActivities = activities.filter((a) => isPast(parseISO(a.time)) && !isToday(parseISO(a.time)) && a.status !== 'completed');
   const completedActivities = activities.filter((a) => a.status === 'completed');
 
   return (
@@ -314,26 +290,32 @@ export default function ActivitiesPage() {
                   </TabsList>
                 </CardHeader>
                 <CardContent>
-                  <TabsContent value="today" className="space-y-4">
-                    {todayActivities.map((activity) => (
-                      <ActivityItem key={activity.id} activity={activity} />
-                    ))}
-                  </TabsContent>
-                  <TabsContent value="upcoming" className="space-y-4">
-                    {upcomingActivities.map((activity) => (
-                      <ActivityItem key={activity.id} activity={activity} />
-                    ))}
-                  </TabsContent>
-                  <TabsContent value="overdue" className="space-y-4">
-                    {overdueActivities.map((activity) => (
-                      <ActivityItem key={activity.id} activity={activity} />
-                    ))}
-                  </TabsContent>
-                  <TabsContent value="completed" className="space-y-4">
-                    {completedActivities.map((activity) => (
-                      <ActivityItem key={activity.id} activity={activity} />
-                    ))}
-                  </TabsContent>
+                    {isLoading ? (
+                        <div className="flex justify-center items-center py-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
+                    ) : (
+                        <>
+                        <TabsContent value="today" className="space-y-4">
+                            {todayActivities.map((activity) => (
+                            <ActivityItem key={activity.id} activity={activity} onToggle={handleToggleComplete} />
+                            ))}
+                        </TabsContent>
+                        <TabsContent value="upcoming" className="space-y-4">
+                            {upcomingActivities.map((activity) => (
+                            <ActivityItem key={activity.id} activity={activity} onToggle={handleToggleComplete} />
+                            ))}
+                        </TabsContent>
+                        <TabsContent value="overdue" className="space-y-4">
+                            {overdueActivities.map((activity) => (
+                            <ActivityItem key={activity.id} activity={activity} onToggle={handleToggleComplete} />
+                            ))}
+                        </TabsContent>
+                        <TabsContent value="completed" className="space-y-4">
+                            {completedActivities.map((activity) => (
+                            <ActivityItem key={activity.id} activity={activity} onToggle={handleToggleComplete} />
+                            ))}
+                        </TabsContent>
+                        </>
+                    )}
                 </CardContent>
               </Card>
             </Tabs>

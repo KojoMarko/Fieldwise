@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A flow for creating a new resource document in Firestore.
@@ -10,12 +9,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import type { Resource } from '@/lib/types';
-import { CreateResourceInputSchema } from '@/lib/schemas';
+import { ResourceSchema } from '@/lib/schemas';
 import { db } from '@/lib/firebase-admin';
-import { formatISO } from 'date-fns';
 
-export type CreateResourceInput = z.infer<typeof CreateResourceInputSchema>;
+export type CreateResourceInput = z.infer<typeof ResourceSchema>;
 
 const CreateResourceOutputSchema = z.object({
   id: z.string().describe('The newly created resource ID.'),
@@ -29,29 +26,29 @@ export async function createResource(input: CreateResourceInput): Promise<Create
 const createResourceFlow = ai.defineFlow(
   {
     name: 'createResourceFlow',
-    inputSchema: CreateResourceInputSchema,
+    inputSchema: ResourceSchema,
     outputSchema: CreateResourceOutputSchema,
   },
   async (input) => {
     const resourceRef = db.collection('resources').doc();
-    const newResource: Omit<Resource, 'id'> = {
-      ...input,
-      updatedDate: formatISO(new Date()),
-      fileUrl: '#', // Placeholder for now
+    
+    // The schema includes an optional ID, but we want Firestore to generate it.
+    const { id, ...resourceData } = input;
+    
+    const newResource = {
+        ...resourceData,
+        id: resourceRef.id,
     };
 
     // Firestore does not accept 'undefined' values. We need to clean the object.
     Object.keys(newResource).forEach(key => {
         const typedKey = key as keyof typeof newResource;
         if (newResource[typedKey] === undefined) {
-            delete newResource[typedKey];
+            delete (newResource as any)[typedKey];
         }
     });
 
-    await resourceRef.set({
-      ...newResource,
-      id: resourceRef.id,
-    });
+    await resourceRef.set(newResource);
     
     return {
       id: resourceRef.id,

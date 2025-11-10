@@ -39,15 +39,16 @@ export async function extractAndCreateParts(input: ExtractAndCreatePartsInput): 
 
 const prompt = ai.definePrompt({
   name: 'extractPartsFromDocPrompt',
-  input: { schema: z.object({ fileDataUri: z.string() }) },
+  input: { schema: z.object({ documentText: z.string() }) },
   output: { schema: ExtractAndCreatePartsOutputSchema },
   prompt: `You are an expert at analyzing technical documents, service manuals and spreadsheets.
-Analyze the following document and extract a list of all spare parts mentioned.
+Analyze the following document content and extract a list of all spare parts mentioned.
 The document may contain thousands of records. Be thorough and extract every single one.
 For each part, identify its name, its corresponding part number, and the specific equipment model it is for.
 Return the data as a list of objects.
 
-Document: {{media url=fileDataUri}}`,
+Document Content:
+{{{documentText}}}`,
 });
 
 const extractAndCreatePartsFlow = ai.defineFlow(
@@ -58,15 +59,52 @@ const extractAndCreatePartsFlow = ai.defineFlow(
   },
   async ({ fileDataUri, companyId }) => {
     
+    let documentText = '';
+    const mimeType = fileDataUri.substring(fileDataUri.indexOf(':') + 1, fileDataUri.indexOf(';'));
+    const base64Data = fileDataUri.substring(fileDataUri.indexOf(',') + 1);
+
+    if (
+        mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
+        mimeType === 'application/vnd.ms-excel' // .xls
+    ) {
+        const buffer = Buffer.from(base64Data, 'base64');
+        const workbook = xlsx.read(buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        documentText = xlsx.utils.sheet_to_csv(worksheet);
+    } else {
+         // For other supported types like PDF, doc, txt, the LLM can handle it.
+        // We re-wrap it in a new data URI to be passed to a different prompt that expects a `media` field.
+         const mediaPrompt = ai.definePrompt({
+          name: 'extractPartsFromMediaPrompt',
+          input: { schema: z.object({ fileDataUri: z.string() }) },
+          output: { schema: ExtractAndCreatePartsOutputSchema },
+          prompt: `You are an expert at analyzing technical documents and service manuals.
+        Analyze the following document and extract a list of all spare parts mentioned.
+        For each part, identify its name, its corresponding part number, and the specific equipment model it is for.
+        Return the data as a list of objects.
+
+        Document: {{media url=fileDataUri}}`,
+        });
+
+        const { output } = await mediaPrompt({ fileDataUri });
+        
+        if (!output || !output.parts || output.parts.length === 0) {
+          return { count: 0 };
+        }
+        documentText = JSON.stringify(output.parts); // Convert to string to reuse logic below
+    }
+
+
     let output;
     try {
-        // Directly pass the data URI to the multimodal prompt
-        const result = await prompt({ fileDataUri });
+        const result = await prompt({ documentText });
         output = result.output;
     } catch (error: any) {
         console.error(`[AI Part Extraction Error]: ${error.message}`);
-        throw new Error("The AI model could not process the document. It might be too large or in an unsupported format.");
+        throw new Error("The AI model could not process the document's content.");
     }
+    
 
     if (!output || !output.parts || output.parts.length === 0) {
       return { count: 0 };

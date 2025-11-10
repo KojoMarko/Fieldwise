@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, Fragment, useEffect, useMemo } from 'react';
+import { useState, Fragment, useEffect, useMemo, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, File, Search, PlusCircle, Edit } from 'lucide-react';
+import { ChevronDown, ChevronRight, File, Search, PlusCircle, Edit, UploadCloud, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { KpiCard } from '@/components/kpi-card';
@@ -30,6 +30,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { formatISO } from 'date-fns';
+import { extractAndCreateTransactions } from '@/ai/flows/extract-and-create-transactions';
+import { useToast } from '@/hooks/use-toast';
 
 export type Product = {
   id: string;
@@ -57,6 +59,96 @@ const statusColors: Record<Transaction['paymentStatus'], string> = {
   'Partial Payment': 'bg-yellow-100 text-yellow-800 border-yellow-300',
   'Pending': 'bg-orange-100 text-orange-800 border-orange-300',
 };
+
+
+function AiDebtImporter() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [fileName, setFileName] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.companyId) return;
+
+    setFileName(file.name);
+    setIsExtracting(true);
+    toast({
+      title: 'AI Extraction Started',
+      description: 'The AI is analyzing your debt tracker to import transactions. This may take a moment.',
+    });
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const dataUri = reader.result as string;
+        const result = await extractAndCreateTransactions({
+          fileDataUri: dataUri,
+          companyId: user.companyId,
+        });
+        
+        toast({
+          title: 'Extraction Complete!',
+          description: `Successfully extracted and created ${result.count} new transactions.`,
+        });
+      };
+      reader.onerror = () => {
+        throw new Error('Could not read the file.');
+      }
+    } catch (error) {
+      console.error("Error extracting transactions:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Extraction Failed',
+        description: 'The AI could not extract transactions from the document. Please try again.',
+      });
+    } finally {
+      setIsExtracting(false);
+      setFileName('');
+      if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  return (
+    <Card className="bg-accent/50 border-primary/20 border-dashed">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="text-primary" />
+          AI Debt Importer
+        </CardTitle>
+        <CardDescription>
+          Have a debt tracker in a spreadsheet or document? Upload it here and the AI will automatically add the transactions to your sales ledger.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4">
+          <Button onClick={() => fileInputRef.current?.click()} disabled={isExtracting} variant="outline">
+              <UploadCloud className="mr-2 h-4 w-4" />
+            Upload Document
+          </Button>
+          <Input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            onChange={handleFileChange}
+            accept=".pdf,.doc,.docx,.xls,.xlsx"
+            disabled={isExtracting}
+          />
+          {isExtracting && (
+            <div className="flex items-center text-sm text-muted-foreground">
+              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+              <span>Analyzing: {fileName}...</span>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 
 function TransactionRow({ transaction, onUpdateClick }: { transaction: Transaction, onUpdateClick: () => void }) {
@@ -228,7 +320,7 @@ export default function SalesLedgerPage() {
         </Button>
       </div>
       
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Total Revenue"
           value={`GH₵${totalRevenue.toLocaleString()}`}
@@ -247,6 +339,7 @@ export default function SalesLedgerPage() {
           description="Partial and pending payments"
           Icon={Clock}
         />
+         <AiDebtImporter />
       </div>
 
       <Card>

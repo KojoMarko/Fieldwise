@@ -29,3 +29,4 @@ import '@/ai/flows/update-asset-name-for-model.ts';
 import '@/ai/flows/transfer-spare-part.ts';
 import '@/ai/flows/create-product.ts';
 import '@/ai/flows/create-resource.ts';
+import '@/ai/flows/extract-and-create-transactions.ts';

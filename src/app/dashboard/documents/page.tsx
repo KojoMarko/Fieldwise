@@ -187,7 +187,14 @@ export default function DocumentsPage() {
                         <FormLabel>Upload File</FormLabel>
                         <FormControl>
                         <div className="relative">
-                            <Input id="file-upload" type="file" onChange={handleFileChange} className="pr-12" disabled={isAnalyzing}/>
+                            <Input 
+                                id="file-upload" 
+                                type="file" 
+                                onChange={handleFileChange} 
+                                className="pr-12" 
+                                disabled={isAnalyzing}
+                                accept=".pdf,.doc,.docx"
+                            />
                             <div className="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
                             {isAnalyzing ? (
                                 <LoaderCircle className="my-auto h-5 w-5 animate-spin text-primary" />

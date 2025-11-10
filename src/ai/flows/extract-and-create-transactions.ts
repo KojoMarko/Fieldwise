@@ -68,6 +68,20 @@ const extractAndCreateTransactionsFlow = ai.defineFlow(
       return { count: 0 };
     }
 
+    // Step 2: Get the Sales Rep User ID
+    const salesRepEmail = 'emmanuella.akoley@alosparaklethealthcare.com';
+    const usersCollection = db.collection('users');
+    const userQuery = await usersCollection.where('email', '==', salesRepEmail).limit(1).get();
+
+    let salesRepId: string | undefined;
+    if (!userQuery.empty) {
+        salesRepId = userQuery.docs[0].id;
+    } else {
+        console.warn(`Sales representative with email "${salesRepEmail}" not found.`);
+        // Continue without assigning an owner, or throw an error if assignment is mandatory.
+    }
+
+
     const batch = db.batch();
     const transactionsCollection = db.collection('transactions');
     const customersCollection = db.collection('customers');
@@ -145,6 +159,7 @@ const extractAndCreateTransactionsFlow = ai.defineFlow(
         paymentMethod: trans.paymentMethod,
         bankName: trans.bankName,
         remarks: trans.remarks,
+        ownerId: salesRepId,
       };
       
       // Clean up undefined fields before setting

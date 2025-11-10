@@ -32,6 +32,8 @@ import { db } from '@/lib/firebase';
 import { formatISO } from 'date-fns';
 import { extractAndCreateTransactions } from '@/ai/flows/extract-and-create-transactions';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 export type Product = {
   id: string;
@@ -315,78 +317,88 @@ export default function SalesLedgerPage() {
           <h1 className="text-3xl font-bold tracking-tight">Sales Ledger</h1>
           <p className="text-muted-foreground">A chronological record of all sales transactions.</p>
         </div>
-        <Button onClick={() => setAddDialogOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> New Transaction
-        </Button>
       </div>
       
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          title="Total Revenue"
-          value={`GH₵${totalRevenue.toLocaleString()}`}
-          description="All recorded transactions"
-          Icon={DollarSign}
-        />
-        <KpiCard
-          title="Revenue Collected"
-          value={`GH₵${paidRevenue.toLocaleString()}`}
-          description="Sum of all paid amounts"
-          Icon={CheckCircle}
-        />
-        <KpiCard
-          title="Outstanding Revenue"
-          value={`GH₵${pendingRevenue.toLocaleString()}`}
-          description="Partial and pending payments"
-          Icon={Clock}
-        />
-         <AiDebtImporter />
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <CardTitle>Transactions</CardTitle>
-             <div className="flex gap-2">
-                <div className="relative w-full sm:w-auto">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                        placeholder="Search transactions..." 
-                        className="pl-8 sm:w-64"
-                        value={searchFilter}
-                        onChange={e => setSearchFilter(e.target.value)}
-                    />
+        <Tabs defaultValue="transactions">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                <TabsTrigger value="debtors">Debtors</TabsTrigger>
+            </TabsList>
+            <TabsContent value="transactions">
+                <Card>
+                    <CardHeader>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <CardTitle>Transactions</CardTitle>
+                        <div className="flex gap-2">
+                            <div className="relative w-full sm:w-auto">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    placeholder="Search transactions..." 
+                                    className="pl-8 sm:w-64"
+                                    value={searchFilter}
+                                    onChange={e => setSearchFilter(e.target.value)}
+                                />
+                            </div>
+                            <Button onClick={() => setAddDialogOpen(true)}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> New Transaction
+                            </Button>
+                        </div>
+                    </div>
+                    </CardHeader>
+                    <CardContent>
+                    <div className="overflow-x-auto rounded-md border">
+                        {isLoading ? (
+                            <div className="flex items-center justify-center p-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
+                        ) : (
+                            <Table>
+                            <TableHeader>
+                                <TableRow>
+                                <TableHead className="w-[300px]">Customer</TableHead>
+                                <TableHead className="hidden sm:table-cell">Date</TableHead>
+                                <TableHead className="text-right">Total Value</TableHead>
+                                <TableHead>Payment Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredTransactions.map(transaction => (
+                                <Collapsible asChild key={transaction.id}>
+                                    <TransactionRow transaction={transaction} onUpdateClick={() => handleOpenUpdateDialog(transaction)} />
+                                </Collapsible>
+                                ))}
+                            </TableBody>
+                            </Table>
+                        )}
+                    </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="debtors">
+                <div className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <KpiCard
+                        title="Total Revenue"
+                        value={`GH₵${totalRevenue.toLocaleString()}`}
+                        description="All recorded transactions"
+                        Icon={DollarSign}
+                        />
+                        <KpiCard
+                        title="Revenue Collected"
+                        value={`GH₵${paidRevenue.toLocaleString()}`}
+                        description="Sum of all paid amounts"
+                        Icon={CheckCircle}
+                        />
+                        <KpiCard
+                        title="Outstanding Revenue"
+                        value={`GH₵${pendingRevenue.toLocaleString()}`}
+                        description="Partial and pending payments"
+                        Icon={Clock}
+                        />
+                    </div>
+                    <AiDebtImporter />
                 </div>
-                 <Button variant="outline"><File className="mr-2 h-4 w-4" /> Export</Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto rounded-md border">
-            {isLoading ? (
-                <div className="flex items-center justify-center p-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
-            ) : (
-                <Table>
-                <TableHeader>
-                    <TableRow>
-                    <TableHead className="w-[300px]">Customer</TableHead>
-                    <TableHead className="hidden sm:table-cell">Date</TableHead>
-                    <TableHead className="text-right">Total Value</TableHead>
-                    <TableHead>Payment Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {filteredTransactions.map(transaction => (
-                    <Collapsible asChild key={transaction.id}>
-                        <TransactionRow transaction={transaction} onUpdateClick={() => handleOpenUpdateDialog(transaction)} />
-                    </Collapsible>
-                    ))}
-                </TableBody>
-                </Table>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </TabsContent>
+        </Tabs>
     </div>
     </>
   );

@@ -319,6 +319,27 @@ export default function SalesLedgerPage() {
         </div>
       </div>
       
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <KpiCard
+            title="Total Revenue"
+            value={`GH₵${totalRevenue.toLocaleString()}`}
+            description="All recorded transactions"
+            Icon={DollarSign}
+            />
+            <KpiCard
+            title="Revenue Collected"
+            value={`GH₵${paidRevenue.toLocaleString()}`}
+            description="Sum of all paid amounts"
+            Icon={CheckCircle}
+            />
+            <KpiCard
+            title="Outstanding Revenue"
+            value={`GH₵${pendingRevenue.toLocaleString()}`}
+            description="Partial and pending payments"
+            Icon={Clock}
+            />
+        </div>
+
         <Tabs defaultValue="transactions">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="transactions">Transactions</TabsTrigger>
@@ -374,32 +395,12 @@ export default function SalesLedgerPage() {
                 </Card>
             </TabsContent>
             <TabsContent value="debtors">
-                <div className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        <KpiCard
-                        title="Total Revenue"
-                        value={`GH₵${totalRevenue.toLocaleString()}`}
-                        description="All recorded transactions"
-                        Icon={DollarSign}
-                        />
-                        <KpiCard
-                        title="Revenue Collected"
-                        value={`GH₵${paidRevenue.toLocaleString()}`}
-                        description="Sum of all paid amounts"
-                        Icon={CheckCircle}
-                        />
-                        <KpiCard
-                        title="Outstanding Revenue"
-                        value={`GH₵${pendingRevenue.toLocaleString()}`}
-                        description="Partial and pending payments"
-                        Icon={Clock}
-                        />
-                    </div>
-                    <AiDebtImporter />
-                </div>
+                <AiDebtImporter />
             </TabsContent>
         </Tabs>
     </div>
     </>
   );
 }
+
+    

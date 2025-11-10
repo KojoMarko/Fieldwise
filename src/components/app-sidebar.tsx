@@ -56,6 +56,7 @@ const engineerNavItems = [
     { href: '/dashboard', icon: Home, label: 'My Dashboard' },
     { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
+    { href: '/dashboard/customers', icon: Building, label: 'Customers' },
     { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
     { href: '/dashboard/map', icon: Map, label: 'Map'},
     { href: '/dashboard/assets', icon: Package, label: 'Assets' },

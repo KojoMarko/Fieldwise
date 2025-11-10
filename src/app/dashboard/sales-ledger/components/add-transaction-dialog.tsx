@@ -43,6 +43,7 @@ import type { Customer } from '@/lib/types';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AddCustomerDialog } from '../../customers/components/add-customer-dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 
 const ProductLineSchema = z.object({
@@ -57,6 +58,9 @@ const AddTransactionSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
   amountPaid: z.coerce.number().min(0, 'Amount paid cannot be negative').optional(),
   products: z.array(ProductLineSchema).min(1, 'At least one product is required'),
+  paymentMethod: z.enum(['Cash', 'Cheque', 'Transfer']).optional(),
+  bankName: z.string().optional(),
+  remarks: z.string().optional(),
 });
 
 type AddTransactionFormValues = z.infer<typeof AddTransactionSchema>;
@@ -83,6 +87,9 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
       date: new Date(),
       amountPaid: 0,
       products: [],
+      paymentMethod: undefined,
+      bankName: '',
+      remarks: '',
     },
   });
 
@@ -149,6 +156,9 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
             amountPaid: amountPaid,
             products: data.products.map(p => ({id: p.productId, name: p.productName, quantity: p.quantity, unitPrice: p.unitPrice})),
             paymentStatus,
+            paymentMethod: data.paymentMethod,
+            bankName: data.bankName,
+            remarks: data.remarks,
         };
 
       onAddTransaction(transactionData);
@@ -350,6 +360,53 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                     </Button>
                 </div>
              </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="paymentMethod"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Select a payment method" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="Cash">Cash</SelectItem>
+                            <SelectItem value="Cheque">Cheque</SelectItem>
+                            <SelectItem value="Transfer">Bank Transfer</SelectItem>
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="bankName"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Bank Name</FormLabel>
+                        <FormControl><Input placeholder="e.g., GCB, Fidelity Bank" {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+             </div>
+             <FormField
+                control={form.control}
+                name="remarks"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Remarks</FormLabel>
+                    <FormControl><Textarea placeholder="Any additional notes or comments..." {...field} /></FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
 
             <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

@@ -29,7 +29,7 @@ import { UpdatePaymentDialog } from './components/update-payment-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { formatISO } from 'date-fns';
+import { format, formatISO, parseISO } from 'date-fns';
 import { extractAndCreateTransactions } from '@/ai/flows/extract-and-create-transactions';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -53,6 +53,9 @@ export type Transaction = {
   paymentStatus: 'Fully Paid' | 'Partial Payment' | 'Pending';
   products: Product[];
   companyId: string;
+  paymentMethod?: 'Cash' | 'Cheque' | 'Transfer';
+  bankName?: string;
+  remarks?: string;
 };
 
 
@@ -292,8 +295,8 @@ export default function SalesLedgerPage() {
       )
   }, [transactions, searchFilter]);
 
-  const totalRevenue = filteredTransactions.reduce((sum, t) => sum + t.total, 0);
-  const paidRevenue = filteredTransactions.reduce((sum, t) => sum + t.amountPaid, 0);
+  const totalRevenue = transactions.reduce((sum, t) => sum + t.total, 0);
+  const paidRevenue = transactions.reduce((sum, t) => sum + t.amountPaid, 0);
   const pendingRevenue = totalRevenue - paidRevenue;
 
   return (
@@ -315,7 +318,7 @@ export default function SalesLedgerPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Sales Ledger</h1>
-          <p className="text-muted-foreground">A chronological record of all sales transactions.</p>
+          <p className="text-muted-foreground">A chronological record of all sales transactions and debts.</p>
         </div>
       </div>
       
@@ -395,12 +398,50 @@ export default function SalesLedgerPage() {
                 </Card>
             </TabsContent>
             <TabsContent value="debtors">
-                <AiDebtImporter />
+                <div className="space-y-4">
+                    <AiDebtImporter />
+                    <Card>
+                         <CardHeader>
+                            <CardTitle>Debtors List</CardTitle>
+                            <CardDescription>Detailed view of all payments and debt collections.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <div className="overflow-x-auto rounded-md border">
+                                {isLoading ? (
+                                    <div className="flex items-center justify-center p-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
+                                ) : (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Date</TableHead>
+                                                <TableHead>Facility Name/Location</TableHead>
+                                                <TableHead>Payment Method</TableHead>
+                                                <TableHead>Bank Name</TableHead>
+                                                <TableHead>Amount</TableHead>
+                                                <TableHead>Remarks</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredTransactions.map(t => (
+                                                <TableRow key={t.id}>
+                                                    <TableCell>{parseISO(t.date).toLocaleDateString()}</TableCell>
+                                                    <TableCell>{t.customerName}</TableCell>
+                                                    <TableCell>{t.paymentMethod || 'N/A'}</TableCell>
+                                                    <TableCell>{t.bankName || 'N/A'}</TableCell>
+                                                    <TableCell>GH₵{t.total.toLocaleString()}</TableCell>
+                                                    <TableCell>{t.remarks || 'N/A'}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                )}
+                             </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </TabsContent>
         </Tabs>
     </div>
     </>
   );
 }
-
-    

@@ -18,6 +18,8 @@ const TransactionFromDocSchema = z.object({
   invoiceNumber: z.string().describe("The unique invoice number."),
   dateOfSupply: z.string().describe("The date the supply was made, in 'd MMMM, yyyy' format (e.g., '24th April, 2025')."),
   amount: z.number().describe("The total amount of the invoice."),
+  paymentMethod: z.enum(['Cash', 'Cheque', 'Transfer']).optional().describe("The method of payment."),
+  bankName: z.string().optional().describe("The name of the bank if payment was by cheque or transfer."),
   remarks: z.string().optional().describe("Any remarks or notes about the transaction."),
 });
 
@@ -45,7 +47,7 @@ const prompt = ai.definePrompt({
   output: { schema: ExtractAndCreateTransactionsOutputSchema },
   prompt: `You are an expert at analyzing financial documents like debt trackers or ledgers.
 Analyze the following document and extract a list of all transactions mentioned.
-For each transaction, identify the debtor's name, invoice number, date of supply, amount, and any remarks.
+For each transaction, identify the debtor's name, invoice number, date of supply, amount, payment method (cash/cheque/transfer), bank name, and any remarks.
 The 'NAME OF DEPTOR' is the customer name. 'INVOICE NO' is the invoice number. 'DATE OF SUPPLY' is the date.
 Return the data as a list of transaction objects.
 
@@ -140,7 +142,14 @@ const extractAndCreateTransactionsFlow = ai.defineFlow(
             unitPrice: trans.amount
         }], // Generic product line item
         companyId,
+        paymentMethod: trans.paymentMethod,
+        bankName: trans.bankName,
+        remarks: trans.remarks,
       };
+      
+      // Clean up undefined fields before setting
+      Object.keys(newTransaction).forEach(key => newTransaction[key as keyof typeof newTransaction] === undefined && delete newTransaction[key as keyof typeof newTransaction]);
+
 
       batch.set(transactionRef, { ...newTransaction, id: transactionRef.id });
       transactionCount++;

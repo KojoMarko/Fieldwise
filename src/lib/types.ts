@@ -238,6 +238,9 @@ export type Transaction = {
       unitPrice: number
   }[];
   companyId: string;
+  paymentMethod?: 'Cash' | 'Cheque' | 'Transfer';
+  bankName?: string;
+  remarks?: string;
 };
 
 

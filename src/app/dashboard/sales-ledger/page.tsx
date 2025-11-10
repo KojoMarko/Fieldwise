@@ -56,6 +56,7 @@ export type Transaction = {
   paymentMethod?: 'Cash' | 'Cheque' | 'Transfer';
   bankName?: string;
   remarks?: string;
+  ownerId?: string;
 };
 
 

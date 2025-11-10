@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
 import type { Transaction, Customer } from '@/lib/types';
 import { format, parse } from 'date-fns';
+import * as xlsx from 'xlsx';
 
 const TransactionFromDocSchema = z.object({
   customerName: z.string().describe("The name of the debtor or customer."),
@@ -41,8 +42,8 @@ export async function extractAndCreateTransactions(input: ExtractAndCreateTransa
   return extractAndCreateTransactionsFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'extractTransactionsFromDocPrompt',
+const mediaPrompt = ai.definePrompt({
+  name: 'extractTransactionsFromMediaPrompt',
   input: { schema: z.object({ fileDataUri: z.string() }) },
   output: { schema: ExtractAndCreateTransactionsOutputSchema },
   prompt: `You are an expert at analyzing financial documents like debt trackers or ledgers.
@@ -54,6 +55,20 @@ Return the data as a list of transaction objects.
 Document: {{media url=fileDataUri}}`,
 });
 
+const textPrompt = ai.definePrompt({
+  name: 'extractTransactionsFromTextPrompt',
+  input: { schema: z.object({ documentText: z.string() }) },
+  output: { schema: ExtractAndCreateTransactionsOutputSchema },
+  prompt: `You are an expert at analyzing financial documents like debt trackers or ledgers.
+Analyze the following document content and extract a list of all transactions mentioned.
+For each transaction, identify the debtor's name, invoice number, date of supply, amount, payment method (cash/cheque/transfer), bank name, and any remarks.
+The 'NAME OF DEPTOR' is the customer name. 'INVOICE NO' is the invoice number. 'DATE OF SUPPLY' is the date.
+Return the data as a list of transaction objects.
+
+Document Content:
+{{{documentText}}}`,
+});
+
 const extractAndCreateTransactionsFlow = ai.defineFlow(
   {
     name: 'extractAndCreateTransactionsFlow',
@@ -61,9 +76,27 @@ const extractAndCreateTransactionsFlow = ai.defineFlow(
     outputSchema: z.object({ count: z.number() }),
   },
   async ({ fileDataUri, companyId }) => {
-    // Step 1: Extract transactions from the document using the LLM
-    const { output } = await prompt({ fileDataUri });
+    
+    let output;
+    const mimeType = fileDataUri.substring(fileDataUri.indexOf(':') + 1, fileDataUri.indexOf(';'));
+    const base64Data = fileDataUri.substring(fileDataUri.indexOf(',') + 1);
 
+    if (
+        mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
+        mimeType === 'application/vnd.ms-excel' // .xls
+    ) {
+        const buffer = Buffer.from(base64Data, 'base64');
+        const workbook = xlsx.read(buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const documentText = xlsx.utils.sheet_to_csv(worksheet);
+        const result = await textPrompt({ documentText });
+        output = result.output;
+    } else {
+        const result = await mediaPrompt({ fileDataUri });
+        output = result.output;
+    }
+    
     if (!output || !output.transactions || output.transactions.length === 0) {
       return { count: 0 };
     }

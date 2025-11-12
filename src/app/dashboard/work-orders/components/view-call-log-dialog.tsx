@@ -52,9 +52,7 @@ export function ViewCallLogDialog({ open, onOpenChange, log }: ViewCallLogDialog
             <Separator />
             <DetailRow label="Complainant" value={log.complainant} />
             <Separator />
-            <DetailRow label="Logged By" value={log.loggedByName} />
-            <Separator />
-            <DetailRow label="Assigned To" value={log.assignedToName || <span className="text-muted-foreground">Unassigned</span>} />
+            <DetailRow label="Logged By" value={log.loggedByName || <span className="text-muted-foreground">N/A</span>} />
             <Separator />
             <DetailRow label="Priority" value={<Badge className={priorityStyles[log.priority]}>{log.priority}</Badge>} />
             <Separator />

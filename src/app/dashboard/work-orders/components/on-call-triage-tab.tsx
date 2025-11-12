@@ -112,8 +112,7 @@ export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilte
                   <TableRow>
                     <TableHead>Customer / Asset</TableHead>
                     <TableHead>Reported Problem</TableHead>
-                    <TableHead className="hidden md:table-cell">Assigned To</TableHead>
-                    <TableHead className="hidden lg:table-cell">Logged By</TableHead>
+                    <TableHead className="hidden md:table-cell">Logged By</TableHead>
                     <TableHead className="hidden lg:table-cell">Status</TableHead>
                     <TableHead>Priority</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -132,8 +131,7 @@ export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilte
                             <p className="max-w-xs truncate">{log.problemReported}</p>
                             <p className="text-xs text-muted-foreground">Complainant: {log.complainant}</p>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">{log.assignedToName || <span className="text-muted-foreground">Unassigned</span>}</TableCell>
-                        <TableCell className="hidden lg:table-cell">{log.loggedByName}</TableCell>
+                        <TableCell className="hidden md:table-cell">{log.loggedByName || <span className="text-muted-foreground">N/A</span>}</TableCell>
                         <TableCell className="hidden lg:table-cell">
                             {log.caseResolved ? (
                                 <Badge variant="outline" className="bg-green-100 text-green-800">Resolved</Badge>
@@ -157,9 +155,6 @@ export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilte
                                     <DropdownMenuItem onClick={() => handleViewDetails(log)}>
                                         View Details
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleAssignClick(log)}>
-                                        Assign Engineer
-                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                            </DropdownMenu>
                         </TableCell>
@@ -167,7 +162,7 @@ export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilte
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-48 text-center">
+                      <TableCell colSpan={6} className="h-48 text-center">
                         <PhoneIncoming className="mx-auto h-12 w-12 text-muted-foreground" />
                         <p className="mt-4 font-semibold">No service calls found.</p>
                         <p className="text-sm text-muted-foreground">Click "Log New Call" to add the first one.</p>

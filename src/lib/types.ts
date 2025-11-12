@@ -214,6 +214,8 @@ export type ServiceCallLog = {
   companyId: string;
   loggedById: string;
   loggedByName: string;
+  assignedToId?: string;
+  assignedToName?: string;
 };
 
 export type Product = {

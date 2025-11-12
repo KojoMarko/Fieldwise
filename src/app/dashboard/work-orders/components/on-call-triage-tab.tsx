@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ViewCallLogDialog } from './view-call-log-dialog';
+import { AssignCallLogDialog } from './assign-call-log-dialog';
 
 const priorityStyles = {
   High: 'bg-red-100 text-red-800 border-red-200',
@@ -42,11 +43,17 @@ interface OnCallTriageTabProps {
 export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilter }: OnCallTriageTabProps) {
   const [selectedLog, setSelectedLog] = useState<ServiceCallLog | null>(null);
   const [isViewDialogOpen, setViewDialogOpen] = useState(false);
+  const [isAssignDialogOpen, setAssignDialogOpen] = useState(false);
 
   const handleViewDetails = (log: ServiceCallLog) => {
     setSelectedLog(log);
     setViewDialogOpen(true);
   };
+  
+  const handleAssignClick = (log: ServiceCallLog) => {
+    setSelectedLog(log);
+    setAssignDialogOpen(true);
+  }
 
   const filteredData = useMemo(() => {
     return callLogs.filter(log => {
@@ -70,11 +77,18 @@ export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilte
   return (
     <>
       {selectedLog && (
-          <ViewCallLogDialog
-            open={isViewDialogOpen}
-            onOpenChange={setViewDialogOpen}
-            log={selectedLog}
-          />
+          <>
+            <ViewCallLogDialog
+              open={isViewDialogOpen}
+              onOpenChange={setViewDialogOpen}
+              log={selectedLog}
+            />
+            <AssignCallLogDialog
+              open={isAssignDialogOpen}
+              onOpenChange={setAssignDialogOpen}
+              callLog={selectedLog}
+            />
+          </>
       )}
       <Card>
         <CardHeader>
@@ -98,7 +112,7 @@ export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilte
                   <TableRow>
                     <TableHead>Customer / Asset</TableHead>
                     <TableHead>Reported Problem</TableHead>
-                    <TableHead className="hidden md:table-cell">Action Taken</TableHead>
+                    <TableHead className="hidden md:table-cell">Assigned To</TableHead>
                     <TableHead className="hidden lg:table-cell">Logged By</TableHead>
                     <TableHead className="hidden lg:table-cell">Status</TableHead>
                     <TableHead>Priority</TableHead>
@@ -118,7 +132,7 @@ export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilte
                             <p className="max-w-xs truncate">{log.problemReported}</p>
                             <p className="text-xs text-muted-foreground">Complainant: {log.complainant}</p>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell max-w-xs truncate">{log.immediateActionTaken}</TableCell>
+                        <TableCell className="hidden md:table-cell">{log.assignedToName || <span className="text-muted-foreground">Unassigned</span>}</TableCell>
                         <TableCell className="hidden lg:table-cell">{log.loggedByName}</TableCell>
                         <TableCell className="hidden lg:table-cell">
                             {log.caseResolved ? (
@@ -142,6 +156,9 @@ export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilte
                                 <DropdownMenuContent>
                                     <DropdownMenuItem onClick={() => handleViewDetails(log)}>
                                         View Details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleAssignClick(log)}>
+                                        Assign Engineer
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                            </DropdownMenu>

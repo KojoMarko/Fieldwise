@@ -54,6 +54,8 @@ export function ViewCallLogDialog({ open, onOpenChange, log }: ViewCallLogDialog
             <Separator />
             <DetailRow label="Logged By" value={log.loggedByName} />
             <Separator />
+            <DetailRow label="Assigned To" value={log.assignedToName || <span className="text-muted-foreground">Unassigned</span>} />
+            <Separator />
             <DetailRow label="Priority" value={<Badge className={priorityStyles[log.priority]}>{log.priority}</Badge>} />
             <Separator />
             <DetailRow label="Problem Reported" value={<p className="whitespace-pre-wrap">{log.problemReported}</p>} />
@@ -80,4 +82,3 @@ export function ViewCallLogDialog({ open, onOpenChange, log }: ViewCallLogDialog
     </Dialog>
   );
 }
-

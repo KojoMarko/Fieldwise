@@ -17,10 +17,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { ServiceCallLog } from '@/lib/types';
-import { useState, useEffect, useMemo } from 'react';
-import { LoaderCircle, PhoneIncoming } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { LoaderCircle, PhoneIncoming, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ViewCallLogDialog } from './view-call-log-dialog';
 
 const priorityStyles = {
   High: 'bg-red-100 text-red-800 border-red-200',
@@ -38,6 +40,13 @@ interface OnCallTriageTabProps {
 }
 
 export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilter }: OnCallTriageTabProps) {
+  const [selectedLog, setSelectedLog] = useState<ServiceCallLog | null>(null);
+  const [isViewDialogOpen, setViewDialogOpen] = useState(false);
+
+  const handleViewDetails = (log: ServiceCallLog) => {
+    setSelectedLog(log);
+    setViewDialogOpen(true);
+  };
 
   const filteredData = useMemo(() => {
     return callLogs.filter(log => {
@@ -60,6 +69,13 @@ export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilte
 
   return (
     <>
+      {selectedLog && (
+          <ViewCallLogDialog
+            open={isViewDialogOpen}
+            onOpenChange={setViewDialogOpen}
+            log={selectedLog}
+          />
+      )}
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -86,12 +102,13 @@ export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilte
                     <TableHead className="hidden lg:table-cell">Logged By</TableHead>
                     <TableHead className="hidden lg:table-cell">Status</TableHead>
                     <TableHead>Priority</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredData.length > 0 ? (
                     filteredData.map(log => (
-                      <TableRow key={log.id}>
+                      <TableRow key={log.id} onDoubleClick={() => handleViewDetails(log)} className="cursor-pointer">
                         <TableCell>
                           <div className="font-medium">{log.customerName}</div>
                           <div className="text-sm text-muted-foreground">{log.assetName}</div>
@@ -115,11 +132,25 @@ export function OnCallTriageTab({ callLogs, isLoading, searchFilter, statusFilte
                         <TableCell>
                             <Badge className={priorityStyles[log.priority]}>{log.priority}</Badge>
                         </TableCell>
+                        <TableCell className="text-right">
+                           <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem onClick={() => handleViewDetails(log)}>
+                                        View Details
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                           </DropdownMenu>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-48 text-center">
+                      <TableCell colSpan={7} className="h-48 text-center">
                         <PhoneIncoming className="mx-auto h-12 w-12 text-muted-foreground" />
                         <p className="mt-4 font-semibold">No service calls found.</p>
                         <p className="text-sm text-muted-foreground">Click "Log New Call" to add the first one.</p>

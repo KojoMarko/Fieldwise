@@ -113,8 +113,8 @@ export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogP
 
 
   async function onSubmit(data: CallLogFormValues) {
-    if (!user?.companyId) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not identify your company.' });
+    if (!user?.companyId || !user.name) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not identify your company or user profile.' });
       return;
     }
 
@@ -139,6 +139,8 @@ export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogP
         reportingTime: formatISO(new Date()),
         priority,
         companyId: user.companyId,
+        loggedById: user.id,
+        loggedByName: user.name,
       };
 
       await addDoc(collection(db, 'service-call-logs'), newLog);

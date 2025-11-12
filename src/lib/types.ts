@@ -212,6 +212,8 @@ export type ServiceCallLog = {
   fieldVisitRequired: boolean;
   priority: 'High' | 'Medium' | 'Low';
   companyId: string;
+  loggedById: string;
+  loggedByName: string;
 };
 
 export type Product = {

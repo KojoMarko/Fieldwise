@@ -58,6 +58,7 @@ import { Separator } from './ui/separator';
 import { collection, onSnapshot, query, where, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Notification } from '@/lib/types';
+import { ScrollArea } from './ui/scroll-area';
 
 function capitalize(s: string) {
   if (!s) return '';
@@ -237,31 +238,34 @@ export function Header() {
             <span className="sr-only">Toggle Menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="sm:max-w-xs">
-          <SheetHeader>
-            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-          </SheetHeader>
-          <nav className="grid gap-6 text-lg font-medium">
-            <Link
-              href="/dashboard"
-              className="group flex items-center gap-4 px-2.5 text-foreground"
-              onClick={() => setSheetOpen(false)}
-            >
-              <Image src="/Field Wise Logo.png" width={40} height={40} alt="FieldWise Logo" />
-              <span className="font-semibold text-xl">FieldWise</span>
-            </Link>
-             {navItems.map(item => (
+        <SheetContent side="left" className="sm:max-w-xs flex flex-col p-0">
+            <div className="p-4 shrink-0">
                 <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                  onClick={() => setSheetOpen(false)}
+                href="/dashboard"
+                className="group flex items-center gap-4 px-2.5 text-foreground"
+                onClick={() => setSheetOpen(false)}
                 >
-                  <item.icon className="h-5 w-5" />
-                  {item.label}
+                <Image src="/Field Wise Logo.png" width={40} height={40} alt="FieldWise Logo" />
+                <span className="font-semibold text-xl">FieldWise</span>
                 </Link>
-             ))}
-            <Link
+            </div>
+          <ScrollArea className="flex-1 overflow-y-auto">
+            <nav className="grid gap-2 text-lg font-medium p-4 pt-0">
+                {navItems.map(item => (
+                    <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                    onClick={() => setSheetOpen(false)}
+                    >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                    </Link>
+                ))}
+            </nav>
+          </ScrollArea>
+           <div className="mt-auto border-t p-4 shrink-0">
+             <Link
               href="/dashboard/settings"
               className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                onClick={() => setSheetOpen(false)}
@@ -269,7 +273,7 @@ export function Header() {
               <Settings className="h-5 w-5" />
               Settings
             </Link>
-          </nav>
+          </div>
         </SheetContent>
       </Sheet>
       <Breadcrumb className="hidden md:flex">
@@ -387,3 +391,5 @@ export function Header() {
     </header>
   );
 }
+
+    

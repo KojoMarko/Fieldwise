@@ -195,7 +195,7 @@ export default function CustomerDetailPage({
   return (
     <>
       <EditCustomerDialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen} customer={customer} />
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" className="h-7 w-7" asChild>
             <Link href="/dashboard/customers">
@@ -210,7 +210,7 @@ export default function CustomerDetailPage({
             <p className="text-sm text-muted-foreground">Customer Details</p>
             </div>
         </div>
-        <div className="flex sm:ml-auto items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming Soon!", description: "Full customer history will be available here." })}><HistoryIcon className="h-4 w-4 mr-2" />View History</Button>
             <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}><Edit className="h-4 w-4 mr-2" />Edit</Button>
             <Button size="sm" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}`}><Plus className="h-4 w-4 mr-2" />New Work Order</Link></Button>

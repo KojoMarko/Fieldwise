@@ -40,6 +40,7 @@ import {
   Briefcase,
   AlertTriangle,
   History as HistoryIcon,
+  Phone,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
@@ -160,7 +161,7 @@ export default function CustomerDetailPage({
 
   const handleGenerateReport = () => {
     toast({
-        title: "Feature in Development",
+        title: "Coming Soon!",
         description: "Customer infographic report generation is coming soon!",
     });
   }

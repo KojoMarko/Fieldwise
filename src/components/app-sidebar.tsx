@@ -125,17 +125,20 @@ export function AppSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-sidebar sm:flex">
       <TooltipProvider>
-        <div className="flex flex-col items-center gap-4 px-2 sm:py-5">
+        {/* Logo - Fixed at top */}
+        <div className="flex shrink-0 flex-col items-center gap-4 px-2 py-4">
             <Link
                 href="/dashboard"
-                className="group flex h-20 w-20 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground"
+                className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground"
             >
-                <Image src="/White Logo FW.png" width={80} height={80} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
+                <Image src="/White Logo FW.png" width={40} height={40} alt="FieldWise Logo" className="transition-all group-hover:scale-110" />
                 <span className="sr-only">FieldWise</span>
             </Link>
         </div>
-        <ScrollArea className="flex-1">
-             <nav className="flex flex-col items-center gap-4 px-2">
+
+        {/* Scrollable navigation area */}
+        <ScrollArea className="flex-1 overflow-y-auto">
+             <nav className="flex flex-col items-center gap-4 px-2 pb-4">
                 {navItems.map((item) => (
                     <Tooltip key={item.href}>
                     <TooltipTrigger asChild>
@@ -162,7 +165,9 @@ export function AppSidebar() {
                 ))}
             </nav>
         </ScrollArea>
-        <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
+
+        {/* Settings - Fixed at bottom */}
+        <nav className="mt-auto flex shrink-0 flex-col items-center gap-4 border-t px-2 py-4">
           <Tooltip>
             <TooltipTrigger asChild>
               <Link

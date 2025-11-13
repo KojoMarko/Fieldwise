@@ -216,8 +216,8 @@ export default function CustomerDetailPage({
             <Button size="sm" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}`}><Plus className="h-4 w-4 mr-2" />New Work Order</Link></Button>
         </div>
       </div>
-      <div className="grid gap-6 md:grid-cols-12">
-        <div className="md:col-span-12 lg:col-span-8 xl:col-span-9 space-y-6">
+      <div className="grid gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-8 space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Customer Details</CardTitle>
@@ -348,7 +348,7 @@ export default function CustomerDetailPage({
                 </CardContent>
              </Card>
         </div>
-        <div className="md:col-span-12 lg:col-span-4 xl:col-span-3 space-y-6">
+        <div className="lg:col-span-4 space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Customer Stats</CardTitle>

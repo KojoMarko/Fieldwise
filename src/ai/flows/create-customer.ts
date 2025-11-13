@@ -33,6 +33,18 @@ const createCustomerFlow = ai.defineFlow(
     outputSchema: CreateCustomerOutputSchema,
   },
   async (input) => {
+    // Check for duplicate customer name within the same company
+    const customersRef = db.collection('customers');
+    const existingCustomerQuery = await customersRef
+      .where('name', '==', input.name)
+      .where('companyId', '==', input.companyId)
+      .limit(1)
+      .get();
+
+    if (!existingCustomerQuery.empty) {
+      throw new Error(`A customer with the name "${input.name}" already exists.`);
+    }
+
     const customerRef = db.collection('customers').doc();
     const newCustomer: Customer = {
         ...input,

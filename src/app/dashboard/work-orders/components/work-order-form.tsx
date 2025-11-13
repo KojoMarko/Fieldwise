@@ -30,7 +30,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, LoaderCircle, PlusCircle } from 'lucide-react';
+import { CalendarIcon, LoaderCircle, PlusCircle, ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -42,6 +42,8 @@ import { AddCustomerDialog } from '../../customers/components/add-customer-dialo
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Customer, Asset } from '@/lib/types';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+
 
 const workOrderSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -220,52 +222,77 @@ export function WorkOrderForm() {
           )}
         />
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="customerId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Customer</FormLabel>
-                <Select
-                  onValueChange={(value) => {
-                      if (value === 'add_new_customer') {
-                          setAddCustomerDialogOpen(true);
-                      } else {
-                          field.onChange(value);
-                          form.resetField('assetId'); // Reset asset when customer changes
-                      }
-                  }}
-                  value={field.value}
-                  disabled={isCustomer || !!customerIdFromParams}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a customer" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                    {!isCustomer && (
-                        <>
-                        <SelectSeparator />
-                        <SelectItem value="add_new_customer" className="text-primary focus:text-primary-foreground focus:bg-primary">
-                            <div className='flex items-center gap-2'>
-                                <PlusCircle className="h-4 w-4" />
-                                <span>Add New Customer</span>
-                            </div>
-                        </SelectItem>
-                        </>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+                control={form.control}
+                name="customerId"
+                render={({ field }) => (
+                <FormItem className="flex flex-col">
+                    <FormLabel>Customer</FormLabel>
+                    <Popover>
+                    <PopoverTrigger asChild>
+                        <FormControl>
+                        <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                            "justify-between",
+                            !field.value && "text-muted-foreground"
+                            )}
+                            disabled={isCustomer || !!customerIdFromParams}
+                        >
+                            {field.value
+                            ? customers.find(
+                                (customer) => customer.id === field.value
+                                )?.name
+                            : "Select a customer"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                        </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                        <CommandInput placeholder="Search customer..." />
+                        <CommandList>
+                            <CommandEmpty>No customer found.</CommandEmpty>
+                            <CommandGroup>
+                                {customers.map((customer) => (
+                                <CommandItem
+                                    value={customer.name}
+                                    key={customer.id}
+                                    onSelect={() => {
+                                        form.setValue("customerId", customer.id)
+                                        form.resetField('assetId');
+                                    }}
+                                >
+                                    <Check
+                                    className={cn(
+                                        "mr-2 h-4 w-4",
+                                        customer.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                    />
+                                    {customer.name}
+                                </CommandItem>
+                                ))}
+                                {!isCustomer && (
+                                    <CommandItem
+                                        onSelect={() => setAddCustomerDialogOpen(true)}
+                                        className="text-primary focus:text-primary-foreground focus:bg-primary mt-1"
+                                    >
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add New Customer
+                                    </CommandItem>
+                                )}
+                            </CommandGroup>
+                        </CommandList>
+                        </Command>
+                    </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
           <FormField
             control={form.control}
             name="assetId"
@@ -410,3 +437,5 @@ export function WorkOrderForm() {
     </>
   );
 }
+
+    

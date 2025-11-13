@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser) => {
@@ -104,7 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await signOut(firebaseAuth);
-  }, []);
+    router.push('/login');
+  }, [router]);
 
   return (
     <AuthContext.Provider value={{ user, firebaseUser, login, signup, logout, isLoading }}>
@@ -148,3 +150,5 @@ export function AuthGuard({ children }: { children: ReactNode }) {
 
     return <>{children}</>;
 }
+
+    

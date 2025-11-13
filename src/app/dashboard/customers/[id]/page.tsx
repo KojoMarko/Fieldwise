@@ -204,13 +204,13 @@ export default function CustomerDetailPage({
             </Link>
             </Button>
             <div className="flex-1">
-            <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
+            <h1 className="text-xl font-semibold tracking-tight">
                 {customer.name}
             </h1>
             <p className="text-sm text-muted-foreground">Customer Details</p>
             </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
             <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming Soon!", description: "Full customer history will be available here." })}><HistoryIcon className="h-4 w-4 mr-2" />View History</Button>
             <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}><Edit className="h-4 w-4 mr-2" />Edit</Button>
             <Button size="sm" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}`}><Plus className="h-4 w-4 mr-2" />New Work Order</Link></Button>
@@ -285,12 +285,12 @@ export default function CustomerDetailPage({
                                             <div>Location: <span className="font-medium text-foreground">{asset.location}</span></div>
                                         </div>
                                     </div>
-                                    <Badge variant="outline" className={cn(assetStatusStyles[asset.status as keyof typeof assetStatusStyles])}>{asset.status}</Badge>
+                                    <Badge variant="outline" className={cn("whitespace-nowrap", assetStatusStyles[asset.status as keyof typeof assetStatusStyles])}>{asset.status}</Badge>
                                 </div>
-                                <div className="flex items-center gap-2 self-stretch w-full">
-                                    <Button variant="outline" size="sm" className="flex-1" asChild><Link href={`/dashboard/assets/${asset.id}`}>View</Link></Button>
-                                    <Button variant="outline" size="sm" className="flex-1" asChild><Link href={`/dashboard/assets/${asset.id}?tab=history`}>History</Link></Button>
-                                    <Button variant="secondary" size="sm" className="flex-1" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}&assetId=${asset.id}`}>Service</Link></Button>
+                                <div className="flex flex-col sm:flex-row items-center gap-2 self-stretch w-full">
+                                    <Button variant="outline" size="sm" className="w-full sm:w-auto flex-1" asChild><Link href={`/dashboard/assets/${asset.id}`}>View</Link></Button>
+                                    <Button variant="outline" size="sm" className="w-full sm:w-auto flex-1" asChild><Link href={`/dashboard/assets/${asset.id}?tab=history`}>History</Link></Button>
+                                    <Button variant="secondary" size="sm" className="w-full sm:w-auto flex-1" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}&assetId=${asset.id}`}>Service</Link></Button>
                                 </div>
                             </li>
                             ))}
@@ -418,4 +418,5 @@ export default function CustomerDetailPage({
     
 
     
+
 

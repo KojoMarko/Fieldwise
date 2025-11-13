@@ -41,6 +41,7 @@ export default function CustomersPage() {
       snapshot.forEach((doc) => {
         customersData.push({ id: doc.id, ...doc.data() } as Customer);
       });
+      customersData.sort((a, b) => a.name.localeCompare(b.name));
       setCustomers(customersData);
       setIsLoading(false);
     });

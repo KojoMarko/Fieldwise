@@ -217,7 +217,7 @@ export default function CustomerDetailPage({
         </div>
       </div>
       <div className="grid gap-6 md:grid-cols-12">
-        <div className="md:col-span-8 lg:col-span-9 space-y-6">
+        <div className="md:col-span-12 lg:col-span-8 xl:col-span-9 space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Customer Details</CardTitle>
@@ -348,7 +348,7 @@ export default function CustomerDetailPage({
                 </CardContent>
              </Card>
         </div>
-        <div className="md:col-span-4 lg:col-span-3 space-y-6">
+        <div className="md:col-span-12 lg:col-span-4 xl:col-span-3 space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Customer Stats</CardTitle>
@@ -413,5 +413,6 @@ export default function CustomerDetailPage({
     </>
   );
 }
+    
 
     

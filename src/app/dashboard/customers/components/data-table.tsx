@@ -12,6 +12,7 @@ import {
   useReactTable,
   getFilteredRowModel,
   type ColumnFiltersState,
+  type Row,
 } from '@tanstack/react-table';
 
 import {
@@ -24,13 +25,27 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { deleteCustomer } from '@/ai/flows/delete-customer';
+import type { Customer } from '@/lib/types';
+import { Trash2 } from 'lucide-react';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends Customer, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
@@ -39,6 +54,8 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const { toast } = useToast();
 
   const table = useReactTable({
     data,
@@ -56,9 +73,46 @@ export function DataTable<TData, TValue>({
       columnFilters,
     },
   });
+  
+  const selectedRows = table.getFilteredSelectedRowModel().rows;
+
+  const handleBulkDelete = async () => {
+    try {
+      const deletionPromises = selectedRows.map(row => deleteCustomer({ customerId: row.original.id }));
+      await Promise.all(deletionPromises);
+
+      toast({
+        title: 'Customers Deleted',
+        description: `${selectedRows.length} customer(s) have been successfully deleted.`,
+      });
+      table.resetRowSelection();
+    } catch (error) {
+      console.error('Failed to bulk delete customers:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: 'An error occurred while deleting the customers. Please try again.',
+      });
+    }
+    setDeleteDialogOpen(false);
+  }
 
   return (
     <div>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the selected {selectedRows.length} customer(s).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter by customer name..."
@@ -68,6 +122,17 @@ export function DataTable<TData, TValue>({
           }
           className="max-w-sm"
         />
+        {selectedRows.length > 0 && (
+          <Button
+            variant="destructive"
+            size="sm"
+            className="ml-auto"
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete Selected ({selectedRows.length})
+          </Button>
+        )}
       </div>
       <div className="rounded-md border">
         <Table>

@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { WorkOrder } from '@/lib/types';
+import { isThisMonth, parseISO, differenceInHours } from 'date-fns';
 
 
 export default function DashboardPage() {
@@ -66,10 +67,27 @@ export default function DashboardPage() {
 
   const openWorkOrders = workOrders.filter(
     (wo) =>
-      wo.status === 'Scheduled' ||
-      wo.status === 'In-Progress' ||
-      wo.status === 'Draft'
+      ['Scheduled', 'In-Progress', 'On-Hold', 'Dispatched', 'On-Site', 'Draft'].includes(wo.status)
   ).length;
+
+  const completedThisMonth = workOrders.filter(
+    (wo) => wo.status === 'Completed' && wo.completedDate && isThisMonth(parseISO(wo.completedDate))
+  ).length;
+  
+  const completedOrdersWithDates = workOrders.filter(
+    (wo) => wo.status === 'Completed' && wo.completedDate && wo.createdAt
+  );
+
+  const totalResolutionTime = completedOrdersWithDates.reduce((acc, wo) => {
+    const created = parseISO(wo.createdAt!);
+    const completed = parseISO(wo.completedDate!);
+    const duration = differenceInHours(completed, created);
+    return acc + duration;
+  }, 0);
+  
+  const avgResolutionTime = completedOrdersWithDates.length > 0 
+    ? (totalResolutionTime / completedOrdersWithDates.length).toFixed(1)
+    : '0.0';
 
   return (
     <div className="space-y-6">
@@ -82,7 +100,7 @@ export default function DashboardPage() {
         />
         <KpiCard
           title="Completed This Month"
-          value="124"
+          value={completedThisMonth.toString()}
           description="+15% from last month"
           Icon={CheckCircle}
         />
@@ -94,7 +112,7 @@ export default function DashboardPage() {
         />
         <KpiCard
           title="Avg. Resolution Time"
-          value="4.2 hours"
+          value={`${avgResolutionTime} hours`}
           description="Down from 5.1 hours last month"
           Icon={Clock}
         />

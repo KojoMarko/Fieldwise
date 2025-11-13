@@ -28,7 +28,6 @@ import {
   LoaderCircle,
   Mail,
   MapPin,
-  Phone,
   User as UserIcon,
   Plus,
   Wrench,
@@ -224,7 +223,7 @@ export default function CustomerDetailPage({
                     <CardDescription>Contact information for {customer.name}.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6 text-sm">
                         <div className="flex items-start gap-3">
                             <UserIcon className="h-4 w-4 text-muted-foreground mt-0.5" />
                             <div>
@@ -421,5 +420,7 @@ export default function CustomerDetailPage({
 
 
 
+
+    
 
     

@@ -145,12 +145,12 @@ const salesRepNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/dashboard/sales-ledger', icon: ClipboardList, label: 'Sales Ledger' },
     { href: '/dashboard/products', icon: ShoppingCart, label: 'Products' },
+    { href: '/dashboard/activities', icon: Activity, label: 'Activities' },
     { href: '/dashboard/customers', icon: Building, label: 'Customers' },
     { href: '/dashboard/assets', icon: Package, label: 'Assets' },
     { href: '/dashboard/leads', icon: Users, label: 'Leads' },
     { href: '/dashboard/opportunities', icon: Briefcase, label: 'Opportunities' },
     { href: '/dashboard/reports', icon: FileText, label: 'Reports' },
-    { href: '/dashboard/activities', icon: Activity, label: 'Activities' },
     { href: '/dashboard/documents', icon: BookText, label: 'Documents' },
     { href: '/dashboard/forecasts', icon: TrendingUp, label: 'Forecasts' },
 ];

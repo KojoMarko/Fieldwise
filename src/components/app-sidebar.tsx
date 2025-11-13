@@ -134,7 +134,7 @@ export function AppSidebar() {
                 <span className="sr-only">FieldWise</span>
             </Link>
         </div>
-        <ScrollArea className="flex-1 overflow-y-auto">
+        <ScrollArea className="flex-1">
              <nav className="flex flex-col items-center gap-4 px-2">
                 {navItems.map((item) => (
                     <Tooltip key={item.href}>
@@ -182,4 +182,3 @@ export function AppSidebar() {
     </aside>
   );
 }
-

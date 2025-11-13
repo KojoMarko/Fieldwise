@@ -270,25 +270,27 @@ export default function CustomerDetailPage({
                     {assets.length > 0 ? (
                         <ul className="space-y-4">
                             {assets.map((asset) => (
-                            <li key={asset.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-md border p-4 gap-4">
-                                <div className="grid gap-1 flex-1">
-                                    <div className="flex items-center gap-3">
-                                        <Wrench className="h-5 w-5 text-muted-foreground" />
-                                        <div>
-                                            <p className="font-semibold leading-none">{asset.name}</p>
-                                            <p className="text-sm text-muted-foreground">Model: {asset.model}</p>
+                            <li key={asset.id} className="flex flex-col rounded-md border p-4 gap-4">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="grid gap-1 flex-1">
+                                        <div className="flex items-center gap-3">
+                                            <Wrench className="h-5 w-5 text-muted-foreground" />
+                                            <div>
+                                                <p className="font-semibold leading-none">{asset.name}</p>
+                                                <p className="text-sm text-muted-foreground">Model: {asset.model}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-xs text-muted-foreground pl-8">
+                                            <div>Serial Number: <span className="font-mono text-foreground">{asset.serialNumber}</span></div>
+                                            <div>Location: <span className="font-medium text-foreground">{asset.location}</span></div>
                                         </div>
                                     </div>
-                                    <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-xs text-muted-foreground pl-8">
-                                        <p>Serial Number: <span className="font-mono text-foreground">{asset.serialNumber}</span></p>
-                                        <p>Location: <span className="font-medium text-foreground">{asset.location}</span></p>
-                                    </div>
+                                    <Badge variant="outline" className={cn(assetStatusStyles[asset.status as keyof typeof assetStatusStyles])}>{asset.status}</Badge>
                                 </div>
-                                <div className="flex items-center gap-2 self-stretch sm:self-center w-full sm:w-auto">
-                                    <Badge variant="outline" className={cn("hidden sm:flex", assetStatusStyles[asset.status as keyof typeof assetStatusStyles])}>{asset.status}</Badge>
-                                    <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/assets/${asset.id}`}>View</Link></Button>
-                                    <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/assets/${asset.id}?tab=history`}>History</Link></Button>
-                                    <Button variant="secondary" size="sm" className="flex-1 sm:flex-none" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}&assetId=${asset.id}`}>Service</Link></Button>
+                                <div className="flex items-center gap-2 self-stretch w-full">
+                                    <Button variant="outline" size="sm" className="flex-1" asChild><Link href={`/dashboard/assets/${asset.id}`}>View</Link></Button>
+                                    <Button variant="outline" size="sm" className="flex-1" asChild><Link href={`/dashboard/assets/${asset.id}?tab=history`}>History</Link></Button>
+                                    <Button variant="secondary" size="sm" className="flex-1" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}&assetId=${asset.id}`}>Service</Link></Button>
                                 </div>
                             </li>
                             ))}
@@ -416,3 +418,4 @@ export default function CustomerDetailPage({
     
 
     
+

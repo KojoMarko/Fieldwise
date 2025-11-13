@@ -113,14 +113,13 @@ export default function CustomerDetailPage({
     const workOrdersQuery = query(
       collection(db, 'work-orders'),
       where('customerId', '==', id),
-      limit(20) // Fetch more to sort client-side
+      limit(20)
     );
     unsubscribers.push(
       onSnapshot(workOrdersQuery, (snapshot) => {
         const woData: WorkOrder[] = [];
         snapshot.forEach((doc) => woData.push({ id: doc.id, ...doc.data() } as WorkOrder));
         
-        // Sort client-side
         woData.sort((a,b) => {
             const dateA = a.scheduledDate ? parseISO(a.scheduledDate) : 0;
             const dateB = b.scheduledDate ? parseISO(b.scheduledDate) : 0;
@@ -130,7 +129,6 @@ export default function CustomerDetailPage({
         });
         setWorkOrders(woData.slice(0,5));
         
-        // After fetching work orders, fetch the relevant users if not already fetched
         const technicianIds = [...new Set(woData.map(wo => wo.technicianId).filter(Boolean))];
         if (technicianIds.length > 0) {
             const usersQuery = query(collection(db, 'users'), where('id', 'in', technicianIds));
@@ -193,64 +191,74 @@ export default function CustomerDetailPage({
 
 
   return (
-    <>
+    <div className="w-full max-w-full overflow-x-hidden">
       <EditCustomerDialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen} customer={customer} />
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+      <div className="flex flex-col gap-3 mb-4 px-1">
+        <div className="flex items-center gap-3">
+            <Button variant="outline" size="icon" className="h-7 w-7 shrink-0" asChild>
             <Link href="/dashboard/customers">
                 <ChevronLeft className="h-4 w-4" />
                 <span className="sr-only">Back to Customers</span>
             </Link>
             </Button>
             <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-semibold tracking-tight">
-                {customer.name}
-            </h1>
-            <p className="text-sm text-muted-foreground">Customer Details</p>
+              <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate">
+                  {customer.name}
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">Customer Details</p>
             </div>
         </div>
-        <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-            <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming Soon!", description: "Full customer history will be available here." })}><HistoryIcon className="h-4 w-4 mr-2" />View History</Button>
-            <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}><Edit className="h-4 w-4 mr-2" />Edit</Button>
-            <Button size="sm" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}`}><Plus className="h-4 w-4 mr-2" />New Work Order</Link></Button>
+        <div className="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
+            <Button variant="outline" size="sm" className="w-full justify-center" onClick={() => toast({ title: "Coming Soon!", description: "Full customer history will be available here." })}>
+              <HistoryIcon className="h-4 w-4 mr-2" />View History
+            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="sm" className="w-full" onClick={() => setEditDialogOpen(true)}>
+                <Edit className="h-4 w-4 mr-1.5" />Edit
+              </Button>
+              <Button size="sm" className="w-full" asChild>
+                <Link href={`/dashboard/work-orders/new?customerId=${customer.id}`}>
+                  <Plus className="h-4 w-4 mr-1.5" /><span className="sm:hidden">New WO</span><span className="hidden sm:inline">New Work Order</span>
+                </Link>
+              </Button>
+            </div>
         </div>
       </div>
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-8 space-y-6">
+      <div className="grid gap-4 lg:gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-8 space-y-4 lg:space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Customer Details</CardTitle>
-                    <CardDescription>Contact information for {customer.name}.</CardDescription>
+                    <CardTitle className="text-base sm:text-lg">Customer Details</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">Contact information for {customer.name}.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6 text-sm">
+                    <div className="grid grid-cols-1 gap-4 text-sm">
                         <div className="flex items-start gap-3">
-                            <UserIcon className="h-4 w-4 text-muted-foreground mt-0.5" />
-                            <div>
-                                <p className="text-muted-foreground">Contact Person</p>
-                                <p className="font-medium">{customer.contactPerson}</p>
+                            <UserIcon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs text-muted-foreground">Contact Person</p>
+                                <p className="font-medium break-words">{customer.contactPerson}</p>
                             </div>
                         </div>
                          <div className="flex items-start gap-3">
-                            <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
-                            <div>
-                                <p className="text-muted-foreground">Contact Email</p>
-                                <p className="font-medium break-all">{customer.contactEmail}</p>
+                            <Mail className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs text-muted-foreground">Contact Email</p>
+                                <p className="font-medium break-all text-xs sm:text-sm">{customer.contactEmail}</p>
                             </div>
                         </div>
                          <div className="flex items-start gap-3">
-                            <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
-                            <div>
-                                <p className="text-muted-foreground">Phone Number</p>
+                            <Phone className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs text-muted-foreground">Phone Number</p>
                                 <p className="font-medium">{customer.phone}</p>
                             </div>
                         </div>
                          <div className="flex items-start gap-3">
-                            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                            <div>
-                                <p className="text-muted-foreground">Address</p>
-                                <p className="font-medium">{customer.address}</p>
+                            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs text-muted-foreground">Address</p>
+                                <p className="font-medium break-words">{customer.address}</p>
                             </div>
                         </div>
                     </div>
@@ -258,89 +266,91 @@ export default function CustomerDetailPage({
             </Card>
             <Card>
                 <CardHeader>
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                            <CardTitle>Managed Assets</CardTitle>
-                            <CardDescription>All equipment supplied to or managed for this customer.</CardDescription>
+                            <CardTitle className="text-base sm:text-lg">Managed Assets</CardTitle>
+                            <CardDescription className="text-xs sm:text-sm">All equipment supplied to or managed for this customer.</CardDescription>
                         </div>
-                        <Button size="sm" asChild><Link href={`/dashboard/assets/new?customerId=${customer.id}`}><Plus className="h-4 w-4 mr-2" />Add Asset</Link></Button>
+                        <Button size="sm" className="w-full sm:w-auto shrink-0" asChild>
+                          <Link href={`/dashboard/assets/new?customerId=${customer.id}`}>
+                            <Plus className="h-4 w-4 mr-2" />Add Asset
+                          </Link>
+                        </Button>
                     </div>
                 </CardHeader>
                 <CardContent>
                     {assets.length > 0 ? (
-                        <ul className="space-y-4">
+                        <ul className="space-y-3">
                             {assets.map((asset) => (
-                            <li key={asset.id} className="flex flex-col rounded-md border p-4 gap-4">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="grid gap-1 flex-1">
-                                        <div className="flex items-center gap-3">
-                                            <Wrench className="h-5 w-5 text-muted-foreground" />
-                                            <div>
-                                                <p className="font-semibold leading-none">{asset.name}</p>
-                                                <p className="text-sm text-muted-foreground">Model: {asset.model}</p>
+                            <li key={asset.id} className="flex flex-col rounded-md border p-3 gap-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="grid gap-1 flex-1 min-w-0">
+                                        <div className="flex items-start gap-2">
+                                            <Wrench className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-semibold text-sm leading-tight break-words">{asset.name}</p>
+                                                <p className="text-xs text-muted-foreground break-words">Model: {asset.model}</p>
                                             </div>
                                         </div>
-                                        <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-xs text-muted-foreground pl-8">
-                                            <div>Serial Number: <span className="font-mono text-foreground">{asset.serialNumber}</span></div>
-                                            <div>Location: <span className="font-medium text-foreground">{asset.location}</span></div>
+                                        <div className="flex flex-col gap-1 mt-1 text-xs text-muted-foreground pl-6">
+                                            <div className="break-all">Serial: <span className="font-mono text-foreground">{asset.serialNumber}</span></div>
+                                            <div className="break-words">Location: <span className="font-medium text-foreground">{asset.location}</span></div>
                                         </div>
                                     </div>
-                                    <Badge variant="outline" className={cn("whitespace-nowrap", assetStatusStyles[asset.status as keyof typeof assetStatusStyles])}>{asset.status}</Badge>
+                                    <Badge variant="outline" className={cn("whitespace-nowrap text-xs shrink-0", assetStatusStyles[asset.status as keyof typeof assetStatusStyles])}>{asset.status}</Badge>
                                 </div>
-                                <div className="flex flex-col sm:flex-row items-center gap-2 self-stretch w-full">
-                                    <Button variant="outline" size="sm" className="w-full sm:w-auto flex-1" asChild><Link href={`/dashboard/assets/${asset.id}`}>View</Link></Button>
-                                    <Button variant="outline" size="sm" className="w-full sm:w-auto flex-1" asChild><Link href={`/dashboard/assets/${asset.id}?tab=history`}>History</Link></Button>
-                                    <Button variant="secondary" size="sm" className="w-full sm:w-auto flex-1" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}&assetId=${asset.id}`}>Service</Link></Button>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <Button variant="outline" size="sm" className="text-xs" asChild><Link href={`/dashboard/assets/${asset.id}`}>View</Link></Button>
+                                    <Button variant="outline" size="sm" className="text-xs" asChild><Link href={`/dashboard/assets/${asset.id}?tab=history`}>History</Link></Button>
+                                    <Button variant="secondary" size="sm" className="text-xs" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}&assetId=${asset.id}`}>Service</Link></Button>
                                 </div>
                             </li>
                             ))}
                         </ul>
                     ) : (
-                        <div className="flex flex-col items-center justify-center rounded-md border-2 border-dashed py-10 text-center">
-                            <HardDrive className="h-10 w-10 text-muted-foreground" />
-                            <p className="mt-4 font-semibold">No Assets Found</p>
-                            <p className="text-sm text-muted-foreground">There are no assets currently assigned to this customer.</p>
+                        <div className="flex flex-col items-center justify-center rounded-md border-2 border-dashed py-8 text-center px-4">
+                            <HardDrive className="h-8 w-8 text-muted-foreground" />
+                            <p className="mt-3 font-semibold text-sm">No Assets Found</p>
+                            <p className="text-xs text-muted-foreground mt-1">There are no assets currently assigned to this customer.</p>
                         </div>
                     )}
                 </CardContent>
             </Card>
              <Card>
                 <CardHeader>
-                    <CardTitle>Recent Service History</CardTitle>
+                    <CardTitle className="text-base sm:text-lg">Recent Service History</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="overflow-x-auto">
+                <CardContent className="p-0 sm:p-6">
+                    <div className="w-full overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Work Order ID</TableHead>
-                                    <TableHead>Asset</TableHead>
-                                    <TableHead className="hidden sm:table-cell">Service Type</TableHead>
-                                    <TableHead className="hidden md:table-cell">Technician</TableHead>
-                                    <TableHead>Status</TableHead>
+                                    <TableHead className="whitespace-nowrap text-xs">Date</TableHead>
+                                    <TableHead className="whitespace-nowrap text-xs">WO ID</TableHead>
+                                    <TableHead className="whitespace-nowrap text-xs hidden sm:table-cell">Asset</TableHead>
+                                    <TableHead className="whitespace-nowrap text-xs hidden md:table-cell">Type</TableHead>
+                                    <TableHead className="whitespace-nowrap text-xs">Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {workOrders.length > 0 ? workOrders.map(wo => (
                                     <TableRow key={wo.id}>
-                                        <TableCell>{isValid(parseISO(wo.scheduledDate)) ? format(parseISO(wo.scheduledDate), 'MMM dd, yyyy') : 'N/A'}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="whitespace-nowrap text-xs">{isValid(parseISO(wo.scheduledDate)) ? format(parseISO(wo.scheduledDate), 'MMM dd, yyyy') : 'N/A'}</TableCell>
+                                        <TableCell className="text-xs">
                                             <Link href={`/dashboard/work-orders/${wo.id}`} className="text-primary hover:underline font-medium">
                                                 {wo.id.toUpperCase().substring(0, 8)}
                                             </Link>
                                         </TableCell>
-                                        <TableCell>{assets.find(a => a.id === wo.assetId)?.name || 'N/A'}</TableCell>
-                                        <TableCell className="hidden sm:table-cell">{wo.type}</TableCell>
-                                        <TableCell className="hidden md:table-cell">{users[wo.technicianId || '']?.name || 'Unassigned'}</TableCell>
+                                        <TableCell className="hidden sm:table-cell text-xs max-w-[120px] truncate">{assets.find(a => a.id === wo.assetId)?.name || 'N/A'}</TableCell>
+                                        <TableCell className="hidden md:table-cell text-xs whitespace-nowrap">{wo.type}</TableCell>
                                         <TableCell>
-                                            <Badge className={cn(workOrderStatusStyles[wo.status])} variant="outline">{wo.status}</Badge>
+                                            <Badge className={cn(workOrderStatusStyles[wo.status], "text-[10px] px-1.5 py-0")} variant="outline">{wo.status}</Badge>
                                         </TableCell>
                                     </TableRow>
                                 )) : (
                                 <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center">
-                                            No service history for this customer yet.
+                                        <TableCell colSpan={5} className="h-24 text-center text-xs">
+                                            No service history yet.
                                         </TableCell>
                                     </TableRow> 
                                 )}
@@ -350,78 +360,99 @@ export default function CustomerDetailPage({
                 </CardContent>
              </Card>
         </div>
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-4 lg:space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Customer Stats</CardTitle>
+                    <CardTitle className="text-base sm:text-lg">Customer Stats</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground flex items-center gap-2"><Layers className="h-4 w-4" />Total Assets</span>
-                        <span className="font-semibold">{stats.totalAssets}</span>
+                <CardContent className="space-y-3 text-xs sm:text-sm">
+                    <div className="flex justify-between items-center gap-2">
+                        <span className="text-muted-foreground flex items-center gap-2 min-w-0">
+                          <Layers className="h-4 w-4 shrink-0" />
+                          <span className="truncate">Total Assets</span>
+                        </span>
+                        <span className="font-semibold shrink-0">{stats.totalAssets}</span>
                     </div>
                      <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground flex items-center gap-2"><Briefcase className="h-4 w-4" />Total Work Orders</span>
-                        <span className="font-semibold">{stats.totalWorkOrders}</span>
+                    <div className="flex justify-between items-center gap-2">
+                        <span className="text-muted-foreground flex items-center gap-2 min-w-0">
+                          <Briefcase className="h-4 w-4 shrink-0" />
+                          <span className="truncate">Total Work Orders</span>
+                        </span>
+                        <span className="font-semibold shrink-0">{stats.totalWorkOrders}</span>
                     </div>
                      <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Pending Work Orders</span>
-                        <span className="font-semibold">{stats.pendingWorkOrders}</span>
+                    <div className="flex justify-between items-center gap-2">
+                        <span className="text-muted-foreground flex items-center gap-2 min-w-0">
+                          <AlertTriangle className="h-4 w-4 shrink-0" />
+                          <span className="truncate">Pending Work Orders</span>
+                        </span>
+                        <span className="font-semibold shrink-0">{stats.pendingWorkOrders}</span>
                     </div>
                      <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground flex items-center gap-2"><History className="h-4 w-4" />Last Service</span>
-                        <span className="font-semibold">{stats.lastServiceDate ? format(stats.lastServiceDate, 'MMM dd, yyyy') : 'N/A'}</span>
+                    <div className="flex justify-between items-center gap-2">
+                        <span className="text-muted-foreground flex items-center gap-2 min-w-0">
+                          <History className="h-4 w-4 shrink-0" />
+                          <span className="truncate">Last Service</span>
+                        </span>
+                        <span className="font-semibold text-right shrink-0">{stats.lastServiceDate ? format(stats.lastServiceDate, 'MMM dd, yyyy') : 'N/A'}</span>
                     </div>
                      <Separator />
-                     <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground flex items-center gap-2"><Calendar className="h-4 w-4" />Customer Since</span>
-                        <span className="font-semibold">{stats.customerSince ? format(stats.customerSince, 'MMM dd, yyyy') : 'N/A'}</span>
+                     <div className="flex justify-between items-center gap-2">
+                        <span className="text-muted-foreground flex items-center gap-2 min-w-0">
+                          <Calendar className="h-4 w-4 shrink-0" />
+                          <span className="truncate">Customer Since</span>
+                        </span>
+                        <span className="font-semibold text-right shrink-0">{stats.customerSince ? format(stats.customerSince, 'MMM dd, yyyy') : 'N/A'}</span>
                     </div>
                 </CardContent>
             </Card>
              <Card>
                 <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
+                    <CardTitle className="text-base sm:text-lg">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start" asChild><Link href={`/dashboard/work-orders/new?customerId=${customer.id}`}><Plus className="h-4 w-4 mr-2" />Schedule Service</Link></Button>
-                    <Button variant="outline" className="w-full justify-start" onClick={handleGenerateReport}><FileText className="h-4 w-4 mr-2" />Generate Report</Button>
-                    <Button variant="outline" className="w-full justify-start" asChild><a href={`mailto:${customer.contactEmail}`}><MailIcon className="h-4 w-4 mr-2" />Send Email</a></Button>
-                    <Button variant="outline" className="w-full justify-start" onClick={() => setEditDialogOpen(true)}><Edit className="h-4 w-4 mr-2" />Edit Customer</Button>
+                    <Button variant="outline" className="w-full justify-start text-xs sm:text-sm" asChild>
+                      <Link href={`/dashboard/work-orders/new?customerId=${customer.id}`}>
+                        <Plus className="h-4 w-4 mr-2 shrink-0" />
+                        <span className="truncate">Schedule Service</span>
+                      </Link>
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start text-xs sm:text-sm" onClick={handleGenerateReport}>
+                      <FileText className="h-4 w-4 mr-2 shrink-0" />
+                      <span className="truncate">Generate Report</span>
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start text-xs sm:text-sm" asChild>
+                      <a href={`mailto:${customer.contactEmail}`}>
+                        <MailIcon className="h-4 w-4 mr-2 shrink-0" />
+                        <span className="truncate">Send Email</span>
+                      </a>
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start text-xs sm:text-sm" onClick={() => setEditDialogOpen(true)}>
+                      <Edit className="h-4 w-4 mr-2 shrink-0" />
+                      <span className="truncate">Edit Customer</span>
+                    </Button>
                 </CardContent>
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>Upcoming Maintenance</CardTitle>
+                    <CardTitle className="text-base sm:text-lg">Upcoming Maintenance</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3">
                     {upcomingMaintenance.length > 0 ? (
                         upcomingMaintenance.map(asset => (
-                            <div key={asset.id}>
-                                <p className="font-semibold">{asset.name}</p>
-                                <p className="text-sm text-muted-foreground">Next maintenance: {format(asset.nextPpmDate, 'MMM dd, yyyy')}</p>
+                            <div key={asset.id} className="min-w-0">
+                                <p className="font-semibold text-sm break-words">{asset.name}</p>
+                                <p className="text-xs text-muted-foreground">Next: {format(asset.nextPpmDate, 'MMM dd, yyyy')}</p>
                             </div>
                         ))
                     ) : (
-                       <p className="text-sm text-muted-foreground">No upcoming maintenance scheduled.</p> 
+                       <p className="text-xs sm:text-sm text-muted-foreground">No upcoming maintenance scheduled.</p> 
                     )}
                 </CardContent>
             </Card>
         </div>
       </div>
-    </>
+    </div>
   );
 }
-    
-
-    
-
-
-
-
-    
-
-    

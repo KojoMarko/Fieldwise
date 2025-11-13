@@ -224,30 +224,30 @@ export default function CustomerDetailPage({
                     <CardDescription>Contact information for {customer.name}.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6 text-sm">
-                        <div className="flex items-center gap-3">
-                            <UserIcon className="h-4 w-4 text-muted-foreground" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6 text-sm">
+                        <div className="flex items-start gap-3">
+                            <UserIcon className="h-4 w-4 text-muted-foreground mt-0.5" />
                             <div>
                                 <p className="text-muted-foreground">Contact Person</p>
                                 <p className="font-medium">{customer.contactPerson}</p>
                             </div>
                         </div>
-                         <div className="flex items-center gap-3">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
+                         <div className="flex items-start gap-3">
+                            <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
                             <div>
                                 <p className="text-muted-foreground">Contact Email</p>
-                                <p className="font-medium">{customer.contactEmail}</p>
+                                <p className="font-medium break-all">{customer.contactEmail}</p>
                             </div>
                         </div>
-                         <div className="flex items-center gap-3">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
+                         <div className="flex items-start gap-3">
+                            <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
                             <div>
                                 <p className="text-muted-foreground">Phone Number</p>
                                 <p className="font-medium">{customer.phone}</p>
                             </div>
                         </div>
-                         <div className="flex items-center gap-3">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                         <div className="flex items-start gap-3">
+                            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                             <div>
                                 <p className="text-muted-foreground">Address</p>
                                 <p className="font-medium">{customer.address}</p>

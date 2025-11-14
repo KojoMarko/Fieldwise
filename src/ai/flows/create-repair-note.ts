@@ -21,12 +21,12 @@ const CreateRepairNoteInputSchema = z.object({
   companyId: z.string().min(1, 'Company ID is required.'),
 });
 
-export type CreateRepairNoteInput = z.infer<typeof CreateRepairNoteInputSchema>;
+type CreateRepairNoteInput = z.infer<typeof CreateRepairNoteInputSchema>;
 
 const CreateRepairNoteOutputSchema = z.object({
   id: z.string().describe('The newly created repair note ID.'),
 });
-export type CreateRepairNoteOutput = z.infer<typeof CreateRepairNoteOutputSchema>;
+type CreateRepairNoteOutput = z.infer<typeof CreateRepairNoteOutputSchema>;
 
 
 export async function createRepairNote(input: CreateRepairNoteInput): Promise<CreateRepairNoteOutput> {

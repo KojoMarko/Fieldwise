@@ -18,7 +18,7 @@ const AnalyzeDocumentInputSchema = z.object({
       "The document file to be analyzed, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
 });
-export type AnalyzeDocumentInput = z.infer<typeof AnalyzeDocumentInputSchema>;
+type AnalyzeDocumentInput = z.infer<typeof AnalyzeDocumentInputSchema>;
 
 
 const AnalyzeDocumentOutputSchema = z.object({
@@ -30,7 +30,7 @@ const AnalyzeDocumentOutputSchema = z.object({
   pages: z.number().describe('The total number of pages in the document.'),
   version: z.string().describe('The version number or revision of the document (e.g., "Rev. 4.2", "v3.1").'),
 });
-export type AnalyzeDocumentOutput = z.infer<typeof AnalyzeDocumentOutputSchema>;
+type AnalyzeDocumentOutput = z.infer<typeof AnalyzeDocumentOutputSchema>;
 
 
 export async function analyzeDocument(input: AnalyzeDocumentInput): Promise<AnalyzeDocumentOutput> {

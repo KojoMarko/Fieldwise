@@ -12,12 +12,12 @@ import { z } from 'zod';
 import { ResourceSchema } from '@/lib/schemas';
 import { db } from '@/lib/firebase-admin';
 
-export type CreateResourceInput = z.infer<typeof ResourceSchema>;
+type CreateResourceInput = z.infer<typeof ResourceSchema>;
 
 const CreateResourceOutputSchema = z.object({
   id: z.string().describe('The newly created resource ID.'),
 });
-export type CreateResourceOutput = z.infer<typeof CreateResourceOutputSchema>;
+type CreateResourceOutput = z.infer<typeof CreateResourceOutputSchema>;
 
 export async function createResource(input: CreateResourceInput): Promise<CreateResourceOutput> {
   return createResourceFlow(input);

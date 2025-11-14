@@ -152,7 +152,6 @@ const salesRepNavItems = [
     { href: '/dashboard/leads', icon: Users, label: 'Leads' },
     { href: '/dashboard/opportunities', icon: Briefcase, label: 'Opportunities' },
     { href: '/dashboard/reports', icon: FileText, label: 'Reports' },
-    { href: '/dashboard/documents', icon: BookText, label: 'Documents' },
     { href: '/dashboard/forecasts', icon: TrendingUp, label: 'Forecasts' },
 ];
 
@@ -239,21 +238,19 @@ export function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs flex flex-col p-0">
-            <SheetHeader className="sr-only">
-              <SheetTitle>Navigation Menu</SheetTitle>
-            </SheetHeader>
-            <div className="p-4 shrink-0">
+            <SheetHeader className="p-4 border-b">
                 <Link
-                href="/dashboard"
-                className="group flex items-center gap-4 px-2.5 text-foreground"
-                onClick={() => setSheetOpen(false)}
-                >
-                <Image src="/Field Wise Logo.png" width={40} height={40} alt="FieldWise Logo" />
-                <span className="font-semibold text-xl">FieldWise</span>
+                    href="/dashboard"
+                    className="group flex items-center gap-4 px-2.5 text-foreground"
+                    onClick={() => setSheetOpen(false)}
+                    >
+                    <Image src="/Field Wise Logo.png" width={40} height={40} alt="FieldWise Logo" />
+                    <span className="font-semibold text-xl">FieldWise</span>
                 </Link>
-            </div>
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+            </SheetHeader>
           <ScrollArea className="flex-1 overflow-y-auto">
-            <nav className="grid gap-2 text-lg font-medium p-4 pt-0">
+            <nav className="grid gap-2 text-lg font-medium p-4 pt-4">
                 {navItems.map(item => (
                     <Link
                     key={item.href}
@@ -394,5 +391,3 @@ export function Header() {
     </header>
   );
 }
-
-    

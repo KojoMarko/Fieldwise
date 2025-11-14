@@ -32,12 +32,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LoaderCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { CreateResourceInputSchema, ResourceSchema } from '@/lib/schemas';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { createResource } from '@/ai/flows/create-resource';
 import { formatISO } from 'date-fns';
 import { analyzeDocument } from '@/ai/flows/analyze-document';
 
@@ -48,9 +47,10 @@ interface AddResourceDialogProps {
   onOpenChange: (open: boolean) => void;
   categories: string[];
   types: ('Manual' | 'Guide' | 'Procedure' | 'Reference' | 'Standard')[];
+  initialEquipment?: string;
 }
 
-export function AddResourceDialog({ open, onOpenChange, categories, types }: AddResourceDialogProps) {
+export function AddResourceDialog({ open, onOpenChange, categories, types, initialEquipment }: AddResourceDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,13 +61,20 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
     resolver: zodResolver(CreateResourceInputSchema),
     defaultValues: {
       title: '',
-      equipment: '',
+      equipment: initialEquipment || '',
       description: '',
       category: '',
       version: ''
     },
   });
   
+  useEffect(() => {
+    if (initialEquipment) {
+        form.setValue('equipment', initialEquipment);
+    }
+  }, [initialEquipment, form]);
+
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -140,24 +147,23 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
     }
     setIsSubmitting(true);
     try {
-      const newResource = {
+      const resourceData = {
         ...data,
         uploaderName: user.name,
         companyId: user.companyId,
         updatedDate: formatISO(new Date()),
-        fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", // Placeholder URL to prevent crash
+        fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", // Placeholder URL
       };
 
-      // Validate with a more complete schema before sending to Firestore
-      const fullResource = ResourceSchema.parse(newResource);
+      const fullResource = ResourceSchema.parse(resourceData);
       
-      await addDoc(collection(db, 'resources'), fullResource);
+      await createResource(fullResource);
 
       toast({
         title: 'Resource Added',
         description: `"${data.title}" has been successfully added to the resource center.`,
       });
-      form.reset();
+      form.reset({ equipment: initialEquipment || '' });
       setFileName('');
       onOpenChange(false);
     } catch (error) {
@@ -329,5 +335,3 @@ export function AddResourceDialog({ open, onOpenChange, categories, types }: Add
     </Dialog>
   );
 }
-
-    

@@ -32,6 +32,10 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AddResourceDialog } from '@/app/dashboard/resources/components/add-resource-dialog';
+
+const uniqueCategories = ['Chemistry', 'Hematology', 'Safety', 'Automation', 'Service', 'Sales', 'Immunology'];
+const uniqueTypes = ['Manual', 'Guide', 'Procedure', 'Reference', 'Standard', 'Brochure', 'Datasheet'] as const;
 
 function ResourceCard({ resource }: { resource: Resource }) {
   return (
@@ -46,7 +50,7 @@ function ResourceCard({ resource }: { resource: Resource }) {
           <p className="text-sm text-muted-foreground mb-2">
             {resource.equipment}
           </p>
-          <p className="text-sm text-muted-foreground/80 mb-4">
+          <p className="text-sm text-muted-foreground/80 mb-4 line-clamp-3">
             {resource.description}
           </p>
         </div>
@@ -84,6 +88,7 @@ function ResourcesSection({ brandName }: { brandName: string }) {
     const { user } = useAuth();
     const [resources, setResources] = useState<Resource[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isAddDialogOpen, setAddDialogOpen] = useState(false);
 
     useEffect(() => {
         if (!user?.companyId) {
@@ -102,6 +107,9 @@ function ResourcesSection({ brandName }: { brandName: string }) {
             snapshot.forEach(doc => resourcesData.push({ id: doc.id, ...doc.data() } as Resource));
             setResources(resourcesData);
             setIsLoading(false);
+        }, (error) => {
+            console.error("Error fetching resources:", error);
+            setIsLoading(false);
         });
 
         return () => unsubscribe();
@@ -116,16 +124,36 @@ function ResourcesSection({ brandName }: { brandName: string }) {
         );
     }
     
-    if (resources.length === 0) {
-        return <p className="text-sm text-center text-muted-foreground p-4">No resources found for {brandName}.</p>;
-    }
-
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {resources.map(resource => (
-                <ResourceCard key={resource.id} resource={resource} />
-            ))}
-        </div>
+        <>
+            <AddResourceDialog
+                open={isAddDialogOpen}
+                onOpenChange={setAddDialogOpen}
+                categories={uniqueCategories}
+                types={uniqueTypes}
+                // Pre-fill brand name
+                initialEquipment={brandName}
+            />
+            <div className="mb-6 flex justify-end">
+                 <Button onClick={() => setAddDialogOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Resource
+                </Button>
+            </div>
+            {resources.length === 0 ? (
+                 <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                    <BookOpen className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-4 text-lg font-medium">No Resources Found for {brandName}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Get started by adding a manual, guide, or other document.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {resources.map(resource => (
+                        <ResourceCard key={resource.id} resource={resource} />
+                    ))}
+                </div>
+            )}
+        </>
     );
 }
 

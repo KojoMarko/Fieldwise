@@ -56,6 +56,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [fileDataUri, setFileDataUri] = useState<string | null>(null);
   
   const form = useForm<AddResourceFormValues>({
     resolver: zodResolver(CreateResourceInputSchema),
@@ -91,6 +92,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
         reader.readAsDataURL(file);
         reader.onload = async () => {
             const dataUri = reader.result as string;
+            setFileDataUri(dataUri); // Store the data URI
             const analysisResult = await analyzeDocument({ fileDataUri: dataUri });
 
             if (!analysisResult) {
@@ -137,7 +139,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
         toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
         return;
     }
-     if (!fileName) {
+     if (!fileDataUri) {
       toast({
         variant: 'destructive',
         title: 'File Required',
@@ -152,7 +154,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
         uploaderName: user.name,
         companyId: user.companyId,
         updatedDate: formatISO(new Date()),
-        fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js-sample-files/master/tracemonkey.pdf", // Embeddable placeholder URL
+        fileUrl: fileDataUri,
       };
 
       const fullResource = ResourceSchema.parse(resourceData);
@@ -165,6 +167,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
       });
       form.reset({ equipment: initialEquipment || '' });
       setFileName('');
+      setFileDataUri(null);
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to add resource:', error);

@@ -110,7 +110,7 @@ export const ResourceSchema = CreateResourceInputSchema.extend({
   uploaderName: z.string().min(1, "Uploader's name is required"),
   companyId: z.string().min(1, 'Company ID is required'),
   updatedDate: z.string().min(1, 'Updated date is required'),
-  fileUrl: z.string().url().or(z.string().regex(/^#/)), // Placeholder or URL
+  fileUrl: z.string().min(1, 'A file must be uploaded'),
 });
 
 const FacilityStockSchema = z.object({

@@ -38,6 +38,7 @@ const createResourceFlow = ai.defineFlow(
     const newResource = {
         ...resourceData,
         id: resourceRef.id,
+        equipment_lowercase: resourceData.equipment.toLowerCase(), // Add lowercase field for querying
     };
 
     // Firestore does not accept 'undefined' values. We need to clean the object.

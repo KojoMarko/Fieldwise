@@ -99,7 +99,7 @@ function ResourcesSection({ brandName }: { brandName: string }) {
         const resourcesQuery = query(
             collection(db, 'resources'),
             where('companyId', '==', user.companyId),
-            where('equipment', '==', brandName)
+            where('equipment_lowercase', '==', brandName.toLowerCase())
         );
 
         const unsubscribe = onSnapshot(resourcesQuery, (snapshot) => {

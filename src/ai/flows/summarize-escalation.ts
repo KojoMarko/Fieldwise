@@ -4,8 +4,6 @@
  * @fileOverview A flow for summarizing an escalation document (e.g., PDF of emails).
  *
  * - summarizeEscalation - A function that handles the document summarization.
- * - SummarizeEscalationInput - The input type for the function.
- * - SummarizeEscalationOutput - The return type for the function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -19,13 +17,13 @@ const SummarizeEscalationInputSchema = z.object({
     ),
   assetBrand: z.string().describe('The asset brand this escalation pertains to.'),
 });
-export type SummarizeEscalationInput = z.infer<typeof SummarizeEscalationInputSchema>;
+type SummarizeEscalationInput = z.infer<typeof SummarizeEscalationInputSchema>;
 
 
 const SummarizeEscalationOutputSchema = z.object({
   summary: z.string().describe('A concise, well-written summary of the escalation, suitable for a repair knowledge base.'),
 });
-export type SummarizeEscalationOutput = z.infer<typeof SummarizeEscalationOutputSchema>;
+type SummarizeEscalationOutput = z.infer<typeof SummarizeEscalationOutputSchema>;
 
 
 export async function summarizeEscalation(input: SummarizeEscalationInput): Promise<SummarizeEscalationOutput> {

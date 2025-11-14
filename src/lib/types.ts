@@ -283,3 +283,13 @@ export type Activity = {
   status: 'today' | 'upcoming' | 'overdue' | 'completed';
   companyId: string;
 };
+
+export type RepairNote = {
+    id: string;
+    assetBrand: string;
+    note: string;
+    authorName: string;
+    authorId: string;
+    timestamp: string; // ISO string
+    companyId: string;
+};

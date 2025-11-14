@@ -6,9 +6,10 @@ import {
   query,
   where,
   onSnapshot,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Asset } from '@/lib/types';
+import type { Asset, RepairNote } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -24,6 +25,111 @@ import { useAuth } from '@/hooks/use-auth';
 import { DataTable } from '../../components/data-table';
 import { columns } from '../../components/columns';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { createRepairNote } from '@/ai/flows/create-repair-note';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+
+function RepairNotesSection({ brandName }: { brandName: string }) {
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [newNote, setNewNote] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [notes, setNotes] = useState<RepairNote[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!user?.companyId) {
+            setIsLoading(false);
+            return;
+        }
+
+        const notesQuery = query(
+            collection(db, 'repair-notes'),
+            where('companyId', '==', user.companyId),
+            where('assetBrand', '==', brandName),
+            orderBy('timestamp', 'desc')
+        );
+
+        const unsubscribe = onSnapshot(notesQuery, (snapshot) => {
+            const notesData: RepairNote[] = [];
+            snapshot.forEach(doc => notesData.push({ id: doc.id, ...doc.data() } as RepairNote));
+            setNotes(notesData);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+
+    }, [user?.companyId, brandName]);
+
+    const handleSaveNote = async () => {
+        if (!newNote.trim() || !user) return;
+        setIsSubmitting(true);
+        try {
+            await createRepairNote({
+                assetBrand: brandName,
+                note: newNote,
+                authorId: user.id,
+                authorName: user.name,
+                companyId: user.companyId,
+            });
+            toast({ title: 'Note Saved', description: 'Your repair note has been added to the knowledge base.' });
+            setNewNote('');
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not save your note.' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
+    return (
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        Service Intelligence
+                    </CardTitle>
+                    <CardDescription>
+                        Add key repair notes and messages for the {brandName} to build a knowledge base.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Textarea 
+                        placeholder="Add a new note or insight for this machine type..."
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                    />
+                    <Button className="w-full" onClick={handleSaveNote} disabled={isSubmitting || !newNote.trim()}>
+                        {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Note
+                    </Button>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Repair Notes History</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {isLoading ? (
+                         <div className="flex items-center justify-center p-4">
+                            <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                            <span>Loading notes...</span>
+                        </div>
+                    ) : notes.length > 0 ? (
+                        notes.map(note => (
+                             <div key={note.id} className="border-l-4 border-blue-400 pl-4 py-2 bg-blue-50">
+                                <p className="text-sm font-medium whitespace-pre-wrap">{note.note}</p>
+                                <p className="text-xs text-muted-foreground mt-2">- {note.authorName}, {formatDistanceToNow(parseISO(note.timestamp), { addSuffix: true })}</p>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-sm text-center text-muted-foreground p-4">No repair notes found for {brandName}.</p>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
 
 export default function AssetBrandPage({
   params,
@@ -110,38 +216,7 @@ export default function AssetBrandPage({
             </Card>
         </div>
 
-        <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-primary" />
-                        Service Intelligence
-                    </CardTitle>
-                    <CardDescription>
-                        Key repair notes and messages from senior engineers for the {brandName}.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Textarea placeholder="Add a new note or insight for this machine type..."/>
-                    <Button className="w-full">Save Note</Button>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Repair Notes</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="border-l-4 border-yellow-400 pl-4 py-2 bg-yellow-50">
-                        <p className="text-sm font-medium">"Remember to check the secondary pump filter (P/N V5600-PF-S2) if you get a low-pressure error. It's often overlooked."</p>
-                        <p className="text-xs text-muted-foreground mt-1">- Senior Engineer, 05/20/2024</p>
-                    </div>
-                     <div className="border-l-4 border-blue-400 pl-4 py-2 bg-blue-50">
-                        <p className="text-sm font-medium">"The calibration sequence must be run twice after replacing the mainboard. The first run often fails with a timeout."</p>
-                         <p className="text-xs text-muted-foreground mt-1">- Tech Support Bulletin, 03/11/2024</p>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+        <RepairNotesSection brandName={brandName} />
 
       </div>
     </div>

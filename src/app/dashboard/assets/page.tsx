@@ -1,6 +1,6 @@
 
 'use client';
-import { File, PlusCircle, LoaderCircle, UploadCloud, Sparkles } from 'lucide-react';
+import { File, PlusCircle, LoaderCircle, UploadCloud, Sparkles, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,19 +9,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { columns } from './components/columns';
-import { DataTable } from './components/data-table';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Asset } from '@/lib/types';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { extractAndLogMaintenance } from '@/ai/flows/extract-and-log-maintenance';
 import { extractAndCreateAssets } from '@/ai/flows/extract-and-create-assets';
 import { Input } from '@/components/ui/input';
-import * as xlsx from 'xlsx';
 
 function AiAssetImporter() {
   const { user } = useAuth();
@@ -112,101 +108,11 @@ function AiAssetImporter() {
   );
 }
 
-
-function AiLogImporter() {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [fileName, setFileName] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user?.companyId) return;
-
-    setFileName(file.name);
-    setIsExtracting(true);
-    toast({
-      title: 'AI Analysis Started',
-      description: 'The AI is reading your maintenance document. This may take a moment.',
-    });
-
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        const dataUri = reader.result as string;
-        const result = await extractAndLogMaintenance({
-          fileDataUri: dataUri,
-          companyId: user.companyId,
-        });
-        
-        toast({
-          title: 'Analysis Complete!',
-          description: `Successfully logged ${result.count} maintenance event(s).`,
-        });
-      };
-      reader.onerror = () => {
-        throw new Error('Could not read the file.');
-      }
-    } catch (error) {
-      console.error("Error extracting maintenance logs:", error);
-      toast({
-        variant: 'destructive',
-        title: 'Analysis Failed',
-        description: 'The AI could not process the document. Please add the log manually.',
-      });
-    } finally {
-      setIsExtracting(false);
-      setFileName('');
-      if(fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-
-  return (
-    <Card className="bg-accent/50 border-primary/20 border-dashed">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="text-primary" />
-          AI Maintenance Log Importer
-        </CardTitle>
-        <CardDescription>
-          Upload a maintenance or PPM report. The AI will find the correct asset and update its service history automatically.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4">
-          <Button onClick={() => fileInputRef.current?.click()} disabled={isExtracting} variant="outline">
-              <UploadCloud className="mr-2 h-4 w-4" />
-            Upload Report
-          </Button>
-          <Input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            onChange={handleFileChange}
-            accept=".pdf,.doc,.docx,.txt"
-            disabled={isExtracting}
-          />
-          {isExtracting && (
-            <div className="flex items-center text-sm text-muted-foreground">
-              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-              <span>Analyzing document: {fileName}...</span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-
 export default function AssetsPage() {
   const { user } = useAuth();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -228,55 +134,32 @@ export default function AssetsPage() {
     return () => unsubscribe();
   }, [user?.companyId]);
   
-  const handleExport = () => {
-    const dataToExport = assets.map(asset => ({
-        'Asset ID': asset.id,
-        'Asset Name': asset.name,
-        'Model': asset.model,
-        'Serial Number': asset.serialNumber,
-        'Customer ID': asset.customerId,
-        'Location': asset.location,
-        'Status': asset.status,
-        'Installation Date': asset.installationDate,
-        'Last PPM Date': asset.lastPpmDate || 'N/A',
-        'PPM Frequency (Months)': asset.ppmFrequency || 'N/A',
-    }));
-
-    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
-    const workbook = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(workbook, worksheet, "Assets");
-
-    // Generate buffer
-    const excelBuffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'array' });
-    
-    // Create a Blob
-    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-T-8' });
-
-    // Create a URL and trigger the download
-    const url = URL.createObjectURL(data);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'Asset_Inventory.xlsx');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const canAddAssets = user?.role === 'Admin' || user?.role === 'Engineer';
+
+  const groupedAssets = useMemo(() => {
+    const filtered = filter 
+        ? assets.filter(
+            (a) =>
+            a.name.toLowerCase().includes(filter.toLowerCase()) ||
+            a.model.toLowerCase().includes(filter.toLowerCase())
+        )
+        : assets;
+
+    return filtered.reduce((acc, asset) => {
+        const name = asset.name || 'Uncategorized';
+        if (!acc[name]) {
+            acc[name] = [];
+        }
+        acc[name].push(asset);
+        return acc;
+    }, {} as Record<string, Asset[]>);
+  }, [filter, assets]);
 
   return (
     <>
-      <div className="flex items-center mb-4">
+      <div className="flex items-center mb-6">
         <h1 className="text-lg font-semibold md:text-2xl">Assets</h1>
         <div className="ml-auto flex items-center gap-2">
-          {user?.role === 'Admin' && (
-            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
-              <File className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Export
-              </span>
-            </Button>
-          )}
            {canAddAssets && (
              <Button size="sm" className="h-8 gap-1" asChild>
                   <Link href="/dashboard/assets/new">
@@ -289,25 +172,46 @@ export default function AssetsPage() {
            )}
         </div>
       </div>
-       <div className='mb-6 grid gap-6 md:grid-cols-2'>
+       <div className='mb-6'>
         <AiAssetImporter />
-        <AiLogImporter />
       </div>
       <Card>
         <CardHeader>
-            <CardTitle>Asset Inventory</CardTitle>
+            <CardTitle>Asset Groups</CardTitle>
             <CardDescription>
-            Manage all company and customer assets.
+            Assets are grouped by their name. Select a group to view all assets and related service intelligence.
             </CardDescription>
+            <div className="pt-2">
+              <Input 
+                placeholder="Filter asset groups..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
              <div className="flex items-center justify-center p-10">
                 <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Loading assets...</p>
+                <p className="ml-4 text-muted-foreground">Loading asset groups...</p>
             </div>
            ) : (
-            <DataTable columns={columns} data={assets} />
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(groupedAssets).map(([name, assetGroup]) => (
+                <Link key={name} href={`/dashboard/assets/brand/${encodeURIComponent(name)}`}>
+                  <Card className="hover:bg-accent hover:border-primary transition-all h-full">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div className='flex-1 min-w-0'>
+                        <CardTitle className="truncate">{name}</CardTitle>
+                        <CardDescription>{assetGroup.length} assets</CardDescription>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    </CardHeader>
+                  </Card>
+                </Link>
+              ))}
+            </div>
            )}
         </CardContent>
       </Card>

@@ -152,7 +152,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
         uploaderName: user.name,
         companyId: user.companyId,
         updatedDate: formatISO(new Date()),
-        fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", // Placeholder URL
+        fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js-sample-files/master/tracemonkey.pdf", // Embeddable placeholder URL
       };
 
       const fullResource = ResourceSchema.parse(resourceData);

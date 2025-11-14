@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import {
   collection,
   query,
@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Edit, HardDrive, LoaderCircle, PlusCircle, Sparkles, Wrench } from 'lucide-react';
+import { ChevronLeft, Edit, HardDrive, LoaderCircle, PlusCircle, Sparkles, Wrench, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { DataTable } from '../../components/data-table';
@@ -27,6 +27,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { createRepairNote } from '@/ai/flows/create-repair-note';
 import { formatDistanceToNow, parseISO } from 'date-fns';
+import { summarizeEscalation } from '@/ai/flows/summarize-escalation';
+import { Input } from '@/components/ui/input';
 
 function RepairNotesSection({ brandName }: { brandName: string }) {
     const { user } = useAuth();
@@ -35,6 +37,7 @@ function RepairNotesSection({ brandName }: { brandName: string }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [notes, setNotes] = useState<RepairNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (!user?.companyId) {
@@ -60,26 +63,71 @@ function RepairNotesSection({ brandName }: { brandName: string }) {
         return () => unsubscribe();
 
     }, [user?.companyId, brandName]);
-
-    const handleSaveNote = async () => {
-        if (!newNote.trim() || !user) return;
-        setIsSubmitting(true);
-        try {
-            await createRepairNote({
-                assetBrand: brandName,
-                note: newNote,
-                authorId: user.id,
-                authorName: user.name,
-                companyId: user.companyId,
-            });
-            toast({ title: 'Note Saved', description: 'Your repair note has been added to the knowledge base.' });
-            setNewNote('');
-        } catch (error) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not save your note.' });
-        } finally {
-            setIsSubmitting(false);
-        }
+    
+    const saveNote = async (noteContent: string) => {
+      if (!noteContent.trim() || !user) return;
+      setIsSubmitting(true);
+      try {
+          await createRepairNote({
+              assetBrand: brandName,
+              note: noteContent,
+              authorId: user.id,
+              authorName: user.name,
+              companyId: user.companyId,
+          });
+          toast({ title: 'Note Saved', description: 'Your repair note has been added to the knowledge base.' });
+          setNewNote(''); // Clear manual entry field
+      } catch (error) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Could not save your note.' });
+      } finally {
+          setIsSubmitting(false);
+      }
     };
+
+
+    const handleSaveNote = () => {
+      saveNote(newNote);
+    };
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !user?.companyId) return;
+
+        setIsSubmitting(true);
+        toast({
+            title: 'AI Summarization Started',
+            description: 'The AI is analyzing your escalation document. This may take a moment.',
+        });
+
+        try {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const dataUri = reader.result as string;
+                const result = await summarizeEscalation({
+                    fileDataUri: dataUri,
+                    assetBrand: brandName,
+                });
+                // Once summarized, save it as a new note
+                await saveNote(result.summary);
+            };
+            reader.onerror = () => {
+                throw new Error('Could not read the file.');
+            }
+        } catch (error: any) {
+            console.error("Error summarizing escalation:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Summarization Failed',
+                description: error.message || 'The AI could not process the document. Please try again.',
+            });
+            setIsSubmitting(false);
+        } finally {
+          if(fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+        }
+    }
     
     return (
         <div className="space-y-6">
@@ -90,19 +138,33 @@ function RepairNotesSection({ brandName }: { brandName: string }) {
                         Service Intelligence
                     </CardTitle>
                     <CardDescription>
-                        Add key repair notes and messages for the {brandName} to build a knowledge base.
+                        Add key repair notes for the {brandName} or upload an escalation PDF for the AI to summarize.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <Textarea 
-                        placeholder="Add a new note or insight for this machine type..."
+                        placeholder="Manually add a new note or insight..."
                         value={newNote}
                         onChange={(e) => setNewNote(e.target.value)}
                     />
-                    <Button className="w-full" onClick={handleSaveNote} disabled={isSubmitting || !newNote.trim()}>
-                        {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                        Save Note
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button className="w-full" onClick={handleSaveNote} disabled={isSubmitting || !newNote.trim()}>
+                            {isSubmitting && newNote ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Save Note
+                        </Button>
+                        <Button className="w-full" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isSubmitting}>
+                           {isSubmitting && !newNote ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                           Upload PDF
+                        </Button>
+                        <Input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            className="hidden" 
+                            onChange={handleFileUpload}
+                            accept="application/pdf"
+                            disabled={isSubmitting}
+                        />
+                    </div>
                 </CardContent>
             </Card>
              <Card>

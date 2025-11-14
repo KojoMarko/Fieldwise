@@ -8,7 +8,7 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Asset, RepairNote } from '@/lib/types';
+import type { Asset, RepairNote, Resource } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import {
   Card,
@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Edit, HardDrive, LoaderCircle, PlusCircle, Sparkles, Wrench, Upload } from 'lucide-react';
+import { ChevronLeft, Edit, HardDrive, LoaderCircle, PlusCircle, Sparkles, Wrench, Upload, BookOpen, FileText, Download, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { DataTable } from '../../components/data-table';
@@ -29,6 +29,105 @@ import { createRepairNote } from '@/ai/flows/create-repair-note';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { summarizeEscalation } from '@/ai/flows/summarize-escalation';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+function ResourceCard({ resource }: { resource: Resource }) {
+  return (
+    <Card className="flex flex-col">
+      <CardContent className="p-6 flex flex-col flex-grow">
+        <div className="flex justify-between items-start mb-4">
+          <BookOpen className="h-6 w-6 text-muted-foreground" />
+          <Badge variant="outline">{resource.category}</Badge>
+        </div>
+        <div className="flex-grow">
+          <h3 className="text-lg font-semibold mb-1">{resource.title}</h3>
+          <p className="text-sm text-muted-foreground mb-2">
+            {resource.equipment}
+          </p>
+          <p className="text-sm text-muted-foreground/80 mb-4">
+            {resource.description}
+          </p>
+        </div>
+        <div className="text-xs text-muted-foreground space-y-2 mb-6">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <FileText className="h-3 w-3" />
+              <span>{resource.pages} pages</span>
+            </div>
+            <span>{resource.version}</span>
+          </div>
+           <div className="flex items-center gap-2">
+             <UserIcon className="h-3 w-3" />
+             <span>Uploaded by {resource.uploaderName} on {new Date(resource.updatedDate).toLocaleDateString()}</span>
+           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button className="w-full" asChild>
+            <Link href={resource.fileUrl} target="_blank">View Document</Link>
+          </Button>
+          <Button variant="outline" className="w-full" asChild>
+             <Link href={resource.fileUrl} download={`${resource.title.replace(/\s/g, '_')}.pdf`}>
+                <Download className="mr-2 h-4 w-4" />
+                Download
+             </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+
+function ResourcesSection({ brandName }: { brandName: string }) {
+    const { user } = useAuth();
+    const [resources, setResources] = useState<Resource[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!user?.companyId) {
+            setIsLoading(false);
+            return;
+        }
+
+        const resourcesQuery = query(
+            collection(db, 'resources'),
+            where('companyId', '==', user.companyId),
+            where('equipment', '==', brandName)
+        );
+
+        const unsubscribe = onSnapshot(resourcesQuery, (snapshot) => {
+            const resourcesData: Resource[] = [];
+            snapshot.forEach(doc => resourcesData.push({ id: doc.id, ...doc.data() } as Resource));
+            setResources(resourcesData);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [user?.companyId, brandName]);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center p-10">
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                <span>Loading resources...</span>
+            </div>
+        );
+    }
+    
+    if (resources.length === 0) {
+        return <p className="text-sm text-center text-muted-foreground p-4">No resources found for {brandName}.</p>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {resources.map(resource => (
+                <ResourceCard key={resource.id} resource={resource} />
+            ))}
+        </div>
+    );
+}
 
 function RepairNotesSection({ brandName }: { brandName: string }) {
     const { user } = useAuth();
@@ -203,6 +302,13 @@ export default function AssetBrandPage({
   const brandName = decodeURIComponent(resolvedParams.brandName);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('inventory');
+
+  const TABS = [
+    { value: 'inventory', label: 'Inventory' },
+    { value: 'knowledge_base', label: 'Knowledge Base' },
+    { value: 'resources', label: 'Resources' },
+  ];
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -263,24 +369,51 @@ export default function AssetBrandPage({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Asset Inventory</CardTitle>
-                    <CardDescription>
-                    All registered assets for the {brandName} brand.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <DataTable columns={columns} data={assets} />
-                </CardContent>
-            </Card>
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <div className="block sm:hidden mb-4">
+                <Select value={activeTab} onValueChange={setActiveTab}>
+                    <SelectTrigger className="justify-center">
+                        <SelectValue placeholder="Select a tab" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {TABS.map((tab) => (
+                            <SelectItem key={tab.value} value={tab.value}>
+                                {tab.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="hidden sm:flex justify-center">
+                <TabsList className="grid w-full grid-cols-3">
+                    {TABS.map((tab) => (
+                        <TabsTrigger key={tab.value} value={tab.value}>
+                            {tab.label}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
+            </div>
+            <TabsContent value="inventory" className="mt-4">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Asset Inventory</CardTitle>
+                        <CardDescription>
+                        All registered assets for the {brandName} brand.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <DataTable columns={columns} data={assets} />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="knowledge_base" className="mt-4">
+                <RepairNotesSection brandName={brandName} />
+            </TabsContent>
+            <TabsContent value="resources" className="mt-4">
+                <ResourcesSection brandName={brandName} />
+            </TabsContent>
+        </Tabs>
 
-        <RepairNotesSection brandName={brandName} />
-
-      </div>
     </div>
   );
 }

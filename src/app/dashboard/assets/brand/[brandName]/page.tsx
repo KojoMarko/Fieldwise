@@ -6,7 +6,6 @@ import {
   query,
   where,
   onSnapshot,
-  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Asset, RepairNote } from '@/lib/types';
@@ -46,13 +45,14 @@ function RepairNotesSection({ brandName }: { brandName: string }) {
         const notesQuery = query(
             collection(db, 'repair-notes'),
             where('companyId', '==', user.companyId),
-            where('assetBrand', '==', brandName),
-            orderBy('timestamp', 'desc')
+            where('assetBrand', '==', brandName)
         );
 
         const unsubscribe = onSnapshot(notesQuery, (snapshot) => {
             const notesData: RepairNote[] = [];
             snapshot.forEach(doc => notesData.push({ id: doc.id, ...doc.data() } as RepairNote));
+            // Sort client-side to avoid needing a composite index
+            notesData.sort((a, b) => parseISO(b.timestamp).getTime() - parseISO(a.timestamp).getTime());
             setNotes(notesData);
             setIsLoading(false);
         });

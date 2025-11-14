@@ -28,10 +28,11 @@ import { Textarea } from '@/components/ui/textarea';
 export default function AssetBrandPage({
   params,
 }: {
-  params: { brandName: string };
+  params: Promise<{ brandName: string }>;
 }) {
   const { user } = useAuth();
-  const brandName = decodeURIComponent(params.brandName);
+  const resolvedParams = use(params);
+  const brandName = decodeURIComponent(resolvedParams.brandName);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -146,4 +147,3 @@ export default function AssetBrandPage({
     </div>
   );
 }
-

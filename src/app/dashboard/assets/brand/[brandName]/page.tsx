@@ -33,11 +33,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AddResourceDialog } from '@/app/dashboard/resources/components/add-resource-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const uniqueCategories = ['Chemistry', 'Hematology', 'Safety', 'Automation', 'Service', 'Sales', 'Immunology'];
 const uniqueTypes = ['Manual', 'Guide', 'Procedure', 'Reference', 'Standard', 'Brochure', 'Datasheet'] as const;
 
-function ResourceCard({ resource }: { resource: Resource }) {
+function PdfViewerDialog({ open, onOpenChange, url, title }: { open: boolean, onOpenChange: (open: boolean) => void, url: string | null, title: string | null }) {
+    if (!url) return null;
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-4xl h-[90vh]">
+                <DialogHeader>
+                    <DialogTitle>{title || 'Document Viewer'}</DialogTitle>
+                </DialogHeader>
+                <div className="flex-grow h-full">
+                    <iframe src={url} className="w-full h-full border-0" title={title || 'PDF Viewer'} />
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+function ResourceCard({ resource, onView }: { resource: Resource, onView: (url: string, title: string) => void }) {
   return (
     <Card className="flex flex-col">
       <CardContent className="p-6 flex flex-col flex-grow">
@@ -68,9 +90,7 @@ function ResourceCard({ resource }: { resource: Resource }) {
            </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button className="w-full" asChild>
-            <Link href={resource.fileUrl} target="_blank">View Document</Link>
-          </Button>
+          <Button className="w-full" onClick={() => onView(resource.fileUrl, resource.title)}>View Document</Button>
           <Button variant="outline" className="w-full" asChild>
              <Link href={resource.fileUrl} download={`${resource.title.replace(/\s/g, '_')}.pdf`}>
                 <Download className="mr-2 h-4 w-4" />
@@ -89,6 +109,9 @@ function ResourcesSection({ brandName }: { brandName: string }) {
     const [resources, setResources] = useState<Resource[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+    const [isViewerOpen, setIsViewerOpen] = useState(false);
+    const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
+    const [selectedPdfTitle, setSelectedPdfTitle] = useState<string | null>(null);
 
     useEffect(() => {
         if (!user?.companyId) {
@@ -114,6 +137,12 @@ function ResourcesSection({ brandName }: { brandName: string }) {
 
         return () => unsubscribe();
     }, [user?.companyId, brandName]);
+    
+    const handleViewResource = (url: string, title: string) => {
+        setSelectedPdfUrl(url);
+        setSelectedPdfTitle(title);
+        setIsViewerOpen(true);
+    };
 
     if (isLoading) {
         return (
@@ -131,8 +160,13 @@ function ResourcesSection({ brandName }: { brandName: string }) {
                 onOpenChange={setAddDialogOpen}
                 categories={uniqueCategories}
                 types={uniqueTypes}
-                // Pre-fill brand name
                 initialEquipment={brandName}
+            />
+            <PdfViewerDialog
+                open={isViewerOpen}
+                onOpenChange={setIsViewerOpen}
+                url={selectedPdfUrl}
+                title={selectedPdfTitle}
             />
             <div className="mb-6 flex justify-end">
                  <Button onClick={() => setAddDialogOpen(true)}>
@@ -149,7 +183,7 @@ function ResourcesSection({ brandName }: { brandName: string }) {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {resources.map(resource => (
-                        <ResourceCard key={resource.id} resource={resource} />
+                        <ResourceCard key={resource.id} resource={resource} onView={handleViewResource} />
                     ))}
                 </div>
             )}

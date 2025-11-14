@@ -30,8 +30,30 @@ import { AddResourceDialog } from './components/add-resource-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
-function ResourceCard({ resource }: { resource: Resource }) {
+function PdfViewerDialog({ open, onOpenChange, url, title }: { open: boolean, onOpenChange: (open: boolean) => void, url: string | null, title: string | null }) {
+    if (!url) return null;
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-4xl h-[90vh]">
+                <DialogHeader>
+                    <DialogTitle>{title || 'Document Viewer'}</DialogTitle>
+                </DialogHeader>
+                <div className="flex-grow h-full">
+                    <iframe src={url} className="w-full h-full border-0" title={title || 'PDF Viewer'} />
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+function ResourceCard({ resource, onView }: { resource: Resource, onView: (url: string, title: string) => void }) {
   return (
     <Card className="flex flex-col">
       <CardContent className="p-6 flex flex-col flex-grow">
@@ -62,9 +84,7 @@ function ResourceCard({ resource }: { resource: Resource }) {
            </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button className="w-full" asChild>
-            <Link href={resource.fileUrl} target="_blank">View Document</Link>
-          </Button>
+           <Button className="w-full" onClick={() => onView(resource.fileUrl, resource.title)}>View Document</Button>
           <Button variant="outline" className="w-full" asChild>
              <Link href={resource.fileUrl} download={`${resource.title.replace(/\s/g, '_')}.pdf`}>
                 <Download className="mr-2 h-4 w-4" />
@@ -85,6 +105,10 @@ export default function ResourcesPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
+  const [selectedPdfTitle, setSelectedPdfTitle] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -134,6 +158,13 @@ export default function ResourcesPage() {
   const uniqueCategories = useMemo(() => [...new Set(initialResources.map(r => r.category))], []);
   const uniqueTypes = useMemo(() => [...new Set(initialResources.map(r => r.type))] as Resource['type'][], []);
 
+  const handleViewResource = (url: string, title: string) => {
+    setSelectedPdfUrl(url);
+    setSelectedPdfTitle(title);
+    setIsViewerOpen(true);
+  };
+
+
   return (
     <>
     <AddResourceDialog
@@ -141,6 +172,12 @@ export default function ResourcesPage() {
         onOpenChange={setAddDialogOpen}
         categories={uniqueCategories}
         types={uniqueTypes}
+    />
+     <PdfViewerDialog
+        open={isViewerOpen}
+        onOpenChange={setIsViewerOpen}
+        url={selectedPdfUrl}
+        title={selectedPdfTitle}
     />
     <div className="space-y-6">
       <div className="flex items-center">
@@ -210,7 +247,7 @@ export default function ResourcesPage() {
       ) : filteredResources.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredResources.map((resource) => (
-            <ResourceCard key={resource.id} resource={resource} />
+            <ResourceCard key={resource.id} resource={resource} onView={handleViewResource} />
             ))}
         </div>
       ) : (

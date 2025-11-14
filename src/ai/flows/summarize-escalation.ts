@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-export const SummarizeEscalationInputSchema = z.object({
+const SummarizeEscalationInputSchema = z.object({
   fileDataUri: z
     .string()
     .describe(

@@ -137,6 +137,7 @@ export type Resource = {
   fileUrl: string;
   uploaderName: string;
   companyId: string;
+  equipment_lowercase: string;
 }
 
 export type Notification = {

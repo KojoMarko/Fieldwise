@@ -45,10 +45,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Activity } from '@/lib/types';
-import { formatISO, parseISO, isToday, isFuture, isPast } from 'date-fns';
+import { formatISO, parseISO, isToday, isFuture, isPast, format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const activityIcons: Record<string, React.ElementType> = {
   call: Phone,
@@ -78,7 +79,7 @@ function ActivityItem({ activity, onToggle }: { activity: Activity, onToggle: (i
             <Icon className="h-4 w-4 text-muted-foreground" />
             {activity.title}
           </label>
-          <Badge variant="outline" className="text-muted-foreground">
+          <Badge variant="outline" className="text-muted-foreground capitalize">
             {activity.status}
           </Badge>
         </div>
@@ -152,8 +153,8 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="company">Company</Label>
-                        <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="e.g., Acme Corp" />
+                        <Label htmlFor="company">Company / Institution</Label>
+                        <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="e.g., Ministry of Health" />
                     </div>
                 </div>
                 <DialogFooter>
@@ -192,7 +193,11 @@ export default function ActivitiesPage() {
 
       const activityDate = parseISO(newActivityData.time);
       let status: Activity['status'] = 'today';
-      if(isFuture(activityDate) && !isToday(activityDate)) status = 'upcoming';
+      if(isFuture(activityDate) && !isToday(activityDate)) {
+        status = 'upcoming';
+      } else if (isPast(activityDate) && !isToday(activityDate)) {
+        status = 'overdue';
+      }
 
       const newActivity: Omit<Activity, 'id'> = {
           ...newActivityData,
@@ -203,13 +208,25 @@ export default function ActivitiesPage() {
   };
   
   const handleToggleComplete = async (id: string, completed: boolean) => {
-      // This is a placeholder for updating the status in Firestore
-      console.log(`Toggling activity ${id} to ${completed ? 'completed' : 'today'}`);
+      const activityRef = doc(db, 'activities', id);
+      const originalActivity = activities.find(a => a.id === id);
+      if (!originalActivity) return;
+
+      let newStatus: Activity['status'] = 'today';
+      if (completed) {
+          newStatus = 'completed';
+      } else {
+        const activityDate = parseISO(originalActivity.time);
+        if(isFuture(activityDate) && !isToday(activityDate)) newStatus = 'upcoming';
+        else if (isPast(activityDate) && !isToday(activityDate)) newStatus = 'overdue';
+      }
+      
+      await updateDoc(activityRef, { status: newStatus });
   };
 
-  const todayActivities = activities.filter((a) => isToday(parseISO(a.time)) && a.status !== 'completed');
-  const upcomingActivities = activities.filter((a) => isFuture(parseISO(a.time)) && !isToday(parseISO(a.time)) && a.status !== 'completed');
-  const overdueActivities = activities.filter((a) => isPast(parseISO(a.time)) && !isToday(parseISO(a.time)) && a.status !== 'completed');
+  const todayActivities = activities.filter((a) => a.status === 'today');
+  const upcomingActivities = activities.filter((a) => a.status === 'upcoming');
+  const overdueActivities = activities.filter((a) => a.status === 'overdue');
   const completedActivities = activities.filter((a) => a.status === 'completed');
 
   return (

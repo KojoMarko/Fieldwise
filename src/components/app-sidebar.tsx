@@ -42,6 +42,7 @@ const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
   { href: '/dashboard/sales-ledger', icon: ClipboardList, label: 'Sales Ledger' },
   { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
+  { href: '/dashboard/activities', icon: Activity, label: 'Activities' },
   { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
   { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
   { href: '/dashboard/map', icon: Map, label: 'Map'},

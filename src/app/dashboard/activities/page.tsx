@@ -50,6 +50,7 @@ import { db } from '@/lib/firebase';
 import type { Activity } from '@/lib/types';
 import { formatISO, parseISO, isToday, isFuture, isPast, format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 const activityIcons: Record<string, React.ElementType> = {
   call: Phone,
@@ -98,12 +99,14 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
     const [description, setDescription] = useState('');
     const [type, setType] = useState('task');
     const [company, setCompany] = useState('');
+    const [date, setDate] = useState<Date | undefined>(new Date());
     const [time, setTime] = useState('');
 
     const handleSubmit = () => {
-        if (!title || !time) return;
+        if (!title || !time || !date) return;
         const [hour, minute] = time.split(':').map(Number);
-        const activityDate = new Date();
+        
+        const activityDate = new Date(date);
         activityDate.setHours(hour, minute);
 
         onAddActivity({ title, description, type, company, time: formatISO(activityDate) });
@@ -113,6 +116,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
         setDescription('');
         setType('task');
         setCompany('');
+        setDate(new Date());
         setTime('');
     }
 
@@ -148,13 +152,40 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
                             </Select>
                         </div>
                         <div className="space-y-2">
+                            <Label>Date</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !date && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                    mode="single"
+                                    selected={date}
+                                    onSelect={setDate}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                    </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
                             <Label htmlFor="time">Time</Label>
                             <Input id="time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
                         </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="company">Company / Institution</Label>
-                        <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="e.g., Ministry of Health" />
+                         <div className="space-y-2">
+                            <Label htmlFor="company">Company / Institution</Label>
+                            <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="e.g., Ministry of Health" />
+                        </div>
                     </div>
                 </div>
                 <DialogFooter>

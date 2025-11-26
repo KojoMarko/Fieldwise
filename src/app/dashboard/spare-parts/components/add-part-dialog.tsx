@@ -24,7 +24,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { createSparePart } from '@/ai/flows/create-spare-part';
@@ -36,24 +36,30 @@ type AddPartFormValues = z.infer<typeof CreateSparePartInputSchema>;
 interface AddPartDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isTool?: boolean;
 }
 
-export function AddPartDialog({ open, onOpenChange }: AddPartDialogProps) {
+export function AddPartDialog({ open, onOpenChange, isTool = false }: AddPartDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AddPartFormValues>({
     resolver: zodResolver(CreateSparePartInputSchema),
-    defaultValues: {
-      name: '',
-      partNumber: '',
-      quantity: 0,
-      location: '',
-      assetModel: '',
-      companyId: user?.companyId,
-    },
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: '',
+        partNumber: '',
+        quantity: 0,
+        location: '',
+        assetModel: isTool ? 'Multiple' : '',
+        companyId: user?.companyId,
+      });
+    }
+  }, [open, isTool, form, user?.companyId]);
 
   async function onSubmit(data: AddPartFormValues) {
     if (!user) {
@@ -65,16 +71,15 @@ export function AddPartDialog({ open, onOpenChange }: AddPartDialogProps) {
     try {
       await createSparePart({ ...data, companyId: user.companyId });
       toast({
-        title: 'Part Added',
-        description: `Part "${data.name}" has been added to the inventory.`,
+        title: isTool ? 'Tool Added' : 'Part Added',
+        description: `Item "${data.name}" has been added to the inventory.`,
       });
-      form.reset();
       onOpenChange(false);
     } catch (error) {
-      console.error('Failed to add part:', error);
+      console.error('Failed to add item:', error);
       toast({
         variant: 'destructive',
-        title: 'Failed to Add Part',
+        title: isTool ? 'Failed to Add Tool' : 'Failed to Add Part',
         description: 'An unexpected error occurred. Please try again.',
       });
     } finally {
@@ -82,14 +87,18 @@ export function AddPartDialog({ open, onOpenChange }: AddPartDialogProps) {
     }
   }
 
+  const title = isTool ? 'Add New Tool' : 'Add New Spare Part';
+  const description = isTool 
+    ? 'Fill out the form below to add a new general-purpose tool to the inventory.'
+    : 'Fill out the form below to add a new part to the inventory.';
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Spare Part</DialogTitle>
-          <DialogDescription>
-            Fill out the form below to add a new part to the inventory.
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -98,9 +107,9 @@ export function AddPartDialog({ open, onOpenChange }: AddPartDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Part Name</FormLabel>
+                  <FormLabel>{isTool ? 'Tool Name' : 'Part Name'}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., HEPA Filter" {...field} />
+                    <Input placeholder={isTool ? "e.g., Digital Multimeter" : "e.g., HEPA Filter"} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -112,9 +121,9 @@ export function AddPartDialog({ open, onOpenChange }: AddPartDialogProps) {
                 name="partNumber"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Part Number</FormLabel>
+                    <FormLabel>{isTool ? 'Model/Serial Number' : 'Part Number'}</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g., FIL-HEPA-1212" {...field} />
+                        <Input placeholder={isTool ? "e.g., FLUKE-87V" : "e.g., FIL-HEPA-1212"} {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -127,7 +136,7 @@ export function AddPartDialog({ open, onOpenChange }: AddPartDialogProps) {
                     <FormItem>
                     <FormLabel>Quantity</FormLabel>
                     <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -142,7 +151,7 @@ export function AddPartDialog({ open, onOpenChange }: AddPartDialogProps) {
                     <FormItem>
                     <FormLabel>Storage Location</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g., Warehouse A, Shelf 3" {...field} />
+                        <Input placeholder="e.g., Tool Cabinet, Shelf 3" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -155,8 +164,9 @@ export function AddPartDialog({ open, onOpenChange }: AddPartDialogProps) {
                     <FormItem>
                     <FormLabel>Associated Asset Model</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g., Vitros 5600" {...field} />
+                        <Input placeholder="e.g., Vitros 5600" {...field} disabled={isTool} />
                     </FormControl>
+                    {isTool && <FormDescription>This is automatically set for tools.</FormDescription>}
                     <FormMessage />
                     </FormItem>
                 )}
@@ -169,7 +179,7 @@ export function AddPartDialog({ open, onOpenChange }: AddPartDialogProps) {
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                {isSubmitting ? 'Adding...' : 'Add Part'}
+                {isSubmitting ? 'Adding...' : (isTool ? 'Add Tool' : 'Add Part')}
               </Button>
             </DialogFooter>
           </form>

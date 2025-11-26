@@ -248,7 +248,7 @@ function ToolsTab() {
   const [tools, setTools] = useState<SparePart[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('');
-  const [isAddPartDialogOpen, setAddPartDialogOpen] = useState(false);
+  const [isAddToolDialogOpen, setAddToolDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -284,7 +284,7 @@ function ToolsTab() {
 
   return (
     <>
-      <AddPartDialog open={isAddPartDialogOpen} onOpenChange={setAddPartDialogOpen} />
+      <AddPartDialog open={isAddToolDialogOpen} onOpenChange={setAddToolDialogOpen} isTool={true} />
       <Card className="mt-6">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -301,7 +301,7 @@ function ToolsTab() {
                 onChange={(e) => setFilter(e.target.value)}
                 className="max-w-sm"
               />
-              <Button size="sm" onClick={() => setAddPartDialogOpen(true)}>
+              <Button size="sm" onClick={() => setAddToolDialogOpen(true)}>
                 <PlusCircle className="mr-2" /> Add Tool
               </Button>
             </div>

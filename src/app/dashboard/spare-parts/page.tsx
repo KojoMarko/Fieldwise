@@ -1,6 +1,6 @@
 
 'use client';
-import { File, PlusCircle, LoaderCircle, UploadCloud, Sparkles } from 'lucide-react';
+import { File, PlusCircle, LoaderCircle, UploadCloud, Sparkles, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -152,14 +152,16 @@ function InventoryTab() {
   const groupedAndFilteredParts = useMemo(() => {
     if (!spareParts) return {};
     
+    const specificParts = spareParts.filter(p => p.assetModel !== 'Multiple');
+
     const filtered = filter 
-        ? spareParts.filter(
+        ? specificParts.filter(
             (p) =>
             p.name.toLowerCase().includes(filter.toLowerCase()) ||
             p.partNumber.toLowerCase().includes(filter.toLowerCase()) ||
             p.assetModel.toLowerCase().includes(filter.toLowerCase())
         )
-        : spareParts;
+        : specificParts;
 
     return filtered.reduce((acc, part) => {
         const model = part.assetModel || 'Uncategorized';
@@ -241,17 +243,97 @@ function InventoryTab() {
   )
 }
 
+function ToolsTab() {
+  const { user } = useAuth();
+  const [tools, setTools] = useState<SparePart[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+  const [isAddPartDialogOpen, setAddPartDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user?.companyId) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    const partsQuery = query(
+      collection(db, "spare-parts"), 
+      where("companyId", "==", user.companyId),
+      where("assetModel", "==", "Multiple")
+    );
+    
+    const unsubscribe = onSnapshot(partsQuery, (snapshot) => {
+      const toolsData: SparePart[] = [];
+      snapshot.forEach((doc) => {
+        toolsData.push({ id: doc.id, ...doc.data() } as SparePart);
+      });
+      setTools(toolsData);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user?.companyId]);
+  
+  const filteredTools = useMemo(() => {
+      return filter ? tools.filter(
+            (t) =>
+            t.name.toLowerCase().includes(filter.toLowerCase()) ||
+            t.partNumber.toLowerCase().includes(filter.toLowerCase())
+        ) : tools;
+  }, [tools, filter]);
+
+  return (
+    <>
+      <AddPartDialog open={isAddPartDialogOpen} onOpenChange={setAddPartDialogOpen} />
+      <Card className="mt-6">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>Tool Inventory</CardTitle>
+              <CardDescription>
+                Manage all general purpose tools and equipment.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Filter tools..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="max-w-sm"
+              />
+              <Button size="sm" onClick={() => setAddPartDialogOpen(true)}>
+                <PlusCircle className="mr-2" /> Add Tool
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center p-10">
+              <LoaderCircle className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <DataTable columns={sparePartsColumns} data={filteredTools} />
+          )}
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+
 export default function SparePartsPage() {
     const [activeTab, setActiveTab] = useState('inventory');
     const TABS = [
         { value: 'inventory', label: 'Inventory' },
+        { value: 'tools', label: 'Tools' },
         { value: 'transfers', label: 'Transfers' },
         { value: 'usage_report', label: 'Usage Report' },
     ];
   return (
     <>
       <div className="flex items-center mb-4">
-        <h1 className="text-3xl font-bold tracking-tight">Spare Parts</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Spare Parts & Tools</h1>
       </div>
       
       <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
@@ -270,7 +352,7 @@ export default function SparePartsPage() {
             </Select>
         </div>
         <div className="hidden md:block">
-             <TabsList className="grid w-full grid-cols-3">
+             <TabsList className="grid w-full grid-cols-4">
                 {TABS.map((tab) => (
                     <TabsTrigger key={tab.value} value={tab.value}>
                         {tab.label}
@@ -280,6 +362,9 @@ export default function SparePartsPage() {
         </div>
         <TabsContent value="inventory">
           <InventoryTab />
+        </TabsContent>
+        <TabsContent value="tools">
+          <ToolsTab />
         </TabsContent>
          <TabsContent value="transfers">
           <TransfersReportTab />

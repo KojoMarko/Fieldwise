@@ -1,0 +1,13 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow read, write, delete on any file in the /resources path
+    // for any authenticated user.
+    // In a production app, you might want to restrict this further,
+    // for example, only allowing users to write to their own company's folder.
+    match /resources/{allPaths=**} {
+      allow read, write, delete: if request.auth != null;
+    }
+  }
+}

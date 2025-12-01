@@ -163,10 +163,10 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
 
   async function onSubmit(data: AddResourceFormValues) {
     if (!user || !user.companyId) {
-        toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
-        return;
+      toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
+      return;
     }
-     if (!file || !storage) {
+    if (!file || !storage) {
       toast({
         variant: 'destructive',
         title: 'File Required',
@@ -175,63 +175,66 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
       return;
     }
     setIsSubmitting(true);
-    
-    // 1. Upload file to Firebase Storage
+    setUploadProgress(0);
+
     const resourceId = uuidv4();
     const storageRef = ref(storage, `resources/${user.companyId}/${resourceId}/${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
-    uploadTask.on('state_changed',
-        (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(progress);
-        },
-        (error) => {
-            console.error('Failed to add resource:', error);
-            const description = error instanceof z.ZodError 
-                ? error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-                : 'Could not upload the file. Please try again.';
-            toast({
-                variant: 'destructive',
-                title: 'Upload Failed',
-                description,
-            });
-            setIsSubmitting(false);
-            setUploadProgress(null);
-        },
-        async () => {
-            try {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                const resourceData = {
-                    ...data,
-                    uploaderName: user.name,
-                    companyId: user.companyId,
-                    updatedDate: formatISO(new Date()),
-                    fileUrl: downloadURL,
-                };
+    try {
+        const downloadURL = await new Promise<string>((resolve, reject) => {
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    setUploadProgress(progress);
+                },
+                (error) => {
+                    console.error('File upload failed:', error);
+                    reject(error);
+                },
+                async () => {
+                    try {
+                        const url = await getDownloadURL(uploadTask.snapshot.ref);
+                        resolve(url);
+                    } catch (error) {
+                        reject(error);
+                    }
+                }
+            );
+        });
 
-                const fullResource = ResourceSchema.parse(resourceData);
-                await createResource(fullResource);
+        const resourceData = {
+            ...data,
+            uploaderName: user.name,
+            companyId: user.companyId,
+            updatedDate: formatISO(new Date()),
+            fileUrl: downloadURL,
+        };
 
-                toast({
-                    title: 'Resource Added',
-                    description: `"${data.title}" has been successfully added.`,
-                });
-                
-                resetDialog();
-                onOpenChange(false);
-            } catch (error) {
-                 console.error('Failed to create resource document:', error);
-                 toast({
-                    variant: 'destructive',
-                    title: 'Failed to Save Resource',
-                    description: 'The file was uploaded but could not be saved to the database.',
-                 });
-                 setIsSubmitting(false);
-                 setUploadProgress(null);
-            }
-        }
-    );
+        const fullResource = ResourceSchema.parse(resourceData);
+        await createResource(fullResource);
+
+        toast({
+            title: 'Resource Added',
+            description: `"${data.title}" has been successfully added.`,
+        });
+
+        resetDialog();
+        onOpenChange(false);
+    } catch (error) {
+        console.error('Failed to add resource:', error);
+        const description = error instanceof z.ZodError 
+            ? error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+            : 'An unexpected error occurred. Please try again.';
+        toast({
+            variant: 'destructive',
+            title: 'Upload or Save Failed',
+            description,
+        });
+    } finally {
+        setIsSubmitting(false);
+        setUploadProgress(null);
+    }
   }
 
   return (

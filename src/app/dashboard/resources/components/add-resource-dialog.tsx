@@ -162,6 +162,13 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
 
 
   async function onSubmit(data: AddResourceFormValues) {
+    console.log('=== UPLOAD DEBUG ===');
+    console.log('User:', user);
+    console.log('Storage instance:', storage);
+    console.log('File:', file);
+    console.log('File size:', file?.size);
+    console.log('File type:', file?.type);
+
     if (!user || !user.companyId) {
       toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
       return;
@@ -179,22 +186,42 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
     setUploadProgress(0);
 
     const resourceId = uuidv4();
-    const storageRef = ref(storage, `resources/${user.companyId}/${resourceId}/${file.name}`);
+    const storagePath = `resources/${user.companyId}/${resourceId}/${file.name}`;
+    console.log('Storage path:', storagePath);
+    
+    const storageRef = ref(storage, storagePath);
+    console.log('Storage ref created:', storageRef);
+    
     const uploadTask = uploadBytesResumable(storageRef, file);
+    console.log('Upload task created:', uploadTask);
+
 
     try {
       const downloadURL = await new Promise<string>((resolve, reject) => {
         uploadTask.on('state_changed',
           (snapshot) => {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Progress: ${progress}% (${snapshot.bytesTransferred}/${snapshot.totalBytes} bytes)`);
+            console.log('Snapshot state:', snapshot.state);
             setUploadProgress(progress);
           },
           (error) => {
-            console.error('File upload failed:', error);
+            console.error('=== UPLOAD ERROR ===');
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            console.error('Full error:', error);
             reject(error);
           },
-          () => {
-            getDownloadURL(uploadTask.snapshot.ref).then(resolve).catch(reject);
+          async () => {
+            console.log('Upload complete, getting download URL...');
+            try {
+                const url = await getDownloadURL(uploadTask.snapshot.ref);
+                console.log('Download URL obtained:', url);
+                resolve(url);
+            } catch (error) {
+                console.error('Error getting download URL:', error);
+                reject(error);
+            }
           }
         );
       });

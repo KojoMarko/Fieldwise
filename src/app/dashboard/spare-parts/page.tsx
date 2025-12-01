@@ -126,6 +126,7 @@ function InventoryTab() {
   const [spareParts, setSpareParts] = useState<SparePart[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [stockFilter, setStockFilter] = useState('all');
   const [isAddPartDialogOpen, setAddPartDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -152,18 +153,27 @@ function InventoryTab() {
   const groupedAndFilteredParts = useMemo(() => {
     if (!spareParts) return {};
     
-    const specificParts = spareParts.filter(p => p.assetModel !== 'Multiple');
+    let partsToFilter = spareParts.filter(p => p.assetModel !== 'Multiple');
 
-    const filtered = filter 
-        ? specificParts.filter(
+    // Apply stock filter
+    if (stockFilter === 'active') {
+        partsToFilter = partsToFilter.filter(p => p.quantity > 0);
+    } else if (stockFilter === 'low') {
+        partsToFilter = partsToFilter.filter(p => p.quantity < 5);
+    } else if (stockFilter === 'out_of_stock') {
+        partsToFilter = partsToFilter.filter(p => p.quantity === 0);
+    }
+
+    const filteredByName = filter 
+        ? partsToFilter.filter(
             (p) =>
             p.name.toLowerCase().includes(filter.toLowerCase()) ||
             p.partNumber.toLowerCase().includes(filter.toLowerCase()) ||
             p.assetModel.toLowerCase().includes(filter.toLowerCase())
         )
-        : specificParts;
+        : partsToFilter;
 
-    return filtered.reduce((acc, part) => {
+    return filteredByName.reduce((acc, part) => {
         const model = part.assetModel || 'Uncategorized';
         if (!acc[model]) {
             acc[model] = [];
@@ -171,7 +181,7 @@ function InventoryTab() {
         acc[model].push(part);
         return acc;
     }, {} as Record<string, SparePart[]>);
-  }, [filter, spareParts]);
+  }, [filter, stockFilter, spareParts]);
 
   const defaultAccordionValue = useMemo(() => {
       const keys = Object.keys(groupedAndFilteredParts);
@@ -191,18 +201,32 @@ function InventoryTab() {
             </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center gap-2">
                     <Input
-                    placeholder="Filter by part name, number, or machine model..."
+                    placeholder="Filter by part name, number, or model..."
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
+                    className="w-full"
                     />
-                    <Button size="sm" className="h-10 gap-1" onClick={() => setAddPartDialogOpen(true)}>
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Add Part
-                        </span>
-                    </Button>
+                    <div className="w-full sm:w-auto flex gap-2">
+                         <Select value={stockFilter} onValueChange={setStockFilter}>
+                            <SelectTrigger className="w-full sm:w-[150px]">
+                                <SelectValue placeholder="Filter Stock" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Parts</SelectItem>
+                                <SelectItem value="active">Active Stock</SelectItem>
+                                <SelectItem value="low">Low Stock</SelectItem>
+                                <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Button size="sm" className="h-10 gap-1" onClick={() => setAddPartDialogOpen(true)}>
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                            Add Part
+                            </span>
+                        </Button>
+                    </div>
                 </div>
             </CardContent>
         </Card>
@@ -234,7 +258,7 @@ function InventoryTab() {
         ) : (
             <Card>
                 <CardContent className="p-10 text-center text-muted-foreground">
-                    No spare parts found.
+                    No spare parts found matching your filters.
                 </CardContent>
             </Card>
         )}
@@ -376,3 +400,4 @@ export default function SparePartsPage() {
     </>
   );
 }
+

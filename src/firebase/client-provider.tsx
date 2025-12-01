@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, type ReactNode } from 'react';
@@ -27,6 +28,7 @@ export function FirebaseClientProvider({
       app={firebase.app}
       auth={firebase.auth}
       firestore={firebase.db}
+      storage={firebase.storage}
     >
       {children}
     </FirebaseProvider>

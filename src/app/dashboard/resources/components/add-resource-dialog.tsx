@@ -39,6 +39,9 @@ import { CreateResourceInputSchema, ResourceSchema } from '@/lib/schemas';
 import { createResource } from '@/ai/flows/create-resource';
 import { formatISO } from 'date-fns';
 import { analyzeDocument } from '@/ai/flows/analyze-document';
+import { useStorage } from '@/firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { v4 as uuidv4 } from 'uuid';
 
 type AddResourceFormValues = z.infer<typeof CreateResourceInputSchema>;
 
@@ -53,10 +56,10 @@ interface AddResourceDialogProps {
 export function AddResourceDialog({ open, onOpenChange, categories, types, initialEquipment }: AddResourceDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const storage = useStorage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [fileName, setFileName] = useState('');
-  const [fileDataUri, setFileDataUri] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   
   const form = useForm<AddResourceFormValues>({
     resolver: zodResolver(CreateResourceInputSchema),
@@ -77,10 +80,10 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
 
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) return;
 
-    setFileName(file.name);
+    setFile(selectedFile);
     setIsAnalyzing(true);
     toast({
       title: 'AI is analyzing your document...',
@@ -89,10 +92,9 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
     
     try {
         const reader = new FileReader();
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(selectedFile);
         reader.onload = async () => {
             const dataUri = reader.result as string;
-            setFileDataUri(dataUri); // Store the data URI
             const analysisResult = await analyzeDocument({ fileDataUri: dataUri });
 
             if (!analysisResult) {
@@ -135,11 +137,11 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
 
 
   async function onSubmit(data: AddResourceFormValues) {
-    if (!user) {
+    if (!user || !user.companyId) {
         toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
         return;
     }
-     if (!fileDataUri) {
+     if (!file || !storage) {
       toast({
         variant: 'destructive',
         title: 'File Required',
@@ -149,16 +151,24 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
     }
     setIsSubmitting(true);
     try {
+      // 1. Upload file to Firebase Storage
+      const resourceId = uuidv4();
+      const storageRef = ref(storage, `resources/${user.companyId}/${resourceId}/${file.name}`);
+      const uploadResult = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(uploadResult.ref);
+
+      // 2. Prepare data for Firestore
       const resourceData = {
         ...data,
         uploaderName: user.name,
         companyId: user.companyId,
         updatedDate: formatISO(new Date()),
-        fileUrl: fileDataUri,
+        fileUrl: downloadURL, // Use the real download URL
       };
 
       const fullResource = ResourceSchema.parse(resourceData);
       
+      // 3. Create the resource document in Firestore
       await createResource(fullResource);
 
       toast({
@@ -166,8 +176,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
         description: `"${data.title}" has been successfully added to the resource center.`,
       });
       form.reset({ equipment: initialEquipment || '' });
-      setFileName('');
-      setFileDataUri(null);
+      setFile(null);
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to add resource:', error);
@@ -209,8 +218,8 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
                     </div>
                   </div>
                 </FormControl>
-                {fileName && !isAnalyzing ? (
-                  <FormDescription>File selected: {fileName}</FormDescription>
+                {file && !isAnalyzing ? (
+                  <FormDescription>File selected: {file.name}</FormDescription>
                 ) : (
                   <FormDescription>Select a PDF or document file to have AI analyze it.</FormDescription>
                 )}

@@ -1,3 +1,4 @@
+
 'use client';
 import {
   createContext,
@@ -7,17 +8,20 @@ import {
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
+import type { FirebaseStorage } from 'firebase/storage';
 
 interface FirebaseContextType {
   app: FirebaseApp | null;
   auth: Auth | null;
   firestore: Firestore | null;
+  storage: FirebaseStorage | null;
 }
 
 const FirebaseContext = createContext<FirebaseContextType>({
   app: null,
   auth: null,
   firestore: null,
+  storage: null,
 });
 
 export function FirebaseProvider({
@@ -25,14 +29,16 @@ export function FirebaseProvider({
   app,
   auth,
   firestore,
+  storage,
 }: {
   children: ReactNode;
   app: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
+  storage: FirebaseStorage;
 }) {
   return (
-    <FirebaseContext.Provider value={{ app, auth, firestore }}>
+    <FirebaseContext.Provider value={{ app, auth, firestore, storage }}>
       {children}
     </FirebaseContext.Provider>
   );
@@ -60,4 +66,12 @@ export const useFirestore = () => {
         throw new Error('useFirestore must be used within a FirebaseProvider');
     }
     return context.firestore;
+}
+
+export const useStorage = () => {
+    const context = useContext(FirebaseContext);
+    if (!context) {
+        throw new Error('useStorage must be used within a FirebaseProvider');
+    }
+    return context.storage;
 }

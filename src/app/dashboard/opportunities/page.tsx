@@ -1,7 +1,7 @@
 
 'use client';
 
-import { DollarSign, Filter, List, MoreHorizontal, PlusCircle, User, Users, View, LoaderCircle } from 'lucide-react';
+import { DollarSign, Filter, List, MoreHorizontal, PlusCircle, User, Users, View, LoaderCircle, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { KpiCard } from '@/components/kpi-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,6 +26,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, useMemo } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import * as xlsx from 'xlsx';
 
 const pipelineStages: { name: Opportunity['stage'], color: string }[] = [
     { name: 'Discovery', color: 'bg-blue-500' },
@@ -137,6 +138,22 @@ export default function OpportunitiesPage() {
     const weightedValue = opportunities.reduce((sum, opp) => sum + (opp.value * (opp.probability / 100)), 0);
     const activeOpportunities = opportunities.filter(o => o.stage !== 'Closing').length;
     const avgDealSize = opportunities.length > 0 ? totalPipelineValue / opportunities.length : 0;
+    
+    const handleExport = () => {
+        const dataToExport = opportunities.map(opp => ({
+            'Opportunity Name': opp.name,
+            'Company': opp.company,
+            'Value (GHS)': opp.value,
+            'Probability (%)': opp.probability,
+            'Stage': opp.stage,
+            'Close Date': opp.closeDate,
+        }));
+        const worksheet = xlsx.utils.json_to_sheet(dataToExport);
+        const workbook = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(workbook, worksheet, "Opportunities");
+        
+        xlsx.writeFile(workbook, "Opportunities_Export.xlsx");
+    };
 
 
   return (
@@ -150,9 +167,14 @@ export default function OpportunitiesPage() {
               Track and manage your sales pipeline
             </p>
           </div>
-          <Button className="w-full sm:w-auto shrink-0">
-            <PlusCircle className="mr-2 h-4 w-4" /> New Opportunity
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExport}>
+                <File className="mr-2 h-4 w-4" /> Export
+            </Button>
+            <Button className="w-full sm:w-auto shrink-0">
+                <PlusCircle className="mr-2 h-4 w-4" /> New Opportunity
+            </Button>
+          </div>
         </div>
 
         {/* KPI Cards */}

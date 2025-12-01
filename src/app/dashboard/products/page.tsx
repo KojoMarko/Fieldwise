@@ -17,6 +17,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Product } from '@/lib/types';
 import { AddProductDialog } from './components/add-product-dialog';
+import * as xlsx from 'xlsx';
 
 export default function ProductsPage() {
   const { user } = useAuth();
@@ -45,6 +46,19 @@ export default function ProductsPage() {
   }, [user?.companyId]);
 
   const canAddProducts = user?.role === 'Admin' || user?.role === 'Sales Rep';
+  
+  const handleExport = () => {
+    const dataToExport = products.map(p => ({
+        'Product Name': p.name,
+        'Category': p.category,
+        'Unit Price (GHS)': p.unitPrice,
+    }));
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Products");
+    
+    xlsx.writeFile(workbook, "Products_Export.xlsx");
+  };
 
   return (
     <>
@@ -56,7 +70,7 @@ export default function ProductsPage() {
         <h1 className="text-lg font-semibold md:text-2xl">Products</h1>
         <div className="ml-auto flex items-center gap-2">
           {user?.role === 'Admin' && (
-            <Button size="sm" variant="outline" className="h-8 gap-1">
+            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
               <File className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                 Export

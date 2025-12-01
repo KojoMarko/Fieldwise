@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Lead } from '@/lib/types';
+import * as xlsx from 'xlsx';
 
 export default function LeadsPage() {
   const { user } = useAuth();
@@ -60,6 +61,24 @@ export default function LeadsPage() {
   const newLeads = leads.filter(lead => lead.status === 'New').length;
   const qualifiedLeads = leads.filter(lead => lead.status === 'Qualified').length;
   const convertedLeads = leads.filter(lead => lead.status === 'Converted').length;
+  
+  const handleExport = () => {
+    const dataToExport = filteredLeads.map(lead => ({
+        'Company': lead.company,
+        'Contact': lead.contact,
+        'Email': lead.email,
+        'Phone': lead.phone,
+        'Value (GHS)': lead.value,
+        'Status': lead.status,
+        'Source': lead.source,
+        'Last Contact': lead.lastContact,
+    }));
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Leads");
+    
+    xlsx.writeFile(workbook, "Leads_Export.xlsx");
+  };
 
   return (
     <div className="w-full max-w-full overflow-hidden">
@@ -136,7 +155,7 @@ export default function LeadsPage() {
                   </SelectContent>
                 </Select>
                 
-                <Button variant="outline" size="sm" className="h-9 whitespace-nowrap">
+                <Button variant="outline" size="sm" className="h-9 whitespace-nowrap" onClick={handleExport}>
                   <File className="mr-2 h-4 w-4" />
                   Export
                 </Button>

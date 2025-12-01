@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Edit, HardDrive, LoaderCircle, PlusCircle, Sparkles, Wrench, Upload, BookOpen, FileText, Download, User as UserIcon } from 'lucide-react';
+import { ChevronLeft, Edit, HardDrive, LoaderCircle, PlusCircle, Sparkles, Wrench, Upload, BookOpen, FileText, Download, User as UserIcon, File } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { DataTable } from '../../components/data-table';
@@ -39,6 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import * as xlsx from 'xlsx';
 
 const uniqueCategories = ['Chemistry', 'Hematology', 'Safety', 'Automation', 'Service', 'Sales', 'Immunology'];
 const uniqueTypes = ['Manual', 'Guide', 'Procedure', 'Reference', 'Standard', 'Brochure', 'Datasheet'] as const;
@@ -395,6 +396,23 @@ export default function AssetBrandPage({
 
     return () => unsubscribe();
   }, [user?.companyId, brandName]);
+  
+  const handleExport = () => {
+    const dataToExport = assets.map(a => ({
+        'Asset Name': a.name,
+        'Model': a.model,
+        'Serial Number': a.serialNumber,
+        'Location': a.location,
+        'Status': a.status,
+        'Installation Date': a.installationDate,
+    }));
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, brandName);
+    
+    xlsx.writeFile(workbook, `${brandName}_Asset_List.xlsx`);
+  };
+
 
   if (isLoading) {
     return (
@@ -421,14 +439,22 @@ export default function AssetBrandPage({
             <h1 className="text-2xl font-semibold truncate">{brandName}</h1>
             <p className="text-sm text-muted-foreground">{assets.length} assets in inventory</p>
         </div>
-        <Button size="sm" className="h-8 gap-1" asChild>
-            <Link href={`/dashboard/assets/new?name=${encodeURIComponent(brandName)}`}>
-                <PlusCircle className="h-3.5 w-3.5" />
+        <div className="ml-auto flex items-center gap-2">
+            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
+                <File className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Add Asset
+                Export
                 </span>
-            </Link>
-        </Button>
+            </Button>
+            <Button size="sm" className="h-8 gap-1" asChild>
+                <Link href={`/dashboard/assets/new?name=${encodeURIComponent(brandName)}`}>
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Add Asset
+                    </span>
+                </Link>
+            </Button>
+        </div>
       </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>

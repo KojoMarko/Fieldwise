@@ -63,6 +63,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const statusStyles: Record<WorkOrderStatus, string> = {
   Draft: 'bg-gray-200 text-gray-800',
   Scheduled: 'bg-blue-100 text-blue-800',
+  Dispatched: 'bg-cyan-100 text-cyan-800',
+  'On-Site': 'bg-teal-100 text-teal-800',
   'In-Progress': 'bg-yellow-100 text-yellow-800',
   'On-Hold': 'bg-orange-100 text-orange-800',
   Completed: 'bg-green-100 text-green-800',
@@ -155,7 +157,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
       date: parseISO(wo.scheduledDate),
       type: wo.type,
       description: wo.title,
-      technician: users[wo.technicianId || '']?.name || 'Unassigned',
+      technician: wo.technicianIds?.map(id => users[id]?.name).join(', ') || 'Unassigned',
       status: wo.status,
       isManual: false,
       originalDate: wo.scheduledDate,
@@ -583,3 +585,5 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
 }
 
   
+
+    

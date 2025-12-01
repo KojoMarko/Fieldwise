@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PartsUsageReportTab } from './components/parts-usage-report-tab';
 import { TransfersReportTab } from './components/transfers-report-tab';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import * as xlsx from 'xlsx';
 
 
 function PartIntelligence() {
@@ -182,6 +183,24 @@ function InventoryTab() {
         return acc;
     }, {} as Record<string, SparePart[]>);
   }, [filter, stockFilter, spareParts]);
+  
+  const handleExport = () => {
+    const dataToExport = Object.values(groupedAndFilteredParts).flat().map(p => ({
+        'Part ID': p.id,
+        'Part Name': p.name,
+        'Part Number': p.partNumber,
+        'Asset Model': p.assetModel,
+        'Central Stock': p.quantity,
+        'Location': p.location,
+    }));
+    
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "SpareParts");
+    
+    xlsx.writeFile(workbook, "Spare_Parts_Inventory.xlsx");
+  };
+
 
   const defaultAccordionValue = useMemo(() => {
       const keys = Object.keys(groupedAndFilteredParts);
@@ -191,78 +210,77 @@ function InventoryTab() {
   return (
      <>
       <AddPartDialog open={isAddPartDialogOpen} onOpenChange={setAddPartDialogOpen} />
-      <div className='my-6 grid gap-6 md:grid-cols-2'>
+      <div className='my-6'>
         <PartIntelligence />
-         <Card>
-            <CardHeader>
-            <CardTitle>Spare Parts Inventory</CardTitle>
-            <CardDescription>
-                Manage all spare parts for your company.
-            </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex flex-col sm:flex-row items-center gap-2">
-                    <Input
-                    placeholder="Filter by part name, number, or model..."
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    className="w-full"
-                    />
-                    <div className="w-full sm:w-auto flex gap-2">
-                         <Select value={stockFilter} onValueChange={setStockFilter}>
-                            <SelectTrigger className="w-full sm:w-[150px]">
-                                <SelectValue placeholder="Filter Stock" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Parts</SelectItem>
-                                <SelectItem value="active">Active Stock</SelectItem>
-                                <SelectItem value="low">Low Stock</SelectItem>
-                                <SelectItem value="out_of_stock">Out of Stock</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button size="sm" className="h-10 gap-1" onClick={() => setAddPartDialogOpen(true)}>
-                            <PlusCircle className="h-3.5 w-3.5" />
-                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                            Add Part
-                            </span>
-                        </Button>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
       </div>
-
-       <div>
-        {isLoading ? (
-            <div className="flex items-center justify-center p-10">
-                <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Loading inventory...</p>
-            </div>
-        ) : Object.keys(groupedAndFilteredParts).length > 0 ? (
-             <Accordion type="multiple" defaultValue={defaultAccordionValue} className="w-full">
-                {Object.entries(groupedAndFilteredParts).map(([model, parts]) => (
-                     <AccordionItem value={model} key={model}>
-                        <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                            {model} ({parts.length} parts)
-                        </AccordionTrigger>
-                        <AccordionContent>
-                           <Card>
-                             <CardContent className="p-0">
-                               <DataTable columns={sparePartsColumns} data={parts} />
-                             </CardContent>
-                           </Card>
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-             </Accordion>
-        ) : (
-            <Card>
-                <CardContent className="p-10 text-center text-muted-foreground">
-                    No spare parts found matching your filters.
-                </CardContent>
-            </Card>
-        )}
-       </div>
+      <Card>
+        <CardHeader>
+            <CardTitle>Spare Parts Inventory</CardTitle>
+            <CardDescription>Manage all spare parts for your company.</CardDescription>
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-4">
+              <Input
+                placeholder="Filter by part name, number, or model..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="w-full"
+              />
+              <div className="w-full sm:w-auto flex gap-2">
+                    <Select value={stockFilter} onValueChange={setStockFilter}>
+                      <SelectTrigger className="w-full sm:w-[150px]">
+                          <SelectValue placeholder="Filter Stock" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="all">All Parts</SelectItem>
+                          <SelectItem value="active">Active Stock</SelectItem>
+                          <SelectItem value="low">Low Stock</SelectItem>
+                          <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                      </SelectContent>
+                  </Select>
+                  <Button size="sm" variant="outline" className="h-10 gap-1" onClick={handleExport}>
+                      <File className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                      Export
+                      </span>
+                  </Button>
+                  <Button size="sm" className="h-10 gap-1" onClick={() => setAddPartDialogOpen(true)}>
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                      Add Part
+                      </span>
+                  </Button>
+              </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+              <div className="flex items-center justify-center p-10">
+                  <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+                  <p className="ml-4 text-muted-foreground">Loading inventory...</p>
+              </div>
+          ) : Object.keys(groupedAndFilteredParts).length > 0 ? (
+              <Accordion type="multiple" defaultValue={defaultAccordionValue} className="w-full">
+                  {Object.entries(groupedAndFilteredParts).map(([model, parts]) => (
+                      <AccordionItem value={model} key={model}>
+                          <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+                              {model} ({parts.length} parts)
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <Card>
+                              <CardContent className="p-0">
+                                <DataTable columns={sparePartsColumns} data={parts} />
+                              </CardContent>
+                            </Card>
+                          </AccordionContent>
+                      </AccordionItem>
+                  ))}
+              </Accordion>
+          ) : (
+              <div className="p-10 text-center text-muted-foreground">
+                  No spare parts found matching your filters.
+              </div>
+          )}
+        </CardContent>
+      </Card>
     </>
   )
 }
@@ -400,4 +418,3 @@ export default function SparePartsPage() {
     </>
   );
 }
-

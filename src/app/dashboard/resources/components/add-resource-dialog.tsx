@@ -262,7 +262,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
                     </div>
                   </div>
                 </FormControl>
-                {file && (
+                {file && !isSubmitting && (
                   <FormDescription>
                     File selected: {file.name}
                   </FormDescription>

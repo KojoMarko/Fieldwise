@@ -32,14 +32,14 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LoaderCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { CreateResourceInputSchema, ResourceSchema } from '@/lib/schemas';
 import { createResource } from '@/ai/flows/create-resource';
 import { formatISO } from 'date-fns';
 import { analyzeDocument } from '@/ai/flows/analyze-document';
-import { useStorage } from '@/firebase/storage';
+import { useStorage } from '@/firebase/provider';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -60,6 +60,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<AddResourceFormValues>({
     resolver: zodResolver(CreateResourceInputSchema),
@@ -81,7 +82,10 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      setFile(null);
+      return;
+    }
 
     setFile(selectedFile);
     setIsAnalyzing(true);
@@ -177,6 +181,9 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
       });
       form.reset({ equipment: initialEquipment || '' });
       setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to add resource:', error);
@@ -208,7 +215,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
                 <FormLabel>Upload File</FormLabel>
                  <FormControl>
                   <div className="relative">
-                    <Input id="file-upload" type="file" onChange={handleFileChange} className="pr-12" disabled={isAnalyzing}/>
+                    <Input ref={fileInputRef} id="file-upload" type="file" onChange={handleFileChange} className="pr-12" disabled={isAnalyzing}/>
                     <div className="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
                        {isAnalyzing ? (
                         <LoaderCircle className="my-auto h-5 w-5 animate-spin text-primary" />

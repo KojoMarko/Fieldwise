@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -19,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { createWorkOrder } from '@/ai/flows/create-work-order';
+import * as xlsx from 'xlsx';
 
 
 export function TransfersReportTab() {
@@ -67,6 +69,23 @@ export function TransfersReportTab() {
       );
     });
   }, [transferLogs, filter]);
+  
+  const handleExport = () => {
+    const dataToExport = filteredData.map(log => ({
+        'Part Name': log.partName,
+        'Part Number': log.partNumber,
+        'Quantity': log.quantity,
+        'Destination': log.toFacilityName,
+        'Transferred By': log.transferredBy,
+        'Timestamp': log.timestamp,
+    }));
+    
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Transfers");
+    
+    xlsx.writeFile(workbook, "Stock_Transfer_Report.xlsx");
+  };
 
   const handleMarkAsUsed = async (log: TransferLogEvent) => {
       if (!user) return;
@@ -164,20 +183,22 @@ export function TransfersReportTab() {
                 A log of all spare part movements from the central warehouse to facilities.
                 </CardDescription>
             </div>
-            <Button size="sm" variant="outline" className="h-8 gap-1 w-full sm:w-auto">
-                <File className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Export Report
-                </span>
-            </Button>
         </div>
-        <div className="mt-4 flex flex-col sm:flex-row gap-4">
+        <div className="mt-4 flex flex-col sm:flex-row items-center gap-2">
             <Input
                 placeholder="Filter by Part, Facility, or User..."
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="max-w-full sm:max-w-sm"
+                className="w-full"
             />
+            <div className="w-full sm:w-auto">
+                <Button size="sm" variant="outline" className="h-10 gap-1 w-full" onClick={handleExport}>
+                    <File className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Export
+                    </span>
+                </Button>
+            </div>
         </div>
       </CardHeader>
       <CardContent>

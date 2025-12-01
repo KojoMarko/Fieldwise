@@ -17,6 +17,7 @@ import { db } from '@/lib/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
 import { Input } from '@/components/ui/input';
+import * as xlsx from 'xlsx';
 
 type UsedPartRecord = {
   id: string;
@@ -107,6 +108,23 @@ export function PartsUsageReportTab() {
       return nameMatch && facilityMatch;
     });
   }, [usedPartsData, nameFilter, facilityFilter]);
+  
+  const handleExport = () => {
+    const dataToExport = filteredData.map(p => ({
+        'Part Name': p.partName,
+        'Part Number': p.partNumber,
+        'Quantity Used': p.quantity,
+        'Facility': p.facility,
+        'Date Used': p.date,
+    }));
+    
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "PartUsage");
+    
+    xlsx.writeFile(workbook, "Part_Usage_Report.xlsx");
+  };
+
 
   if (isLoading) {
     return (
@@ -127,26 +145,28 @@ export function PartsUsageReportTab() {
                 A consolidated table of all recently used parts.
                 </CardDescription>
             </div>
-            <Button size="sm" variant="outline" className="h-8 gap-1 w-full sm:w-auto">
-                <File className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Export Report
-                </span>
-            </Button>
         </div>
-        <div className="mt-4 flex flex-col sm:flex-row gap-4">
+        <div className="mt-4 flex flex-col sm:flex-row items-center gap-2">
             <Input
                 placeholder="Filter by Part Name/Number..."
                 value={nameFilter}
                 onChange={(e) => setNameFilter(e.target.value)}
-                className="max-w-full sm:max-w-sm"
+                className="w-full"
             />
-            <Input
-                placeholder="Filter by Facility..."
-                value={facilityFilter}
-                onChange={(e) => setFacilityFilter(e.target.value)}
-                className="max-w-full sm:max-w-sm"
-            />
+            <div className="w-full sm:w-auto flex gap-2">
+                <Input
+                    placeholder="Filter by Facility..."
+                    value={facilityFilter}
+                    onChange={(e) => setFacilityFilter(e.target.value)}
+                    className="w-full"
+                />
+                 <Button size="sm" variant="outline" className="h-10 gap-1 w-full" onClick={handleExport}>
+                    <File className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Export
+                    </span>
+                </Button>
+            </div>
         </div>
       </CardHeader>
       <CardContent>

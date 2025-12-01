@@ -323,6 +323,22 @@ function ToolsTab() {
             t.partNumber.toLowerCase().includes(filter.toLowerCase())
         ) : tools;
   }, [tools, filter]);
+  
+  const handleExport = () => {
+    const dataToExport = filteredTools.map(t => ({
+        'Tool ID': t.id,
+        'Tool Name': t.name,
+        'Model/Serial Number': t.partNumber,
+        'Quantity': t.quantity,
+        'Location': t.location,
+    }));
+    
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Tools");
+    
+    xlsx.writeFile(workbook, "Tool_Inventory.xlsx");
+  };
 
   return (
     <>
@@ -336,17 +352,28 @@ function ToolsTab() {
                 Manage all general purpose tools and equipment.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+          </div>
+           <div className="flex flex-col sm:flex-row items-center gap-2 pt-4">
               <Input
-                placeholder="Filter tools..."
+                placeholder="Filter tools by name or model/serial..."
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="max-w-sm"
+                className="w-full"
               />
-              <Button size="sm" onClick={() => setAddToolDialogOpen(true)}>
-                <PlusCircle className="mr-2" /> Add Tool
-              </Button>
-            </div>
+              <div className="w-full sm:w-auto flex gap-2">
+                  <Button size="sm" variant="outline" className="h-10 gap-1 w-full" onClick={handleExport}>
+                      <File className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                      Export
+                      </span>
+                  </Button>
+                  <Button size="sm" className="h-10 gap-1 w-full" onClick={() => setAddToolDialogOpen(true)}>
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                      Add Tool
+                      </span>
+                  </Button>
+              </div>
           </div>
         </CardHeader>
         <CardContent>

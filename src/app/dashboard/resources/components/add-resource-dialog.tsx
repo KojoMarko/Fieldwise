@@ -174,6 +174,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
       });
       return;
     }
+    
     setIsSubmitting(true);
     setUploadProgress(0);
 
@@ -182,63 +183,64 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
     const uploadTask = uploadBytesResumable(storageRef, file);
 
     try {
-        const downloadURL = await new Promise<string>((resolve, reject) => {
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setUploadProgress(progress);
-                },
-                (error) => {
-                    console.error('File upload failed:', error);
-                    reject(error);
-                },
-                async () => {
-                    try {
-                        const url = await getDownloadURL(uploadTask.snapshot.ref);
-                        resolve(url);
-                    } catch (error) {
-                        reject(error);
-                    }
-                }
-            );
-        });
+      const downloadURL = await new Promise<string>((resolve, reject) => {
+        uploadTask.on('state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadProgress(progress);
+          },
+          (error) => {
+            console.error('File upload failed:', error);
+            reject(error);
+          },
+          () => {
+            getDownloadURL(uploadTask.snapshot.ref).then(resolve).catch(reject);
+          }
+        );
+      });
 
-        const resourceData = {
-            ...data,
-            uploaderName: user.name,
-            companyId: user.companyId,
-            updatedDate: formatISO(new Date()),
-            fileUrl: downloadURL,
-        };
+      const resourceData = {
+        ...data,
+        uploaderName: user.name,
+        companyId: user.companyId,
+        updatedDate: formatISO(new Date()),
+        fileUrl: downloadURL,
+      };
 
-        const fullResource = ResourceSchema.parse(resourceData);
-        await createResource(fullResource);
+      const fullResource = ResourceSchema.parse(resourceData);
+      await createResource(fullResource);
 
-        toast({
-            title: 'Resource Added',
-            description: `"${data.title}" has been successfully added.`,
-        });
+      toast({
+        title: 'Resource Added',
+        description: `"${data.title}" has been successfully added.`,
+      });
 
-        resetDialog();
-        onOpenChange(false);
-    } catch (error) {
-        console.error('Failed to add resource:', error);
-        const description = error instanceof z.ZodError 
-            ? error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-            : 'An unexpected error occurred. Please try again.';
-        toast({
-            variant: 'destructive',
-            title: 'Upload or Save Failed',
-            description,
-        });
-    } finally {
-        setIsSubmitting(false);
-        setUploadProgress(null);
+      onOpenChange(false);
+      // Delay reset to allow dialog to close smoothly
+      setTimeout(resetDialog, 300);
+
+    } catch (error: any) {
+      console.error('Failed to add resource:', error);
+      const description = error instanceof z.ZodError 
+          ? error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+          : error.message || 'An unexpected error occurred. Please try again.';
+      toast({
+        variant: 'destructive',
+        title: 'Upload or Save Failed',
+        description,
+      });
+      setIsSubmitting(false);
+      setUploadProgress(null);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        resetDialog();
+      }
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Add New Resource</DialogTitle>
@@ -386,7 +388,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
                  </div>
              )}
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting || isAnalyzing}>
                 {isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {isSubmitting ? `Uploading... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : 'Add to Resources'}

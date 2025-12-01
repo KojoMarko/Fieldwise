@@ -43,6 +43,7 @@ import { useStorage } from '@/firebase/provider';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { Progress } from '@/components/ui/progress';
+import { Label } from '@/components/ui/label';
 
 
 type AddResourceFormValues = z.infer<typeof CreateResourceInputSchema>;

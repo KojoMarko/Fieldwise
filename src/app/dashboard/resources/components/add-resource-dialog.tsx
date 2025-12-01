@@ -40,8 +40,10 @@ import { createResource } from '@/ai/flows/create-resource';
 import { formatISO } from 'date-fns';
 import { analyzeDocument } from '@/ai/flows/analyze-document';
 import { useStorage } from '@/firebase/provider';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { Progress } from '@/components/ui/progress';
+
 
 type AddResourceFormValues = z.infer<typeof CreateResourceInputSchema>;
 
@@ -61,6 +63,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   
   const form = useForm<AddResourceFormValues>({
     resolver: zodResolver(CreateResourceInputSchema),
@@ -78,6 +81,23 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
         form.setValue('equipment', initialEquipment);
     }
   }, [initialEquipment, form]);
+
+  const resetDialog = () => {
+    form.reset({
+        title: '',
+        equipment: initialEquipment || '',
+        description: '',
+        category: '',
+        version: ''
+    });
+    setFile(null);
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+    setUploadProgress(null);
+    setIsSubmitting(false);
+    setIsAnalyzing(false);
+  }
 
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,50 +174,63 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
       return;
     }
     setIsSubmitting(true);
-    try {
-      // 1. Upload file to Firebase Storage
-      const resourceId = uuidv4();
-      const storageRef = ref(storage, `resources/${user.companyId}/${resourceId}/${file.name}`);
-      const uploadResult = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(uploadResult.ref);
+    
+    // 1. Upload file to Firebase Storage
+    const resourceId = uuidv4();
+    const storageRef = ref(storage, `resources/${user.companyId}/${resourceId}/${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
 
-      // 2. Prepare data for Firestore
-      const resourceData = {
-        ...data,
-        uploaderName: user.name,
-        companyId: user.companyId,
-        updatedDate: formatISO(new Date()),
-        fileUrl: downloadURL, // Use the real download URL
-      };
+    uploadTask.on('state_changed',
+        (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadProgress(progress);
+        },
+        (error) => {
+            console.error('Failed to add resource:', error);
+            const description = error instanceof z.ZodError 
+                ? error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+                : 'Could not upload the file. Please try again.';
+            toast({
+                variant: 'destructive',
+                title: 'Upload Failed',
+                description,
+            });
+            setIsSubmitting(false);
+            setUploadProgress(null);
+        },
+        async () => {
+            try {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                const resourceData = {
+                    ...data,
+                    uploaderName: user.name,
+                    companyId: user.companyId,
+                    updatedDate: formatISO(new Date()),
+                    fileUrl: downloadURL,
+                };
 
-      const fullResource = ResourceSchema.parse(resourceData);
-      
-      // 3. Create the resource document in Firestore
-      await createResource(fullResource);
+                const fullResource = ResourceSchema.parse(resourceData);
+                await createResource(fullResource);
 
-      toast({
-        title: 'Resource Added',
-        description: `"${data.title}" has been successfully added to the resource center.`,
-      });
-      form.reset({ equipment: initialEquipment || '' });
-      setFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Failed to add resource:', error);
-      const description = error instanceof z.ZodError 
-        ? error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-        : 'An unexpected error occurred. Please try again.';
-      toast({
-        variant: 'destructive',
-        title: 'Failed to Add Resource',
-        description,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+                toast({
+                    title: 'Resource Added',
+                    description: `"${data.title}" has been successfully added.`,
+                });
+                
+                resetDialog();
+                onOpenChange(false);
+            } catch (error) {
+                 console.error('Failed to create resource document:', error);
+                 toast({
+                    variant: 'destructive',
+                    title: 'Failed to Save Resource',
+                    description: 'The file was uploaded but could not be saved to the database.',
+                 });
+                 setIsSubmitting(false);
+                 setUploadProgress(null);
+            }
+        }
+    );
   }
 
   return (
@@ -215,7 +248,7 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
                 <FormLabel>Upload File</FormLabel>
                  <FormControl>
                   <div className="relative">
-                    <Input ref={fileInputRef} id="file-upload" type="file" onChange={handleFileChange} className="pr-12" disabled={isAnalyzing}/>
+                    <Input ref={fileInputRef} id="file-upload" type="file" onChange={handleFileChange} className="pr-12" disabled={isAnalyzing || isSubmitting}/>
                     <div className="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
                        {isAnalyzing ? (
                         <LoaderCircle className="my-auto h-5 w-5 animate-spin text-primary" />
@@ -225,10 +258,10 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
                     </div>
                   </div>
                 </FormControl>
-                {file && !isAnalyzing ? (
-                  <FormDescription>File selected: {file.name}</FormDescription>
-                ) : (
-                  <FormDescription>Select a PDF or document file to have AI analyze it.</FormDescription>
+                {file && (
+                  <FormDescription>
+                    File selected: {file.name}
+                  </FormDescription>
                 )}
              </FormItem>
             
@@ -341,11 +374,18 @@ export function AddResourceDialog({ open, onOpenChange, categories, types, initi
                   )}
                 />
              </div>
+             {uploadProgress !== null && (
+                 <div className="space-y-2">
+                     <Label>Upload Progress</Label>
+                     <Progress value={uploadProgress} />
+                     <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+                 </div>
+             )}
             <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting || isAnalyzing}>
-                {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                {isSubmitting ? 'Uploading...' : 'Add to Resources'}
+                {isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isSubmitting ? `Uploading... ${uploadProgress !== null ? Math.round(uploadProgress) + '%' : ''}` : 'Add to Resources'}
               </Button>
             </DialogFooter>
           </form>

@@ -52,7 +52,7 @@ export const useFirebaseApp = () => {
     return context.app;
 }
 
-export const useAuth = () => {
+export const useAuthFirebase = () => {
     const context = useContext(FirebaseContext);
     if (!context) {
         throw new Error('useAuth must be used within a FirebaseProvider');

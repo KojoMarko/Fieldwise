@@ -168,8 +168,8 @@ export type TransferLogEvent = {
   partNumber: string;
   quantity: number;
   fromLocation: string;
-  toFacilityId: string;
-  toFacilityName: string;
+  toFacilityId: string; // This can be a customer or a location ID
+  toFacilityName: string; // This can be a customer name or a location name
   transferredBy: string;
   transferredById: string;
   timestamp: string;

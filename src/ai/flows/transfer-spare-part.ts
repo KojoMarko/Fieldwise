@@ -14,8 +14,8 @@ import { formatISO } from 'date-fns';
 const TransferSparePartInputSchema = z.object({
   partId: z.string().min(1, 'Part ID is required'),
   quantity: z.coerce.number().min(1, 'Quantity must be at least 1'),
-  toFacilityId: z.string().min(1, 'Destination facility is required'),
-  toFacilityName: z.string().min(1, 'Destination facility name is required'),
+  toLocationId: z.string().min(1, 'Destination location is required'),
+  toLocationName: z.string().min(1, 'Destination location name is required'),
   companyId: z.string().min(1, 'Company ID is required'),
   transferredById: z.string().min(1, 'User ID is required'),
   transferredBy: z.string().min(1, 'User name is required'),
@@ -37,7 +37,7 @@ const transferSparePartFlow = ai.defineFlow(
     },
   },
   async (input) => {
-    const { partId, quantity, toFacilityId, toFacilityName, companyId, transferredById, transferredBy } = input;
+    const { partId, quantity, toLocationId, toLocationName, companyId, transferredById, transferredBy } = input;
     const partRef = db.collection('spare-parts').doc(partId);
 
     await db.runTransaction(async (transaction) => {
@@ -59,7 +59,7 @@ const transferSparePartFlow = ai.defineFlow(
 
         // Update facility stock
         const currentFacilityStock = part.facilityStock || [];
-        const facilityIndex = currentFacilityStock.findIndex(f => f.facilityId === toFacilityId);
+        const facilityIndex = currentFacilityStock.findIndex(f => f.facilityId === toLocationId);
 
         if (facilityIndex > -1) {
             // Increment existing facility stock
@@ -69,8 +69,8 @@ const transferSparePartFlow = ai.defineFlow(
         } else {
             // Add new facility stock record
             const newFacilityStock: FacilityStock = {
-                facilityId: toFacilityId,
-                facilityName: toFacilityName,
+                facilityId: toLocationId,
+                facilityName: toLocationName,
                 quantity: quantity
             };
             transaction.update(partRef, {
@@ -86,14 +86,14 @@ const transferSparePartFlow = ai.defineFlow(
             partNumber: part.partNumber,
             quantity,
             fromLocation: 'Central Warehouse',
-            toFacilityId,
-            toFacilityName,
+            toFacilityId: toLocationId,
+            toFacilityName: toLocationName,
             transferredBy,
             transferredById,
             timestamp: formatISO(new Date()),
             companyId,
         };
-        transaction.set(logRef, logEvent);
+        transaction.set(logRef, { ...logEvent, id: logRef.id });
     });
   }
 );

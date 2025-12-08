@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { SparePart, Customer } from '@/lib/types';
+import type { SparePart, Location } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { LoaderCircle } from 'lucide-react';
@@ -37,25 +37,25 @@ export function TransferStockDialog({
   const { user } = useAuth();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
-  const [facilityId, setFacilityId] = useState('');
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [destinationId, setDestinationId] = useState('');
+  const [locations, setLocations] = useState<Location[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(true);
 
   useEffect(() => {
     if (!user?.companyId || !open) {
-      setIsLoadingCustomers(false);
+      setIsLoadingLocations(false);
       return;
     }
 
-    const customerQuery = query(collection(db, "customers"), where("companyId", "==", user.companyId));
-    const unsubscribe = onSnapshot(customerQuery, (snapshot) => {
-        const customersData: Customer[] = [];
+    const locationQuery = query(collection(db, "locations"), where("companyId", "==", user.companyId));
+    const unsubscribe = onSnapshot(locationQuery, (snapshot) => {
+        const locationsData: Location[] = [];
         snapshot.forEach((doc) => {
-            customersData.push({ id: doc.id, ...doc.data() } as Customer);
+            locationsData.push({ id: doc.id, ...doc.data() } as Location);
         });
-        setCustomers(customersData);
-        setIsLoadingCustomers(false);
+        setLocations(locationsData);
+        setIsLoadingLocations(false);
     });
 
     return () => unsubscribe();
@@ -74,35 +74,35 @@ export function TransferStockDialog({
       });
       return;
     }
-    if (!facilityId) {
+    if (!destinationId) {
         toast({
             variant: 'destructive',
-            title: 'No Facility Selected',
-            description: 'Please select a destination facility.',
+            title: 'No Destination Selected',
+            description: 'Please select a destination location.',
         });
         return;
     }
     
     setIsSubmitting(true);
     try {
-      const selectedCustomer = customers.find(c => c.id === facilityId);
-      if (!selectedCustomer) throw new Error("Selected customer not found");
+      const selectedLocation = locations.find(c => c.id === destinationId);
+      if (!selectedLocation) throw new Error("Selected location not found");
 
       await transferSparePart({
         partId: part.id,
         quantity,
-        toFacilityId: facilityId,
-        toFacilityName: selectedCustomer.name,
+        toLocationId: destinationId,
+        toLocationName: selectedLocation.name,
         companyId: user.companyId,
         transferredBy: user.name,
         transferredById: user.id
       });
       toast({
         title: 'Stock Transferred',
-        description: `${quantity} unit(s) of ${part.name} transferred to ${selectedCustomer.name}.`,
+        description: `${quantity} unit(s) of ${part.name} transferred to ${selectedLocation.name}.`,
       });
       setQuantity(1);
-      setFacilityId('');
+      setDestinationId('');
       onOpenChange(false);
     } catch (error: any) {
       console.error('Failed to transfer stock:', error);
@@ -122,7 +122,7 @@ export function TransferStockDialog({
         <DialogHeader>
           <DialogTitle>Transfer Stock: {part.name}</DialogTitle>
           <DialogDescription>
-            Move parts from the central warehouse to a facility's holding stock. Central stock: {part.quantity}.
+            Move parts from the central warehouse to another location. Central stock: {part.quantity}.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
@@ -138,14 +138,14 @@ export function TransferStockDialog({
                 />
             </div>
              <div className="space-y-2">
-                <Label htmlFor="facility">Destination Facility</Label>
-                <Select value={facilityId} onValueChange={setFacilityId} disabled={isLoadingCustomers}>
+                <Label htmlFor="facility">Destination Location</Label>
+                <Select value={destinationId} onValueChange={setDestinationId} disabled={isLoadingLocations}>
                     <SelectTrigger id="facility">
-                        <SelectValue placeholder={isLoadingCustomers ? "Loading facilities..." : "Select a facility"} />
+                        <SelectValue placeholder={isLoadingLocations ? "Loading locations..." : "Select a location"} />
                     </SelectTrigger>
                     <SelectContent>
-                        {customers.map(customer => (
-                            <SelectItem key={customer.id} value={customer.id}>{customer.name}</SelectItem>
+                        {locations.map(loc => (
+                            <SelectItem key={loc.id} value={loc.id}>{loc.name} ({loc.type})</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -155,7 +155,7 @@ export function TransferStockDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleTransferStock} disabled={isSubmitting || isLoadingCustomers}>
+          <Button onClick={handleTransferStock} disabled={isSubmitting || isLoadingLocations}>
              {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
             Confirm Transfer
           </Button>

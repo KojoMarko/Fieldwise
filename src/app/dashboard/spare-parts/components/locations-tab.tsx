@@ -20,19 +20,22 @@ import { LocationsDataTable } from './locations-data-table';
 import { locationsColumns } from './locations-columns';
 
 export function LocationsTab() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const isAdmin = user?.role === 'Admin';
   const canAddLocations = user?.role === 'Admin';
   const [isAddLocationDialogOpen, setAddLocationDialogOpen] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
-    if (!user?.companyId) {
-      setIsLoading(false);
+    if (isAuthLoading) {
       return;
     }
-    setIsLoading(true);
+    if (!user?.companyId) {
+      setIsLoadingData(false);
+      return;
+    }
+
     const locationsQuery = query(collection(db, "locations"), where("companyId", "==", user.companyId));
     
     const unsubscribe = onSnapshot(locationsQuery, (snapshot) => {
@@ -42,11 +45,11 @@ export function LocationsTab() {
       });
       locationsData.sort((a, b) => a.name.localeCompare(b.name));
       setLocations(locationsData);
-      setIsLoading(false);
+      setIsLoadingData(false);
     });
 
     return () => unsubscribe();
-  }, [user?.companyId]);
+  }, [user, isAuthLoading]);
   
   const handleExport = () => {
     const dataToExport = locations.map(l => ({
@@ -112,7 +115,7 @@ export function LocationsTab() {
             </div>
         </CardHeader>
         <CardContent>
-           {isLoading ? (
+           {isLoadingData ? (
              <div className="flex items-center justify-center p-10">
                 <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
                 <p className="ml-4 text-muted-foreground">Loading locations...</p>

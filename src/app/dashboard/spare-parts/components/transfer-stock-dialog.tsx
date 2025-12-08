@@ -16,11 +16,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGr
 import type { SparePart, Location, Customer } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, Building, Warehouse, Check, ChevronsUpDown } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { transferSparePart } from '@/ai/flows/transfer-spare-part';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 
 interface TransferStockDialogProps {
@@ -42,6 +45,7 @@ export function TransferStockDialog({
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isComboboxOpen, setComboboxOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.companyId || !open) {
@@ -89,6 +93,14 @@ export function TransferStockDialog({
         unsubCustomers();
     };
   }, [user?.companyId, open]);
+  
+  // Reset local state when dialog is closed/reopened
+  useEffect(() => {
+    if(open) {
+      setQuantity(1);
+      setDestinationId('');
+    }
+  }, [open]);
 
   const handleTransferStock = async () => {
     if (!user) {
@@ -138,8 +150,6 @@ export function TransferStockDialog({
         title: 'Stock Transferred',
         description: `${quantity} unit(s) of ${part.name} transferred to ${selectedDestination.name}.`,
       });
-      setQuantity(1);
-      setDestinationId('');
       onOpenChange(false);
     } catch (error: any) {
       console.error('Failed to transfer stock:', error);
@@ -151,6 +161,14 @@ export function TransferStockDialog({
     } finally {
         setIsSubmitting(false);
     }
+  };
+
+  const getDestinationName = () => {
+    if (!destinationId) return "Select a destination...";
+    const [type, id] = destinationId.split(':');
+    const list = type === 'loc' ? locations : customers;
+    const item = list.find(i => i.id === id);
+    return item?.name || "Select a destination...";
   };
 
   return (
@@ -175,26 +193,71 @@ export function TransferStockDialog({
                 />
             </div>
              <div className="space-y-2">
-                <Label htmlFor="facility">Destination</Label>
-                <Select value={destinationId} onValueChange={setDestinationId} disabled={isLoading}>
-                    <SelectTrigger id="facility">
-                        <SelectValue placeholder={isLoading ? "Loading destinations..." : "Select a destination"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                            <Label className="px-2 text-xs">Locations</Label>
-                             {locations.map(loc => (
-                                <SelectItem key={`loc:${loc.id}`} value={`loc:${loc.id}`}>{loc.name} ({loc.type})</SelectItem>
-                            ))}
-                        </SelectGroup>
-                        <SelectGroup>
-                           <Label className="px-2 text-xs">Customer Facilities</Label>
-                             {customers.map(cust => (
-                                <SelectItem key={`cust:${cust.id}`} value={`cust:${cust.id}`}>{cust.name}</SelectItem>
-                            ))}
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
+                <Label>Destination</Label>
+                 <Popover open={isComboboxOpen} onOpenChange={setComboboxOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={isComboboxOpen}
+                      className="w-full justify-between"
+                      disabled={isLoading}
+                    >
+                      {getDestinationName()}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search destination..." />
+                      <CommandList>
+                        <CommandEmpty>No destination found.</CommandEmpty>
+                        <CommandGroup heading="Locations">
+                          {locations.map((loc) => (
+                            <CommandItem
+                              key={`loc:${loc.id}`}
+                              value={loc.name}
+                              onSelect={() => {
+                                setDestinationId(`loc:${loc.id}`);
+                                setComboboxOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  destinationId === `loc:${loc.id}` ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                               <Warehouse className="mr-2 h-4 w-4 text-muted-foreground" />
+                              {loc.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                        <CommandGroup heading="Customers">
+                          {customers.map((cust) => (
+                            <CommandItem
+                              key={`cust:${cust.id}`}
+                              value={cust.name}
+                              onSelect={() => {
+                                setDestinationId(`cust:${cust.id}`);
+                                setComboboxOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  destinationId === `cust:${cust.id}` ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <Building className="mr-2 h-4 w-4 text-muted-foreground" />
+                              {cust.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
             </div>
         </div>
         <DialogFooter>

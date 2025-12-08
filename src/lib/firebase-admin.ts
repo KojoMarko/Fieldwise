@@ -7,18 +7,20 @@ import { getAuth } from 'firebase-admin/auth';
 let adminApp: App;
 
 const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-if (!serviceAccountString) {
-    throw new Error('The FIREBASE_SERVICE_ACCOUNT environment variable is not set. Please add it to your .env file.');
+if (!serviceAccountString || !privateKey) {
+    throw new Error('The FIREBASE_SERVICE_ACCOUNT and FIREBASE_PRIVATE_KEY environment variables must be set.');
 }
 
 let serviceAccount;
 try {
-    // Decode the Base64 string to get the JSON string
-    const decodedServiceAccount = Buffer.from(serviceAccountString, 'base64').toString('utf-8');
-    serviceAccount = JSON.parse(decodedServiceAccount);
+    // Parse the main service account JSON
+    serviceAccount = JSON.parse(serviceAccountString);
+    // Add the private key, replacing the escaped newlines with actual newlines
+    serviceAccount.private_key = privateKey.replace(/\\n/g, '\n');
 } catch (error) {
-    throw new Error('Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid Base64 encoded JSON string.');
+    throw new Error('Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid JSON string.');
 }
 
 

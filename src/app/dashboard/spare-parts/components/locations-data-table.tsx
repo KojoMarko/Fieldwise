@@ -12,6 +12,7 @@ import {
   useReactTable,
   getFilteredRowModel,
   type ColumnFiltersState,
+  Row,
 } from '@tanstack/react-table';
 
 import {
@@ -24,15 +25,19 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import type { Location } from '@/lib/types';
 
-interface DataTableProps<TData, TValue> {
+
+interface DataTableProps<TData extends Location, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  onRowDoubleClick: (row: TData) => void;
 }
 
-export function LocationsDataTable<TData, TValue>({
+export function LocationsDataTable<TData extends Location, TValue>({
   columns,
   data,
+  onRowDoubleClick,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [rowSelection, setRowSelection] = React.useState({});
@@ -95,6 +100,8 @@ export function LocationsDataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
+                  onDoubleClick={() => onRowDoubleClick(row.original)}
+                  className="cursor-pointer"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} meta={cell.column.columnDef.meta}>

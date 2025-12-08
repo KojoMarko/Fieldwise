@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -7,7 +8,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, File, LoaderCircle, Warehouse, DatabaseZap } from 'lucide-react';
+import { PlusCircle, File, LoaderCircle, Warehouse, DatabaseZap, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -325,6 +326,7 @@ export function LocationsTab() {
             <LocationsDataTable
               columns={locationsColumns({ onLocationClick: handleLocationClick })}
               data={locations}
+              onRowDoubleClick={handleLocationClick}
             />
           ) : (
             <div className="text-center py-20 border-2 border-dashed rounded-lg">

@@ -12,7 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Trash2, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
 import {
@@ -143,6 +143,10 @@ export const locationsColumns = ({ onLocationClick }: LocationsColumnsProps): Co
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => onLocationClick(targetLocation)}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Stock
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>Edit Location</DropdownMenuItem>
                 <DropdownMenuItem
                     className="text-destructive"

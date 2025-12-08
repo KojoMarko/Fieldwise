@@ -139,6 +139,15 @@ function InventoryTab() {
     }
     setIsLoading(true);
 
+    let partsLoaded = false;
+    let locationsLoaded = false;
+
+    const checkLoadingDone = () => {
+      if (partsLoaded && locationsLoaded) {
+        setIsLoading(false);
+      }
+    };
+
     const partsQuery = query(collection(db, "spare-parts"), where("companyId", "==", user.companyId));
     const locationsQuery = query(collection(db, "locations"), where("companyId", "==", user.companyId));
     
@@ -148,18 +157,19 @@ function InventoryTab() {
         partsData.push({ id: doc.id, ...doc.data() } as SparePart);
       });
       setSpareParts(partsData);
-      if(locations.length) setIsLoading(false);
+      partsLoaded = true;
+      checkLoadingDone();
     });
 
-     const unsubscribeLocations = onSnapshot(locationsQuery, (snapshot) => {
+    const unsubscribeLocations = onSnapshot(locationsQuery, (snapshot) => {
       const locsData: Location[] = [];
       snapshot.forEach((doc) => {
         locsData.push({ id: doc.id, ...doc.data() } as Location);
       });
       setLocations(locsData);
-      if(spareParts.length) setIsLoading(false);
+      locationsLoaded = true;
+      checkLoadingDone();
     });
-
 
     return () => {
       unsubscribeParts();
@@ -316,6 +326,15 @@ function ToolsTab() {
       return;
     }
     setIsLoading(true);
+    let toolsLoaded = false;
+    let locationsLoaded = false;
+
+    const checkLoadingDone = () => {
+      if (toolsLoaded && locationsLoaded) {
+        setIsLoading(false);
+      }
+    };
+    
     const partsQuery = query(
       collection(db, "spare-parts"), 
       where("companyId", "==", user.companyId),
@@ -329,7 +348,8 @@ function ToolsTab() {
         toolsData.push({ id: doc.id, ...doc.data() } as SparePart);
       });
       setTools(toolsData);
-      if(locations.length) setIsLoading(false);
+      toolsLoaded = true;
+      checkLoadingDone();
     });
 
      const unsubscribeLocations = onSnapshot(locationsQuery, (snapshot) => {
@@ -338,7 +358,8 @@ function ToolsTab() {
         locsData.push({ id: doc.id, ...doc.data() } as Location);
       });
       setLocations(locsData);
-       if(tools.length || snapshot.empty) setIsLoading(false);
+       locationsLoaded = true;
+       checkLoadingDone();
     });
 
     return () => {
@@ -480,3 +501,5 @@ export default function SparePartsPage() {
     </>
   );
 }
+
+    

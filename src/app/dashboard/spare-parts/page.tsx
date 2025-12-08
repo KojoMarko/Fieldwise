@@ -137,8 +137,7 @@ function InventoryTab() {
       setIsLoading(false);
       return;
     }
-    setIsLoading(true);
-
+    
     let partsLoaded = false;
     let locationsLoaded = false;
 
@@ -159,6 +158,9 @@ function InventoryTab() {
       setSpareParts(partsData);
       partsLoaded = true;
       checkLoadingDone();
+    }, () => {
+      partsLoaded = true;
+      checkLoadingDone();
     });
 
     const unsubscribeLocations = onSnapshot(locationsQuery, (snapshot) => {
@@ -167,6 +169,9 @@ function InventoryTab() {
         locsData.push({ id: doc.id, ...doc.data() } as Location);
       });
       setLocations(locsData);
+      locationsLoaded = true;
+      checkLoadingDone();
+    }, () => {
       locationsLoaded = true;
       checkLoadingDone();
     });
@@ -201,7 +206,7 @@ function InventoryTab() {
         )
         : partsToFilter;
 
-    return filteredByName.reduce((acc, part) => {
+    const grouped = filteredByName.reduce((acc, part) => {
         const model = part.assetModel || 'Uncategorized';
         if (!acc[model]) {
             acc[model] = [];
@@ -209,6 +214,13 @@ function InventoryTab() {
         acc[model].push(part);
         return acc;
     }, {} as Record<string, SparePart[]>);
+
+    // Sort parts within each group by quantity
+    for (const model in grouped) {
+        grouped[model].sort((a, b) => b.quantity - a.quantity);
+    }
+
+    return grouped;
   }, [filter, stockFilter, spareParts]);
   
   const handleExport = () => {
@@ -325,7 +337,7 @@ function ToolsTab() {
       setIsLoading(false);
       return;
     }
-    setIsLoading(true);
+    
     let toolsLoaded = false;
     let locationsLoaded = false;
 
@@ -350,6 +362,9 @@ function ToolsTab() {
       setTools(toolsData);
       toolsLoaded = true;
       checkLoadingDone();
+    }, () => {
+        toolsLoaded = true;
+        checkLoadingDone();
     });
 
      const unsubscribeLocations = onSnapshot(locationsQuery, (snapshot) => {
@@ -360,6 +375,9 @@ function ToolsTab() {
       setLocations(locsData);
        locationsLoaded = true;
        checkLoadingDone();
+    }, () => {
+        locationsLoaded = true;
+        checkLoadingDone();
     });
 
     return () => {

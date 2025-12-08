@@ -12,8 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { SparePart, Location } from '@/lib/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from '@/components/ui/select';
+import type { SparePart, Location, Customer } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { LoaderCircle } from 'lucide-react';
@@ -39,26 +39,55 @@ export function TransferStockDialog({
   const [quantity, setQuantity] = useState(1);
   const [destinationId, setDestinationId] = useState('');
   const [locations, setLocations] = useState<Location[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingLocations, setIsLoadingLocations] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user?.companyId || !open) {
-      setIsLoadingLocations(false);
+      setIsLoading(false);
       return;
     }
+    
+    setIsLoading(true);
 
     const locationQuery = query(collection(db, "locations"), where("companyId", "==", user.companyId));
-    const unsubscribe = onSnapshot(locationQuery, (snapshot) => {
+    const customerQuery = query(collection(db, "customers"), where("companyId", "==", user.companyId));
+    
+    let locationsLoaded = false;
+    let customersLoaded = false;
+
+    const checkLoading = () => {
+        if (locationsLoaded && customersLoaded) {
+            setIsLoading(false);
+        }
+    }
+
+    const unsubLocations = onSnapshot(locationQuery, (snapshot) => {
         const locationsData: Location[] = [];
         snapshot.forEach((doc) => {
             locationsData.push({ id: doc.id, ...doc.data() } as Location);
         });
         setLocations(locationsData);
-        setIsLoadingLocations(false);
-    });
+        locationsLoaded = true;
+        checkLoading();
+    }, () => { locationsLoaded = true; checkLoading(); });
+    
+    const unsubCustomers = onSnapshot(customerQuery, (snapshot) => {
+        const customersData: Customer[] = [];
+        snapshot.forEach((doc) => {
+            customersData.push({ id: doc.id, ...doc.data() } as Customer);
+        });
+        setCustomers(customersData);
+        customersLoaded = true;
+        checkLoading();
+    }, () => { customersLoaded = true; checkLoading(); });
 
-    return () => unsubscribe();
+
+    return () => {
+        unsubLocations();
+        unsubCustomers();
+    };
   }, [user?.companyId, open]);
 
   const handleTransferStock = async () => {
@@ -78,28 +107,36 @@ export function TransferStockDialog({
         toast({
             variant: 'destructive',
             title: 'No Destination Selected',
-            description: 'Please select a destination location.',
+            description: 'Please select a destination location or customer.',
         });
         return;
     }
     
     setIsSubmitting(true);
     try {
-      const selectedLocation = locations.find(c => c.id === destinationId);
-      if (!selectedLocation) throw new Error("Selected location not found");
+      const [type, id] = destinationId.split(':');
+      let selectedDestination;
+
+      if (type === 'loc') {
+          selectedDestination = locations.find(c => c.id === id);
+      } else {
+          selectedDestination = customers.find(c => c.id === id);
+      }
+
+      if (!selectedDestination) throw new Error("Selected destination not found");
 
       await transferSparePart({
         partId: part.id,
         quantity,
-        toLocationId: destinationId,
-        toLocationName: selectedLocation.name,
+        toLocationId: id,
+        toLocationName: selectedDestination.name,
         companyId: user.companyId,
         transferredBy: user.name,
         transferredById: user.id
       });
       toast({
         title: 'Stock Transferred',
-        description: `${quantity} unit(s) of ${part.name} transferred to ${selectedLocation.name}.`,
+        description: `${quantity} unit(s) of ${part.name} transferred to ${selectedDestination.name}.`,
       });
       setQuantity(1);
       setDestinationId('');
@@ -122,7 +159,7 @@ export function TransferStockDialog({
         <DialogHeader>
           <DialogTitle>Transfer Stock: {part.name}</DialogTitle>
           <DialogDescription>
-            Move parts from the central warehouse to another location. Central stock: {part.quantity}.
+            Move parts from the central warehouse to another location or customer facility. Central stock: {part.quantity}.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
@@ -138,15 +175,24 @@ export function TransferStockDialog({
                 />
             </div>
              <div className="space-y-2">
-                <Label htmlFor="facility">Destination Location</Label>
-                <Select value={destinationId} onValueChange={setDestinationId} disabled={isLoadingLocations}>
+                <Label htmlFor="facility">Destination</Label>
+                <Select value={destinationId} onValueChange={setDestinationId} disabled={isLoading}>
                     <SelectTrigger id="facility">
-                        <SelectValue placeholder={isLoadingLocations ? "Loading locations..." : "Select a location"} />
+                        <SelectValue placeholder={isLoading ? "Loading destinations..." : "Select a destination"} />
                     </SelectTrigger>
                     <SelectContent>
-                        {locations.map(loc => (
-                            <SelectItem key={loc.id} value={loc.id}>{loc.name} ({loc.type})</SelectItem>
-                        ))}
+                        <SelectGroup>
+                            <Label className="px-2 text-xs">Locations</Label>
+                             {locations.map(loc => (
+                                <SelectItem key={`loc:${loc.id}`} value={`loc:${loc.id}`}>{loc.name} ({loc.type})</SelectItem>
+                            ))}
+                        </SelectGroup>
+                        <SelectGroup>
+                           <Label className="px-2 text-xs">Customer Facilities</Label>
+                             {customers.map(cust => (
+                                <SelectItem key={`cust:${cust.id}`} value={`cust:${cust.id}`}>{cust.name}</SelectItem>
+                            ))}
+                        </SelectGroup>
                     </SelectContent>
                 </Select>
             </div>
@@ -155,7 +201,7 @@ export function TransferStockDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleTransferStock} disabled={isSubmitting || isLoadingLocations}>
+          <Button onClick={handleTransferStock} disabled={isSubmitting || isLoading}>
              {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
             Confirm Transfer
           </Button>

@@ -9,30 +9,36 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
 import type { Location, SparePart } from '@/lib/types';
 
+const MigrateLocationsInputSchema = z.object({
+  companyId: z.string().min(1, 'Company ID is required'),
+});
+type MigrateLocationsInput = z.infer<typeof MigrateLocationsInputSchema>;
+
+
 const MigrateLocationsOutputSchema = z.object({
   migratedCount: z.number().describe('The number of new locations created.'),
 });
 type MigrateLocationsOutput = z.infer<typeof MigrateLocationsOutputSchema>;
 
-export async function migrateLocations(): Promise<MigrateLocationsOutput> {
-  return migrateLocationsFlow();
+export async function migrateLocations(input: MigrateLocationsInput): Promise<MigrateLocationsOutput> {
+  return migrateLocationsFlow(input);
 }
 
 const migrateLocationsFlow = ai.defineFlow(
   {
     name: 'migrateLocationsFlow',
-    inputSchema: z.void(),
+    inputSchema: MigrateLocationsInputSchema,
     outputSchema: MigrateLocationsOutputSchema,
   },
-  async () => {
-    // 1. Get all spare parts
-    const sparePartsSnapshot = await db.collection('spare-parts').get();
+  async ({ companyId }) => {
+    // 1. Get all spare parts for the specified company
+    const sparePartsSnapshot = await db.collection('spare-parts').where('companyId', '==', companyId).get();
     if (sparePartsSnapshot.empty) {
       return { migratedCount: 0 };
     }
 
-    // 2. Get all existing locations
-    const locationsSnapshot = await db.collection('locations').get();
+    // 2. Get all existing locations for the company
+    const locationsSnapshot = await db.collection('locations').where('companyId', '==', companyId).get();
     const existingLocations = new Set(
       locationsSnapshot.docs.map(doc => (doc.data() as Location).name.toLowerCase())
     );
@@ -57,7 +63,7 @@ const migrateLocationsFlow = ai.defineFlow(
           name: locationName,
           type: 'Warehouse', // Defaulting to Warehouse, can be changed by user later
           address: 'Address not specified',
-          companyId: 'alos-paraklet' // Assuming a single company for now
+          companyId: companyId
         };
         batch.set(newLocationRef, { ...newLocation, id: newLocationRef.id });
         migratedCount++;

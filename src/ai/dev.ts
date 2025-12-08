@@ -36,4 +36,3 @@ import '@/ai/flows/create-location.ts';
 import '@/ai/flows/update-location.ts';
 import '@/ai/flows/delete-location.ts';
 import '@/ai/flows/migrate-locations.ts';
-

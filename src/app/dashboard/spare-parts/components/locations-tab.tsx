@@ -79,13 +79,21 @@ export function LocationsTab() {
   };
   
   const handleMigration = async () => {
+    if (!user?.companyId) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not determine your company to run migration.'
+        });
+        return;
+    }
     setIsMigrating(true);
     toast({
         title: 'Starting Migration',
         description: 'Scanning your inventory for existing location names...',
     });
     try {
-        const result = await migrateLocations();
+        const result = await migrateLocations({ companyId: user.companyId });
         toast({
             title: 'Migration Complete',
             description: `${result.migratedCount} new locations were created from your inventory data.`,

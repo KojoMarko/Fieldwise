@@ -6,23 +6,19 @@ import { getAuth } from 'firebase-admin/auth';
 
 let adminApp: App;
 
-const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+const projectId = process.env.FIREBASE_PROJECT_ID;
+const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-if (!serviceAccountString || !privateKey) {
-    throw new Error('The FIREBASE_SERVICE_ACCOUNT and FIREBASE_PRIVATE_KEY environment variables must be set.');
+if (!projectId || !clientEmail || !privateKey) {
+    throw new Error('FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables must be set.');
 }
 
-let serviceAccount;
-try {
-    // Parse the main service account JSON
-    serviceAccount = JSON.parse(serviceAccountString);
-    // Add the private key, replacing the escaped newlines with actual newlines
-    serviceAccount.private_key = privateKey.replace(/\\n/g, '\n');
-} catch (error) {
-    throw new Error('Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid JSON string.');
-}
-
+const serviceAccount = {
+  projectId,
+  clientEmail,
+  privateKey: privateKey.replace(/\\n/g, '\n'),
+};
 
 if (getApps().length === 0) {
   try {

@@ -34,7 +34,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { LoaderCircle, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
+import { LoaderCircle, PlusCircle, Trash2, CalendarIcon, ChevronsUpDown, Check } from 'lucide-react';
 import { Transaction, Product } from '../page';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -44,6 +44,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AddCustomerDialog } from '../../customers/components/add-customer-dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 
 const ProductLineSchema = z.object({
@@ -79,6 +80,9 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddCustomerOpen, setAddCustomerOpen] = useState(false);
+  const [isCustomerComboboxOpen, setCustomerComboboxOpen] = useState(false);
+  const [isProductComboboxOpen, setProductComboboxOpen] = useState(false);
+
 
   const form = useForm<AddTransactionFormValues>({
     resolver: zodResolver(AddTransactionSchema),
@@ -217,39 +221,65 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                 control={form.control}
                 name="customerId"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Customer</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                          if (value === 'add_new_customer') {
-                            setAddCustomerOpen(true);
-                          } else {
-                            field.onChange(value);
-                          }
-                      }}
-                      value={field.value}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={isLoading ? "Loading customers..." : "Select a customer"} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {customers.map((customer) => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name}
-                          </SelectItem>
-                        ))}
-                         <SelectSeparator />
-                        <SelectItem value="add_new_customer" className="text-primary focus:text-primary-foreground focus:bg-primary">
-                            <div className='flex items-center gap-2'>
-                                <PlusCircle className="h-4 w-4" />
-                                <span>Add New Customer...</span>
-                            </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Popover open={isCustomerComboboxOpen} onOpenChange={setCustomerComboboxOpen}>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                            <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                                )}
+                                disabled={isLoading}
+                            >
+                                {field.value
+                                ? customers.find(c => c.id === field.value)?.name
+                                : "Select a customer"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search customer..." />
+                                <CommandList>
+                                <CommandEmpty>No customer found.</CommandEmpty>
+                                <CommandGroup>
+                                    {customers.map((customer) => (
+                                    <CommandItem
+                                        value={customer.name}
+                                        key={customer.id}
+                                        onSelect={() => {
+                                            form.setValue("customerId", customer.id);
+                                            setCustomerComboboxOpen(false);
+                                        }}
+                                    >
+                                        <Check
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            customer.id === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                        />
+                                        {customer.name}
+                                    </CommandItem>
+                                    ))}
+                                    <CommandItem
+                                        onSelect={() => setAddCustomerOpen(true)}
+                                        className="text-primary focus:text-primary-foreground focus:bg-primary mt-1"
+                                    >
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add New Customer
+                                    </CommandItem>
+                                </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -304,23 +334,58 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
                              <FormField
                                 control={form.control}
                                 name={`products.${index}.productId`}
-                                render={({ field }) => (
+                                render={({ field: lineItemField }) => (
                                 <FormItem className="sm:col-span-2">
                                     <FormLabel className="text-xs text-muted-foreground">Product Name</FormLabel>
-                                     <Select onValueChange={(value) => handleProductSelect(value, index)} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                            <SelectValue placeholder="Select a product" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {products.map((p) => (
-                                            <SelectItem key={p.id} value={p.id}>
-                                                {p.name}
-                                            </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <Popover open={isProductComboboxOpen && form.getValues(`products.${index}.productId`) === lineItemField.value} onOpenChange={(open) => setProductComboboxOpen(open && form.getValues(`products.${index}.productId`) === lineItemField.value)}>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                className={cn(
+                                                "w-full justify-between",
+                                                !lineItemField.value && "text-muted-foreground"
+                                                )}
+                                            >
+                                                {lineItemField.value
+                                                ? products.find(p => p.id === lineItemField.value)?.name
+                                                : "Select a product"}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Search product..." />
+                                                <CommandList>
+                                                <CommandEmpty>No product found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {products.map((product) => (
+                                                    <CommandItem
+                                                        value={product.name}
+                                                        key={product.id}
+                                                        onSelect={() => {
+                                                            handleProductSelect(product.id, index);
+                                                            setProductComboboxOpen(false);
+                                                        }}
+                                                    >
+                                                        <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            product.id === lineItemField.value
+                                                            ? "opacity-100"
+                                                            : "opacity-0"
+                                                        )}
+                                                        />
+                                                        {product.name}
+                                                    </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
                                     <FormMessage />
                                 </FormItem>
                                 )}
@@ -424,3 +489,5 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
     </>
   );
 }
+
+    

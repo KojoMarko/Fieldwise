@@ -14,14 +14,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectSeparator,
-} from '@/components/ui/select';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -46,8 +38,11 @@ import type { Asset } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { LoaderCircle, PlusCircle } from 'lucide-react';
+import { LoaderCircle, PlusCircle, ChevronsUpDown, Check } from 'lucide-react';
 import { updateAssetNameForModel } from '@/ai/flows/update-asset-name-for-model';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 
 interface ReclassifyAssetDialogProps {
@@ -68,6 +63,8 @@ export function ReclassifyAssetDialog({ open, onOpenChange, asset }: ReclassifyA
   const [discoveredNames, setDiscoveredNames] = useState<string[]>([]);
   const [isNewNameDialogOpen, setNewNameDialogOpen] = useState(false);
   const [newName, setNewName] = useState('');
+  const [isComboboxOpen, setComboboxOpen] = useState(false);
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -137,14 +134,6 @@ export function ReclassifyAssetDialog({ open, onOpenChange, asset }: ReclassifyA
     }
   }
 
-  const handleNameChange = (nameValue: string) => {
-    if (nameValue === 'add_new_name') {
-        setNewNameDialogOpen(true);
-    } else {
-        form.setValue('newAssetName', nameValue);
-    }
-  }
-
   const handleAddNewName = () => {
       if (newName.trim()) {
           if (!discoveredNames.includes(newName)) {
@@ -191,33 +180,61 @@ export function ReclassifyAssetDialog({ open, onOpenChange, asset }: ReclassifyA
                 control={form.control}
                 name="newAssetName"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>New Asset Name</FormLabel>
-                    <Select
-                        onValueChange={handleNameChange}
-                        value={field.value}
-                    >
-                    <FormControl>
-                        <SelectTrigger>
-                        <SelectValue placeholder="Select an existing name or add new" />
-                        </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                        {discoveredNames.map((name) => (
-                        <SelectItem key={name} value={name}>
-                            {name}
-                        </SelectItem>
-                        ))}
-                        <SelectSeparator />
-                        <SelectItem value="add_new_name" className="text-primary focus:text-primary-foreground focus:bg-primary">
-                            <div className='flex items-center gap-2'>
-                                <PlusCircle className="h-4 w-4" />
-                                <span>Add New Name...</span>
-                            </div>
-                        </SelectItem>
-                    </SelectContent>
-                    </Select>
-                    <FormMessage />
+                    <FormItem className="flex flex-col">
+                        <FormLabel>New Asset Name</FormLabel>
+                        <Popover open={isComboboxOpen} onOpenChange={setComboboxOpen}>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                    )}
+                                >
+                                    {field.value || "Select an existing name or add new"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                <CommandInput placeholder="Search asset name..." />
+                                <CommandList>
+                                    <CommandEmpty>No name found.</CommandEmpty>
+                                    <CommandGroup>
+                                    {discoveredNames.map((name) => (
+                                        <CommandItem
+                                        value={name}
+                                        key={name}
+                                        onSelect={() => {
+                                            form.setValue("newAssetName", name);
+                                            setComboboxOpen(false);
+                                        }}
+                                        >
+                                        <Check
+                                            className={cn(
+                                            "mr-2 h-4 w-4",
+                                            name === field.value ? "opacity-100" : "opacity-0"
+                                            )}
+                                        />
+                                        {name}
+                                        </CommandItem>
+                                    ))}
+                                    <CommandItem
+                                        onSelect={() => setNewNameDialogOpen(true)}
+                                        className="text-primary focus:text-primary-foreground focus:bg-primary mt-1"
+                                    >
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add New Name...
+                                    </CommandItem>
+                                    </CommandGroup>
+                                </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
                     </FormItem>
                 )}
                 />
@@ -235,3 +252,5 @@ export function ReclassifyAssetDialog({ open, onOpenChange, asset }: ReclassifyA
     </>
   );
 }
+
+    

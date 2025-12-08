@@ -23,7 +23,7 @@ import {
   SelectValue,
   SelectSeparator,
 } from '@/components/ui/select';
-import { LoaderCircle, CalendarIcon, PlusCircle } from 'lucide-react';
+import { LoaderCircle, CalendarIcon, PlusCircle, ChevronsUpDown, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
@@ -48,6 +48,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { AddCustomerDialog } from '../../customers/components/add-customer-dialog';
 
 type AssetFormValues = z.infer<typeof CreateAssetInputSchema>;
 
@@ -68,11 +70,16 @@ export function AssetForm() {
   
   const [isNewModelDialogOpen, setNewModelDialogOpen] = useState(false);
   const [newModelName, setNewModelName] = useState('');
-  const [discoveredModels, setDiscoveredModels] = useState<DiscoveredModel[]>([]);
 
   const [isNewNameDialogOpen, setNewNameDialogOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [discoveredNames, setDiscoveredNames] = useState<string[]>([]);
+  
+  const [isAddCustomerDialogOpen, setAddCustomerDialogOpen] = useState(false);
+  
+  const [isNameComboboxOpen, setNameComboboxOpen] = useState(false);
+  const [isCustomerComboboxOpen, setCustomerComboboxOpen] = useState(false);
+  const [isModelComboboxOpen, setModelComboboxOpen] = useState(false);
 
   const customerIdFromParams = searchParams.get('customerId');
 
@@ -180,19 +187,16 @@ export function AssetForm() {
   }
   
   const handleModelChange = (modelName: string) => {
-    if (modelName === 'add_new_model') {
-        setNewModelDialogOpen(true);
-    } else {
-        form.setValue('model', modelName);
-        const selectedModel = availableModels.find(m => m.name === modelName);
-        if (selectedModel && selectedModel.ppmFrequency) {
-            form.setValue('ppmFrequency', selectedModel.ppmFrequency);
-             toast({
-                title: 'PPM Frequency Pre-filled',
-                description: `PPM frequency set to ${selectedModel.ppmFrequency} months based on model template.`,
-            });
-        }
-    }
+      form.setValue('model', modelName);
+      const selectedModel = availableModels.find(m => m.name === modelName);
+      if (selectedModel && selectedModel.ppmFrequency) {
+          form.setValue('ppmFrequency', selectedModel.ppmFrequency);
+           toast({
+              title: 'PPM Frequency Pre-filled',
+              description: `PPM frequency set to ${selectedModel.ppmFrequency} months based on model template.`,
+          });
+      }
+      setModelComboboxOpen(false);
   }
 
   const handleAddNewModel = () => {
@@ -216,15 +220,6 @@ export function AssetForm() {
     }
   }
 
-  const handleNameChange = (nameValue: string) => {
-    if (nameValue === 'add_new_name') {
-        setNewNameDialogOpen(true);
-    } else {
-        form.setValue('name', nameValue);
-        form.resetField('model'); // Reset model when name changes
-    }
-  }
-
   const handleAddNewName = () => {
       if (newName.trim()) {
           if (!discoveredNames.includes(newName)) {
@@ -236,6 +231,11 @@ export function AssetForm() {
           setNewName('');
       }
   }
+  
+  const handleCustomerCreated = (newCustomerId: string) => {
+    form.setValue('customerId', newCustomerId);
+  };
+
 
   if (isLoading) {
     return <div className="flex justify-center items-center py-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
@@ -243,6 +243,11 @@ export function AssetForm() {
 
   return (
     <>
+       <AddCustomerDialog
+        open={isAddCustomerDialogOpen}
+        onOpenChange={setAddCustomerDialogOpen}
+        onCustomerCreated={handleCustomerCreated}
+      />
       <AlertDialog open={isNewModelDialogOpen} onOpenChange={setNewModelDialogOpen}>
         <AlertDialogContent>
             <AlertDialogHeader>
@@ -289,32 +294,63 @@ export function AssetForm() {
             control={form.control}
             name="name"
             render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
                 <FormLabel>Asset Name</FormLabel>
-                <Select
-                onValueChange={handleNameChange}
-                value={field.value}
-                >
-                <FormControl>
-                    <SelectTrigger>
-                    <SelectValue placeholder="Select an existing name or add new" />
-                    </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                    {discoveredNames.map((name) => (
-                    <SelectItem key={name} value={name}>
-                        {name}
-                    </SelectItem>
-                    ))}
-                    <SelectSeparator />
-                    <SelectItem value="add_new_name" className="text-primary focus:text-primary-foreground focus:bg-primary">
-                        <div className='flex items-center gap-2'>
-                            <PlusCircle className="h-4 w-4" />
-                            <span>Add New Name...</span>
-                        </div>
-                    </SelectItem>
-                </SelectContent>
-                </Select>
+                 <Popover open={isNameComboboxOpen} onOpenChange={setNameComboboxOpen}>
+                    <PopoverTrigger asChild>
+                        <FormControl>
+                        <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                            )}
+                        >
+                            {field.value || "Select an existing name or add new"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                        </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                            <CommandInput placeholder="Search asset name..." />
+                            <CommandList>
+                            <CommandEmpty>No name found.</CommandEmpty>
+                            <CommandGroup>
+                                {discoveredNames.map((name) => (
+                                <CommandItem
+                                    value={name}
+                                    key={name}
+                                    onSelect={() => {
+                                        form.setValue("name", name);
+                                        form.resetField('model');
+                                        setNameComboboxOpen(false);
+                                    }}
+                                >
+                                    <Check
+                                    className={cn(
+                                        "mr-2 h-4 w-4",
+                                        name === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                    />
+                                    {name}
+                                </CommandItem>
+                                ))}
+                                 <CommandItem
+                                    onSelect={() => setNewNameDialogOpen(true)}
+                                    className="text-primary focus:text-primary-foreground focus:bg-primary mt-1"
+                                >
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add New Name...
+                                </CommandItem>
+                            </CommandGroup>
+                             </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
                  <FormDescription>
                     The general category of the equipment.
                 </FormDescription>
@@ -327,33 +363,60 @@ export function AssetForm() {
                 control={form.control}
                 name="model"
                 render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                     <FormLabel>Asset Model</FormLabel>
-                    <Select
-                      onValueChange={handleModelChange}
-                      value={field.value}
-                      disabled={!watchedName}
-                    >
-                    <FormControl>
-                        <SelectTrigger>
-                        <SelectValue placeholder={!watchedName ? "Select an asset name first" : "Select an existing model or add new"} />
-                        </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                        {availableModels.map((model) => (
-                        <SelectItem key={model.name} value={model.name}>
-                            {model.name}
-                        </SelectItem>
-                        ))}
-                         <SelectSeparator />
-                        <SelectItem value="add_new_model" className="text-primary focus:text-primary-foreground focus:bg-primary">
-                            <div className='flex items-center gap-2'>
-                                <PlusCircle className="h-4 w-4" />
-                                <span>Add New Model...</span>
-                            </div>
-                        </SelectItem>
-                    </SelectContent>
-                    </Select>
+                    <Popover open={isModelComboboxOpen} onOpenChange={setModelComboboxOpen}>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                            <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                                )}
+                                disabled={!watchedName}
+                            >
+                                {field.value || (!watchedName ? "Select an asset name first" : "Select an existing model or add new")}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search model..." />
+                                <CommandList>
+                                <CommandEmpty>No model found.</CommandEmpty>
+                                <CommandGroup>
+                                    {availableModels.map((model) => (
+                                    <CommandItem
+                                        value={model.name}
+                                        key={model.name}
+                                        onSelect={() => handleModelChange(model.name)}
+                                    >
+                                        <Check
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            model.name === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                        />
+                                        {model.name}
+                                    </CommandItem>
+                                    ))}
+                                    <CommandItem
+                                        onSelect={() => setNewModelDialogOpen(true)}
+                                        className="text-primary focus:text-primary-foreground focus:bg-primary mt-1"
+                                    >
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add New Model...
+                                    </CommandItem>
+                                </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                     <FormDescription>Select a model to pre-fill template data like PPM frequency.</FormDescription>
                     <FormMessage />
                 </FormItem>
@@ -438,26 +501,65 @@ export function AssetForm() {
                 control={form.control}
                 name="customerId"
                 render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                     <FormLabel>Customer</FormLabel>
-                    <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={isLoading}
-                    >
-                    <FormControl>
-                        <SelectTrigger>
-                        <SelectValue placeholder="Select a customer" />
-                        </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                        {customers.map((customer) => (
-                        <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name}
-                        </SelectItem>
-                        ))}
-                    </SelectContent>
-                    </Select>
+                     <Popover open={isCustomerComboboxOpen} onOpenChange={setCustomerComboboxOpen}>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                            <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                                )}
+                                disabled={isLoading}
+                            >
+                                {field.value
+                                ? customers.find(c => c.id === field.value)?.name
+                                : "Select a customer"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search customer..." />
+                                <CommandList>
+                                <CommandEmpty>No customer found.</CommandEmpty>
+                                <CommandGroup>
+                                    {customers.map((customer) => (
+                                    <CommandItem
+                                        value={customer.name}
+                                        key={customer.id}
+                                        onSelect={() => {
+                                            form.setValue("customerId", customer.id);
+                                            setCustomerComboboxOpen(false);
+                                        }}
+                                    >
+                                        <Check
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            customer.id === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                        />
+                                        {customer.name}
+                                    </CommandItem>
+                                    ))}
+                                    <CommandItem
+                                        onSelect={() => setAddCustomerDialogOpen(true)}
+                                        className="text-primary focus:text-primary-foreground focus:bg-primary mt-1"
+                                    >
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add New Customer
+                                    </CommandItem>
+                                </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                     <FormMessage />
                 </FormItem>
                 )}

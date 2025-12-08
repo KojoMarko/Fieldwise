@@ -23,7 +23,7 @@ import {
   SelectValue,
   SelectSeparator,
 } from '@/components/ui/select';
-import { LoaderCircle, CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { LoaderCircle, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
@@ -46,6 +46,7 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
 import { AddCustomerDialog } from '../../customers/components/add-customer-dialog';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 type AssetFormValues = z.infer<typeof UpdateAssetInputSchema>;
 
@@ -62,6 +63,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
   const [isAddCustomerDialogOpen, setAddCustomerDialogOpen] = useState(false);
+  const [isCustomerComboboxOpen, setCustomerComboboxOpen] = useState(false);
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(UpdateAssetInputSchema),
@@ -271,39 +273,65 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
                         control={form.control}
                         name="customerId"
                         render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex flex-col">
                             <FormLabel>Customer (Transfer)</FormLabel>
-                            <Select
-                              onValueChange={(value) => {
-                                  if (value === 'add_new_customer') {
-                                      setAddCustomerDialogOpen(true);
-                                  } else {
-                                      field.onChange(value);
-                                  }
-                              }}
-                              value={field.value}
-                              disabled={isLoadingCustomers}
-                            >
-                            <FormControl>
-                                <SelectTrigger>
-                                <SelectValue placeholder="Select a customer" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {customers.map((customer) => (
-                                <SelectItem key={customer.id} value={customer.id}>
-                                    {customer.name}
-                                </SelectItem>
-                                ))}
-                                 <SelectSeparator />
-                                <SelectItem value="add_new_customer" className="text-primary focus:text-primary-foreground focus:bg-primary">
-                                    <div className='flex items-center gap-2'>
-                                        <PlusCircle className="h-4 w-4" />
-                                        <span>Add New Customer</span>
-                                    </div>
-                                </SelectItem>
-                            </SelectContent>
-                            </Select>
+                            <Popover open={isCustomerComboboxOpen} onOpenChange={setCustomerComboboxOpen}>
+                                <PopoverTrigger asChild>
+                                    <FormControl>
+                                    <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        className={cn(
+                                        "w-full justify-between",
+                                        !field.value && "text-muted-foreground"
+                                        )}
+                                        disabled={isLoadingCustomers}
+                                    >
+                                        {field.value
+                                        ? customers.find(c => c.id === field.value)?.name
+                                        : "Select a customer"}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                    </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                    <Command>
+                                        <CommandInput placeholder="Search customer..." />
+                                        <CommandList>
+                                        <CommandEmpty>No customer found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {customers.map((customer) => (
+                                            <CommandItem
+                                                value={customer.name}
+                                                key={customer.id}
+                                                onSelect={() => {
+                                                    form.setValue("customerId", customer.id);
+                                                    setCustomerComboboxOpen(false);
+                                                }}
+                                            >
+                                                <Check
+                                                className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    customer.id === field.value
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                                )}
+                                                />
+                                                {customer.name}
+                                            </CommandItem>
+                                            ))}
+                                            <CommandItem
+                                                onSelect={() => setAddCustomerDialogOpen(true)}
+                                                className="text-primary focus:text-primary-foreground focus:bg-primary mt-1"
+                                            >
+                                                <PlusCircle className="mr-2 h-4 w-4" />
+                                                Add New Customer
+                                            </CommandItem>
+                                        </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
                             <FormDescription>
                                 To transfer this asset, select a new customer.
                             </FormDescription>

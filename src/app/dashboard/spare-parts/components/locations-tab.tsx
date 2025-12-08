@@ -8,7 +8,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, File, LoaderCircle, Warehouse } from 'lucide-react';
+import { PlusCircle, File, LoaderCircle, Warehouse, DatabaseZap } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -18,14 +18,18 @@ import * as xlsx from 'xlsx';
 import { AddLocationDialog } from './add-location-dialog';
 import { LocationsDataTable } from './locations-data-table';
 import { locationsColumns } from './locations-columns';
+import { migrateLocations } from '@/ai/flows/migrate-locations';
+import { useToast } from '@/hooks/use-toast';
 
 export function LocationsTab() {
   const { user, isLoading: isAuthLoading } = useAuth();
+  const { toast } = useToast();
   const isAdmin = user?.role === 'Admin';
   const canAddLocations = user?.role === 'Admin';
   const [isAddLocationDialogOpen, setAddLocationDialogOpen] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isMigrating, setIsMigrating] = useState(false);
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -73,6 +77,30 @@ export function LocationsTab() {
     link.click();
     document.body.removeChild(link);
   };
+  
+  const handleMigration = async () => {
+    setIsMigrating(true);
+    toast({
+        title: 'Starting Migration',
+        description: 'Scanning your inventory for existing location names...',
+    });
+    try {
+        const result = await migrateLocations();
+        toast({
+            title: 'Migration Complete',
+            description: `${result.migratedCount} new locations were created from your inventory data.`,
+        });
+    } catch(error: any) {
+        console.error("Migration failed", error);
+        toast({
+            variant: 'destructive',
+            title: 'Migration Failed',
+            description: error.message || 'Could not migrate locations at this time.',
+        });
+    } finally {
+        setIsMigrating(false);
+    }
+  }
 
 
   return (
@@ -126,7 +154,11 @@ export function LocationsTab() {
              <div className="text-center py-20 border-2 border-dashed rounded-lg">
                 <Warehouse className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-medium">No Locations Found</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Get started by creating your first parts location.</p>
+                <p className="mt-1 text-sm text-muted-foreground">Get started by creating your first parts location, or migrate existing ones.</p>
+                <Button className="mt-4" onClick={handleMigration} disabled={isMigrating}>
+                    {isMigrating ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <DatabaseZap className="mr-2 h-4 w-4" />}
+                    {isMigrating ? 'Migrating...' : 'Migrate from Inventory'}
+                </Button>
             </div>
            )}
         </CardContent>

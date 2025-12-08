@@ -14,9 +14,11 @@ if (!serviceAccountString) {
 
 let serviceAccount;
 try {
-    serviceAccount = JSON.parse(serviceAccountString);
+    // Decode the Base64 string to get the JSON string
+    const decodedServiceAccount = Buffer.from(serviceAccountString, 'base64').toString('utf-8');
+    serviceAccount = JSON.parse(decodedServiceAccount);
 } catch (error) {
-    throw new Error('Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid JSON string.');
+    throw new Error('Failed to parse FIREBASE_SERVICE_ACCOUNT. Make sure it is a valid Base64 encoded JSON string.');
 }
 
 

@@ -63,6 +63,14 @@ export type FacilityStock = {
   quantity: number;
 }
 
+export type Location = {
+    id: string;
+    name: string;
+    type: 'Warehouse' | 'Van' | 'Site' | 'Other';
+    address: string;
+    companyId: string;
+}
+
 export type SparePart = {
     id: string;
     name: string;
@@ -292,5 +300,4 @@ export type RepairNote = {
     authorName: string;
     authorId: string;
     timestamp: string; // ISO string
-    companyId: string;
-};
+    companyId

@@ -144,3 +144,14 @@ export const CreateProductInputSchema = z.object({
   unitPrice: z.coerce.number().min(0.01, 'Unit price must be positive'),
   companyId: z.string().min(1, 'Company ID is required'),
 });
+
+export const CreateLocationInputSchema = z.object({
+  name: z.string().min(1, 'Location name is required'),
+  type: z.enum(['Warehouse', 'Van', 'Site', 'Other']),
+  address: z.string().min(1, 'Address is required'),
+  companyId: z.string().min(1, 'Company ID is required'),
+});
+
+export const UpdateLocationInputSchema = CreateLocationInputSchema.extend({
+  id: z.string().min(1, 'Location ID is required'),
+});

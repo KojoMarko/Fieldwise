@@ -9,7 +9,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
-import type { SparePart } from '@/lib/types';
+import type { SparePart, Location } from '@/lib/types';
 import * as xlsx from 'xlsx';
 
 const SparePartFromDocSchema = z.object({
@@ -110,6 +110,24 @@ const extractAndCreatePartsFlow = ai.defineFlow(
       return { count: 0 };
     }
     
+    // Find a default location for the imported parts
+    const locationsRef = db.collection('locations');
+    const locationsQuery = await locationsRef.where('companyId', '==', companyId).get();
+    let defaultLocation = 'Unspecified';
+    if (!locationsQuery.empty) {
+        const locations = locationsQuery.docs.map(doc => doc.data() as Location);
+        const centralWarehouse = locations.find(loc => loc.name.toLowerCase() === 'central warehouse');
+        const firstWarehouse = locations.find(loc => loc.type === 'Warehouse');
+        if (centralWarehouse) {
+            defaultLocation = centralWarehouse.name;
+        } else if (firstWarehouse) {
+            defaultLocation = firstWarehouse.name;
+        } else {
+            defaultLocation = locations[0].name; // fallback to the first location found
+        }
+    }
+
+
     // Filter for unique parts based on partNumber
     const uniqueParts = new Map<string, z.infer<typeof SparePartFromDocSchema>>();
     output.parts.forEach((part) => {
@@ -132,7 +150,7 @@ const extractAndCreatePartsFlow = ai.defineFlow(
             assetModel: part.assetModel,
             companyId: companyId,
             quantity: 0, 
-            location: 'Unspecified',
+            location: defaultLocation,
         };
         batch.set(sparePartRef, newSparePart);
     });

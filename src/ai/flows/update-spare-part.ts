@@ -31,6 +31,8 @@ const updateSparePartFlow = ai.defineFlow(
     const { id, ...dataToUpdate } = input;
     const sparePartRef = db.collection('spare-parts').doc(id);
 
-    await sparePartRef.update(dataToUpdate);
+    const cleanData = Object.fromEntries(Object.entries(dataToUpdate).filter(([_, v]) => v !== undefined));
+
+    await sparePartRef.update(cleanData);
   }
 );

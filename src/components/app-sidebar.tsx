@@ -49,7 +49,7 @@ const adminNavItems = [
   { href: '/dashboard/customers', icon: Building, label: 'Customers' },
   { href: '/dashboard/users', icon: Users, label: 'Users' },
   { href: '/dashboard/assets', icon: Package, label: 'Assets' },
-  { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
+  { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts & Locations' },
   { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
   { href: '/dashboard/audit-log', icon: History, label: 'Audit Log' },
 ];
@@ -62,7 +62,7 @@ const engineerNavItems = [
     { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
     { href: '/dashboard/map', icon: Map, label: 'Map'},
     { href: '/dashboard/assets', icon: Package, label: 'Assets' },
-    { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
+    { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts & Locations' },
     { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
 ]
 

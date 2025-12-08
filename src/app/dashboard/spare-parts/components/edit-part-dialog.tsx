@@ -34,43 +34,59 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { createSparePart } from '@/ai/flows/create-spare-part';
-import { CreateSparePartInputSchema } from '@/lib/schemas';
-import type { Location } from '@/lib/types';
+import type { Location, SparePart } from '@/lib/types';
+import { updateSparePart } from '@/ai/flows/update-spare-part';
 
 
-type AddPartFormValues = z.infer<typeof CreateSparePartInputSchema>;
+const EditPartFormSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, 'Part name is required'),
+  partNumber: z.string().min(1, 'Part number is required'),
+  location: z.string().min(1, 'Location is required'),
+  assetModel: z.string().min(1, 'Asset model is required'),
+  quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
+});
 
-interface AddPartDialogProps {
+type EditPartFormValues = z.infer<typeof EditPartFormSchema>;
+
+interface EditPartDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  isTool?: boolean;
+  part: SparePart;
   locations: Location[];
 }
 
-export function AddPartDialog({ open, onOpenChange, isTool = false, locations }: AddPartDialogProps) {
+export function EditPartDialog({ open, onOpenChange, part, locations }: EditPartDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<AddPartFormValues>({
-    resolver: zodResolver(CreateSparePartInputSchema),
+  const form = useForm<EditPartFormValues>({
+    resolver: zodResolver(EditPartFormSchema),
+    defaultValues: {
+      id: part.id,
+      name: part.name,
+      partNumber: part.partNumber,
+      location: part.location,
+      assetModel: part.assetModel,
+      quantity: part.quantity,
+    },
   });
 
   useEffect(() => {
     if (open) {
       form.reset({
-        name: '',
-        partNumber: '',
-        quantity: 0,
-        location: '',
-        assetModel: isTool ? 'Multiple' : '',
-        companyId: user?.companyId,
+        id: part.id,
+        name: part.name,
+        partNumber: part.partNumber,
+        location: part.location,
+        assetModel: part.assetModel,
+        quantity: part.quantity,
       });
     }
-  }, [open, isTool, form, user?.companyId]);
+  }, [open, part, form]);
 
-  async function onSubmit(data: AddPartFormValues) {
+  async function onSubmit(data: EditPartFormValues) {
     if (!user) {
         toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
         return;
@@ -78,17 +94,17 @@ export function AddPartDialog({ open, onOpenChange, isTool = false, locations }:
 
     setIsSubmitting(true);
     try {
-      await createSparePart({ ...data, companyId: user.companyId });
+      await updateSparePart(data);
       toast({
-        title: isTool ? 'Tool Added' : 'Part Added',
-        description: `Item "${data.name}" has been added to the inventory.`,
+        title: 'Item Updated',
+        description: `Item "${data.name}" has been updated.`,
       });
       onOpenChange(false);
     } catch (error) {
-      console.error('Failed to add item:', error);
+      console.error('Failed to update item:', error);
       toast({
         variant: 'destructive',
-        title: isTool ? 'Failed to Add Tool' : 'Failed to Add Part',
+        title: 'Failed to Update Item',
         description: 'An unexpected error occurred. Please try again.',
       });
     } finally {
@@ -96,10 +112,11 @@ export function AddPartDialog({ open, onOpenChange, isTool = false, locations }:
     }
   }
 
-  const title = isTool ? 'Add New Tool' : 'Add New Spare Part';
+  const isTool = part.assetModel === 'Multiple';
+  const title = isTool ? 'Edit Tool' : 'Edit Spare Part';
   const description = isTool 
-    ? 'Fill out the form below to add a new general-purpose tool to the inventory.'
-    : 'Fill out the form below to add a new part to the inventory.';
+    ? 'Update the details for this tool.'
+    : 'Update the details for this spare part.';
 
 
   return (
@@ -118,7 +135,7 @@ export function AddPartDialog({ open, onOpenChange, isTool = false, locations }:
                 <FormItem>
                   <FormLabel>{isTool ? 'Tool Name' : 'Part Name'}</FormLabel>
                   <FormControl>
-                    <Input placeholder={isTool ? "e.g., Digital Multimeter" : "e.g., HEPA Filter"} {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -132,7 +149,7 @@ export function AddPartDialog({ open, onOpenChange, isTool = false, locations }:
                     <FormItem>
                     <FormLabel>{isTool ? 'Model/Serial Number' : 'Part Number'}</FormLabel>
                     <FormControl>
-                        <Input placeholder={isTool ? "e.g., FLUKE-87V" : "e.g., FIL-HEPA-1212"} {...field} />
+                        <Input {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -145,7 +162,7 @@ export function AddPartDialog({ open, onOpenChange, isTool = false, locations }:
                     <FormItem>
                     <FormLabel>Quantity</FormLabel>
                     <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                        <Input type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -157,9 +174,9 @@ export function AddPartDialog({ open, onOpenChange, isTool = false, locations }:
                 control={form.control}
                 name="location"
                 render={({ field }) => (
-                  <FormItem>
+                    <FormItem>
                     <FormLabel>Storage Location</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a location" />
@@ -174,7 +191,7 @@ export function AddPartDialog({ open, onOpenChange, isTool = false, locations }:
                       </SelectContent>
                     </Select>
                     <FormMessage />
-                  </FormItem>
+                    </FormItem>
                 )}
                 />
                 <FormField
@@ -184,7 +201,7 @@ export function AddPartDialog({ open, onOpenChange, isTool = false, locations }:
                     <FormItem>
                     <FormLabel>Associated Asset Model</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g., Vitros 5600" {...field} disabled={isTool} />
+                        <Input {...field} disabled={isTool} />
                     </FormControl>
                     {isTool && <FormDescription>This is automatically set for tools.</FormDescription>}
                     <FormMessage />
@@ -199,7 +216,7 @@ export function AddPartDialog({ open, onOpenChange, isTool = false, locations }:
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                {isSubmitting ? 'Adding...' : (isTool ? 'Add Tool' : 'Add Part')}
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
               </Button>
             </DialogFooter>
           </form>

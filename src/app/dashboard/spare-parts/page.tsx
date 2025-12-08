@@ -1,6 +1,6 @@
 
 'use client';
-import { File, PlusCircle, LoaderCircle, UploadCloud, Sparkles, Wrench } from 'lucide-react';
+import { File, PlusCircle, LoaderCircle, UploadCloud, Sparkles, Wrench, Warehouse } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { sparePartsColumns } from './components/spare-parts-columns';
 import { DataTable } from './components/data-table';
-import type { SparePart } from '@/lib/types';
+import type { SparePart, Location } from '@/lib/types';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { AddPartDialog } from './components/add-part-dialog';
@@ -31,6 +31,7 @@ import { PartsUsageReportTab } from './components/parts-usage-report-tab';
 import { TransfersReportTab } from './components/transfers-report-tab';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as xlsx from 'xlsx';
+import { LocationsTab } from './components/locations-tab';
 
 
 function PartIntelligence() {
@@ -129,6 +130,7 @@ function InventoryTab() {
   const [filter, setFilter] = useState('');
   const [stockFilter, setStockFilter] = useState('all');
   const [isAddPartDialogOpen, setAddPartDialogOpen] = useState(false);
+  const [locations, setLocations] = useState<Location[]>([]);
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -136,18 +138,33 @@ function InventoryTab() {
       return;
     }
     setIsLoading(true);
+
     const partsQuery = query(collection(db, "spare-parts"), where("companyId", "==", user.companyId));
+    const locationsQuery = query(collection(db, "locations"), where("companyId", "==", user.companyId));
     
-    const unsubscribe = onSnapshot(partsQuery, (snapshot) => {
+    const unsubscribeParts = onSnapshot(partsQuery, (snapshot) => {
       const partsData: SparePart[] = [];
       snapshot.forEach((doc) => {
         partsData.push({ id: doc.id, ...doc.data() } as SparePart);
       });
       setSpareParts(partsData);
-      setIsLoading(false);
+      if(locations.length) setIsLoading(false);
     });
 
-    return () => unsubscribe();
+     const unsubscribeLocations = onSnapshot(locationsQuery, (snapshot) => {
+      const locsData: Location[] = [];
+      snapshot.forEach((doc) => {
+        locsData.push({ id: doc.id, ...doc.data() } as Location);
+      });
+      setLocations(locsData);
+      if(spareParts.length) setIsLoading(false);
+    });
+
+
+    return () => {
+      unsubscribeParts();
+      unsubscribeLocations();
+    };
   }, [user?.companyId]);
 
 
@@ -209,7 +226,7 @@ function InventoryTab() {
 
   return (
      <>
-      <AddPartDialog open={isAddPartDialogOpen} onOpenChange={setAddPartDialogOpen} />
+      <AddPartDialog open={isAddPartDialogOpen} onOpenChange={setAddPartDialogOpen} locations={locations} />
       <div className='my-6'>
         <PartIntelligence />
       </div>
@@ -267,7 +284,7 @@ function InventoryTab() {
                           <AccordionContent>
                             <Card>
                               <CardContent className="p-0">
-                                <DataTable columns={sparePartsColumns} data={parts} />
+                                <DataTable columns={sparePartsColumns(locations)} data={parts} />
                               </CardContent>
                             </Card>
                           </AccordionContent>
@@ -291,6 +308,7 @@ function ToolsTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [isAddToolDialogOpen, setAddToolDialogOpen] = useState(false);
+  const [locations, setLocations] = useState<Location[]>([]);
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -303,17 +321,30 @@ function ToolsTab() {
       where("companyId", "==", user.companyId),
       where("assetModel", "==", "Multiple")
     );
+     const locationsQuery = query(collection(db, "locations"), where("companyId", "==", user.companyId));
     
-    const unsubscribe = onSnapshot(partsQuery, (snapshot) => {
+    const unsubscribeParts = onSnapshot(partsQuery, (snapshot) => {
       const toolsData: SparePart[] = [];
       snapshot.forEach((doc) => {
         toolsData.push({ id: doc.id, ...doc.data() } as SparePart);
       });
       setTools(toolsData);
-      setIsLoading(false);
+      if(locations.length) setIsLoading(false);
     });
 
-    return () => unsubscribe();
+     const unsubscribeLocations = onSnapshot(locationsQuery, (snapshot) => {
+      const locsData: Location[] = [];
+      snapshot.forEach((doc) => {
+        locsData.push({ id: doc.id, ...doc.data() } as Location);
+      });
+      setLocations(locsData);
+       if(tools.length || snapshot.empty) setIsLoading(false);
+    });
+
+    return () => {
+      unsubscribeParts();
+      unsubscribeLocations();
+    }
   }, [user?.companyId]);
   
   const filteredTools = useMemo(() => {
@@ -342,7 +373,7 @@ function ToolsTab() {
 
   return (
     <>
-      <AddPartDialog open={isAddToolDialogOpen} onOpenChange={setAddToolDialogOpen} isTool={true} />
+      <AddPartDialog open={isAddToolDialogOpen} onOpenChange={setAddToolDialogOpen} isTool={true} locations={locations} />
       <Card className="mt-6">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -382,7 +413,7 @@ function ToolsTab() {
               <LoaderCircle className="h-8 w-8 animate-spin" />
             </div>
           ) : (
-            <DataTable columns={sparePartsColumns} data={filteredTools} />
+            <DataTable columns={sparePartsColumns(locations)} data={filteredTools} />
           )}
         </CardContent>
       </Card>
@@ -396,13 +427,14 @@ export default function SparePartsPage() {
     const TABS = [
         { value: 'inventory', label: 'Inventory' },
         { value: 'tools', label: 'Tools' },
+        { value: 'locations', label: 'Locations' },
         { value: 'transfers', label: 'Transfers' },
         { value: 'usage_report', label: 'Usage Report' },
     ];
   return (
     <>
       <div className="flex items-center mb-4">
-        <h1 className="text-3xl font-bold tracking-tight">Spare Parts & Tools</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Parts, Tools & Locations</h1>
       </div>
       
       <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
@@ -421,7 +453,7 @@ export default function SparePartsPage() {
             </Select>
         </div>
         <div className="hidden md:block">
-             <TabsList className="grid w-full grid-cols-4">
+             <TabsList className="grid w-full grid-cols-5">
                 {TABS.map((tab) => (
                     <TabsTrigger key={tab.value} value={tab.value}>
                         {tab.label}
@@ -434,6 +466,9 @@ export default function SparePartsPage() {
         </TabsContent>
         <TabsContent value="tools">
           <ToolsTab />
+        </TabsContent>
+        <TabsContent value="locations">
+          <LocationsTab />
         </TabsContent>
          <TabsContent value="transfers">
           <TransfersReportTab />

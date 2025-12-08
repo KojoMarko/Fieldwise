@@ -183,8 +183,8 @@ export type AuditLogEvent = {
     id: string;
     name: string;
   };
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'TRANSFER';
-  entity: 'Asset' | 'Work Order' | 'Resource' | 'Spare Part' | 'Customer' | 'User' | 'Company';
+  action: 'CREATE' | 'UPDATE' | 'DELETE';
+  entity: 'Asset' | 'Work Order' | 'Resource' | 'Spare Part' | 'Customer' | 'User' | 'Company' | 'Location';
   entityId: string;
   entityName: string;
   companyId: string;
@@ -300,4 +300,5 @@ export type RepairNote = {
     authorName: string;
     authorId: string;
     timestamp: string; // ISO string
-    companyId
+    companyId: string;
+}

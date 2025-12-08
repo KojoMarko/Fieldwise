@@ -3,7 +3,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { SparePart } from '@/lib/types';
+import type { SparePart, Location } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Trash2, ArrowRightLeft } from 'lucide-react';
@@ -24,13 +24,15 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { deleteSparePart } from '@/ai/flows/delete-spare-part';
 import { TransferStockDialog } from './transfer-stock-dialog';
+import { EditPartDialog } from './edit-part-dialog';
 
-function ActionsCell({ part }: { part: SparePart }) {
+function ActionsCell({ part, locations }: { part: SparePart, locations: Location[] }) {
   const { toast } = useToast();
   const [isAdjustStockOpen, setAdjustStockOpen] = useState(false);
   const [isTransferStockOpen, setTransferStockOpen] = useState(false);
   const [isViewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleRemove = async () => {
     try {
@@ -67,6 +69,12 @@ function ActionsCell({ part }: { part: SparePart }) {
         onOpenChange={setViewDetailsOpen}
         part={part}
       />
+      <EditPartDialog
+        open={isEditDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        part={part}
+        locations={locations}
+      />
        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -93,6 +101,9 @@ function ActionsCell({ part }: { part: SparePart }) {
           <DropdownMenuItem onClick={() => setViewDetailsOpen(true)}>
             View Details
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
+            Edit Part
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setAdjustStockOpen(true)}>
             Adjust Stock
           </DropdownMenuItem>
@@ -115,7 +126,7 @@ function ActionsCell({ part }: { part: SparePart }) {
 }
 
 
-export const sparePartsColumns: ColumnDef<SparePart>[] = [
+export const sparePartsColumns = (locations: Location[]): ColumnDef<SparePart>[] => [
   {
     id: 'select',
     header: ({ table }) => (
@@ -173,7 +184,7 @@ export const sparePartsColumns: ColumnDef<SparePart>[] = [
   {
     id: 'actions',
     cell: ({ row }) => {
-      return <ActionsCell part={row.original} />;
+      return <ActionsCell part={row.original} locations={locations} />;
     },
   },
 ];

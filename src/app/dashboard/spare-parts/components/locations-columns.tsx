@@ -30,7 +30,11 @@ import { Badge } from '@/components/ui/badge';
 import { EditLocationDialog } from './edit-location-dialog';
 import { deleteLocation } from '@/ai/flows/delete-location';
 
-export const locationsColumns: ColumnDef<Location>[] = [
+interface LocationsColumnsProps {
+  onLocationClick: (location: Location) => void;
+}
+
+export const locationsColumns = ({ onLocationClick }: LocationsColumnsProps): ColumnDef<Location>[] => [
   {
     id: 'select',
     header: ({ table }) => (
@@ -56,6 +60,14 @@ export const locationsColumns: ColumnDef<Location>[] = [
   {
     accessorKey: 'name',
     header: 'Location Name',
+    cell: ({ row }) => (
+      <button
+        className="font-medium text-primary hover:underline"
+        onClick={() => onLocationClick(row.original)}
+      >
+        {row.original.name}
+      </button>
+    ),
   },
   {
     accessorKey: 'type',

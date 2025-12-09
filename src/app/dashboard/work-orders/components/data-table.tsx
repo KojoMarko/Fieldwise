@@ -43,7 +43,7 @@ export function DataTable<TData extends { id: string }, TValue>({
   );
   const router = useRouter();
 
-  const handleRowClick = (row: { original: TData }) => {
+  const handleRowDoubleClick = (row: { original: TData }) => {
     const workOrderId = row.original.id;
     if (workOrderId) {
       router.push(`/dashboard/work-orders/${workOrderId}`);
@@ -96,7 +96,7 @@ export function DataTable<TData extends { id: string }, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
                   className="cursor-pointer"
-                  onClick={() => handleRowClick(row)}
+                  onDoubleClick={() => handleRowDoubleClick(row)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} meta={cell.column.columnDef.meta}>

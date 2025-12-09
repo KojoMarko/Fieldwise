@@ -37,3 +37,4 @@ const auth = getAuth(legacyApp);
 const storage = getStorage(legacyApp);
 
 export { db, auth, storage };
+

@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Asset, RepairNote, Resource } from '@/lib/types';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -361,6 +361,7 @@ export default function AssetBrandPage({
   params: Promise<{ brandName: string }>;
 }) {
   const { user } = useAuth();
+  const router = useRouter();
   const resolvedParams = use(params);
   const brandName = decodeURIComponent(resolvedParams.brandName);
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -411,6 +412,10 @@ export default function AssetBrandPage({
     xlsx.utils.book_append_sheet(workbook, worksheet, brandName);
     
     xlsx.writeFile(workbook, `${brandName}_Asset_List.xlsx`);
+  };
+  
+  const handleRowDoubleClick = (asset: Asset) => {
+    router.push(`/dashboard/assets/${asset.id}`);
   };
 
 
@@ -490,7 +495,7 @@ export default function AssetBrandPage({
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <DataTable columns={columns} data={assets} />
+                        <DataTable columns={columns} data={assets} onRowDoubleClick={handleRowDoubleClick} />
                     </CardContent>
                 </Card>
             </TabsContent>

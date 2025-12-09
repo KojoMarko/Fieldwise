@@ -19,9 +19,11 @@ import { db } from '@/lib/firebase';
 import type { Customer } from '@/lib/types';
 import { LoaderCircle } from 'lucide-react';
 import * as xlsx from 'xlsx';
+import { useRouter } from 'next/navigation';
 
 export default function CustomersPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const isAdmin = user?.role === 'Admin';
   const canAddCustomers = user?.role === 'Admin' || user?.role === 'Engineer';
   const [isAddCustomerDialogOpen, setAddCustomerDialogOpen] = useState(false);
@@ -74,6 +76,10 @@ export default function CustomersPage() {
     document.body.removeChild(link);
   };
 
+  const handleRowDoubleClick = (customer: Customer) => {
+    router.push(`/dashboard/customers/${customer.id}`);
+  };
+
 
   return (
     <>
@@ -123,7 +129,7 @@ export default function CustomersPage() {
                 <p className="ml-4 text-muted-foreground">Loading customers...</p>
             </div>
            ) : (
-            <DataTable columns={columns} data={customers} />
+            <DataTable columns={columns} data={customers} onRowDoubleClick={handleRowDoubleClick} />
            )}
         </CardContent>
       </Card>

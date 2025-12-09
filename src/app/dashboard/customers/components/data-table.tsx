@@ -43,11 +43,13 @@ import { Trash2 } from 'lucide-react';
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  onRowDoubleClick?: (row: TData) => void;
 }
 
 export function DataTable<TData extends Customer, TValue>({
   columns,
   data,
+  onRowDoubleClick,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [rowSelection, setRowSelection] = React.useState({});
@@ -160,6 +162,8 @@ export function DataTable<TData extends Customer, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
+                  onDoubleClick={() => onRowDoubleClick && onRowDoubleClick(row.original)}
+                  className={onRowDoubleClick ? "cursor-pointer" : ""}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} meta={cell.column.columnDef.meta}>

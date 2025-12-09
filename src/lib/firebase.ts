@@ -1,8 +1,8 @@
 
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getFirestore, type Firestore } from 'firebase/firestore';
-import { getAuth, type Auth } from 'firebase/auth';
-import { getStorage, type FirebaseStorage } from 'firebase/storage';
+import { getFirestore, connectFirestoreEmulator, type Firestore } from 'firebase/firestore';
+import { getAuth, connectAuthEmulator, type Auth } from 'firebase/auth';
+import { getStorage, connectStorageEmulator, type FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   "projectId": "studio-7671175170-dc56a",
@@ -20,13 +20,32 @@ export type FirebaseServices = {
   storage: FirebaseStorage;
 }
 
+let services: FirebaseServices | null = null;
+
 // This function should only be called on the client side.
 export function initializeFirebase(): FirebaseServices {
+    if (services) {
+        return services;
+    }
+
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const auth = getAuth(app);
     const storage = getStorage(app);
-    return { app, db, auth, storage };
+
+    if (process.env.NODE_ENV === 'development') {
+        try {
+            connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+            connectFirestoreEmulator(db, '127.0.0.1', 8080);
+            connectStorageEmulator(storage, '127.0.0.1', 9199);
+            console.log("Connected to local Firebase emulators.");
+        } catch (e) {
+            console.warn("Could not connect to Firebase emulators. This is expected in production.", e);
+        }
+    }
+    
+    services = { app, db, auth, storage };
+    return services;
 }
 
 // The following exports are for legacy compatibility and might be removed later.
@@ -36,5 +55,15 @@ const db = getFirestore(legacyApp);
 const auth = getAuth(legacyApp);
 const storage = getStorage(legacyApp);
 
-export { db, auth, storage };
+if (process.env.NODE_ENV === 'development') {
+  try {
+      connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+      connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      connectStorageEmulator(storage, '127.0.0.1', 9199);
+      console.log("Connected legacy exports to local Firebase emulators.");
+  } catch (e) {
+      // console.warn("Could not connect legacy exports to Firebase emulators.", e);
+  }
+}
 
+export { db, auth, storage };

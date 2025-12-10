@@ -33,6 +33,13 @@ const createAssetFlow = ai.defineFlow(
     outputSchema: CreateAssetOutputSchema,
   },
   async (input) => {
+    // Check if the admin database is initialized
+    if (!db) {
+      throw new Error(
+        'The Firebase Admin SDK is not initialized. Please ensure your server-side environment variables (e.g., for Vercel) are set up correctly.'
+      );
+    }
+    
     const assetRef = db.collection('assets').doc();
     
     const newAsset: Omit<Asset, 'id'> = {

@@ -21,3 +21,5 @@ export class FirestorePermissionError extends Error {
     }
   }
 }
+
+export type { SecurityRuleContext };

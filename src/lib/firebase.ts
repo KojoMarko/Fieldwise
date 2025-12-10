@@ -48,22 +48,24 @@ export function initializeFirebase(): FirebaseServices {
     return services;
 }
 
-// The following exports are for legacy compatibility and might be removed later.
-// It is recommended to use the `initializeFirebase` function in a client provider.
+// --- DEPRECATED ---
+// The following exports are for legacy compatibility and will be removed in a future version.
+// It is recommended to use the `initializeFirebase` function within `FirebaseClientProvider`.
+
 const legacyApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(legacyApp);
 const auth = getAuth(legacyApp);
 const storage = getStorage(legacyApp);
 
-if (process.env.NODE_ENV === 'development') {
-  try {
-      connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
-      connectFirestoreEmulator(db, '127.0.0.1', 8080);
-      connectStorageEmulator(storage, '127.0.0.1', 9199);
-      console.log("Connected legacy exports to local Firebase emulators.");
-  } catch (e) {
-      // console.warn("Could not connect legacy exports to Firebase emulators.", e);
+try {
+  if (process.env.NODE_ENV === 'development') {
+    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    connectFirestoreEmulator(db, '127.0.0.1', 8080);
+    connectStorageEmulator(storage, '127.0.0.1', 9199);
   }
+} catch (e) {
+  // This can happen with Next.js fast refresh.
+  // The emulators are likely already connected.
 }
 
 export { db, auth, storage };

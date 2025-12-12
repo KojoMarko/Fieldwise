@@ -56,7 +56,7 @@ import React, { useState, useEffect } from 'react';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { collection, onSnapshot, query, where, doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Notification } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
 
@@ -162,6 +162,7 @@ const customerNavItems = [
 
 export function Header() {
     const { user, logout } = useAuth();
+    const db = useFirestore();
     const pathname = usePathname();
     const router = useRouter();
     const [isSheetOpen, setSheetOpen] = useState(false);
@@ -185,7 +186,7 @@ export function Header() {
     }
 
     useEffect(() => {
-        if (!user?.companyId) return;
+        if (!user?.companyId || !db) return;
 
         const notificationsQuery = query(
             collection(db, 'notifications'),
@@ -206,9 +207,10 @@ export function Header() {
         });
 
         return () => unsubscribe();
-    }, [user]);
+    }, [user, db]);
 
     const handleMarkAsRead = async (notificationId: string, link?: string) => {
+        if (!db) return;
         const notifRef = doc(db, 'notifications', notificationId);
         await updateDoc(notifRef, { isRead: true });
         if (link) {

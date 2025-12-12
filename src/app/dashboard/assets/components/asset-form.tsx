@@ -29,7 +29,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect, useMemo } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Customer, Asset } from '@/lib/types';
 import { CreateAssetInputSchema } from '@/lib/schemas';
 import { createAsset } from '@/ai/flows/create-asset';
@@ -63,6 +63,7 @@ export function AssetForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const db = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [allAssets, setAllAssets] = useState<Asset[]>([]);
@@ -102,7 +103,7 @@ export function AssetForm() {
   const watchedName = form.watch('name');
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
       setIsLoading(false);
       return;
     }
@@ -130,7 +131,7 @@ export function AssetForm() {
         unsubscribeCustomers();
         unsubscribeAssets();
     }
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
   
   useEffect(() => {
     const nameSet = new Set<string>();
@@ -758,5 +759,3 @@ export function AssetForm() {
     </>
   );
 }
-
-    

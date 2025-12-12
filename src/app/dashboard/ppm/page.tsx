@@ -10,7 +10,7 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Asset, Customer } from '@/lib/types';
 import { LoaderCircle } from 'lucide-react';
 import {
@@ -27,12 +27,13 @@ import Link from 'next/link';
 
 export default function PpmPage() {
   const { user } = useAuth();
+  const db = useFirestore();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [customers, setCustomers] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
       setIsLoading(false);
       return;
     }
@@ -67,7 +68,7 @@ export default function PpmPage() {
         unsubscribeAssets();
         unsubscribeCustomers();
     };
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
 
   const ppmSchedule = assets.map(asset => {
     if (asset.lastPpmDate && asset.ppmFrequency) {

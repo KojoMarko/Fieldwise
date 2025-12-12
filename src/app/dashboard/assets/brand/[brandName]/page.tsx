@@ -7,7 +7,7 @@ import {
   where,
   onSnapshot,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Asset, RepairNote, Resource } from '@/lib/types';
 import { notFound, useRouter } from 'next/navigation';
 import {
@@ -107,6 +107,7 @@ function ResourceCard({ resource, onView }: { resource: Resource, onView: (url: 
 
 function ResourcesSection({ brandName }: { brandName: string }) {
     const { user } = useAuth();
+    const db = useFirestore();
     const [resources, setResources] = useState<Resource[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAddDialogOpen, setAddDialogOpen] = useState(false);
@@ -115,7 +116,7 @@ function ResourcesSection({ brandName }: { brandName: string }) {
     const [selectedPdfTitle, setSelectedPdfTitle] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!user?.companyId) {
+        if (!user?.companyId || !db) {
             setIsLoading(false);
             return;
         }
@@ -137,7 +138,7 @@ function ResourcesSection({ brandName }: { brandName: string }) {
         });
 
         return () => unsubscribe();
-    }, [user?.companyId, brandName]);
+    }, [user?.companyId, brandName, db]);
     
     const handleViewResource = (url: string, title: string) => {
         setSelectedPdfUrl(url);
@@ -194,6 +195,7 @@ function ResourcesSection({ brandName }: { brandName: string }) {
 
 function RepairNotesSection({ brandName }: { brandName: string }) {
     const { user } = useAuth();
+    const db = useFirestore();
     const { toast } = useToast();
     const [newNote, setNewNote] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -202,7 +204,7 @@ function RepairNotesSection({ brandName }: { brandName: string }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (!user?.companyId) {
+        if (!user?.companyId || !db) {
             setIsLoading(false);
             return;
         }
@@ -224,7 +226,7 @@ function RepairNotesSection({ brandName }: { brandName: string }) {
 
         return () => unsubscribe();
 
-    }, [user?.companyId, brandName]);
+    }, [user?.companyId, brandName, db]);
     
     const saveNote = async (noteContent: string) => {
       if (!noteContent.trim() || !user) return;
@@ -361,6 +363,7 @@ export default function AssetBrandPage({
   params: Promise<{ brandName: string }>;
 }) {
   const { user } = useAuth();
+  const db = useFirestore();
   const router = useRouter();
   const resolvedParams = use(params);
   const brandName = decodeURIComponent(resolvedParams.brandName);
@@ -375,7 +378,7 @@ export default function AssetBrandPage({
   ];
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
       setIsLoading(false);
       return;
     }
@@ -396,7 +399,7 @@ export default function AssetBrandPage({
     });
 
     return () => unsubscribe();
-  }, [user?.companyId, brandName]);
+  }, [user?.companyId, brandName, db]);
   
   const handleExport = () => {
     const dataToExport = assets.map(a => ({

@@ -6,16 +6,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useFirestore } from "@/firebase";
 import type { Company } from "@/lib/types";
 
 export default function SettingsPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
+  const db = useFirestore();
   const [company, setCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
       setIsLoading(false);
       return;
     }
@@ -36,7 +37,7 @@ export default function SettingsPage() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, db]);
 
   if (isAuthLoading || isLoading) {
      return (

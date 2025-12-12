@@ -32,7 +32,7 @@ import { useEffect, useState } from 'react';
 import { AssignTechnicianDialog } from '@/app/dashboard/work-orders/components/assign-technician-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where, limit, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 
 
 const statusStyles: Record<WorkOrderStatus, string> = {
@@ -50,6 +50,7 @@ const statusStyles: Record<WorkOrderStatus, string> = {
 
 export function RecentWorkOrders() {
   const { user, isLoading: isAuthLoading } = useAuth();
+  const db = useFirestore();
   const [recentOrders, setRecentOrders] = useState<WorkOrder[]>([]);
   const [customers, setCustomers] = useState<Record<string, Customer>>({});
   const [users, setUsers] = useState<Record<string, User>>({});
@@ -59,7 +60,7 @@ export function RecentWorkOrders() {
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
 
   useEffect(() => {
-    if (isAuthLoading || !user) return;
+    if (isAuthLoading || !user || !db) return;
 
     if (!user?.companyId) {
       setIsLoading(false);
@@ -140,7 +141,7 @@ export function RecentWorkOrders() {
         unsubscribeCustomers();
         unsubscribeUsers();
     };
-  }, [user, isAuthLoading]);
+  }, [user, isAuthLoading, db]);
 
   const handleAssignClick = (order: WorkOrder) => {
     setSelectedOrder(order);

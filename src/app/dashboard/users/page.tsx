@@ -15,20 +15,21 @@ import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
 import { AddUserDialog } from './components/add-user-dialog';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { User } from '@/lib/types';
 import { LoaderCircle } from 'lucide-react';
 import * as xlsx from 'xlsx';
 
 export default function UsersPage() {
   const { user } = useAuth();
+  const db = useFirestore();
   const isAdmin = user?.role === 'Admin';
   const [isAddUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
       setIsLoading(false);
       return;
     }
@@ -45,7 +46,7 @@ export default function UsersPage() {
     });
 
     return () => unsubscribe();
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
   
   const handleExport = () => {
     const dataToExport = users.map(u => ({

@@ -35,7 +35,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { AuditLogEvent } from '@/lib/types';
 
 const actionIcons: Record<AuditLogEvent['action'], React.ElementType> = {
@@ -52,6 +52,7 @@ const entityIcons: Record<AuditLogEvent['entity'], React.ElementType> = {
     Customer: Building,
     User: UserPlus,
     Company: Building,
+    Location: Building,
 }
 
 const actionColors: Record<AuditLogEvent['action'], string> = {
@@ -63,6 +64,7 @@ const actionColors: Record<AuditLogEvent['action'], string> = {
 export default function AuditLogPage() {
     const { user, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
+    const db = useFirestore();
     const [auditLogs, setAuditLogs] = useState<AuditLogEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -74,7 +76,7 @@ export default function AuditLogPage() {
             return;
         }
 
-        if (!user.companyId) {
+        if (!user.companyId || !db) {
             setIsLoading(false);
             return;
         }
@@ -99,7 +101,7 @@ export default function AuditLogPage() {
         });
 
         return () => unsubscribe();
-    }, [user, isAuthLoading, router]);
+    }, [user, isAuthLoading, router, db]);
 
     if (isAuthLoading || isLoading) {
         return (

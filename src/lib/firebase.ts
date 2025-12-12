@@ -1,7 +1,9 @@
 
+'use client';
+
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getFirestore, connectFirestoreEmulator, type Firestore } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator, type Auth } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator, type Firestore } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator, type FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -13,40 +15,42 @@ const firebaseConfig = {
   "messagingSenderId": "366529567590"
 };
 
-export type FirebaseServices = {
-  app: FirebaseApp;
-  db: Firestore;
-  auth: Auth;
-  storage: FirebaseStorage;
-}
+type FirebaseServices = {
+    app: FirebaseApp;
+    auth: Auth;
+    db: Firestore;
+    storage: FirebaseStorage;
+};
 
 let services: FirebaseServices | null = null;
 
-// This function should only be called on the client side.
 export function initializeFirebase(): FirebaseServices {
-  if (services && getApps().length > 0) {
+    if (services) {
+        return services;
+    }
+
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    if (process.env.NODE_ENV === 'development') {
+        // Connect to emulators
+        try {
+            connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+            connectFirestoreEmulator(db, '127.0.0.1', 8080);
+            connectStorageEmulator(storage, '127.0.0.1', 9199);
+        } catch (error) {
+            // This can happen with Next.js fast refresh.
+            // It's usually safe to ignore, but we log it for debugging.
+            console.warn('Firebase emulators already connected or connection failed:', error);
+        }
+    }
+    
+    services = { app, auth, db, storage };
     return services;
-  }
-
-  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
-
-  if (process.env.NODE_ENV === 'development') {
-    // It's safe to call these on every app initialization in development.
-    // The emulator connection is only established once.
-    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-    connectFirestoreEmulator(db, '127.0.0.1', 8080);
-    connectStorageEmulator(storage, '127.0.0.1', 9199);
-  }
-  
-  services = { app, db, auth, storage };
-  return services;
 }
 
-// The following exports are for legacy compatibility and might be removed later.
-// It is recommended to use the `initializeFirebase` function in a client provider.
-const { db, auth, storage } = initializeFirebase();
-
-export { db, auth, storage };
+// Initialize and export the services immediately
+const { app, auth, db, storage } = initializeFirebase();
+export { app, auth, db, storage };

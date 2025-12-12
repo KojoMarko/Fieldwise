@@ -12,7 +12,7 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Asset } from '@/lib/types';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -110,12 +110,13 @@ function AiAssetImporter() {
 
 export default function AssetsPage() {
   const { user } = useAuth();
+  const db = useFirestore();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
       setIsLoading(false);
       return;
     }
@@ -132,7 +133,7 @@ export default function AssetsPage() {
     });
 
     return () => unsubscribe();
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
   
   const canAddAssets = user?.role === 'Admin' || user?.role === 'Engineer';
 

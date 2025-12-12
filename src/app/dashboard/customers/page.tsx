@@ -15,7 +15,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
 import { AddCustomerDialog } from './components/add-customer-dialog';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Customer } from '@/lib/types';
 import { LoaderCircle } from 'lucide-react';
 import * as xlsx from 'xlsx';
@@ -23,6 +23,7 @@ import { useRouter } from 'next/navigation';
 
 export default function CustomersPage() {
   const { user } = useAuth();
+  const db = useFirestore();
   const router = useRouter();
   const isAdmin = user?.role === 'Admin';
   const canAddCustomers = user?.role === 'Admin' || user?.role === 'Engineer';
@@ -31,7 +32,7 @@ export default function CustomersPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
       setIsLoading(false);
       return;
     }
@@ -49,7 +50,7 @@ export default function CustomersPage() {
     });
 
     return () => unsubscribe();
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
   
   const handleExport = () => {
     const dataToExport = customers.map(c => ({

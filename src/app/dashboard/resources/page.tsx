@@ -29,7 +29,7 @@ import type { Resource } from '@/lib/types';
 import { AddResourceDialog } from './components/add-resource-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import {
   Dialog,
   DialogContent,
@@ -99,6 +99,7 @@ function ResourceCard({ resource, onView }: { resource: Resource, onView: (url: 
 
 export default function ResourcesPage() {
   const { user } = useAuth();
+  const db = useFirestore();
   const [resources, setResources] = useState<Resource[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -111,7 +112,7 @@ export default function ResourcesPage() {
 
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
         setIsLoading(false);
         return;
     }
@@ -128,7 +129,7 @@ export default function ResourcesPage() {
     });
 
     return () => unsubscribe();
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
 
   const categories = useMemo(
     () => [...new Set(resources.map((r) => r.category))],
@@ -264,5 +265,3 @@ export default function ResourcesPage() {
     </>
   );
 }
-
-    

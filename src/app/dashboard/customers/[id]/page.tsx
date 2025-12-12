@@ -11,7 +11,7 @@ import {
   getDocs,
   limit,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Asset, Customer, WorkOrder, User } from '@/lib/types';
 import { notFound, useRouter } from 'next/navigation';
 import {
@@ -82,6 +82,7 @@ export default function CustomerDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const db = useFirestore();
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
@@ -91,6 +92,7 @@ export default function CustomerDetailPage({
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!db) return;
     setIsLoading(true);
     const unsubscribers: (() => void)[] = [];
 
@@ -143,7 +145,7 @@ export default function CustomerDetailPage({
     );
 
     return () => unsubscribers.forEach(unsub => unsub());
-  }, [id]);
+  }, [id, db]);
 
   if (isLoading) {
     return (

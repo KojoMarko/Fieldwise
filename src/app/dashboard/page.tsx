@@ -16,18 +16,19 @@ import CustomerDashboardPage from './customer/page';
 import SalesDashboardPage from './sales/page';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { WorkOrder } from '@/lib/types';
 import { isThisMonth, parseISO, differenceInHours } from 'date-fns';
 
 
 export default function DashboardPage() {
     const { user, isLoading } = useAuth();
+    const db = useFirestore();
     const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
     const [isDataLoading, setIsDataLoading] = useState(true);
 
     useEffect(() => {
-      if (!user?.companyId || user.role === 'Customer' || user.role === 'Sales Rep') {
+      if (!user?.companyId || !db || user.role === 'Customer' || user.role === 'Sales Rep') {
         setIsDataLoading(false);
         return;
       };
@@ -42,7 +43,7 @@ export default function DashboardPage() {
       }
       fetchWorkOrders();
 
-    }, [user])
+    }, [user, db])
 
 
     if (isLoading || isDataLoading) {

@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { MoreHorizontal, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import Link from 'next/link';
 import { EditAssetDialog } from './edit-asset-dialog';
 import {
@@ -30,10 +30,11 @@ import { ReclassifyAssetDialog } from './reclassify-asset-dialog';
 
 function CustomerNameCell({ customerId, onNameFetched }: { customerId: string, onNameFetched: (name: string) => void }) {
     const [name, setName] = useState('Loading...');
+    const db = useFirestore();
     
     useEffect(() => {
         const fetchCustomer = async () => {
-            if (!customerId) {
+            if (!customerId || !db) {
                 setName('N/A');
                 onNameFetched('N/A');
                 return;
@@ -56,7 +57,7 @@ function CustomerNameCell({ customerId, onNameFetched }: { customerId: string, o
             }
         };
         fetchCustomer();
-    }, [customerId, onNameFetched]);
+    }, [customerId, onNameFetched, db]);
 
     return <span>{name}</span>;
 }

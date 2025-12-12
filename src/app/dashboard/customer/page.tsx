@@ -16,17 +16,18 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { Customer, WorkOrder, Asset } from '@/lib/types';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 
 export default function CustomerDashboardPage() {
   const { user } = useAuth();
+  const db = useFirestore();
   const [customerProfile, setCustomerProfile] = useState<Customer | null>(null);
   const [myWorkOrders, setMyWorkOrders] = useState<WorkOrder[]>([]);
   const [myAssets, setMyAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !user.companyId) {
+    if (!user || !user.companyId || !db) {
       setIsLoading(false);
       return;
     }
@@ -43,10 +44,10 @@ export default function CustomerDashboardPage() {
     });
 
     return () => unsubscribeCustomer();
-  }, [user]);
+  }, [user, db]);
 
   useEffect(() => {
-    if (!customerProfile) {
+    if (!customerProfile || !db) {
       if (!isLoading) setIsLoading(false);
       return;
     };
@@ -71,7 +72,7 @@ export default function CustomerDashboardPage() {
       unsubscribeWorkOrders();
       unsubscribeAssets();
     }
-  }, [customerProfile, isLoading]);
+  }, [customerProfile, isLoading, db]);
 
   if (isLoading) {
       return (

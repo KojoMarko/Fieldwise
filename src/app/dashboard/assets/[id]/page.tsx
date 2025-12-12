@@ -10,7 +10,7 @@ import {
   where,
   getDocs,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Asset, Customer, WorkOrder, WorkOrderStatus, User, LifecycleEvent } from '@/lib/types';
 import { notFound, useRouter } from 'next/navigation';
 import {
@@ -103,9 +103,10 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [users, setUsers] = useState<Record<string, User>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const db = useFirestore();
 
   useEffect(() => {
-    if (!asset.id) return;
+    if (!asset.id || !db) return;
     const q = query(
       collection(db, 'work-orders'),
       where('assetId', '==', asset.id)
@@ -120,7 +121,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
     });
 
     const fetchUsers = async () => {
-        if (!asset.companyId) return;
+        if (!asset.companyId || !db) return;
         const usersQuery = query(
             collection(db, 'users'),
             where('companyId', '==', asset.companyId)
@@ -136,7 +137,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
     return () => {
       unsubscribeWorkOrders();
     };
-  }, [asset.id, asset.companyId]);
+  }, [asset.id, asset.companyId, db]);
   
   const combinedHistory = useMemo(() => {
     const manualEntries = (asset.lifecycleNotes || []).map((note, index) => ({
@@ -337,6 +338,7 @@ function MaintenanceHistory({ asset }: { asset: Asset }) {
 
 export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const db = useFirestore();
   const [asset, setAsset] = useState<Asset | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -351,6 +353,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
   }, [asset]);
 
   useEffect(() => {
+    if (!db) return;
     setIsLoading(true);
     const assetRef = doc(db, 'assets', id);
     const unsubscribeAsset = onSnapshot(assetRef, (assetSnap) => {
@@ -380,7 +383,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     });
 
     return () => unsubscribeAsset();
-  }, [id]);
+  }, [id, db]);
 
   if (isLoading) {
     return (
@@ -583,7 +586,3 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     </div>
   );
 }
-
-  
-
-    

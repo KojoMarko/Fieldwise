@@ -35,7 +35,7 @@ import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { ScrollArea } from './ui/scroll-area';
 
 const adminNavItems = [
@@ -87,10 +87,11 @@ const customerNavItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const db = useFirestore();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (!user?.companyId) return;
+    if (!user?.companyId || !db) return;
     
     const notificationsQuery = query(
       collection(db, 'notifications'),
@@ -110,7 +111,7 @@ export function AppSidebar() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, db]);
 
   let navItems = adminNavItems;
   if (user?.role === 'Engineer') {

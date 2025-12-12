@@ -30,22 +30,25 @@ let services: FirebaseServices | null = null;
 
 // This function should only be called on the client side.
 export function initializeFirebase(): FirebaseServices {
-    if (services && getApps().length > 0) {
-      return services;
-    }
-
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const auth = getAuth(app);
     const storage = getStorage(app);
 
-    // This block will only run in development, and it will only try to connect once.
     if (process.env.NODE_ENV === 'development') {
-      // It's safe to call these on every app initialization in development.
-      // The emulator connection is only established once.
-      connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-      connectFirestoreEmulator(db, '127.0.0.1', 8080);
-      connectStorageEmulator(storage, '127.0.0.1', 9199);
+      // Check if emulators are already connected to prevent re-connecting on hot reloads
+      // @ts-ignore - _emulator.host is not in the official type definitions but it's a reliable way to check
+      if (!auth.config.emulator) {
+        connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+      }
+      // @ts-ignore
+      if (!db._settings.host.includes('127.0.0.1')) {
+        connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      }
+      // @ts-ignore
+      if (!storage._protocol.emulatorHost) {
+        connectStorageEmulator(storage, '127.0.0.1', 9199);
+      }
     }
     
     services = { app, db, auth, storage };

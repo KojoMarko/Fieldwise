@@ -31,7 +31,7 @@ import { LoaderCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { ServiceCallLog, Customer, Asset } from '@/lib/types';
 import { addDoc, collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { formatISO } from 'date-fns';
 import {
   Select,
@@ -62,6 +62,7 @@ interface CreateCallLogDialogProps {
 export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const db = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -83,7 +84,7 @@ export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogP
   const watchedCustomerId = form.watch('customerId');
 
   useEffect(() => {
-    if (!user?.companyId || !open) {
+    if (!user?.companyId || !open || !db) {
       setIsLoading(false);
       return;
     }
@@ -109,11 +110,11 @@ export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogP
       unsubscribeCustomers();
       unsubscribeAssets();
     }
-  }, [user?.companyId, open]);
+  }, [user?.companyId, open, db]);
 
 
   async function onSubmit(data: CallLogFormValues) {
-    if (!user?.companyId || !user.name) {
+    if (!user?.companyId || !user.name || !db) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not identify your company or user profile.' });
       return;
     }

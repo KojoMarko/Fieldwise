@@ -40,7 +40,7 @@ import { createWorkOrder } from '@/ai/flows/create-work-order';
 import { useEffect, useState } from 'react';
 import { AddCustomerDialog } from '../../customers/components/add-customer-dialog';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Customer, Asset } from '@/lib/types';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
@@ -64,6 +64,7 @@ export function WorkOrderForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const db = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAddCustomerDialogOpen, setAddCustomerDialogOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -74,7 +75,7 @@ export function WorkOrderForm() {
   const assetIdFromParams = searchParams.get('assetId');
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
       setIsLoading(false);
       return;
     }
@@ -105,7 +106,7 @@ export function WorkOrderForm() {
         unsubscribeCustomers();
         unsubscribeAssets();
     };
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
 
 
   const customerProfile = user?.role === 'Customer' ? customers.find(c => c.contactEmail === user.email) : undefined;

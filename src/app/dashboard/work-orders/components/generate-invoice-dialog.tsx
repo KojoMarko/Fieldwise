@@ -16,7 +16,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { Download } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import Image from 'next/image';
 
 interface GenerateInvoiceDialogProps {
@@ -33,13 +33,14 @@ export function GenerateInvoiceDialog({
   company,
 }: GenerateInvoiceDialogProps) {
   const { toast } = useToast();
+  const db = useFirestore();
   const [showPreview, setShowPreview] = useState(false);
   const invoiceRef = useRef<HTMLDivElement>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [asset, setAsset] = useState<Asset | null>(null);
 
   useEffect(() => {
-    if (open) {
+    if (open && db) {
       const fetchDetails = async () => {
         if (workOrder.customerId) {
           const customerSnap = await getDoc(doc(db, "customers", workOrder.customerId));
@@ -52,7 +53,7 @@ export function GenerateInvoiceDialog({
       }
       fetchDetails();
     }
-  }, [open, workOrder]);
+  }, [open, workOrder, db]);
 
   // Reset state when dialog is closed
   useEffect(() => {
@@ -199,7 +200,7 @@ export function GenerateInvoiceDialog({
                           {workOrder.title}
                         </p>
                       </td>
-                      <td className="text-right py-2 align-top">$450.00</td>
+                      <td className="text-right py-2 align-top">GH₵450.00</td>
                     </tr>
                     <tr className="border-b">
                       <td className="py-2 align-top">
@@ -208,14 +209,14 @@ export function GenerateInvoiceDialog({
                           Filter Kit, Lubricant
                         </p>
                       </td>
-                      <td className="text-right py-2 align-top">$75.50</td>
+                      <td className="text-right py-2 align-top">GH₵75.50</td>
                     </tr>
                   </tbody>
                   <tfoot>
                     <tr>
                       <td className="text-right py-4 font-semibold">Total</td>
                       <td className="text-right py-4 font-bold text-lg">
-                        $525.50
+                        GH₵525.50
                       </td>
                     </tr>
                   </tfoot>

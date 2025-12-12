@@ -6,9 +6,9 @@ export { useCollection } from './firestore/use-collection';
 export { useDoc } from './firestore/use-doc';
 
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getFirestore, type Firestore } from 'firebase/firestore';
-import { getAuth, type Auth } from 'firebase/auth';
-import { getStorage, type FirebaseStorage } from 'firebase/storage';
+import { getFirestore, type Firestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getAuth, type Auth, connectAuthEmulator } from 'firebase/auth';
+import { getStorage, type FirebaseStorage, connectStorageEmulator } from 'firebase/storage';
 
 const firebaseConfig = {
   "projectId": "studio-7671175170-dc56a",
@@ -26,11 +26,29 @@ export type FirebaseServices = {
   storage: FirebaseStorage;
 }
 
+let services: FirebaseServices | null = null;
+
 // This function should only be called on the client side.
 export function initializeFirebase(): FirebaseServices {
+    if (services) {
+      return services;
+    }
+
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const auth = getAuth(app);
     const storage = getStorage(app);
-    return { app, db, auth, storage };
+
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+        connectFirestoreEmulator(db, '127.0.0.1', 8080);
+        connectStorageEmulator(storage, '127.0.0.1', 9199);
+      } catch (error) {
+        console.warn('Firebase emulators already connected or connection failed:', error);
+      }
+    }
+    
+    services = { app, db, auth, storage };
+    return services;
 }

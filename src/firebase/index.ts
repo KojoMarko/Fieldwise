@@ -30,47 +30,47 @@ let services: FirebaseServices | null = null;
 
 // This function should only be called on the client side.
 export function initializeFirebase(): FirebaseServices {
-    // Validate config
-    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-      throw new Error('Firebase configuration is incomplete. Check your environment variables.');
-    }
-
-    // Return cached services if already initialized
     if (services) {
       return services;
     }
 
+    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+      throw new Error('Firebase configuration is incomplete. Check your environment variables.');
+    }
+    
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const auth = getAuth(app);
     const storage = getStorage(app);
 
     if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_EMULATOR === 'true') {
-      // Check if emulators are already connected to prevent re-connecting on hot reloads
-      // @ts-ignore
-      if (!auth.config.emulator) {
-        try {
-          connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-        } catch (e) {
-          console.warn('Could not connect to Auth emulator:', e);
-        }
-      }
-      // @ts-ignore
-      if (!db._settings.host.includes('127.0.0.1')) {
-        try {
-          connectFirestoreEmulator(db, '127.0.0.1', 8080);
-        } catch (e) {
-          console.warn('Could not connect to Firestore emulator:', e);
-        }
-      }
-      // @ts-ignore
-      if (!storage._protocol.emulatorHost) {
-        try {
-          connectStorageEmulator(storage, '127.0.0.1', 9199);
-        } catch (e) {
-          console.warn('Could not connect to Storage emulator:', e);
-        }
-      }
+        // Delay emulator connection slightly to avoid race conditions
+        setTimeout(() => {
+            // @ts-ignore
+             if (!auth.config.emulator) {
+                try {
+                connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+                } catch (e) {
+                console.warn('Could not connect to Auth emulator:', e);
+                }
+            }
+            // @ts-ignore
+            if (!db._settings.host.includes('127.0.0.1')) {
+                try {
+                connectFirestoreEmulator(db, '127.0.0.1', 8080);
+                } catch (e) {
+                console.warn('Could not connect to Firestore emulator:', e);
+                }
+            }
+            // @ts-ignore
+            if (!storage._protocol.emulatorHost) {
+                try {
+                connectStorageEmulator(storage, '127.0.0.1', 9199);
+                } catch (e) {
+                console.warn('Could not connect to Storage emulator:', e);
+                }
+            }
+        }, 0);
     }
     
     services = { app, db, auth, storage };

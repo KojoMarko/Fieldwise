@@ -13,15 +13,9 @@ export function FirebaseClientProvider({
   const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    // Initialize Firebase on the client
-    try {
-      const services = initializeFirebase();
-      setFirebase(services);
-    } catch (error) {
-      console.error('Failed to initialize Firebase:', error);
-    } finally {
-      setIsInitializing(false);
-    }
+    const services = initializeFirebase();
+    setFirebase(services);
+    setIsInitializing(false);
   }, []);
 
   // Show loading state while initializing

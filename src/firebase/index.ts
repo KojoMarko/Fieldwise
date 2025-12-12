@@ -30,23 +30,22 @@ let services: FirebaseServices | null = null;
 
 // This function should only be called on the client side.
 export function initializeFirebase(): FirebaseServices {
-    if (services) {
+    if (services && getApps().length > 0) {
       return services;
     }
 
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const auth = getAuth(app);
     const storage = getStorage(app);
 
+    // This block will only run in development, and it will only try to connect once.
     if (process.env.NODE_ENV === 'development') {
-      try {
-        connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-        connectFirestoreEmulator(db, '127.0.0.1', 8080);
-        connectStorageEmulator(storage, '127.0.0.1', 9199);
-      } catch (error) {
-        console.warn('Firebase emulators already connected or connection failed:', error);
-      }
+      // It's safe to call these on every app initialization in development.
+      // The emulator connection is only established once.
+      connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+      connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      connectStorageEmulator(storage, '127.0.0.1', 9199);
     }
     
     services = { app, db, auth, storage };

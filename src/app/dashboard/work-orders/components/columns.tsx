@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { WorkOrder, WorkOrderStatus, User, Customer, Company } from '@/lib/types';
 import Link from 'next/link';
 import { AssignTechnicianDialog } from './assign-technician-dialog';
-import { GenerateInvoiceDialog } from './generate-invoice-dialog';
+import { GenerateInvoiceDialog } from '../[id]/components/generate-invoice-dialog';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where, doc, updateDoc } from 'firebase/firestore';

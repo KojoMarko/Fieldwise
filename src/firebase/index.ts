@@ -1,4 +1,5 @@
 
+'use client';
 export * from './provider';
 export * from './client-provider';
 export { useCollection } from './firestore/use-collection';
@@ -7,7 +8,7 @@ export { useDoc } from './firestore/use-doc';
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getStorage, type FirebaseStorage, uploadBytesResumable } from 'firebase/storage';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   "projectId": "studio-7671175170-dc56a",

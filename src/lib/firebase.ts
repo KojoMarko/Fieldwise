@@ -24,11 +24,11 @@ let services: FirebaseServices | null = null;
 
 // This function should only be called on the client side.
 export function initializeFirebase(): FirebaseServices {
-  if (services) {
+  if (services && getApps().length > 0) {
     return services;
   }
 
-  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
   const auth = getAuth(app);
   const db = getFirestore(app);
   const storage = getStorage(app);

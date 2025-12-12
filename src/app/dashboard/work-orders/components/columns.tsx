@@ -21,7 +21,7 @@ import { GenerateInvoiceDialog } from './generate-invoice-dialog';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where, doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -40,6 +40,7 @@ const statusStyles: Record<WorkOrderStatus, string> = {
 // Custom cell component for actions to handle user roles
 function ActionsCell({ row }: { row: { original: WorkOrder }}) {
   const { user } = useAuth();
+  const db = useFirestore();
   const workOrder = row.original;
   const [isAssignDialogOpen, setAssignDialogOpen] = useState(false);
   const [isInvoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
@@ -49,7 +50,7 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
   const isAdmin = user?.role === 'Admin';
   
   useEffect(() => {
-    if (user?.companyId) {
+    if (user?.companyId && db) {
       const companyRef = doc(db, 'companies', user.companyId);
       const unsubscribe = onSnapshot(companyRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -58,10 +59,11 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
       });
       return () => unsubscribe();
     }
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
 
 
   const handleStatusUpdate = async (status: WorkOrderStatus) => {
+    if(!db) return;
     try {
       const workOrderRef = doc(db, 'work-orders', workOrder.id);
       await updateDoc(workOrderRef, { status });
@@ -134,9 +136,10 @@ function ActionsCell({ row }: { row: { original: WorkOrder }}) {
 function CustomerCell({ row }: { row: { original: WorkOrder }}) {
     const [customerName, setCustomerName] = useState('Loading...');
     const { user } = useAuth();
+    const db = useFirestore();
 
     useEffect(() => {
-        if (!user?.companyId || !row.original.customerId) {
+        if (!user?.companyId || !row.original.customerId || !db) {
             setCustomerName('N/A');
             return;
         }
@@ -152,7 +155,7 @@ function CustomerCell({ row }: { row: { original: WorkOrder }}) {
         }, () => setCustomerName('Error'));
 
         return () => unsubscribe();
-    }, [row.original.customerId, user?.companyId]);
+    }, [row.original.customerId, user?.companyId, db]);
     
     return <div className="truncate max-w-[150px]">{customerName}</div>;
 }
@@ -161,10 +164,11 @@ function CustomerCell({ row }: { row: { original: WorkOrder }}) {
 function TechnicianCell({ row }: { row: { original: WorkOrder }}) {
     const [techNames, setTechNames] = useState<string>('Unassigned');
      const { user } = useAuth();
+     const db = useFirestore();
 
     useEffect(() => {
         const techIds = row.original.technicianIds;
-        if (!techIds || techIds.length === 0 || !user?.companyId) {
+        if (!techIds || techIds.length === 0 || !user?.companyId || !db) {
             setTechNames('Unassigned');
             return;
         };
@@ -180,7 +184,7 @@ function TechnicianCell({ row }: { row: { original: WorkOrder }}) {
         }, () => setTechNames('Error'));
 
         return () => unsubscribe();
-    }, [row.original.technicianIds, user?.companyId]);
+    }, [row.original.technicianIds, user?.companyId, db]);
     
     return techNames ? <div className="truncate max-w-[150px]">{techNames}</div> : <div className="text-muted-foreground">Unassigned</div>;
 }

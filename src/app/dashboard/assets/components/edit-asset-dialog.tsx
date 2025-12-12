@@ -28,7 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Customer, Asset } from '@/lib/types';
 import { UpdateAssetInputSchema } from '@/lib/schemas';
 import { updateAsset } from '@/ai/flows/update-asset';
@@ -59,6 +59,7 @@ interface EditAssetDialogProps {
 export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const db = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
@@ -99,7 +100,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
   }, [asset, form]);
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
       setIsLoadingCustomers(false);
       return;
     }
@@ -116,7 +117,7 @@ export function EditAssetDialog({ open, onOpenChange, asset }: EditAssetDialogPr
     });
 
     return () => unsubscribeCustomers();
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
 
 
   async function onSubmit(data: AssetFormValues) {

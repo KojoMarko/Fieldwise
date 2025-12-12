@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { updateWorkOrder } from '@/ai/flows/update-work-order';
 import { LoaderCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -34,6 +34,7 @@ export function AssignTechnicianDialog({
   workOrder,
 }: AssignTechnicianDialogProps) {
   const { user } = useAuth();
+  const db = useFirestore();
   const [engineers, setEngineers] = useState<User[]>([]);
   const [selectedTechs, setSelectedTechs] = useState<string[]>([]);
   const { toast } = useToast();
@@ -46,7 +47,7 @@ export function AssignTechnicianDialog({
   }, [workOrder]);
 
   useEffect(() => {
-    if (!user?.companyId) return;
+    if (!user?.companyId || !db) return;
     
     const engineersQuery = query(collection(db, 'users'), where('companyId', '==', user.companyId), where('role', '==', 'Engineer'));
     
@@ -57,7 +58,7 @@ export function AssignTechnicianDialog({
     });
 
     return () => unsubscribe();
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
 
   const handleAssign = async () => {
     if (selectedTechs.length === 0) {

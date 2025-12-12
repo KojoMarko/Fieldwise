@@ -33,7 +33,7 @@ import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { CalendarIcon } from 'lucide-react';
 import { ServiceReportDisplay } from './service-report-display';
 
@@ -128,6 +128,7 @@ export function WorkOrderClientSection({
   company?: Company,
 }) {
   const { user } = useAuth();
+  const db = useFirestore();
   const { toast } = useToast();
   const [isQuestionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
@@ -195,6 +196,7 @@ export function WorkOrderClientSection({
 
 
   const handlePutOnHold = async (reason: string) => {
+    if(!db) return;
     try {
       const workOrderRef = doc(db, 'work-orders', workOrder.id);
       const newNotes = `${workOrder.technicianNotes || ''}\n\nWork put on hold. Reason: ${reason}`;
@@ -215,7 +217,7 @@ export function WorkOrderClientSection({
   };
 
   const handleStatusChange = async (newStatus: WorkOrderStatus) => {
-    if (!workOrder) return;
+    if (!workOrder || !db) return;
     try {
       const workOrderRef = doc(db, 'work-orders', workOrder.id);
       await updateDoc(workOrderRef, { status: newStatus });
@@ -235,6 +237,7 @@ export function WorkOrderClientSection({
 
 
   const handleQuestionnaireSubmit = async () => {
+    if(!db) return;
     setQuestionnaireOpen(false);
     setIsGeneratingReport(true);
     try {

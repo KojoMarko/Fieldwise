@@ -14,20 +14,21 @@ import { ActiveOpportunitiesTable } from './components/active-opportunities';
 import { TodaysTasks } from './components/todays-tasks';
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Opportunity, Lead, Activity } from '@/lib/types';
 import { LoaderCircle } from 'lucide-react';
 
 
 export default function SalesDashboardPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
+  const db = useFirestore();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
         setIsLoading(false);
         return;
     }
@@ -63,7 +64,7 @@ export default function SalesDashboardPage() {
         unsubLeads();
         unsubActivities();
     }
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
   
   if (isAuthLoading || isLoading) {
       return (

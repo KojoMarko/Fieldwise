@@ -1,4 +1,3 @@
-
 'use client';
 export * from './provider';
 export * from './client-provider';
@@ -11,12 +10,13 @@ import { getAuth, type Auth, connectAuthEmulator } from 'firebase/auth';
 import { getStorage, type FirebaseStorage, connectStorageEmulator } from 'firebase/storage';
 
 const firebaseConfig = {
-  "projectId": "studio-7671175170-dc56a",
-  "appId": "1:366529567590:web:17f7b26be8f46d86c386a7",
-  "storageBucket": "studio-7671175170-dc56a.appspot.com",
-  "apiKey": "AIzaSyDXMwRlSYKM03z2XatKzOmT9ZnkFDOtBvo",
-  "authDomain": "studio-7671175170-dc56a.firebaseapp.com",
-  "messagingSenderId": "366529567590"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 export type FirebaseServices = {
@@ -30,24 +30,46 @@ let services: FirebaseServices | null = null;
 
 // This function should only be called on the client side.
 export function initializeFirebase(): FirebaseServices {
+    // Validate config
+    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+      throw new Error('Firebase configuration is incomplete. Check your environment variables.');
+    }
+
+    // Return cached services if already initialized
+    if (services) {
+      return services;
+    }
+
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const auth = getAuth(app);
     const storage = getStorage(app);
 
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_EMULATOR === 'true') {
       // Check if emulators are already connected to prevent re-connecting on hot reloads
-      // @ts-ignore - _emulator.host is not in the official type definitions but it's a reliable way to check
+      // @ts-ignore
       if (!auth.config.emulator) {
-        connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+        try {
+          connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+        } catch (e) {
+          console.warn('Could not connect to Auth emulator:', e);
+        }
       }
       // @ts-ignore
       if (!db._settings.host.includes('127.0.0.1')) {
-        connectFirestoreEmulator(db, '127.0.0.1', 8080);
+        try {
+          connectFirestoreEmulator(db, '127.0.0.1', 8080);
+        } catch (e) {
+          console.warn('Could not connect to Firestore emulator:', e);
+        }
       }
       // @ts-ignore
       if (!storage._protocol.emulatorHost) {
-        connectStorageEmulator(storage, '127.0.0.1', 9199);
+        try {
+          connectStorageEmulator(storage, '127.0.0.1', 9199);
+        } catch (e) {
+          console.warn('Could not connect to Storage emulator:', e);
+        }
       }
     }
     

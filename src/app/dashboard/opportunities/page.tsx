@@ -25,7 +25,7 @@ import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, useMemo } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import * as xlsx from 'xlsx';
 
 const pipelineStages: { name: Opportunity['stage'], color: string }[] = [
@@ -116,11 +116,12 @@ function PipelineView({ opportunities }: { opportunities: Opportunity[] }) {
 
 export default function OpportunitiesPage() {
   const { user } = useAuth();
+  const db = useFirestore();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
         setIsLoading(false);
         return;
     }
@@ -132,7 +133,7 @@ export default function OpportunitiesPage() {
         setIsLoading(false);
     });
     return () => unsubscribe();
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
 
     const totalPipelineValue = opportunities.reduce((sum, opp) => sum + opp.value, 0);
     const weightedValue = opportunities.reduce((sum, opp) => sum + (opp.value * (opp.probability / 100)), 0);

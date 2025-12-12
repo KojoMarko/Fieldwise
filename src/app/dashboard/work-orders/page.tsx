@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { WorkOrder, ServiceCallLog } from '@/lib/types';
 import { customers } from '@/lib/data'; // Keep for customer role filtering
 import { LoaderCircle } from 'lucide-react';
@@ -30,6 +30,7 @@ type TriageStatusFilter = 'all' | 'resolved' | 'unresolved';
 
 export default function WorkOrdersPage() {
   const { user } = useAuth();
+  const db = useFirestore();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mainTab, setMainTab] = useState('work_orders');
@@ -44,7 +45,7 @@ export default function WorkOrdersPage() {
   const [workOrderSearchFilter, setWorkOrderSearchFilter] = useState('');
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
         setIsLoading(false);
         setIsLoadingLogs(false);
         return;
@@ -99,7 +100,7 @@ export default function WorkOrdersPage() {
         unsubWorkOrders();
         unsubLogs();
     };
-  }, [user]);
+  }, [user, db]);
 
   const filteredWorkOrders = workOrders.filter(wo => {
       const statusMatch = 

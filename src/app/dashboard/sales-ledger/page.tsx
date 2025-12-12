@@ -28,7 +28,7 @@ import { AddTransactionDialog } from './components/add-transaction-dialog';
 import { UpdatePaymentDialog } from './components/update-payment-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where, addDoc, doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { format, formatISO, parseISO } from 'date-fns';
 import { extractAndCreateTransactions } from '@/ai/flows/extract-and-create-transactions';
 import { useToast } from '@/hooks/use-toast';
@@ -228,6 +228,7 @@ function TransactionRow({ transaction, onUpdateClick }: { transaction: Transacti
 
 export default function SalesLedgerPage() {
   const { user } = useAuth();
+  const db = useFirestore();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
@@ -236,7 +237,7 @@ export default function SalesLedgerPage() {
   const [searchFilter, setSearchFilter] = useState('');
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
         setIsLoading(false);
         return;
     }
@@ -249,11 +250,11 @@ export default function SalesLedgerPage() {
         setIsLoading(false);
     });
     return () => unsubscribe();
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
 
 
   const handleAddTransaction = async (newTransactionData: Omit<Transaction, 'id' | 'transactionId' | 'total' | 'companyId'>) => {
-    if (!user?.companyId) return;
+    if (!user?.companyId || !db) return;
 
     const total = newTransactionData.products.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
     const transactionCount = transactions.length + 1;
@@ -273,6 +274,7 @@ export default function SalesLedgerPage() {
   }
 
   const handleUpdatePayment = async (transactionId: string, newPayment: number) => {
+    if(!db) return;
     const transactionRef = doc(db, 'transactions', transactionId);
     const currentTransaction = transactions.find(t => t.id === transactionId);
     if (!currentTransaction) return;

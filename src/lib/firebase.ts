@@ -1,2 +1,2 @@
-// This file is intentionally left empty as its contents are being moved to the new /src/firebase directory.
-// It will be deleted in a subsequent step.
+// This file is intentionally left empty. It will be deleted in a future step.
+// All initialization logic has been moved to src/firebase/index.ts

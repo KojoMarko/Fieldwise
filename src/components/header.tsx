@@ -120,13 +120,14 @@ const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
   { href: '/dashboard/sales-ledger', icon: ClipboardList, label: 'Sales Ledger' },
   { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
+  { href: '/dashboard/activities', icon: Activity, label: 'Activities' },
   { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
   { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
   { href: '/dashboard/map', icon: Map, label: 'Map'},
   { href: '/dashboard/customers', icon: Building, label: 'Customers' },
   { href: '/dashboard/users', icon: Users, label: 'Users' },
   { href: '/dashboard/assets', icon: Package, label: 'Assets' },
-  { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
+  { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts & Locations' },
   { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
   { href: '/dashboard/audit-log', icon: History, label: 'Audit Log' },
 ];
@@ -135,10 +136,11 @@ const engineerNavItems = [
     { href: '/dashboard', icon: Home, label: 'My Dashboard' },
     { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
+    { href: '/dashboard/customers', icon: Building, label: 'Customers' },
     { href: '/dashboard/ppm', icon: CalendarCheck, label: 'PPM' },
     { href: '/dashboard/map', icon: Map, label: 'Map'},
     { href: '/dashboard/assets', icon: Package, label: 'Assets' },
-    { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts' },
+    { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts & Locations' },
     { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
 ]
 

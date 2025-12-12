@@ -21,19 +21,20 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import type { Lead } from '@/lib/types';
 import * as xlsx from 'xlsx';
 
 export default function LeadsPage() {
   const { user } = useAuth();
+  const db = useFirestore();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchFilter, setSearchFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !db) {
         setIsLoading(false);
         return;
     }
@@ -45,7 +46,7 @@ export default function LeadsPage() {
         setIsLoading(false);
     });
     return () => unsubscribe();
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
 
   const filteredLeads = useMemo(() => {
       return leads.filter(lead => {

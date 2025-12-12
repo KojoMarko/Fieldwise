@@ -19,7 +19,7 @@ import { useState, useEffect } from 'react';
 import { LoaderCircle, Building, Warehouse, Check, ChevronsUpDown } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { transferSparePart } from '@/ai/flows/transfer-spare-part';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -38,6 +38,7 @@ export function TransferStockDialog({
   part,
 }: TransferStockDialogProps) {
   const { user } = useAuth();
+  const db = useFirestore();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [destinationId, setDestinationId] = useState('');
@@ -48,7 +49,7 @@ export function TransferStockDialog({
   const [isComboboxOpen, setComboboxOpen] = useState(false);
 
   useEffect(() => {
-    if (!user?.companyId || !open) {
+    if (!user?.companyId || !open || !db) {
       setIsLoading(false);
       return;
     }
@@ -92,7 +93,7 @@ export function TransferStockDialog({
         unsubLocations();
         unsubCustomers();
     };
-  }, [user?.companyId, open]);
+  }, [user?.companyId, open, db]);
   
   // Reset local state when dialog is closed/reopened
   useEffect(() => {

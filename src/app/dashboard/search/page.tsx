@@ -4,7 +4,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import type { WorkOrder, Asset, Customer } from '@/lib/types';
 import { LoaderCircle, Search as SearchIcon, Wrench, Building, Package } from 'lucide-react';
@@ -22,13 +22,14 @@ function SearchResults() {
     const searchParams = useSearchParams();
     const q = searchParams.get('q');
     const { user } = useAuth();
+    const db = useFirestore();
     
     const [results, setResults] = useState<SearchResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         const performSearch = async () => {
-            if (!q || !user?.companyId) {
+            if (!q || !user?.companyId || !db) {
                 setResults([]);
                 return;
             }
@@ -44,7 +45,7 @@ function SearchResults() {
                 const workOrdersSnapshot = await getDocs(workOrdersQuery);
                 workOrdersSnapshot.forEach(doc => {
                     const data = doc.data() as WorkOrder;
-                    if (data.title.toLowerCase().includes(lowerCaseQuery) || data.description.toLowerCase().includes(lowerCaseQuery)) {
+                    if (data.title.toLowerCase().includes(lowerCaseQuery) || data.description?.toLowerCase().includes(lowerCaseQuery)) {
                         allResults.push({ type: 'Work Order', data });
                     }
                 });
@@ -80,7 +81,7 @@ function SearchResults() {
         };
 
         performSearch();
-    }, [q, user?.companyId]);
+    }, [q, user?.companyId, db]);
 
     const resultIcons = {
         'Work Order': <Wrench className="h-5 w-5 text-muted-foreground" />,

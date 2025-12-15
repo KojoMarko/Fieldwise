@@ -1,5 +1,5 @@
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-admin';
 import type { WorkOrder } from '@/lib/types';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 

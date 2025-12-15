@@ -26,21 +26,40 @@ let auth: Auth;
 let db: Firestore;
 let storage: FirebaseStorage;
 
-if (getApps().length === 0) {
+// Check if we are on the client side before initializing
+if (typeof window !== 'undefined' && getApps().length === 0) {
   if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
     throw new Error('Firebase configuration is incomplete. Check your environment variables.');
   }
   app = initializeApp(firebaseConfig);
-} else {
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+} else if (typeof window !== 'undefined') {
   app = getApp();
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
 }
 
-auth = getAuth(app);
-db = getFirestore(app);
-storage = getStorage(app);
 
 export const initializeFirebase = (): FirebaseServices => {
+  if (!app) {
+    // This will re-run the initialization logic if it was skipped on the server.
+    if (getApps().length === 0) {
+        if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+            throw new Error('Firebase configuration is incomplete. Check your environment variables.');
+        }
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
+    }
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+  }
   return { app, db, auth, storage };
 }
 
+// @ts-ignore - These will be initialized on the client
 export { app, auth, db, storage };

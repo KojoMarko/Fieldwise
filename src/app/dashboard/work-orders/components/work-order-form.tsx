@@ -39,7 +39,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { createWorkOrder } from '@/ai/flows/create-work-order';
 import { useEffect, useState } from 'react';
 import { AddCustomerDialog } from '../../customers/components/add-customer-dialog';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Customer, Asset } from '@/lib/types';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -109,7 +109,17 @@ export function WorkOrderForm() {
   }, [user?.companyId, db]);
 
 
-  const customerProfile = user?.role === 'Customer' ? customers.find(c => c.contactEmail === user.email) : undefined;
+  const getCustomerProfile = async () => {
+      if (user?.role === 'Customer' && db) {
+          const customerQuery = query(collection(db, 'customers'), where('contactEmail', '==', user.email), where('companyId', '==', user.companyId));
+          const customerSnapshot = await getDocs(customerQuery);
+          if (!customerSnapshot.empty) {
+              return customerSnapshot.docs[0].data() as Customer;
+          }
+      }
+      return undefined;
+  }
+
 
   const form = useForm<WorkOrderFormValues>({
     resolver: zodResolver(workOrderSchema),
@@ -118,14 +128,20 @@ export function WorkOrderForm() {
       description: '',
       priority: 'Medium',
       type: 'Corrective',
-      customerId: customerIdFromParams || customerProfile?.id || '',
+      customerId: customerIdFromParams || '',
       assetId: assetIdFromParams || '',
     },
   });
 
   useEffect(() => {
-      if (customerProfile) {
-          form.setValue('customerId', customerProfile.id);
+      const setInitialCustomer = async () => {
+        const customerProfile = await getCustomerProfile();
+        if (customerProfile) {
+            form.setValue('customerId', customerProfile.id);
+        }
+      }
+      if (user?.role === 'Customer') {
+          setInitialCustomer();
       }
       if (customerIdFromParams) {
           form.setValue('customerId', customerIdFromParams);
@@ -133,7 +149,7 @@ export function WorkOrderForm() {
       if (assetIdFromParams) {
           form.setValue('assetId', assetIdFromParams);
       }
-  }, [customerProfile, customerIdFromParams, assetIdFromParams, form]);
+  }, [user, customerIdFromParams, assetIdFromParams, form]);
 
   async function onSubmit(data: WorkOrderFormValues) {
     if (!user) {

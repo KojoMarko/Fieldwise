@@ -37,7 +37,7 @@ import { useState, useEffect } from 'react';
 import type { Asset } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { LoaderCircle, PlusCircle, ChevronsUpDown, Check } from 'lucide-react';
 import { updateAssetNameForModel } from '@/ai/flows/update-asset-name-for-model';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -59,6 +59,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function ReclassifyAssetDialog({ open, onOpenChange, asset }: ReclassifyAssetDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const db = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [discoveredNames, setDiscoveredNames] = useState<string[]>([]);
   const [isNewNameDialogOpen, setNewNameDialogOpen] = useState(false);
@@ -79,7 +80,7 @@ export function ReclassifyAssetDialog({ open, onOpenChange, asset }: ReclassifyA
   }, [asset, form, open]);
 
   useEffect(() => {
-    if (!user?.companyId) return;
+    if (!user?.companyId || !db) return;
 
     const assetQuery = query(collection(db, "assets"), where("companyId", "==", user.companyId));
     const unsubscribe = onSnapshot(assetQuery, (snapshot) => {
@@ -94,7 +95,7 @@ export function ReclassifyAssetDialog({ open, onOpenChange, asset }: ReclassifyA
     });
 
     return () => unsubscribe();
-  }, [user?.companyId]);
+  }, [user?.companyId, db]);
 
 
   async function onSubmit(data: FormValues) {

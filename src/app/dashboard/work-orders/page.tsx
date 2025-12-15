@@ -17,8 +17,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
-import type { WorkOrder, ServiceCallLog } from '@/lib/types';
-import { customers } from '@/lib/data'; // Keep for customer role filtering
+import type { WorkOrder, ServiceCallLog, Customer } from '@/lib/types';
 import { LoaderCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { OnCallTriageTab } from './components/on-call-triage-tab';
@@ -32,6 +31,7 @@ export default function WorkOrdersPage() {
   const { user } = useAuth();
   const db = useFirestore();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
+  const [customers, setCustomers] = useState<Record<string, Customer>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [mainTab, setMainTab] = useState('work_orders');
   const [workOrderSubTab, setWorkOrderSubTab] = useState('all');
@@ -67,12 +67,15 @@ export default function WorkOrdersPage() {
         if (user.role === 'Admin' || user.role === 'Engineer') {
             setWorkOrders(fetchedWorkOrders);
         } else if (user.role === 'Customer') {
-            const customerProfile = customers.find(c => c.contactEmail === user.email);
-            if (!customerProfile) {
-                setWorkOrders([]);
-            } else {
-                setWorkOrders(fetchedWorkOrders.filter(wo => wo.customerId === customerProfile.id));
-            }
+            const customerQuery = query(collection(db, 'customers'), where('contactEmail', '==', user.email), where('companyId', '==', user.companyId));
+            getDocs(customerQuery).then(customerSnapshot => {
+                if (!customerSnapshot.empty) {
+                    const customerId = customerSnapshot.docs[0].id;
+                    setWorkOrders(fetchedWorkOrders.filter(wo => wo.customerId === customerId));
+                } else {
+                    setWorkOrders([]);
+                }
+            });
         } else {
             setWorkOrders([]);
         }
@@ -80,6 +83,13 @@ export default function WorkOrdersPage() {
     }, (error) => {
         console.error("Error fetching work orders: ", error);
         setIsLoading(false);
+    });
+    
+    const customersQuery = query(collection(db, 'customers'), where('companyId', '==', user.companyId));
+    const unsubCustomers = onSnapshot(customersQuery, (snapshot) => {
+        const custs: Record<string, Customer> = {};
+        snapshot.forEach(doc => custs[doc.id] = { ...doc.data(), id: doc.id } as Customer);
+        setCustomers(custs);
     });
 
     const logsQuery = query(collection(db, 'service-call-logs'), where('companyId', '==', user.companyId));
@@ -99,6 +109,7 @@ export default function WorkOrdersPage() {
     return () => {
         unsubWorkOrders();
         unsubLogs();
+        unsubCustomers();
     };
   }, [user, db]);
 
@@ -110,7 +121,10 @@ export default function WorkOrdersPage() {
           (workOrderSubTab === 'draft' && wo.status === 'Draft');
 
       const searchMatch = workOrderSearchFilter ?
-          wo.title.toLowerCase().includes(workOrderSearchFilter.toLowerCase()) : true;
+          (wo.title.toLowerCase().includes(workOrderSearchFilter.toLowerCase()) || 
+           (customers[wo.customerId]?.name.toLowerCase().includes(workOrderSearchFilter.toLowerCase()))
+          )
+          : true;
 
       return statusMatch && searchMatch;
   });
@@ -186,7 +200,7 @@ export default function WorkOrdersPage() {
             <div className="flex justify-between items-start gap-4">
                 <div className="flex flex-col md:flex-row gap-2">
                      <Input
-                        placeholder="Filter by title..."
+                        placeholder="Filter by title or customer..."
                         value={workOrderSearchFilter}
                         onChange={(e) => setWorkOrderSearchFilter(e.target.value)}
                         className="max-w-full sm:max-w-xs"

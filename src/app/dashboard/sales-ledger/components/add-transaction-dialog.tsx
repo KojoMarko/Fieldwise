@@ -41,7 +41,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import type { Customer } from '@/lib/types';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { AddCustomerDialog } from '../../customers/components/add-customer-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -75,6 +75,7 @@ interface AddTransactionDialogProps {
 export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: AddTransactionDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const db = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -103,7 +104,7 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
   });
 
   useEffect(() => {
-    if (!user?.companyId || !open) {
+    if (!user?.companyId || !open || !db) {
       setIsLoading(false);
       return;
     }
@@ -131,7 +132,7 @@ export function AddTransactionDialog({ open, onOpenChange, onAddTransaction }: A
       unsubscribeCustomers();
       unsubscribeProducts();
     }
-  }, [user?.companyId, open]);
+  }, [user?.companyId, open, db]);
 
   async function onSubmit(data: AddTransactionFormValues) {
     setIsSubmitting(true);

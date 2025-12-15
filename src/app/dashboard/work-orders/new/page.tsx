@@ -14,6 +14,7 @@ import { WorkOrderForm } from '../components/work-order-form';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
+import { useFirestore } from '@/firebase';
 
 function NewWorkOrderPageContent() {
   const { user, isLoading } = useAuth();

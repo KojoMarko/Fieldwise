@@ -161,11 +161,11 @@ export function CreateCallLogDialog({ open, onOpenChange }: CreateCallLogDialogP
           type: 'Corrective',
           scheduledDate: new Date(),
           companyId: user.companyId,
-          status: 'Draft',
+          status: 'Scheduled',
         });
         toast({
           title: 'Work Order Created',
-          description: 'A new work order has been automatically created from the call log.',
+          description: 'A new work order has been automatically created and scheduled.',
         });
       }
 

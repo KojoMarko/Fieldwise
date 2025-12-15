@@ -46,7 +46,7 @@ export function FirebaseProvider({
 
 export const useFirebaseApp = () => {
     const context = useContext(FirebaseContext);
-    if (!context) {
+    if (!context || !context.app) {
         throw new Error('useFirebaseApp must be used within a FirebaseProvider');
     }
     return context.app;
@@ -54,15 +54,15 @@ export const useFirebaseApp = () => {
 
 export const useAuthFirebase = () => {
     const context = useContext(FirebaseContext);
-    if (!context) {
+    if (!context || !context.auth) {
         throw new Error('useAuth must be used within a FirebaseProvider');
     }
     return context.auth;
 }
 
-export const useFirestore = () => {
+export const useFirestore = (): Firestore => {
     const context = useContext(FirebaseContext);
-    if (!context) {
+    if (!context || !context.firestore) {
         throw new Error('useFirestore must be used within a FirebaseProvider');
     }
     return context.firestore;
@@ -70,7 +70,7 @@ export const useFirestore = () => {
 
 export const useStorage = () => {
     const context = useContext(FirebaseContext);
-    if (!context) {
+    if (!context || !context.storage) {
         throw new Error('useStorage must be used within a FirebaseProvider');
     }
     return context.storage;

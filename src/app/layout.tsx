@@ -4,13 +4,16 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth';
 import { FirebaseErrorListener } from '@/components/firebase-error-listener';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { FirebaseProvider } from '@/firebase/provider';
+import { initializeFirebase } from '@/lib/firebase';
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const firebaseServices = initializeFirebase();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -30,13 +33,18 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
-        <FirebaseClientProvider>
+        <FirebaseProvider
+          app={firebaseServices.app}
+          auth={firebaseServices.auth}
+          firestore={firebaseServices.db}
+          storage={firebaseServices.storage}
+        >
           <AuthProvider>
               <FirebaseErrorListener>
                   {children}
               </FirebaseErrorListener>
           </AuthProvider>
-        </FirebaseClientProvider>
+        </FirebaseProvider>
         <Toaster />
       </body>
     </html>

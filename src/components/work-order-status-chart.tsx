@@ -25,7 +25,7 @@ import type { WorkOrder, WorkOrderStatus } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { db } from '@/lib/firebase';
 import { LoaderCircle } from 'lucide-react';
 
 const statusOrder: WorkOrderStatus[] = [
@@ -47,12 +47,11 @@ const chartConfig = {
 
 export function WorkOrderStatusChart() {
   const { user } = useAuth();
-  const db = useFirestore();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.companyId || !db) {
+    if (!user?.companyId) {
         setIsLoading(false);
         return;
     };
@@ -66,7 +65,7 @@ export function WorkOrderStatusChart() {
     });
 
     return () => unsubscribe();
-  }, [user, db]);
+  }, [user]);
 
   const data = statusOrder.map((status) => ({
     name: status,

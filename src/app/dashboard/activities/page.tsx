@@ -46,7 +46,7 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { db } from '@/lib/firebase';
 import type { Activity } from '@/lib/types';
 import { formatISO, parseISO, isToday, isFuture, isPast, format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -199,14 +199,13 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
 
 export default function ActivitiesPage() {
   const { user } = useAuth();
-  const db = useFirestore();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (!user?.companyId || !db) {
+    if (!user?.companyId) {
         setIsLoading(false);
         return;
     }
@@ -218,10 +217,10 @@ export default function ActivitiesPage() {
         setIsLoading(false);
     });
     return () => unsubscribe();
-  }, [user?.companyId, db]);
+  }, [user?.companyId]);
 
   const handleAddActivity = async (newActivityData: Omit<Activity, 'id' | 'status' | 'companyId'>) => {
-      if (!user?.companyId || !db) return;
+      if (!user?.companyId) return;
 
       const activityDate = parseISO(newActivityData.time);
       let status: Activity['status'] = 'today';
@@ -240,7 +239,6 @@ export default function ActivitiesPage() {
   };
   
   const handleToggleComplete = async (id: string, completed: boolean) => {
-      if (!db) return;
       const activityRef = doc(db, 'activities', id);
       const originalActivity = activities.find(a => a.id === id);
       if (!originalActivity) return;

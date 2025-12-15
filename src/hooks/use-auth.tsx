@@ -4,7 +4,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@/lib/types';
-import { useAuthFirebase } from '@/firebase';
+import { auth, db } from '@/lib/firebase';
 import { 
     onAuthStateChanged, 
     signInWithEmailAndPassword, 
@@ -14,7 +14,6 @@ import {
     type User as FirebaseUser
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
 
 
 interface AuthContextType {
@@ -33,22 +32,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const firebaseAuth = useAuthFirebase();
-  const db = useFirestore();
 
   useEffect(() => {
-    if (!firebaseAuth) {
-        setIsLoading(false);
-        return;
-    };
-    const unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
         setFirebaseUser(fbUser);
-        if (!db) {
-            console.error("Firestore is not initialized");
-            setIsLoading(false);
-            return;
-        }
         try {
           const userDocRef = doc(db, 'users', fbUser.uid);
           const userDoc = await getDoc(userDocRef);
@@ -57,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(userDoc.data() as User);
           } else {
             console.warn(`User ${fbUser.uid} exists in Auth but not in Firestore. Logging out.`);
-            await signOut(firebaseAuth);
+            await signOut(auth);
             setUser(null);
             setFirebaseUser(null);
           }
@@ -74,17 +62,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [firebaseAuth, db]);
+  }, []);
 
   const login = useCallback(async (email: string, pass: string) => {
-    if (!firebaseAuth) throw new Error("Auth service not available.");
-    await signInWithEmailAndPassword(firebaseAuth, email, pass);
-  }, [firebaseAuth]);
+    await signInWithEmailAndPassword(auth, email, pass);
+  }, []);
 
   const signup = useCallback(async (email: string, pass: string, name: string, companyName: string) => {
-    if (!firebaseAuth || !db) throw new Error("Auth or Firestore service not available.");
 
-    const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, pass);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const fbUser = userCredential.user;
     
     if (fbUser) {
@@ -116,13 +102,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setUser(newUser);
     }
-  }, [firebaseAuth, db]);
+  }, []);
 
   const logout = useCallback(async () => {
-    if (!firebaseAuth) return;
-    await signOut(firebaseAuth);
+    await signOut(auth);
     router.push('/login');
-  }, [firebaseAuth, router]);
+  }, [router]);
 
   return (
     <AuthContext.Provider value={{ user, firebaseUser, login, signup, logout, isLoading }}>

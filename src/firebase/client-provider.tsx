@@ -2,8 +2,9 @@
 'use client';
 
 import { useState, useEffect, type ReactNode } from 'react';
-import { initializeFirebase, type FirebaseServices } from '@/firebase';
+import { initializeFirebase, type FirebaseServices } from '@/lib/firebase';
 import { FirebaseProvider } from '@/firebase/provider';
+import { LoaderCircle } from 'lucide-react';
 
 export function FirebaseClientProvider({
   children,
@@ -24,8 +25,8 @@ export function FirebaseClientProvider({
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p>Loading...</p>
+          <LoaderCircle className="animate-spin h-12 w-12 text-primary mx-auto mb-4" />
+          <p>Loading Application...</p>
         </div>
       </div>
     );

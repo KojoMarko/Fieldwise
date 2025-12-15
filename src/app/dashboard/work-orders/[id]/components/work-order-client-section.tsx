@@ -133,7 +133,7 @@ export function WorkOrderClientSection({
   const [isQuestionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
   const [questionnaireData, setQuestionnaireData] = useState<Partial<ServiceReportQuestionnaire>>({
-    reportedProblem: workOrder.description,
+    reportedProblem: workOrder.description || '',
     symptomSummary: '',
     problemSummary: '',
     resolutionSummary: '',
@@ -156,15 +156,15 @@ export function WorkOrderClientSection({
       try {
         const savedData = JSON.parse(workOrder.technicianNotes);
         setQuestionnaireData({
-          reportedProblem: savedData.summary?.reportedProblem,
-          symptomSummary: savedData.summary?.symptomSummary,
-          problemSummary: savedData.summary?.problemSummary,
-          resolutionSummary: savedData.summary?.resolutionSummary,
-          verificationOfActivity: savedData.summary?.verificationOfActivity,
-          instrumentCondition: savedData.workOrder?.instrumentCondition,
-          agreementType: savedData.agreement?.type,
-          laborHours: savedData.labor?.[0]?.hours,
-          signingPerson: savedData.summary?.signingPerson || savedData.signingPerson,
+          reportedProblem: savedData.summary?.reportedProblem || '',
+          symptomSummary: savedData.summary?.symptomSummary || '',
+          problemSummary: savedData.summary?.problemSummary || '',
+          resolutionSummary: savedData.summary?.resolutionSummary || '',
+          verificationOfActivity: savedData.summary?.verificationOfActivity || '',
+          instrumentCondition: savedData.workOrder?.instrumentCondition || 'Operational',
+          agreementType: savedData.agreement?.type || 'Warranty',
+          laborHours: savedData.labor?.[0]?.hours || 0,
+          signingPerson: savedData.summary?.signingPerson || savedData.signingPerson || '',
           timeWorkStarted: savedData.labor?.[0]?.startDate ? parseISO(savedData.labor[0].startDate) : undefined,
           timeWorkCompleted: savedData.labor?.[0]?.endDate ? parseISO(savedData.labor[0].endDate) : undefined,
           partsUsed: savedData.parts || [],
@@ -512,7 +512,7 @@ export function WorkOrderClientSection({
                 <Label>Labor Hours</Label>
                 <Input
                   type="number"
-                  value={questionnaireData.laborHours as any}
+                  value={questionnaireData.laborHours || 0}
                   onChange={e => setQuestionnaireData({ ...questionnaireData, laborHours: parseFloat(e.target.value) || 0 })}
                   className="w-full"
                 />
@@ -573,4 +573,5 @@ export function WorkOrderClientSection({
   );
 }
 
+    
     

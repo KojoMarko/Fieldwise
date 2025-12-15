@@ -16,20 +16,24 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { db } from '@/lib/firebase';
 import type { WorkOrder, ServiceCallLog, Customer } from '@/lib/types';
 import { LoaderCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { OnCallTriageTab } from './components/on-call-triage-tab';
 import { CreateCallLogDialog } from './components/create-call-log-dialog';
 import { Input } from '@/components/ui/input';
 import * as xlsx from 'xlsx';
+import dynamic from 'next/dynamic';
+
+const OnCallTriageTab = dynamic(() => import('./components/on-call-triage-tab').then(mod => mod.OnCallTriageTab), {
+  loading: () => <div className="flex items-center justify-center p-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>,
+});
+
 
 type TriageStatusFilter = 'all' | 'resolved' | 'unresolved';
 
 export default function WorkOrdersPage() {
   const { user } = useAuth();
-  const db = useFirestore();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [customers, setCustomers] = useState<Record<string, Customer>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +49,7 @@ export default function WorkOrdersPage() {
   const [workOrderSearchFilter, setWorkOrderSearchFilter] = useState('');
 
   useEffect(() => {
-    if (!user?.companyId || !db) {
+    if (!user?.companyId) {
         setIsLoading(false);
         setIsLoadingLogs(false);
         return;
@@ -111,7 +115,7 @@ export default function WorkOrdersPage() {
         unsubLogs();
         unsubCustomers();
     };
-  }, [user, db]);
+  }, [user]);
 
   const filteredWorkOrders = workOrders.filter(wo => {
       const statusMatch = 

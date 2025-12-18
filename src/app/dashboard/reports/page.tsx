@@ -59,12 +59,20 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { ReportView } from './components/report-view';
 
-function ReportChat() {
+type ChatMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+function ReportChat({ chatSessions, setChatSessions, activeChatIndex, setActiveChatIndex }: {
+  chatSessions: ChatMessage[][];
+  setChatSessions: React.Dispatch<React.SetStateAction<ChatMessage[][]>>;
+  activeChatIndex: number;
+  setActiveChatIndex: React.Dispatch<React.SetStateAction<number>>;
+}) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [question, setQuestion] = useState('');
-  const [chatSessions, setChatSessions] = useState<ChatMessage[][]>([[]]);
-  const [activeChatIndex, setActiveChatIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -202,10 +210,6 @@ function ReportChat() {
   )
 }
 
-type ChatMessage = {
-  role: 'user' | 'assistant';
-  content: string;
-};
 
 type DialogDataType = 'assets' | 'categories';
 
@@ -294,6 +298,10 @@ export default function ReportsPage() {
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogData, setDialogData] = useState<any[]>([]);
   const [dialogType, setDialogType] = useState<DialogDataType>('assets');
+  
+  // State for AI Chat
+  const [chatSessions, setChatSessions] = useState<ChatMessage[][]>([[]]);
+  const [activeChatIndex, setActiveChatIndex] = useState(0);
 
 
   useEffect(() => {
@@ -341,7 +349,6 @@ export default function ReportsPage() {
     return assets.filter(asset => {
         if (!asset.installationDate || !isValid(parseISO(asset.installationDate))) return false;
         const installDate = parseISO(asset.installationDate);
-        if (!isValid(installDate)) return false;
 
         const warrantyDate = asset.warrantyExpiry ? parseISO(asset.warrantyExpiry) : null;
         
@@ -493,7 +500,7 @@ export default function ReportsPage() {
                       </TableHeader>
                       <TableBody>
                         {newAssetsThisMonth.length > 0 ? (
-                          newAssetsThisMonth.map((asset) => (
+                          newAssetsThisMonth.slice(0,5).map((asset) => (
                             <TableRow key={asset.id}>
                               <TableCell>
                                 <div className="font-medium">{asset.name}</div>
@@ -527,7 +534,12 @@ export default function ReportsPage() {
             <ReportView title="Yearly Report" assets={assets} dateRange={dateRanges.yearly} />
           </TabsContent>
           <TabsContent value="chat" className="mt-6">
-            <ReportChat />
+            <ReportChat 
+                chatSessions={chatSessions}
+                setChatSessions={setChatSessions}
+                activeChatIndex={activeChatIndex}
+                setActiveChatIndex={setActiveChatIndex}
+            />
           </TabsContent>
         </Tabs>
       </div>

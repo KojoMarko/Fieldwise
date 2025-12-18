@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
 import type { Asset, WorkOrder, Customer, SparePart } from '@/lib/types';
 import { format } from 'date-fns';
+import * as xlsx from 'xlsx';
 
 const QueryDataInputSchema = z.object({
   question: z.string().describe('The user\'s question about their operational data.'),
@@ -61,9 +62,9 @@ async function getCompanyData(companyId: string) {
 }
 
 
-const prompt = ai.definePrompt({
-    name: 'queryDataPrompt',
-    input: { schema: z.object({ question: z.string(), context: z.any(), fileDataUri: z.string().optional() }) },
+const mediaPrompt = ai.definePrompt({
+    name: 'queryDataMediaPrompt',
+    input: { schema: z.object({ question: z.string(), context: z.any(), fileDataUri: z.string() }) },
     output: { schema: QueryDataOutputSchema },
     prompt: `You are a helpful AI assistant for a field service management app called FieldWise. Your role is to answer questions based *only* on the data provided in the context. If an image or document is provided, use it as the primary source of information for your answer. Do not make up information. If the answer is not in the data, say that you don't have enough information to answer.
 
@@ -86,14 +87,48 @@ const prompt = ai.definePrompt({
     - Title: {{this.title}}, Status: {{this.status}}, Priority: {{this.priority}}, Type: {{this.type}}, Scheduled: {{this.scheduledDate}}, CustomerID: {{this.customerId}}
     {{/each}}
     ---
-    {{#if fileDataUri}}
     The user has also provided the following file. Analyze it to help answer the question.
     Attached File: {{media url=fileDataUri}}
-    {{/if}}
 
     User's Question: "{{{question}}}"
 
     Based on the data and any attached file, provide a clear and concise answer.`,
+});
+
+const textPrompt = ai.definePrompt({
+    name: 'queryDataTextPrompt',
+    input: { schema: z.object({ question: z.string(), context: z.any(), documentText: z.string().optional() }) },
+    output: { schema: QueryDataOutputSchema },
+    prompt: `You are a helpful AI assistant for a field service management app called FieldWise. Your role is to answer questions based *only* on the data provided in the context. If additional document text is provided, use it as the primary source of information for your answer. Do not make up information. If the answer is not in the data, say that you don't have enough information to answer.
+
+    Today's Date: {{{context.summary.currentDate}}}
+
+    Data Context:
+    ---
+    Customers:
+    {{#each context.customers}}
+    - Name: {{this.name}} (ID: {{this.id}})
+    {{/each}}
+
+    Assets ({{context.summary.totalAssets}} total):
+    {{#each context.assets}}
+    - Name: {{this.name}}, Model: {{this.model}}, Status: {{this.status}}, Installed: {{this.installationDate}}, CustomerID: {{this.customerId}}
+    {{/each}}
+
+    Work Orders ({{context.summary.totalWorkOrders}} total):
+    {{#each context.workOrders}}
+    - Title: {{this.title}}, Status: {{this.status}}, Priority: {{this.priority}}, Type: {{this.type}}, Scheduled: {{this.scheduledDate}}, CustomerID: {{this.customerId}}
+    {{/each}}
+    ---
+    {{#if documentText}}
+    The user has also provided the following document content. Analyze it to help answer the question.
+    Attached Document Content:
+    {{{documentText}}}
+    {{/if}}
+
+    User's Question: "{{{question}}}"
+
+    Based on the data and any attached document content, provide a clear and concise answer.`,
 });
 
 
@@ -106,9 +141,35 @@ const queryDataFlow = ai.defineFlow(
   async ({ question, companyId, fileDataUri }) => {
     // Step 1: Fetch the relevant data from Firestore
     const dataContext = await getCompanyData(companyId);
+    
+    let output;
 
-    // Step 2: Pass the question, data, and optional file to the LLM
-    const { output } = await prompt({ question, context: dataContext, fileDataUri });
+    if (fileDataUri) {
+        const mimeType = fileDataUri.substring(fileDataUri.indexOf(':') + 1, fileDataUri.indexOf(';'));
+        const isSpreadsheet = mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || mimeType === 'application/vnd.ms-excel';
+
+        if (isSpreadsheet) {
+            const base64Data = fileDataUri.substring(fileDataUri.indexOf(',') + 1);
+            const buffer = Buffer.from(base64Data, 'base64');
+            const workbook = xlsx.read(buffer, { type: 'buffer' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const documentText = xlsx.utils.sheet_to_csv(worksheet);
+
+            // Use the text-based prompt
+            const result = await textPrompt({ question, context: dataContext, documentText });
+            output = result.output;
+        } else {
+            // Use the media-based prompt for other file types like images, PDFs
+            const result = await mediaPrompt({ question, context: dataContext, fileDataUri });
+            output = result.output;
+        }
+    } else {
+        // No file attached, use the text-based prompt without document content
+        const result = await textPrompt({ question, context: dataContext });
+        output = result.output;
+    }
+
 
     if (!output) {
       throw new Error("The AI failed to generate an answer.");

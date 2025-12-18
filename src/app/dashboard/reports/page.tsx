@@ -16,6 +16,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReportKpiCard } from './components/report-kpi-card';
 import {
@@ -151,11 +158,63 @@ function ReportChat() {
   )
 }
 
+function DataDisplayDialog({ open, onOpenChange, title, data }: { open: boolean, onOpenChange: (open: boolean) => void, title: string, data: Asset[] }) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                    <DialogDescription>
+                        A list of all assets related to this metric.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="max-h-[60vh] overflow-y-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Asset Name</TableHead>
+                                <TableHead>Model</TableHead>
+                                <TableHead>Serial Number</TableHead>
+                                <TableHead>Installed On</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {data.length > 0 ? (
+                                data.map((asset) => (
+                                    <TableRow key={asset.id}>
+                                        <TableCell>{asset.name}</TableCell>
+                                        <TableCell>{asset.model}</TableCell>
+                                        <TableCell>{asset.serialNumber}</TableCell>
+                                        <TableCell>
+                                            {asset.installationDate && isValid(parseISO(asset.installationDate))
+                                                ? format(parseISO(asset.installationDate), 'PPP')
+                                                : 'N/A'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">
+                                        No assets to display for this metric.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 
 export default function ReportsPage() {
   const { user } = useAuth();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogData, setDialogData] = useState<Asset[]>([]);
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -191,8 +250,7 @@ export default function ReportsPage() {
     () =>
       assets.filter((asset) => {
         if (!asset.installationDate || !isValid(parseISO(asset.installationDate))) return false;
-        const date = parseISO(asset.installationDate);
-        return isValid(date) && isThisMonth(date);
+        return isThisMonth(parseISO(asset.installationDate));
       }),
     [assets]
   );
@@ -214,6 +272,12 @@ export default function ReportsPage() {
     })
   }, [assets]);
 
+  const handleKpiClick = (title: string, data: Asset[]) => {
+    setDialogTitle(title);
+    setDialogData(data);
+    setDialogOpen(true);
+  };
+
 
   if (isLoading) {
     return (
@@ -224,148 +288,159 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-      </div>
+    <>
+      <DataDisplayDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title={dialogTitle}
+        data={dialogData}
+      />
+      <div className="space-y-6">
+        <div className="flex items-center">
+          <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
+        </div>
 
-       <Tabs defaultValue="overview">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="monthly">Monthly</TabsTrigger>
-          <TabsTrigger value="quarterly">Quarterly</TabsTrigger>
-          <TabsTrigger value="yearly">Yearly</TabsTrigger>
-          <TabsTrigger value="chat">AI Chat</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview" className="mt-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <ReportKpiCard
-                title="Total Assets"
-                value={assets.length.toString()}
-                change=""
-                Icon={Package}
-                changeType="increase"
-              />
-              <ReportKpiCard
-                title="Asset Categories"
-                value={assetCategories.length.toString()}
-                change=""
-                Icon={Layers}
-                changeType="increase"
-              />
-              <ReportKpiCard
-                title="New This Month"
-                value={newAssetsThisMonth.length.toString()}
-                change=""
-                Icon={PackagePlus}
-                changeType="increase"
-              />
-              <ReportKpiCard
-                title="Nearing End-of-Life"
-                value={assetsNearEOL.length.toString()}
-                change=""
-                Icon={ShieldAlert}
-                changeType="decrease"
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 mt-6">
-              <Card className="lg:col-span-3">
-                <CardHeader>
-                  <CardTitle>Asset Category Distribution</CardTitle>
-                  <CardDescription>
-                    A breakdown of all managed assets by their category.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={assetCategories}>
-                      <XAxis
-                        dataKey="name"
-                        stroke="#888888"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        angle={-25}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis
-                        stroke="#888888"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(value) => `${value}`}
-                      />
-                      <Tooltip
-                        cursor={{ fill: 'hsl(var(--muted))' }}
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--background))',
-                          border: '1px solid hsl(var(--border))',
-                        }}
-                      />
-                      <Bar
-                        dataKey="total"
-                        fill="hsl(var(--primary))"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Recently Added Assets</CardTitle>
-                  <CardDescription>
-                    New equipment onboarded this month.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Asset Name</TableHead>
-                        <TableHead>Installed On</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {newAssetsThisMonth.length > 0 ? (
-                        newAssetsThisMonth.map((asset) => (
-                          <TableRow key={asset.id}>
-                            <TableCell>
-                              <div className="font-medium">{asset.name}</div>
-                              <div className="text-xs text-muted-foreground">{asset.serialNumber}</div>
-                            </TableCell>
-                            <TableCell>
-                               {asset.installationDate && isValid(parseISO(asset.installationDate)) ? format(parseISO(asset.installationDate), 'PPP') : 'N/A'}
+        <Tabs defaultValue="overview">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly</TabsTrigger>
+            <TabsTrigger value="quarterly">Quarterly</TabsTrigger>
+            <TabsTrigger value="yearly">Yearly</TabsTrigger>
+            <TabsTrigger value="chat">AI Chat</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="mt-6">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <ReportKpiCard
+                  title="Total Assets"
+                  value={assets.length.toString()}
+                  change=""
+                  Icon={Package}
+                  changeType="increase"
+                  onClick={() => handleKpiClick('Total Assets', assets)}
+                />
+                <ReportKpiCard
+                  title="Asset Categories"
+                  value={assetCategories.length.toString()}
+                  change=""
+                  Icon={Layers}
+                  changeType="increase"
+                />
+                <ReportKpiCard
+                  title="New This Month"
+                  value={newAssetsThisMonth.length.toString()}
+                  change=""
+                  Icon={PackagePlus}
+                  changeType="increase"
+                  onClick={() => handleKpiClick('New Assets This Month', newAssetsThisMonth)}
+                />
+                <ReportKpiCard
+                  title="Nearing End-of-Life"
+                  value={assetsNearEOL.length.toString()}
+                  change=""
+                  Icon={ShieldAlert}
+                  changeType="decrease"
+                  onClick={() => handleKpiClick('Assets Nearing End-of-Life', assetsNearEOL)}
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 mt-6">
+                <Card className="lg:col-span-3">
+                  <CardHeader>
+                    <CardTitle>Asset Category Distribution</CardTitle>
+                    <CardDescription>
+                      A breakdown of all managed assets by their category.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={assetCategories}>
+                        <XAxis
+                          dataKey="name"
+                          stroke="#888888"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          angle={-25}
+                          textAnchor="end"
+                          height={60}
+                        />
+                        <YAxis
+                          stroke="#888888"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(value) => `${value}`}
+                        />
+                        <Tooltip
+                          cursor={{ fill: 'hsl(var(--muted))' }}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--background))',
+                            border: '1px solid hsl(var(--border))',
+                          }}
+                        />
+                        <Bar
+                          dataKey="total"
+                          fill="hsl(var(--primary))"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+                <Card className="lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle>Recently Added Assets</CardTitle>
+                    <CardDescription>
+                      New equipment onboarded this month.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Asset Name</TableHead>
+                          <TableHead>Installed On</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {newAssetsThisMonth.length > 0 ? (
+                          newAssetsThisMonth.map((asset) => (
+                            <TableRow key={asset.id}>
+                              <TableCell>
+                                <div className="font-medium">{asset.name}</div>
+                                <div className="text-xs text-muted-foreground">{asset.serialNumber}</div>
+                              </TableCell>
+                              <TableCell>
+                                {asset.installationDate && isValid(parseISO(asset.installationDate)) ? format(parseISO(asset.installationDate), 'PPP') : 'N/A'}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={2} className="h-24 text-center">
+                              No new assets added this month.
                             </TableCell>
                           </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={2} className="h-24 text-center">
-                            No new assets added this month.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
-        </TabsContent>
-        <TabsContent value="monthly" className="mt-6">
-          <ReportPlaceholder />
-        </TabsContent>
-        <TabsContent value="quarterly" className="mt-6">
-          <ReportPlaceholder />
-        </TabsContent>
-        <TabsContent value="yearly" className="mt-6">
-          <ReportPlaceholder />
-        </TabsContent>
-        <TabsContent value="chat" className="mt-6">
-          <ReportChat />
-        </TabsContent>
-       </Tabs>
-    </div>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
+          </TabsContent>
+          <TabsContent value="monthly" className="mt-6">
+            <ReportPlaceholder />
+          </TabsContent>
+          <TabsContent value="quarterly" className="mt-6">
+            <ReportPlaceholder />
+          </TabsContent>
+          <TabsContent value="yearly" className="mt-6">
+            <ReportPlaceholder />
+          </TabsContent>
+          <TabsContent value="chat" className="mt-6">
+            <ReportChat />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </>
   );
 }

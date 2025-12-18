@@ -1,16 +1,23 @@
 
+'use client';
 import {
   Card,
   CardContent,
   CardHeader,
   CardDescription,
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { TrendingDown, TrendingUp } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
+export function ReportKpiCard({ title, value, change, Icon, changeType, onClick }: { title: string, value: string, change: string, Icon: React.ElementType, changeType: 'increase' | 'decrease', onClick?: () => void }) {
+    const isClickable = !!onClick;
 
-export function ReportKpiCard({ title, value, change, Icon, changeType }: { title: string, value: string, change: string, Icon: React.ElementType, changeType: 'increase' | 'decrease' }) {
     return (
-        <Card>
+        <Card 
+            onClick={onClick}
+            className={cn(isClickable && 'cursor-pointer hover:bg-accent transition-colors')}
+        >
             <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                     <CardDescription>{title}</CardDescription>

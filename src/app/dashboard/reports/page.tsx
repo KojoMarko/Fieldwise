@@ -31,7 +31,6 @@ import {
   PackagePlus,
   ShieldAlert,
   LoaderCircle,
-  CalendarDays,
   Sparkles,
   Send,
   User,
@@ -51,28 +50,14 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Asset } from '@/lib/types';
-import { format, parseISO, isThisMonth, differenceInYears, isValid } from 'date-fns';
+import { format, parseISO, isThisMonth, differenceInYears, isValid, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { queryData } from '@/ai/flows/query-data-flow';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-
-function ReportPlaceholder() {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-10 text-center h-96">
-        <CalendarDays className="h-16 w-16 text-muted-foreground" />
-        <h3 className="mt-4 text-lg font-semibold">Report Coming Soon</h3>
-        <p className="mt-1 text-sm text-muted-foreground">This report view is under construction. Check back later for updates!</p>
-    </div>
-  )
-}
-
-type ChatMessage = {
-  role: 'user' | 'assistant';
-  content: string;
-};
+import { ReportView } from './components/report-view';
 
 function ReportChat() {
   const { user } = useAuth();
@@ -216,6 +201,11 @@ function ReportChat() {
     </Card>
   )
 }
+
+type ChatMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
 
 type DialogDataType = 'assets' | 'categories';
 
@@ -369,6 +359,13 @@ export default function ReportsPage() {
     setDialogOpen(true);
   };
 
+  const now = new Date();
+  const dateRanges = {
+      monthly: { start: startOfMonth(now), end: endOfMonth(now) },
+      quarterly: { start: startOfQuarter(now), end: endOfQuarter(now) },
+      yearly: { start: startOfYear(now), end: endOfYear(now) },
+  }
+
 
   if (isLoading) {
     return (
@@ -521,13 +518,13 @@ export default function ReportsPage() {
               </div>
           </TabsContent>
           <TabsContent value="monthly" className="mt-6">
-            <ReportPlaceholder />
+             <ReportView title="Monthly Report" assets={assets} dateRange={dateRanges.monthly} />
           </TabsContent>
           <TabsContent value="quarterly" className="mt-6">
-            <ReportPlaceholder />
+             <ReportView title="Quarterly Report" assets={assets} dateRange={dateRanges.quarterly} />
           </TabsContent>
           <TabsContent value="yearly" className="mt-6">
-            <ReportPlaceholder />
+            <ReportView title="Yearly Report" assets={assets} dateRange={dateRanges.yearly} />
           </TabsContent>
           <TabsContent value="chat" className="mt-6">
             <ReportChat />

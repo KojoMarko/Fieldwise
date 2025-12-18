@@ -37,7 +37,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Asset } from '@/lib/types';
-import { format, parseISO, isThisMonth, differenceInYears } from 'date-fns';
+import { format, parseISO, isThisMonth, differenceInYears, isValid } from 'date-fns';
 
 export default function ReportsPage() {
   const { user } = useAuth();
@@ -76,9 +76,11 @@ export default function ReportsPage() {
 
   const newAssetsThisMonth = useMemo(
     () =>
-      assets.filter((asset) =>
-        isThisMonth(parseISO(asset.installationDate))
-      ),
+      assets.filter((asset) => {
+        if (!asset.installationDate) return false;
+        const date = parseISO(asset.installationDate);
+        return isValid(date) && isThisMonth(date);
+      }),
     [assets]
   );
   
@@ -86,11 +88,14 @@ export default function ReportsPage() {
     const now = new Date();
     // Assets older than 5 years or with expired warranty
     return assets.filter(asset => {
+        if (!asset.installationDate) return false;
         const installDate = parseISO(asset.installationDate);
+        if (!isValid(installDate)) return false;
+
         const warrantyDate = asset.warrantyExpiry ? parseISO(asset.warrantyExpiry) : null;
         
         const isOld = differenceInYears(now, installDate) >= 5;
-        const isWarrantyExpired = warrantyDate ? now > warrantyDate : false;
+        const isWarrantyExpired = warrantyDate && isValid(warrantyDate) ? now > warrantyDate : false;
         
         return isOld || isWarrantyExpired;
     })

@@ -16,6 +16,9 @@ import { format } from 'date-fns';
 const QueryDataInputSchema = z.object({
   question: z.string().describe('The user\'s question about their operational data.'),
   companyId: z.string().describe('The ID of the company the data belongs to.'),
+  fileDataUri: z.string().optional().describe(
+      "An optional file (document or image) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
 });
 export type QueryDataInput = z.infer<typeof QueryDataInputSchema>;
 
@@ -60,9 +63,9 @@ async function getCompanyData(companyId: string) {
 
 const prompt = ai.definePrompt({
     name: 'queryDataPrompt',
-    input: { schema: z.object({ question: z.string(), context: z.any() }) },
+    input: { schema: z.object({ question: z.string(), context: z.any(), fileDataUri: z.string().optional() }) },
     output: { schema: QueryDataOutputSchema },
-    prompt: `You are a helpful AI assistant for a field service management app called FieldWise. Your role is to answer questions based *only* on the data provided in the context. Do not make up information. If the answer is not in the data, say that you don't have enough information to answer.
+    prompt: `You are a helpful AI assistant for a field service management app called FieldWise. Your role is to answer questions based *only* on the data provided in the context. If an image or document is provided, use it as the primary source of information for your answer. Do not make up information. If the answer is not in the data, say that you don't have enough information to answer.
 
     Today's Date: {{{context.summary.currentDate}}}
 
@@ -83,10 +86,14 @@ const prompt = ai.definePrompt({
     - Title: {{this.title}}, Status: {{this.status}}, Priority: {{this.priority}}, Type: {{this.type}}, Scheduled: {{this.scheduledDate}}, CustomerID: {{this.customerId}}
     {{/each}}
     ---
+    {{#if fileDataUri}}
+    The user has also provided the following file. Analyze it to help answer the question.
+    Attached File: {{media url=fileDataUri}}
+    {{/if}}
 
     User's Question: "{{{question}}}"
 
-    Based on the data above, provide a clear and concise answer.`,
+    Based on the data and any attached file, provide a clear and concise answer.`,
 });
 
 
@@ -96,12 +103,12 @@ const queryDataFlow = ai.defineFlow(
     inputSchema: QueryDataInputSchema,
     outputSchema: QueryDataOutputSchema,
   },
-  async ({ question, companyId }) => {
+  async ({ question, companyId, fileDataUri }) => {
     // Step 1: Fetch the relevant data from Firestore
     const dataContext = await getCompanyData(companyId);
 
-    // Step 2: Pass the question and data to the LLM
-    const { output } = await prompt({ question, context: dataContext });
+    // Step 2: Pass the question, data, and optional file to the LLM
+    const { output } = await prompt({ question, context: dataContext, fileDataUri });
 
     if (!output) {
       throw new Error("The AI failed to generate an answer.");

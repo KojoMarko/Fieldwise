@@ -36,6 +36,8 @@ import {
   User,
   Plus,
   MessageSquare,
+  Paperclip,
+  X,
 } from 'lucide-react';
 import {
   BarChart,
@@ -58,10 +60,16 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { ReportView } from './components/report-view';
+import Image from 'next/image';
 
 type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
+  attachment?: {
+    name: string;
+    type: string;
+    dataUri: string;
+  };
 };
 
 function ReportChat({ chatSessions, setChatSessions, activeChatIndex, setActiveChatIndex }: {
@@ -74,7 +82,9 @@ function ReportChat({ chatSessions, setChatSessions, activeChatIndex, setActiveC
   const { toast } = useToast();
   const [question, setQuestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [attachment, setAttachment] = useState<{ name: string; type: string; dataUri: string; } | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Scroll to bottom when new messages are added
@@ -83,20 +93,43 @@ function ReportChat({ chatSessions, setChatSessions, activeChatIndex, setActiveC
     }
   }, [chatSessions, activeChatIndex]);
 
-  const handleSendMessage = async () => {
-    if (!question.trim() || !user?.companyId) return;
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAttachment({
+          name: file.name,
+          type: file.type,
+          dataUri: e.target?.result as string,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-    const currentMessages = [...chatSessions[activeChatIndex], { role: 'user', content: question }];
+  const handleSendMessage = async () => {
+    if ((!question.trim() && !attachment) || !user?.companyId) return;
+
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: question,
+      ...(attachment && { attachment }),
+    };
+
+    const currentMessages = [...chatSessions[activeChatIndex], userMessage];
     
     const newChatSessions = [...chatSessions];
     newChatSessions[activeChatIndex] = currentMessages;
     setChatSessions(newChatSessions);
     
     setQuestion('');
+    setAttachment(null);
+    if(fileInputRef.current) fileInputRef.current.value = '';
     setIsLoading(true);
 
     try {
-      const result = await queryData({ question, companyId: user.companyId });
+      const result = await queryData({ question, companyId: user.companyId, fileDataUri: attachment?.dataUri });
       const updatedMessages = [...currentMessages, { role: 'assistant', content: result.answer }];
       const updatedChatSessions = [...chatSessions];
       updatedChatSessions[activeChatIndex] = updatedMessages;
@@ -161,7 +194,7 @@ function ReportChat({ chatSessions, setChatSessions, activeChatIndex, setActiveC
                 Chat with your Data
                 </CardTitle>
                 <CardDescription>
-                Ask questions about your assets, work orders, and more.
+                Ask questions about your assets, work orders, and more. Attach documents or images for context.
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex-grow overflow-hidden flex flex-col p-4">
@@ -174,13 +207,25 @@ function ReportChat({ chatSessions, setChatSessions, activeChatIndex, setActiveC
                     </div>
                     )}
                     {activeChat.map((msg, index) => (
-                    <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                        {msg.role === 'assistant' && <div className="p-2 bg-primary text-primary-foreground rounded-full"><Sparkles className="h-4 w-4" /></div>}
-                        <div className={`p-3 rounded-lg max-w-[80%] ${msg.role === 'user' ? 'bg-muted' : 'bg-secondary'}`}>
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                        </div>
-                        {msg.role === 'user' && <div className="p-2 bg-muted rounded-full"><User className="h-4 w-4" /></div>}
-                    </div>
+                      <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                          {msg.role === 'assistant' && <div className="p-2 bg-primary text-primary-foreground rounded-full"><Sparkles className="h-4 w-4" /></div>}
+                          <div className={`p-3 rounded-lg max-w-[80%] ${msg.role === 'user' ? 'bg-muted' : 'bg-secondary'}`}>
+                              {msg.attachment && (
+                                <div className="mb-2 p-2 border rounded-md bg-background">
+                                  {msg.attachment.type.startsWith('image/') ? (
+                                    <Image src={msg.attachment.dataUri} alt={msg.attachment.name} width={150} height={150} className="rounded-md object-cover"/>
+                                  ) : (
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <Paperclip className="h-4 w-4" />
+                                      <span>{msg.attachment.name}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          </div>
+                          {msg.role === 'user' && <div className="p-2 bg-muted rounded-full"><User className="h-4 w-4" /></div>}
+                      </div>
                     ))}
                     {isLoading && (
                     <div className="flex items-start gap-3">
@@ -192,17 +237,38 @@ function ReportChat({ chatSessions, setChatSessions, activeChatIndex, setActiveC
                     )}
                 </div>
                 </ScrollArea>
-                <div className="flex items-center gap-2 pt-4 border-t">
-                <Input
-                    placeholder="Ask about your assets, work orders, etc."
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                    disabled={isLoading}
-                />
-                <Button onClick={handleSendMessage} disabled={isLoading || !question.trim()}>
-                    <Send className="h-4 w-4" />
-                </Button>
+                <div className="space-y-2 pt-4 border-t">
+                  {attachment && (
+                    <div className="p-2 border rounded-md flex items-center justify-between text-sm bg-muted">
+                        <div className="flex items-center gap-2 truncate">
+                          {attachment.type.startsWith('image/') ? (
+                            <Image src={attachment.dataUri} alt={attachment.name} width={24} height={24} className="rounded object-cover"/>
+                          ) : (
+                            <Paperclip className="h-4 w-4 flex-shrink-0" />
+                          )}
+                          <span className="truncate">{attachment.name}</span>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setAttachment(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}>
+                            <X className="h-4 w-4"/>
+                        </Button>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Input
+                        placeholder="Ask about your assets, work orders, etc."
+                        value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                        disabled={isLoading}
+                    />
+                     <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                      <Paperclip className="h-5 w-5" />
+                    </Button>
+                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
+                    <Button onClick={handleSendMessage} disabled={isLoading || (!question.trim() && !attachment)}>
+                        <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
             </CardContent>
         </div>
@@ -299,7 +365,7 @@ export default function ReportsPage() {
   const [dialogData, setDialogData] = useState<any[]>([]);
   const [dialogType, setDialogType] = useState<DialogDataType>('assets');
   
-  // State for AI Chat
+  // State for AI Chat, lifted up
   const [chatSessions, setChatSessions] = useState<ChatMessage[][]>([[]]);
   const [activeChatIndex, setActiveChatIndex] = useState(0);
 

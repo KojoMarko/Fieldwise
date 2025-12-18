@@ -25,6 +25,9 @@ import {
   ShieldAlert,
   LoaderCircle,
   CalendarDays,
+  Sparkles,
+  Send,
+  User,
 } from 'lucide-react';
 import {
   BarChart,
@@ -40,6 +43,11 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Asset } from '@/lib/types';
 import { format, parseISO, isThisMonth, differenceInYears, isValid } from 'date-fns';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { queryData } from '@/ai/flows/query-data-flow';
+import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 function ReportPlaceholder() {
   return (
@@ -50,6 +58,99 @@ function ReportPlaceholder() {
     </div>
   )
 }
+
+type ChatMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+function ReportChat() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [question, setQuestion] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSendMessage = async () => {
+    if (!question.trim() || !user?.companyId) return;
+
+    const newMessages: ChatMessage[] = [...messages, { role: 'user', content: question }];
+    setMessages(newMessages);
+    setQuestion('');
+    setIsLoading(true);
+
+    try {
+      const result = await queryData({ question, companyId: user.companyId });
+      setMessages([...newMessages, { role: 'assistant', content: result.answer }]);
+    } catch (error: any) {
+      console.error('AI query failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'AI Query Failed',
+        description: error.message || 'The AI could not answer your question at this time.',
+      });
+       setMessages([...newMessages, { role: 'assistant', content: "Sorry, I encountered an error and couldn't answer your question." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Card className="h-[70vh] flex flex-col">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="text-primary" />
+          Chat with your Data
+        </CardTitle>
+        <CardDescription>
+          Ask questions about your assets, work orders, and more.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex-grow overflow-hidden flex flex-col p-4">
+        <ScrollArea className="flex-grow mb-4 pr-4">
+          <div className="space-y-4">
+            {messages.length === 0 && (
+              <div className="text-center text-muted-foreground pt-10">
+                <p>Ask a question to get started, e.g.,</p>
+                <p className="italic">"How many assets are currently down for maintenance?"</p>
+              </div>
+            )}
+            {messages.map((msg, index) => (
+              <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                {msg.role === 'assistant' && <div className="p-2 bg-primary text-primary-foreground rounded-full"><Sparkles className="h-4 w-4" /></div>}
+                <div className={`p-3 rounded-lg max-w-[80%] ${msg.role === 'user' ? 'bg-muted' : 'bg-secondary'}`}>
+                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                </div>
+                {msg.role === 'user' && <div className="p-2 bg-muted rounded-full"><User className="h-4 w-4" /></div>}
+              </div>
+            ))}
+             {isLoading && (
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-primary text-primary-foreground rounded-full"><LoaderCircle className="h-4 w-4 animate-spin" /></div>
+                <div className="p-3 rounded-lg bg-secondary">
+                  <p className="text-sm text-muted-foreground italic">Thinking...</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+        <div className="flex items-center gap-2 pt-4 border-t">
+          <Input
+            placeholder="Ask about your assets, work orders, etc."
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+            disabled={isLoading}
+          />
+          <Button onClick={handleSendMessage} disabled={isLoading || !question.trim()}>
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 
 export default function ReportsPage() {
   const { user } = useAuth();
@@ -89,7 +190,7 @@ export default function ReportsPage() {
   const newAssetsThisMonth = useMemo(
     () =>
       assets.filter((asset) => {
-        if (!asset.installationDate) return false;
+        if (!asset.installationDate || !isValid(parseISO(asset.installationDate))) return false;
         const date = parseISO(asset.installationDate);
         return isValid(date) && isThisMonth(date);
       }),
@@ -129,11 +230,12 @@ export default function ReportsPage() {
       </div>
 
        <Tabs defaultValue="overview">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="monthly">Monthly</TabsTrigger>
           <TabsTrigger value="quarterly">Quarterly</TabsTrigger>
           <TabsTrigger value="yearly">Yearly</TabsTrigger>
+          <TabsTrigger value="chat">AI Chat</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -259,6 +361,9 @@ export default function ReportsPage() {
         </TabsContent>
         <TabsContent value="yearly" className="mt-6">
           <ReportPlaceholder />
+        </TabsContent>
+        <TabsContent value="chat" className="mt-6">
+          <ReportChat />
         </TabsContent>
        </Tabs>
     </div>

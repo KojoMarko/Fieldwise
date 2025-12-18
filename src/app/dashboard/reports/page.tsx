@@ -55,6 +55,7 @@ import { Button } from '@/components/ui/button';
 import { queryData } from '@/ai/flows/query-data-flow';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 function ReportPlaceholder() {
   return (
@@ -158,49 +159,78 @@ function ReportChat() {
   )
 }
 
-function DataDisplayDialog({ open, onOpenChange, title, data }: { open: boolean, onOpenChange: (open: boolean) => void, title: string, data: Asset[] }) {
+type DialogDataType = 'assets' | 'categories';
+
+function DataDisplayDialog({ open, onOpenChange, title, data, type }: { open: boolean, onOpenChange: (open: boolean) => void, title: string, data: any[], type: DialogDataType }) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>
-                        A list of all assets related to this metric.
+                        A list of all items related to this metric.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="max-h-[60vh] overflow-y-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Asset Name</TableHead>
-                                <TableHead>Model</TableHead>
-                                <TableHead>Serial Number</TableHead>
-                                <TableHead>Installed On</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {data.length > 0 ? (
-                                data.map((asset) => (
-                                    <TableRow key={asset.id}>
-                                        <TableCell>{asset.name}</TableCell>
-                                        <TableCell>{asset.model}</TableCell>
-                                        <TableCell>{asset.serialNumber}</TableCell>
-                                        <TableCell>
-                                            {asset.installationDate && isValid(parseISO(asset.installationDate))
-                                                ? format(parseISO(asset.installationDate), 'PPP')
-                                                : 'N/A'}
+                    {type === 'assets' ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Asset Name</TableHead>
+                                    <TableHead>Model</TableHead>
+                                    <TableHead>Serial Number</TableHead>
+                                    <TableHead>Installed On</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {data.length > 0 ? (
+                                    data.map((asset) => (
+                                        <TableRow key={asset.id}>
+                                            <TableCell>{asset.name}</TableCell>
+                                            <TableCell>{asset.model}</TableCell>
+                                            <TableCell>{asset.serialNumber}</TableCell>
+                                            <TableCell>
+                                                {asset.installationDate && isValid(parseISO(asset.installationDate))
+                                                    ? format(parseISO(asset.installationDate), 'PPP')
+                                                    : 'N/A'}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="h-24 text-center">
+                                            No assets to display for this metric.
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            ) : (
+                                )}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                         <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">
-                                        No assets to display for this metric.
-                                    </TableCell>
+                                    <TableHead>Category Name</TableHead>
+                                    <TableHead className="text-right">Asset Count</TableHead>
                                 </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                 {data.length > 0 ? (
+                                    data.map((category) => (
+                                        <TableRow key={category.name}>
+                                            <TableCell>{category.name}</TableCell>
+                                            <TableCell className="text-right"><Badge variant="secondary">{category.total}</Badge></TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                     <TableRow>
+                                        <TableCell colSpan={2} className="h-24 text-center">
+                                            No categories to display.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>
@@ -214,7 +244,9 @@ export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
-  const [dialogData, setDialogData] = useState<Asset[]>([]);
+  const [dialogData, setDialogData] = useState<any[]>([]);
+  const [dialogType, setDialogType] = useState<DialogDataType>('assets');
+
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -272,9 +304,10 @@ export default function ReportsPage() {
     })
   }, [assets]);
 
-  const handleKpiClick = (title: string, data: Asset[]) => {
+  const handleKpiClick = (title: string, data: any[], type: DialogDataType) => {
     setDialogTitle(title);
     setDialogData(data);
+    setDialogType(type);
     setDialogOpen(true);
   };
 
@@ -294,6 +327,7 @@ export default function ReportsPage() {
         onOpenChange={setDialogOpen}
         title={dialogTitle}
         data={dialogData}
+        type={dialogType}
       />
       <div className="space-y-6">
         <div className="flex items-center">
@@ -316,7 +350,7 @@ export default function ReportsPage() {
                   change=""
                   Icon={Package}
                   changeType="increase"
-                  onClick={() => handleKpiClick('Total Assets', assets)}
+                  onClick={() => handleKpiClick('Total Assets', assets, 'assets')}
                 />
                 <ReportKpiCard
                   title="Asset Categories"
@@ -324,6 +358,7 @@ export default function ReportsPage() {
                   change=""
                   Icon={Layers}
                   changeType="increase"
+                   onClick={() => handleKpiClick('Asset Categories', assetCategories, 'categories')}
                 />
                 <ReportKpiCard
                   title="New This Month"
@@ -331,7 +366,7 @@ export default function ReportsPage() {
                   change=""
                   Icon={PackagePlus}
                   changeType="increase"
-                  onClick={() => handleKpiClick('New Assets This Month', newAssetsThisMonth)}
+                  onClick={() => handleKpiClick('New Assets This Month', newAssetsThisMonth, 'assets')}
                 />
                 <ReportKpiCard
                   title="Nearing End-of-Life"
@@ -339,7 +374,7 @@ export default function ReportsPage() {
                   change=""
                   Icon={ShieldAlert}
                   changeType="decrease"
-                  onClick={() => handleKpiClick('Assets Nearing End-of-Life', assetsNearEOL)}
+                  onClick={() => handleKpiClick('Assets Nearing End-of-Life', assetsNearEOL, 'assets')}
                 />
               </div>
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 mt-6">

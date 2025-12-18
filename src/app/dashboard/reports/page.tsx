@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReportKpiCard } from './components/report-kpi-card';
@@ -38,6 +39,7 @@ import {
   MessageSquare,
   Paperclip,
   X,
+  Download,
 } from 'lucide-react';
 import {
   BarChart,
@@ -61,6 +63,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { ReportView } from './components/report-view';
 import Image from 'next/image';
+import * as xlsx from 'xlsx';
 
 type ChatMessage = {
   role: 'user' | 'assistant';
@@ -280,6 +283,33 @@ function ReportChat({ chatSessions, setChatSessions, activeChatIndex, setActiveC
 type DialogDataType = 'assets' | 'categories';
 
 function DataDisplayDialog({ open, onOpenChange, title, data, type }: { open: boolean, onOpenChange: (open: boolean) => void, title: string, data: any[], type: DialogDataType }) {
+    
+    const handleExport = () => {
+        let dataToExport: any[];
+        let fileName = `${title.replace(/\s+/g, '_')}_Report.xlsx`;
+
+        if (type === 'assets') {
+            dataToExport = data.map((asset: Asset) => ({
+                'Asset Name': asset.name,
+                'Model': asset.model,
+                'Serial Number': asset.serialNumber,
+                'Installation Date': asset.installationDate ? format(parseISO(asset.installationDate), 'PPP') : 'N/A',
+                'Customer ID': asset.customerId,
+                'Location': asset.location
+            }));
+        } else { // categories
+            dataToExport = data.map((category: { name: string, total: number }) => ({
+                'Category Name': category.name,
+                'Asset Count': category.total,
+            }));
+        }
+
+        const worksheet = xlsx.utils.json_to_sheet(dataToExport);
+        const workbook = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(workbook, worksheet, "Data");
+        xlsx.writeFile(workbook, fileName);
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl">
@@ -350,6 +380,12 @@ function DataDisplayDialog({ open, onOpenChange, title, data, type }: { open: bo
                         </Table>
                     )}
                 </div>
+                 <DialogFooter>
+                    <Button variant="outline" onClick={handleExport}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Export to Excel
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

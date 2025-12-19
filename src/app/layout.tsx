@@ -1,25 +1,27 @@
 
-'use client';
-import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider } from '@/hooks/use-auth';
-import { FirebaseErrorListener } from '@/components/firebase-error-listener';
-import { FirebaseProvider } from '@/firebase/provider';
-import { initializeFirebase } from '@/lib/firebase';
+import type { Metadata } from "next";
+import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/hooks/use-auth";
+import { FirebaseErrorListener } from "@/components/firebase-error-listener";
+import { FirebaseClientProvider } from "@/firebase/client-provider";
+
+export const metadata: Metadata = {
+  title: "FieldWise",
+  description: "Enterprise-grade field service management",
+  icons: {
+    icon: "/Field Wise Logo.png",
+  },
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const firebaseServices = initializeFirebase();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>FieldWise</title>
-        <meta name="description" content="Enterprise-grade field service management" />
-        <link rel="icon" href="/Field Wise Logo.png" sizes="any" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -33,18 +35,11 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
-        <FirebaseProvider
-          app={firebaseServices.app}
-          auth={firebaseServices.auth}
-          firestore={firebaseServices.db}
-          storage={firebaseServices.storage}
-        >
+        <FirebaseClientProvider>
           <AuthProvider>
-              <FirebaseErrorListener>
-                  {children}
-              </FirebaseErrorListener>
+            <FirebaseErrorListener>{children}</FirebaseErrorListener>
           </AuthProvider>
-        </FirebaseProvider>
+        </FirebaseClientProvider>
         <Toaster />
       </body>
     </html>

@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for answering questions about operational data.
@@ -17,8 +18,8 @@ import * as xlsx from 'xlsx';
 const QueryDataInputSchema = z.object({
   question: z.string().describe('The user\'s question about their operational data.'),
   companyId: z.string().describe('The ID of the company the data belongs to.'),
-  fileDataUri: z.string().optional().describe(
-      "An optional file (document or image) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+  fileUrl: z.string().url().optional().describe(
+      "An optional Firebase Storage URL pointing to a document or image for context."
     ),
 });
 export type QueryDataInput = z.infer<typeof QueryDataInputSchema>;
@@ -64,7 +65,7 @@ async function getCompanyData(companyId: string) {
 
 const mediaPrompt = ai.definePrompt({
     name: 'queryDataMediaPrompt',
-    input: { schema: z.object({ question: z.string(), context: z.any(), fileDataUri: z.string() }) },
+    input: { schema: z.object({ question: z.string(), context: z.any(), fileUrl: z.string() }) },
     output: { schema: QueryDataOutputSchema },
     prompt: `You are a helpful AI assistant for a field service management app called FieldWise. Your role is to answer questions based *only* on the data provided in the context. If an image or document is provided, use it as the primary source of information for your answer. Do not make up information. If the answer is not in the data, say that you don't have enough information to answer.
 
@@ -88,7 +89,7 @@ const mediaPrompt = ai.definePrompt({
     {{/each}}
     ---
     The user has also provided the following file. Analyze it to help answer the question.
-    Attached File: {{media url=fileDataUri}}
+    Attached File: {{media url=fileUrl}}
 
     User's Question: "{{{question}}}"
 
@@ -138,32 +139,16 @@ const queryDataFlow = ai.defineFlow(
     inputSchema: QueryDataInputSchema,
     outputSchema: QueryDataOutputSchema,
   },
-  async ({ question, companyId, fileDataUri }) => {
+  async ({ question, companyId, fileUrl }) => {
     // Step 1: Fetch the relevant data from Firestore
     const dataContext = await getCompanyData(companyId);
     
     let output;
 
-    if (fileDataUri) {
-        const mimeType = fileDataUri.substring(fileDataUri.indexOf(':') + 1, fileDataUri.indexOf(';'));
-        const isSpreadsheet = mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || mimeType === 'application/vnd.ms-excel';
-
-        if (isSpreadsheet) {
-            const base64Data = fileDataUri.substring(fileDataUri.indexOf(',') + 1);
-            const buffer = Buffer.from(base64Data, 'base64');
-            const workbook = xlsx.read(buffer, { type: 'buffer' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const documentText = xlsx.utils.sheet_to_csv(worksheet);
-
-            // Use the text-based prompt
-            const result = await textPrompt({ question, context: dataContext, documentText });
-            output = result.output;
-        } else {
-            // Use the media-based prompt for other file types like images, PDFs
-            const result = await mediaPrompt({ question, context: dataContext, fileDataUri });
-            output = result.output;
-        }
+    if (fileUrl) {
+      // Use the media-based prompt for all file types now handled by URL
+      const result = await mediaPrompt({ question, context: dataContext, fileUrl });
+      output = result.output;
     } else {
         // No file attached, use the text-based prompt without document content
         const result = await textPrompt({ question, context: dataContext });

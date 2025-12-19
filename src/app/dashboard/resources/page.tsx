@@ -41,11 +41,11 @@ function PdfViewerDialog({ open, onOpenChange, url, title }: { open: boolean, on
     if (!url) return null;
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl h-[90vh]">
-                <DialogHeader>
+            <DialogContent className="max-w-[95vw] h-[95vh] flex flex-col p-4">
+                <DialogHeader className="flex-shrink-0">
                     <DialogTitle>{title || 'Document Viewer'}</DialogTitle>
                 </DialogHeader>
-                <div className="flex-grow h-full">
+                <div className="flex-grow h-full overflow-hidden rounded-md">
                     <iframe src={url} className="w-full h-full border-0" title={title || 'PDF Viewer'} />
                 </div>
             </DialogContent>

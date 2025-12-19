@@ -39,14 +39,19 @@ import {
 
 function PdfViewerDialog({ open, onOpenChange, url, title }: { open: boolean, onOpenChange: (open: boolean) => void, url: string | null, title: string | null }) {
     if (!url) return null;
+    
+    // Use Google's PDF viewer to embed the document, which avoids browser blocking issues.
+    // Ensure the URL is properly encoded.
+    const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-[95vw] h-[95vh] flex flex-col p-4">
                 <DialogHeader className="flex-shrink-0">
                     <DialogTitle>{title || 'Document Viewer'}</DialogTitle>
                 </DialogHeader>
-                <div className="flex-grow h-full overflow-hidden rounded-md">
-                    <iframe src={url} className="w-full h-full border-0" title={title || 'PDF Viewer'} />
+                <div className="flex-grow h-full overflow-hidden rounded-md border">
+                    <iframe src={viewerUrl} className="w-full h-full border-0" title={title || 'PDF Viewer'} />
                 </div>
             </DialogContent>
         </Dialog>

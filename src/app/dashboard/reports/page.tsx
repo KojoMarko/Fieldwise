@@ -52,7 +52,8 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db, useStorage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
+import { useStorage } from '@/firebase/provider';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import type { Asset } from '@/lib/types';

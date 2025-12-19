@@ -215,8 +215,8 @@ export default function ResourcesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
+                  {categories.map((cat, index) => (
+                    <SelectItem key={`${cat}-${index}`} value={cat}>
                       {cat}
                     </SelectItem>
                   ))}
@@ -229,8 +229,8 @@ export default function ResourcesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                {types.map((type) => (
-                  <SelectItem key={type} value={type}>
+                {types.map((type, index) => (
+                  <SelectItem key={`${type}-${index}`} value={type}>
                     {type}
                   </SelectItem>
                 ))}

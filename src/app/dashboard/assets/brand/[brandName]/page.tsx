@@ -129,25 +129,25 @@ function ResourcesSection({ brandName }: { brandName: string }) {
             return;
         }
 
-        const lowerCaseBrand = brandName.toLowerCase();
+        // Fetch all resources for the company
         const resourcesQuery = query(
             collection(db, 'resources'),
-            where('companyId', '==', user.companyId),
-            orderBy('equipment_lowercase'),
-            startAt(lowerCaseBrand),
-            endAt(lowerCaseBrand + '\uf8ff')
+            where('companyId', '==', user.companyId)
         );
 
         const unsubscribe = onSnapshot(resourcesQuery, (snapshot) => {
-            const resourcesData: Resource[] = [];
+            const allCompanyResources: Resource[] = [];
             snapshot.forEach(doc => {
-                const data = doc.data() as Resource;
-                // Double-check on the client side since Firestore's string ranges can be broad
-                if (data.equipment_lowercase.startsWith(lowerCaseBrand)) {
-                   resourcesData.push({ id: doc.id, ...data });
-                }
+                allCompanyResources.push({ id: doc.id, ...doc.data() } as Resource);
             });
-            setResources(resourcesData);
+
+            // Filter client-side
+            const lowerCaseBrand = brandName.toLowerCase();
+            const filteredResources = allCompanyResources.filter(resource => 
+                resource.equipment_lowercase?.toLowerCase().includes(lowerCaseBrand)
+            );
+            
+            setResources(filteredResources);
             setIsLoading(false);
         }, (error) => {
             console.error("Error fetching resources:", error);

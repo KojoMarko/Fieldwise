@@ -6,6 +6,9 @@ import {
   query,
   where,
   onSnapshot,
+  orderBy,
+  startAt,
+  endAt,
 } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Asset, RepairNote, Resource } from '@/lib/types';
@@ -126,15 +129,24 @@ function ResourcesSection({ brandName }: { brandName: string }) {
             return;
         }
 
+        const lowerCaseBrand = brandName.toLowerCase();
         const resourcesQuery = query(
             collection(db, 'resources'),
             where('companyId', '==', user.companyId),
-            where('equipment_lowercase', '==', brandName.toLowerCase())
+            orderBy('equipment_lowercase'),
+            startAt(lowerCaseBrand),
+            endAt(lowerCaseBrand + '\uf8ff')
         );
 
         const unsubscribe = onSnapshot(resourcesQuery, (snapshot) => {
             const resourcesData: Resource[] = [];
-            snapshot.forEach(doc => resourcesData.push({ id: doc.id, ...doc.data() } as Resource));
+            snapshot.forEach(doc => {
+                const data = doc.data() as Resource;
+                // Double-check on the client side since Firestore's string ranges can be broad
+                if (data.equipment_lowercase.startsWith(lowerCaseBrand)) {
+                   resourcesData.push({ id: doc.id, ...data });
+                }
+            });
             setResources(resourcesData);
             setIsLoading(false);
         }, (error) => {

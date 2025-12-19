@@ -28,6 +28,7 @@ import {
   TrendingUp,
   ClipboardList,
   ShoppingCart,
+  PenSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -40,6 +41,7 @@ import { ScrollArea } from './ui/scroll-area';
 
 const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
+  { href: '/dashboard/articles/new', icon: PenSquare, label: 'Write Article' },
   { href: '/dashboard/sales-ledger', icon: ClipboardList, label: 'Sales Ledger' },
   { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
   { href: '/dashboard/activities', icon: Activity, label: 'Activities' },
@@ -57,6 +59,7 @@ const adminNavItems = [
 
 const engineerNavItems = [
     { href: '/dashboard', icon: Home, label: 'My Dashboard' },
+    { href: '/dashboard/articles/new', icon: PenSquare, label: 'Write Article' },
     { href: '/dashboard/notifications', icon: Inbox, label: 'Inbox', isNotification: true },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'Work Orders' },
     { href: '/dashboard/customers', icon: Building, label: 'Customers' },
@@ -70,6 +73,7 @@ const engineerNavItems = [
 
 const salesRepNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
+    { href: '/dashboard/articles/new', icon: PenSquare, label: 'Write Article' },
     { href: '/dashboard/sales-ledger', icon: ClipboardList, label: 'Sales Ledger' },
     { href: '/dashboard/products', icon: ShoppingCart, label: 'Products' },
     { href: '/dashboard/activities', icon: Activity, label: 'Activities' },
@@ -84,6 +88,7 @@ const salesRepNavItems = [
 const customerNavItems = [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/dashboard/work-orders', icon: Wrench, label: 'My Service History' },
+    { href: '/dashboard/articles/new', icon: PenSquare, label: 'Write Article' },
 ]
 
 export function AppSidebar() {

@@ -1,3 +1,4 @@
+
 'use client';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Header } from '@/components/header';
@@ -7,11 +8,6 @@ import { useEffect } from 'react';
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isArticlePage = pathname.startsWith('/dashboard/articles');
-
-  if (isArticlePage) {
-    return <main>{children}</main>;
-  }
   
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">

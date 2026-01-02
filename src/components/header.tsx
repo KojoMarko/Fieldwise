@@ -132,6 +132,7 @@ const adminNavItems = [
   { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts & Locations' },
   { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
   { href: '/dashboard/audit-log', icon: History, label: 'Audit Log' },
+  { href: '/dashboard/reports', icon: FileText, label: 'Reports' },
 ];
 
 const engineerNavItems = [
@@ -145,6 +146,7 @@ const engineerNavItems = [
     { href: '/dashboard/assets', icon: Package, label: 'Assets' },
     { href: '/dashboard/spare-parts', icon: List, label: 'Spare Parts & Locations' },
     { href: '/dashboard/resources', icon: BookText, label: 'Resource Center' },
+    { href: '/dashboard/reports', icon: FileText, label: 'Reports' },
 ]
 
 const salesRepNavItems = [

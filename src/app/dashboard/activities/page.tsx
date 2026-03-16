@@ -52,7 +52,7 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Activity } from '@/lib/types';
+import type { Activity, Company } from '@/lib/types';
 import { formatISO, parseISO, isToday, isFuture, isPast, format, formatDistanceToNow, startOfWeek, startOfMonth, startOfToday, isAfter } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -380,7 +380,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
     )
 }
 
-function GenerateReportDialog({ open, onOpenChange, activities, user }: { open: boolean, onOpenChange: (open: boolean) => void, activities: Activity[], user: any }) {
+function GenerateReportDialog({ open, onOpenChange, activities, user, company }: { open: boolean, onOpenChange: (open: boolean) => void, activities: Activity[], user: any, company: Company | null }) {
   const [period, setPeriod] = useState('this-week');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -427,26 +427,54 @@ function GenerateReportDialog({ open, onOpenChange, activities, user }: { open: 
       });
       
       const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 40;
+      let y = margin;
+      
+      if (company?.logoUrl) {
+        try {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.src = company.logoUrl;
+            await new Promise<void>((resolve, reject) => {
+                img.onload = () => {
+                    doc.addImage(img, 'PNG', margin, y - 20, 40, 40);
+                    resolve();
+                };
+                img.onerror = (e) => reject(e);
+            });
+        } catch (e) {
+            console.error("Error adding company logo to PDF:", e);
+        }
+      }
+
+      const companyName = company?.name || "FieldWise";
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(companyName, pageWidth - margin, y - 10, { align: 'right' });
+      y += 30; // Space after header
       
       doc.setFontSize(18);
-      doc.text(reportData.reportTitle, 14, 22);
+      doc.text(reportData.reportTitle, margin, y);
+      y += 20;
 
       doc.setFontSize(11);
       doc.setTextColor(100);
-      doc.text(`Report for: ${user.name}`, 14, 30);
-      doc.text(`Period: ${period.replace('-', ' ')}`, 14, 36);
-
-      let y = 50;
+      doc.text(`Report for: ${user.name}`, margin, y);
+      y += 15;
+      doc.text(`Period: ${period.replace('-', ' ')}`, margin, y);
+      y += 25;
+      doc.setTextColor(0);
 
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('Executive Summary', 14, y);
-      y += 7;
+      doc.text('Executive Summary', margin, y);
+      y += 20;
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      const summaryLines = doc.splitTextToSize(reportData.executiveSummary, 180);
-      doc.text(summaryLines, 14, y);
-      y += summaryLines.length * 4 + 10;
+      const summaryLines = doc.splitTextToSize(reportData.executiveSummary, pageWidth - margin * 2);
+      doc.text(summaryLines, margin, y);
+      y += summaryLines.length * 12 + 10;
 
       (doc as any).autoTable({
         startY: y,
@@ -466,15 +494,15 @@ function GenerateReportDialog({ open, onOpenChange, activities, user }: { open: 
       for (const section of reportData.sections) {
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text(section.title, 14, y);
-        y += 7;
+        doc.text(section.title, margin, y);
+        y += 20;
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'italic');
         doc.setTextColor(150);
-        const sectionSummaryLines = doc.splitTextToSize(section.summary, 180);
-        doc.text(sectionSummaryLines, 14, y);
-        y += sectionSummaryLines.length * 4 + 5;
+        const sectionSummaryLines = doc.splitTextToSize(section.summary, pageWidth - margin * 2);
+        doc.text(sectionSummaryLines, margin, y);
+        y += sectionSummaryLines.length * 12 + 5;
         doc.setTextColor(0);
         doc.setFont('helvetica', 'normal');
 
@@ -625,12 +653,21 @@ export default function ActivitiesPage() {
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('today');
   const [isReportDialogOpen, setReportDialogOpen] = useState(false);
+  const [company, setCompany] = useState<Company | null>(null);
 
   useEffect(() => {
     if (!user?.companyId || !user.id) {
         setIsLoading(false);
         return;
     }
+
+    const companyRef = doc(db, 'companies', user.companyId);
+    const unsubCompany = onSnapshot(companyRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setCompany(docSnap.data() as Company);
+        }
+    });
+
     const activitiesQuery = query(
         collection(db, 'activities'), 
         where('companyId', '==', user.companyId),
@@ -642,7 +679,10 @@ export default function ActivitiesPage() {
         setActivities(activitiesData);
         setIsLoading(false);
     });
-    return () => unsubscribe();
+    return () => {
+        unsubscribe();
+        unsubCompany();
+    };
   }, [user?.companyId, user?.id]);
 
   const handleAddActivity = async (newActivityData: Omit<Activity, 'id' | 'status' | 'companyId' | 'ownerId'>) => {
@@ -714,7 +754,7 @@ export default function ActivitiesPage() {
   return (
     <>
       <AddActivityDialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen} onAddActivity={handleAddActivity} />
-      {user && <GenerateReportDialog open={isReportDialogOpen} onOpenChange={setReportDialogOpen} activities={activities} user={user} />}
+      {user && <GenerateReportDialog open={isReportDialogOpen} onOpenChange={setReportDialogOpen} activities={activities} user={user} company={company} />}
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>

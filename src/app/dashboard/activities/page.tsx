@@ -24,6 +24,7 @@ import {
   FolderKanban,
   Building,
   User as UserIcon,
+  FileText,
 } from 'lucide-react';
 import { KpiCard } from '@/components/kpi-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,6 +41,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -51,10 +53,15 @@ import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Activity } from '@/lib/types';
-import { formatISO, parseISO, isToday, isFuture, isPast, format, formatDistanceToNow } from 'date-fns';
+import { formatISO, parseISO, isToday, isFuture, isPast, format, formatDistanceToNow, startOfWeek, startOfMonth, startOfToday, isAfter } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { generateActivityReport } from '@/ai/flows/generate-activity-report';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 
 const activityIcons: Record<string, React.ElementType> = {
   call: Phone,
@@ -140,8 +147,7 @@ function ActivityItem({ activity, onToggle }: { activity: Activity; onToggle: (i
 
 function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolean, onOpenChange: (open: boolean) => void, onAddActivity: (activity: Omit<Activity, 'id' | 'status' | 'companyId'>) => void }) {
     const [title, setTitle] = useState('');
-    const [discussionSummary, setDiscussionSummary] = useState('');
-    const [taskDescription, setTaskDescription] = useState('');
+    const [description, setDescription] = useState('');
     const [type, setType] = useState('meeting');
     const [date, setDate] = useState<Date | undefined>(new Date());
     const [time, setTime] = useState('');
@@ -168,7 +174,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
         if (type === 'meeting') {
             activityData = {
                 title,
-                description: discussionSummary,
+                description: description,
                 type,
                 company: facilityName,
                 time: formatISO(activityDate),
@@ -183,7 +189,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
         } else if (type === 'call' || type === 'email') {
             activityData = {
                 title,
-                description: discussionSummary,
+                description: description,
                 type,
                 company: facilityName,
                 time: formatISO(activityDate),
@@ -193,7 +199,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
         } else { // task or deadline
             activityData = {
                 title,
-                description: taskDescription,
+                description: description,
                 type,
                 time: formatISO(activityDate),
                 company: ''
@@ -205,8 +211,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
         onOpenChange(false);
         // Reset form
         setTitle('');
-        setDiscussionSummary('');
-        setTaskDescription('');
+        setDescription('');
         setType('meeting');
         setFacilityName('');
         setDate(new Date());
@@ -285,7 +290,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
                             <Separator />
                             <div className="space-y-2">
                                 <Label htmlFor="task-description">Description</Label>
-                                <Textarea id="task-description" value={taskDescription} onChange={e => setTaskDescription(e.target.value)} placeholder="Add more details about this task or deadline..." />
+                                <Textarea id="task-description" value={description} onChange={e => setDescription(e.target.value)} placeholder="Add more details about this task or deadline..." />
                             </div>
                         </>
                     )}
@@ -309,7 +314,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="discussion-summary">Summary</Label>
-                                <Textarea id="discussion-summary" value={discussionSummary} onChange={e => setDiscussionSummary(e.target.value)} placeholder="Summarize the key points of the call or email..." />
+                                <Textarea id="discussion-summary" value={description} onChange={e => setDescription(e.target.value)} placeholder="Summarize the key points of the call or email..." />
                             </div>
                         </>
                     )}
@@ -361,7 +366,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
                             <Separator />
                             <div className="space-y-2">
                                 <Label htmlFor="discussion">Discussion Summary</Label>
-                                <Textarea id="discussion" value={discussionSummary} onChange={(e) => setDiscussionSummary(e.target.value)} placeholder="Summarize the key points of the discussion..." />
+                                <Textarea id="discussion" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Summarize the key points of the discussion..." />
                             </div>
                         </>
                     )}
@@ -375,6 +380,170 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
     )
 }
 
+function GenerateReportDialog({ open, onOpenChange, activities, user }: { open: boolean, onOpenChange: (open: boolean) => void, activities: Activity[], user: any }) {
+  const [period, setPeriod] = useState('this-week');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleGenerateReport = async () => {
+    setIsLoading(true);
+    toast({ title: 'Generating Report...', description: 'The AI is summarizing your activities. This may take a moment.' });
+
+    try {
+      const now = new Date();
+      let startDate: Date;
+
+      switch (period) {
+        case 'today':
+          startDate = startOfToday();
+          break;
+        case 'this-week':
+          startDate = startOfWeek(now, { weekStartsOn: 1 });
+          break;
+        case 'this-month':
+          startDate = startOfMonth(now);
+          break;
+        default:
+          startDate = startOfWeek(now, { weekStartsOn: 1 });
+      }
+
+      const filteredActivities = activities.filter(a => isAfter(parseISO(a.time), startDate));
+
+      if (filteredActivities.length === 0) {
+        toast({
+          variant: 'destructive',
+          title: 'No Activities Found',
+          description: 'There are no activities in the selected period to report on.',
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      const reportData = await generateActivityReport({
+        activities: filteredActivities,
+        userName: user.name,
+        period: period.replace('-', ' '),
+      });
+      
+      const doc = new jsPDF();
+      
+      doc.setFontSize(18);
+      doc.text(reportData.reportTitle, 14, 22);
+
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Report for: ${user.name}`, 14, 30);
+      doc.text(`Period: ${period.replace('-', ' ')}`, 14, 36);
+
+      let y = 50;
+
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Executive Summary', 14, y);
+      y += 7;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const summaryLines = doc.splitTextToSize(reportData.executiveSummary, 180);
+      doc.text(summaryLines, 14, y);
+      y += summaryLines.length * 4 + 10;
+
+      (doc as any).autoTable({
+        startY: y,
+        theme: 'plain',
+        body: [
+          [
+            { content: `Total Activities: ${reportData.kpi.totalActivities}`, styles: { fontStyle: 'bold' } },
+            { content: `Meetings: ${reportData.kpi.meetings}`, styles: { fontStyle: 'bold' } },
+            { content: `Communications: ${reportData.kpi.calls + reportData.kpi.emails}`, styles: { fontStyle: 'bold' } },
+            { content: `Tasks Completed: ${reportData.kpi.tasksCompleted}`, styles: { fontStyle: 'bold' } },
+          ]
+        ],
+        styles: { fontSize: 9 }
+      });
+      y = (doc as any).lastAutoTable.finalY + 15;
+      
+      for (const section of reportData.sections) {
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(section.title, 14, y);
+        y += 7;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(150);
+        const sectionSummaryLines = doc.splitTextToSize(section.summary, 180);
+        doc.text(sectionSummaryLines, 14, y);
+        y += sectionSummaryLines.length * 4 + 5;
+        doc.setTextColor(0);
+        doc.setFont('helvetica', 'normal');
+
+        if (section.items && section.items.length > 0) {
+          (doc as any).autoTable({
+            startY: y,
+            head: [['Details']],
+            body: section.items.map(item => [item]),
+            theme: 'striped',
+            headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+            bodyStyles: { overflow: 'linebreak' }
+          });
+          y = (doc as any).lastAutoTable.finalY + 15;
+        } else {
+            y += 10;
+        }
+      }
+
+      doc.save(`Activity_Report_${user.name.replace(' ', '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+
+      toast({
+        title: 'Report Generated',
+        description: 'Your activity report PDF has been downloaded.',
+      });
+      onOpenChange(false);
+
+    } catch (e) {
+      console.error('Report generation failed', e);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to generate the report.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Generate Activity Report</DialogTitle>
+          <DialogDescription>Select a period to generate a report for your activities.</DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <RadioGroup value={period} onValueChange={setPeriod} className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="today" id="today" />
+              <Label htmlFor="today">Today's Activities</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="this-week" id="this-week" />
+              <Label htmlFor="this-week">This Week</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="this-month" id="this-month" />
+              <Label htmlFor="this-month">This Month</Label>
+            </div>
+          </RadioGroup>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleGenerateReport} disabled={isLoading}>
+            {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? 'Generating...' : 'Generate & Download PDF'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 export default function ActivitiesPage() {
   const { user } = useAuth();
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -382,6 +551,7 @@ export default function ActivitiesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('today');
+  const [isReportDialogOpen, setReportDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -466,6 +636,7 @@ export default function ActivitiesPage() {
   return (
     <>
       <AddActivityDialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen} onAddActivity={handleAddActivity} />
+      {user && <GenerateReportDialog open={isReportDialogOpen} onOpenChange={setReportDialogOpen} activities={activities} user={user} />}
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -474,7 +645,10 @@ export default function ActivitiesPage() {
               Manage your tasks, calls, meetings, and emails
             </p>
           </div>
-          <div className="sm:ml-auto">
+          <div className="sm:ml-auto flex items-center gap-2">
+             <Button variant="outline" onClick={() => setReportDialogOpen(true)}>
+              <FileText className="mr-2 h-4 w-4" /> Generate Report
+            </Button>
             <Button onClick={() => setAddDialogOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" /> New Activity
             </Button>

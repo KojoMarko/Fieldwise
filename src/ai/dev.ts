@@ -37,3 +37,4 @@ import '@/ai/flows/update-location.ts';
 import '@/ai/flows/delete-location.ts';
 import '@/ai/flows/migrate-locations.ts';
 import '@/ai/flows/query-data-flow.ts';
+import '@/ai/flows/generate-activity-report.ts';

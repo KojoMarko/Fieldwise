@@ -291,6 +291,13 @@ export type Activity = {
   company: string;
   status: 'pending' | 'completed';
   companyId: string;
+  location?: string;
+  contactPerson?: string;
+  contactPersonNumber?: string;
+  personMet?: string;
+  personMetNumber?: string;
+  department?: string;
+  personMetProfession?: string;
 };
 
 export type RepairNote = {

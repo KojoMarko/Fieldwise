@@ -22,6 +22,8 @@ import {
   Briefcase,
   LoaderCircle,
   FolderKanban,
+  Building,
+  User as UserIcon,
 } from 'lucide-react';
 import { KpiCard } from '@/components/kpi-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,6 +54,7 @@ import type { Activity } from '@/lib/types';
 import { formatISO, parseISO, isToday, isFuture, isPast, format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 
 const activityIcons: Record<string, React.ElementType> = {
   call: Phone,
@@ -116,6 +119,18 @@ function ActivityItem({ activity, onToggle }: { activity: Activity; onToggle: (i
                  <span>{activity.company}</span>
               </div>
             )}
+            {activity.department && (
+              <div className="flex items-center gap-1">
+                 <Building className="h-3 w-3" />
+                 <span>{activity.department}</span>
+              </div>
+            )}
+             {activity.contactPerson && (
+              <div className="flex items-center gap-1">
+                 <UserIcon className="h-3 w-3" />
+                 <span>{activity.contactPerson}</span>
+              </div>
+            )}
             <span className="ml-auto">{formatDistanceToNow(activityDate, { addSuffix: true })}</span>
         </div>
       </div>
@@ -125,11 +140,20 @@ function ActivityItem({ activity, onToggle }: { activity: Activity; onToggle: (i
 
 function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolean, onOpenChange: (open: boolean) => void, onAddActivity: (activity: Omit<Activity, 'id' | 'status' | 'companyId'>) => void }) {
     const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [type, setType] = useState('task');
-    const [company, setCompany] = useState('');
+    const [discussionSummary, setDiscussionSummary] = useState('');
+    const [type, setType] = useState('meeting');
     const [date, setDate] = useState<Date | undefined>(new Date());
     const [time, setTime] = useState('');
+
+    const [facilityName, setFacilityName] = useState('');
+    const [location, setLocation] = useState('');
+    const [department, setDepartment] = useState('');
+    const [contactPerson, setContactPerson] = useState('');
+    const [contactPersonNumber, setContactPersonNumber] = useState('');
+    const [personMet, setPersonMet] = useState('');
+    const [personMetProfession, setPersonMetProfession] = useState('');
+    const [personMetNumber, setPersonMetNumber] = useState('');
+
 
     const handleSubmit = () => {
         if (!title || !time || !date) return;
@@ -138,34 +162,51 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
         const activityDate = new Date(date);
         activityDate.setHours(hour, minute);
 
-        onAddActivity({ title, description, type, company, time: formatISO(activityDate) });
+        onAddActivity({ 
+            title, 
+            description: discussionSummary,
+            type, 
+            company: facilityName, 
+            time: formatISO(activityDate),
+            location,
+            department,
+            contactPerson,
+            contactPersonNumber,
+            personMet,
+            personMetProfession,
+            personMetNumber
+        });
         onOpenChange(false);
         // Reset form
         setTitle('');
-        setDescription('');
-        setType('task');
-        setCompany('');
+        setDiscussionSummary('');
+        setType('meeting');
+        setFacilityName('');
         setDate(new Date());
         setTime('');
+        setLocation('');
+        setDepartment('');
+        setContactPerson('');
+        setContactPersonNumber('');
+        setPersonMet('');
+        setPersonMetProfession('');
+        setPersonMetNumber('');
     }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Add New Activity</DialogTitle>
                     <DialogDescription>Fill out the details for your new activity.</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto px-2">
                     <div className="space-y-2">
-                        <Label htmlFor="title">Title</Label>
+                        <Label htmlFor="title">Activity Title</Label>
                         <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Follow up with Acme Corp" />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g., Discuss enterprise package pricing" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+                   
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                          <div className="space-y-2">
                             <Label htmlFor="type">Type</Label>
                              <Select value={type} onValueChange={setType}>
@@ -206,16 +247,63 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
                                 </PopoverContent>
                             </Popover>
                         </div>
-                    </div>
-                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="time">Time</Label>
                             <Input id="time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
                         </div>
+                    </div>
+
+                    <Separator className="my-4" />
+                    <h4 className="text-sm font-medium">Facility Details</h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                          <div className="space-y-2">
-                            <Label htmlFor="company">Company / Institution</Label>
-                            <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="e.g., Ministry of Health" />
+                            <Label htmlFor="facilityName">Facility Name</Label>
+                            <Input id="facilityName" value={facilityName} onChange={(e) => setFacilityName(e.target.value)} placeholder="e.g., Ministry of Health" />
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="location">Facility Location</Label>
+                            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Accra" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="department">Department</Label>
+                            <Input id="department" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="e.g., Procurement" />
+                        </div>
+                    </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div className="space-y-2">
+                            <Label htmlFor="contactPerson">Main Contact Person</Label>
+                            <Input id="contactPerson" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="e.g., Dr. Jane Doe" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="contactPersonNumber">Main Contact's Number</Label>
+                            <Input id="contactPersonNumber" value={contactPersonNumber} onChange={(e) => setContactPersonNumber(e.target.value)} />
+                        </div>
+                    </div>
+
+                    <Separator className="my-4" />
+                    <h4 className="text-sm font-medium">Person Met Details (if different)</h4>
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div className="space-y-2">
+                            <Label htmlFor="personMet">Person Met</Label>
+                            <Input id="personMet" value={personMet} onChange={(e) => setPersonMet(e.target.value)} placeholder="e.g., Mr. John Smith" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="personMetProfession">Profession</Label>
+                            <Input id="personMetProfession" value={personMetProfession} onChange={(e) => setPersonMetProfession(e.target.value)} placeholder="e.g., Lab Manager" />
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="personMetNumber">Person Met's Contact Number</Label>
+                        <Input id="personMetNumber" value={personMetNumber} onChange={(e) => setPersonMetNumber(e.target.value)} />
+                    </div>
+
+                    <Separator className="my-4" />
+
+                     <div className="space-y-2">
+                        <Label htmlFor="discussion">Discussion Summary</Label>
+                        <Textarea id="discussion" value={discussionSummary} onChange={(e) => setDiscussionSummary(e.target.value)} placeholder="Summarize the key points of the discussion..." />
                     </div>
                 </div>
                 <DialogFooter>
@@ -253,12 +341,21 @@ export default function ActivitiesPage() {
   const handleAddActivity = async (newActivityData: Omit<Activity, 'id' | 'status' | 'companyId'>) => {
       if (!user?.companyId) return;
 
-      const newActivity: Omit<Activity, 'id'> = {
+      const activityPayload: Partial<Omit<Activity, 'id'>> = {
           ...newActivityData,
           status: 'pending',
           companyId: user.companyId,
       };
-      await addDoc(collection(db, 'activities'), newActivity);
+
+      // Clean up optional fields that are empty strings to avoid storing them in Firestore
+      Object.keys(activityPayload).forEach(key => {
+          const typedKey = key as keyof typeof activityPayload;
+          if (activityPayload[typedKey] === '') {
+              delete (activityPayload as any)[typedKey];
+          }
+      });
+      
+      await addDoc(collection(db, 'activities'), activityPayload);
   };
   
   const handleToggleComplete = async (id: string, completed: boolean) => {

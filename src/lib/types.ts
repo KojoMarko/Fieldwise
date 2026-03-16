@@ -291,6 +291,7 @@ export type Activity = {
   company: string;
   status: 'pending' | 'completed';
   companyId: string;
+  ownerId: string;
   location?: string;
   contactPerson?: string;
   contactPersonNumber?: string;

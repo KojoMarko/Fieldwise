@@ -145,7 +145,7 @@ function ActivityItem({ activity, onToggle }: { activity: Activity; onToggle: (i
   )
 }
 
-function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolean, onOpenChange: (open: boolean) => void, onAddActivity: (activity: Omit<Activity, 'id' | 'status' | 'companyId'>) => void }) {
+function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolean, onOpenChange: (open: boolean) => void, onAddActivity: (activity: Omit<Activity, 'id' | 'status' | 'companyId' | 'ownerId'>) => void }) {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [type, setType] = useState('meeting');
@@ -169,7 +169,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
         const activityDate = new Date(date);
         activityDate.setHours(hour, minute);
         
-        let activityData: Omit<Activity, 'id' | 'status' | 'companyId'>;
+        let activityData: Omit<Activity, 'id' | 'status' | 'companyId' | 'ownerId'>;
 
         if (type === 'meeting') {
             activityData = {
@@ -627,11 +627,15 @@ export default function ActivitiesPage() {
   const [isReportDialogOpen, setReportDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (!user?.companyId) {
+    if (!user?.companyId || !user.id) {
         setIsLoading(false);
         return;
     }
-    const activitiesQuery = query(collection(db, 'activities'), where('companyId', '==', user.companyId));
+    const activitiesQuery = query(
+        collection(db, 'activities'), 
+        where('companyId', '==', user.companyId),
+        where('ownerId', '==', user.id)
+    );
     const unsubscribe = onSnapshot(activitiesQuery, (snapshot) => {
         const activitiesData: Activity[] = [];
         snapshot.forEach(doc => activitiesData.push({ id: doc.id, ...doc.data() } as Activity));
@@ -639,15 +643,16 @@ export default function ActivitiesPage() {
         setIsLoading(false);
     });
     return () => unsubscribe();
-  }, [user?.companyId]);
+  }, [user?.companyId, user?.id]);
 
-  const handleAddActivity = async (newActivityData: Omit<Activity, 'id' | 'status' | 'companyId'>) => {
-      if (!user?.companyId) return;
+  const handleAddActivity = async (newActivityData: Omit<Activity, 'id' | 'status' | 'companyId' | 'ownerId'>) => {
+      if (!user?.companyId || !user.id) return;
 
       const activityPayload: Partial<Omit<Activity, 'id'>> = {
           ...newActivityData,
           status: 'pending',
           companyId: user.companyId,
+          ownerId: user.id
       };
 
       // Clean up optional fields that are empty strings to avoid storing them in Firestore

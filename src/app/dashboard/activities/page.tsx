@@ -141,6 +141,7 @@ function ActivityItem({ activity, onToggle }: { activity: Activity; onToggle: (i
 function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolean, onOpenChange: (open: boolean) => void, onAddActivity: (activity: Omit<Activity, 'id' | 'status' | 'companyId'>) => void }) {
     const [title, setTitle] = useState('');
     const [discussionSummary, setDiscussionSummary] = useState('');
+    const [taskDescription, setTaskDescription] = useState('');
     const [type, setType] = useState('meeting');
     const [date, setDate] = useState<Date | undefined>(new Date());
     const [time, setTime] = useState('');
@@ -161,25 +162,51 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
         
         const activityDate = new Date(date);
         activityDate.setHours(hour, minute);
+        
+        let activityData: Omit<Activity, 'id' | 'status' | 'companyId'>;
 
-        onAddActivity({ 
-            title, 
-            description: discussionSummary,
-            type, 
-            company: facilityName, 
-            time: formatISO(activityDate),
-            location,
-            department,
-            contactPerson,
-            contactPersonNumber,
-            personMet,
-            personMetProfession,
-            personMetNumber
-        });
+        if (type === 'meeting') {
+            activityData = {
+                title,
+                description: discussionSummary,
+                type,
+                company: facilityName,
+                time: formatISO(activityDate),
+                location,
+                department,
+                contactPerson,
+                contactPersonNumber,
+                personMet,
+                personMetProfession,
+                personMetNumber
+            };
+        } else if (type === 'call' || type === 'email') {
+            activityData = {
+                title,
+                description: discussionSummary,
+                type,
+                company: facilityName,
+                time: formatISO(activityDate),
+                contactPerson,
+                contactPersonNumber,
+            };
+        } else { // task or deadline
+            activityData = {
+                title,
+                description: taskDescription,
+                type,
+                time: formatISO(activityDate),
+                company: ''
+            };
+        }
+
+
+        onAddActivity(activityData);
         onOpenChange(false);
         // Reset form
         setTitle('');
         setDiscussionSummary('');
+        setTaskDescription('');
         setType('meeting');
         setFacilityName('');
         setDate(new Date());
@@ -214,10 +241,10 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="task">Task</SelectItem>
+                                    <SelectItem value="meeting">Meeting</SelectItem>
                                     <SelectItem value="call">Call</SelectItem>
                                     <SelectItem value="email">Email</SelectItem>
-                                    <SelectItem value="meeting">Meeting</SelectItem>
+                                    <SelectItem value="task">Task</SelectItem>
                                     <SelectItem value="deadline">Deadline</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -253,58 +280,91 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
                         </div>
                     </div>
 
-                    <Separator className="my-4" />
-                    <h4 className="text-sm font-medium">Facility Details</h4>
+                    {(type === 'task' || type === 'deadline') && (
+                        <>
+                            <Separator />
+                            <div className="space-y-2">
+                                <Label htmlFor="task-description">Description</Label>
+                                <Textarea id="task-description" value={taskDescription} onChange={e => setTaskDescription(e.target.value)} placeholder="Add more details about this task or deadline..." />
+                            </div>
+                        </>
+                    )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                         <div className="space-y-2">
-                            <Label htmlFor="facilityName">Facility Name</Label>
-                            <Input id="facilityName" value={facilityName} onChange={(e) => setFacilityName(e.target.value)} placeholder="e.g., Ministry of Health" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="location">Facility Location</Label>
-                            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Accra" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="department">Department</Label>
-                            <Input id="department" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="e.g., Procurement" />
-                        </div>
-                    </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="space-y-2">
-                            <Label htmlFor="contactPerson">Main Contact Person</Label>
-                            <Input id="contactPerson" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="e.g., Dr. Jane Doe" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="contactPersonNumber">Main Contact's Number</Label>
-                            <Input id="contactPersonNumber" value={contactPersonNumber} onChange={(e) => setContactPersonNumber(e.target.value)} />
-                        </div>
-                    </div>
+                    {(type === 'call' || type === 'email') && (
+                        <>
+                            <Separator />
+                            <div className="space-y-2">
+                                <Label htmlFor="facilityName">Facility/Company Name</Label>
+                                <Input id="facilityName" value={facilityName} onChange={(e) => setFacilityName(e.target.value)} placeholder="e.g., Ministry of Health" />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="contactPerson">Contact Person</Label>
+                                    <Input id="contactPerson" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="e.g., Dr. Jane Doe" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="contactPersonNumber">Contact Number</Label>
+                                    <Input id="contactPersonNumber" value={contactPersonNumber} onChange={(e) => setContactPersonNumber(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="discussion-summary">Summary</Label>
+                                <Textarea id="discussion-summary" value={discussionSummary} onChange={e => setDiscussionSummary(e.target.value)} placeholder="Summarize the key points of the call or email..." />
+                            </div>
+                        </>
+                    )}
 
-                    <Separator className="my-4" />
-                    <h4 className="text-sm font-medium">Person Met Details (if different)</h4>
-
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="space-y-2">
-                            <Label htmlFor="personMet">Person Met</Label>
-                            <Input id="personMet" value={personMet} onChange={(e) => setPersonMet(e.target.value)} placeholder="e.g., Mr. John Smith" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="personMetProfession">Profession</Label>
-                            <Input id="personMetProfession" value={personMetProfession} onChange={(e) => setPersonMetProfession(e.target.value)} placeholder="e.g., Lab Manager" />
-                        </div>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="personMetNumber">Person Met's Contact Number</Label>
-                        <Input id="personMetNumber" value={personMetNumber} onChange={(e) => setPersonMetNumber(e.target.value)} />
-                    </div>
-
-                    <Separator className="my-4" />
-
-                     <div className="space-y-2">
-                        <Label htmlFor="discussion">Discussion Summary</Label>
-                        <Textarea id="discussion" value={discussionSummary} onChange={(e) => setDiscussionSummary(e.target.value)} placeholder="Summarize the key points of the discussion..." />
-                    </div>
+                    {type === 'meeting' && (
+                        <>
+                            <Separator />
+                            <h4 className="text-sm font-medium">Facility Details</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="facilityName">Facility Name</Label>
+                                    <Input id="facilityName" value={facilityName} onChange={(e) => setFacilityName(e.target.value)} placeholder="e.g., Ministry of Health" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="location">Facility Location</Label>
+                                    <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Accra" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="department">Department</Label>
+                                    <Input id="department" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="e.g., Procurement" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="contactPerson">Main Contact Person</Label>
+                                    <Input id="contactPerson" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="e.g., Dr. Jane Doe" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="contactPersonNumber">Main Contact's Number</Label>
+                                    <Input id="contactPersonNumber" value={contactPersonNumber} onChange={(e) => setContactPersonNumber(e.target.value)} />
+                                </div>
+                            </div>
+                            <Separator />
+                            <h4 className="text-sm font-medium">Person Met Details (if different)</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="personMet">Person Met</Label>
+                                    <Input id="personMet" value={personMet} onChange={(e) => setPersonMet(e.target.value)} placeholder="e.g., Mr. John Smith" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="personMetProfession">Profession</Label>
+                                    <Input id="personMetProfession" value={personMetProfession} onChange={(e) => setPersonMetProfession(e.target.value)} placeholder="e.g., Lab Manager" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="personMetNumber">Person Met's Contact Number</Label>
+                                <Input id="personMetNumber" value={personMetNumber} onChange={(e) => setPersonMetNumber(e.target.value)} />
+                            </div>
+                            <Separator />
+                            <div className="space-y-2">
+                                <Label htmlFor="discussion">Discussion Summary</Label>
+                                <Textarea id="discussion" value={discussionSummary} onChange={(e) => setDiscussionSummary(e.target.value)} placeholder="Summarize the key points of the discussion..." />
+                            </div>
+                        </>
+                    )}
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
@@ -350,7 +410,7 @@ export default function ActivitiesPage() {
       // Clean up optional fields that are empty strings to avoid storing them in Firestore
       Object.keys(activityPayload).forEach(key => {
           const typedKey = key as keyof typeof activityPayload;
-          if (activityPayload[typedKey] === '') {
+          if (activityPayload[typedKey] === '' || activityPayload[typedKey] === undefined) {
               delete (activityPayload as any)[typedKey];
           }
       });

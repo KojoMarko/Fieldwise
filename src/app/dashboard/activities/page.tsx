@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -21,6 +20,7 @@ import {
   Users,
   Briefcase,
   LoaderCircle,
+  FolderKanban,
 } from 'lucide-react';
 import { KpiCard } from '@/components/kpi-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,7 +48,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Activity } from '@/lib/types';
-import { formatISO, parseISO, isToday, isFuture, isPast, format } from 'date-fns';
+import { formatISO, parseISO, isToday, isFuture, isPast, format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
@@ -57,41 +57,69 @@ const activityIcons: Record<string, React.ElementType> = {
   email: Mail,
   meeting: Users,
   task: CheckCircle,
-  deadline: Briefcase,
+  deadline: FolderKanban,
 };
 
-function ActivityItem({ activity, onToggle }: { activity: Activity, onToggle: (id: string, completed: boolean) => void }) {
+function ActivityItem({ activity, onToggle }: { activity: Activity; onToggle: (id: string, completed: boolean) => void }) {
   const Icon = activityIcons[activity.type] || CheckCircle;
   const isCompleted = activity.status === 'completed';
+  const activityDate = parseISO(activity.time);
+
+  const getStatusInfo = () => {
+    if (isCompleted) {
+        return { text: 'Completed', color: 'bg-green-100 text-green-800' };
+    }
+    if (isToday(activityDate)) {
+        return { text: 'Today', color: 'bg-blue-100 text-blue-800' };
+    }
+    if (isPast(activityDate)) {
+        return { text: 'Overdue', color: 'bg-red-100 text-red-800' };
+    }
+    return { text: 'Upcoming', color: 'bg-gray-100 text-gray-800' };
+  };
+
+  const statusInfo = getStatusInfo();
+  
   return (
-    <div className="flex items-start gap-4 rounded-lg border p-4">
-      <Checkbox 
-        id={`task-${activity.id}`} 
-        className="mt-1" 
-        checked={isCompleted}
-        onCheckedChange={(checked) => onToggle(activity.id, !!checked)}
-      />
-      <div className="flex-1 space-y-1">
+    <div className={cn("flex items-start gap-4 p-4 transition-colors border-l-4 rounded-r-md bg-card border", isCompleted ? 'border-primary' : 'border-transparent' )}>
+      <div className="flex items-center h-full pt-1">
+         <Checkbox 
+            id={`task-${activity.id}`} 
+            checked={isCompleted}
+            onCheckedChange={(checked) => onToggle(activity.id, !!checked)}
+            className="w-5 h-5"
+          />
+      </div>
+      <div className="flex-1 grid gap-1">
         <div className="flex items-center justify-between">
-          <label
+           <label
             htmlFor={`task-${activity.id}`}
-            className={cn("flex items-center gap-2 font-medium", isCompleted && "line-through text-muted-foreground")}
+            className={cn("font-semibold flex items-center gap-2 cursor-pointer", isCompleted && "line-through text-muted-foreground")}
           >
-            <Icon className="h-4 w-4 text-muted-foreground" />
+            <Icon className="h-4 w-4" />
             {activity.title}
           </label>
-          <Badge variant="outline" className="text-muted-foreground capitalize">
-            {activity.status}
-          </Badge>
+           <Badge variant="outline" className={cn("text-xs", statusInfo.color)}>{statusInfo.text}</Badge>
         </div>
-        <p className={cn("text-sm text-muted-foreground", isCompleted && "line-through")}>{activity.description}</p>
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span>{format(parseISO(activity.time), 'p')}</span>
-          <span>{activity.company}</span>
+        <p className={cn("text-sm text-muted-foreground", isCompleted && "line-through")}>
+            {activity.description}
+        </p>
+         <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1">
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>{format(activityDate, 'p')}</span>
+            </div>
+            {activity.company && (
+              <div className="flex items-center gap-1">
+                 <Briefcase className="h-3 w-3" />
+                 <span>{activity.company}</span>
+              </div>
+            )}
+            <span className="ml-auto">{formatDistanceToNow(activityDate, { addSuffix: true })}</span>
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolean, onOpenChange: (open: boolean) => void, onAddActivity: (activity: Omit<Activity, 'id' | 'status' | 'companyId'>) => void }) {
@@ -148,6 +176,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
                                     <SelectItem value="call">Call</SelectItem>
                                     <SelectItem value="email">Email</SelectItem>
                                     <SelectItem value="meeting">Meeting</SelectItem>
+                                    <SelectItem value="deadline">Deadline</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -222,17 +251,9 @@ export default function ActivitiesPage() {
   const handleAddActivity = async (newActivityData: Omit<Activity, 'id' | 'status' | 'companyId'>) => {
       if (!user?.companyId) return;
 
-      const activityDate = parseISO(newActivityData.time);
-      let status: Activity['status'] = 'today';
-      if(isFuture(activityDate) && !isToday(activityDate)) {
-        status = 'upcoming';
-      } else if (isPast(activityDate) && !isToday(activityDate)) {
-        status = 'overdue';
-      }
-
       const newActivity: Omit<Activity, 'id'> = {
           ...newActivityData,
-          status,
+          status: 'pending',
           companyId: user.companyId,
       };
       await addDoc(collection(db, 'activities'), newActivity);
@@ -240,25 +261,41 @@ export default function ActivitiesPage() {
   
   const handleToggleComplete = async (id: string, completed: boolean) => {
       const activityRef = doc(db, 'activities', id);
-      const originalActivity = activities.find(a => a.id === id);
-      if (!originalActivity) return;
-
-      let newStatus: Activity['status'] = 'today';
-      if (completed) {
-          newStatus = 'completed';
-      } else {
-        const activityDate = parseISO(originalActivity.time);
-        if(isFuture(activityDate) && !isToday(activityDate)) newStatus = 'upcoming';
-        else if (isPast(activityDate) && !isToday(activityDate)) newStatus = 'overdue';
-      }
-      
+      const newStatus = completed ? 'completed' : 'pending';
       await updateDoc(activityRef, { status: newStatus });
   };
+  
+  const categorizedActivities = useMemo(() => {
+    const today: Activity[] = [];
+    const upcoming: Activity[] = [];
+    const overdue: Activity[] = [];
+    const completed: Activity[] = [];
 
-  const todayActivities = activities.filter((a) => a.status === 'today');
-  const upcomingActivities = activities.filter((a) => a.status === 'upcoming');
-  const overdueActivities = activities.filter((a) => a.status === 'overdue');
-  const completedActivities = activities.filter((a) => a.status === 'completed');
+    activities.forEach(activity => {
+      if (activity.status === 'completed') {
+        completed.push(activity);
+        return;
+      }
+      
+      const activityDate = parseISO(activity.time);
+      if (isPast(activityDate) && !isToday(activityDate)) {
+        overdue.push(activity);
+      } else if (isToday(activityDate)) {
+        today.push(activity);
+      } else {
+        upcoming.push(activity);
+      }
+    });
+
+    return { 
+        today: today.sort((a,b) => parseISO(a.time).getTime() - parseISO(b.time).getTime()),
+        upcoming: upcoming.sort((a,b) => parseISO(a.time).getTime() - parseISO(b.time).getTime()),
+        overdue: overdue.sort((a,b) => parseISO(a.time).getTime() - parseISO(b.time).getTime()),
+        completed: completed.sort((a,b) => parseISO(b.time).getTime() - parseISO(a.time).getTime())
+    };
+  }, [activities]);
+
+  const { today: todayActivities, upcoming: upcomingActivities, overdue: overdueActivities, completed: completedActivities } = categorizedActivities;
 
   return (
     <>

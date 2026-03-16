@@ -284,12 +284,12 @@ export type Opportunity = {
 
 export type Activity = {
   id: string;
-  type: 'call' | 'email' | 'meeting' | 'task';
+  type: 'call' | 'email' | 'meeting' | 'task' | 'deadline';
   title: string;
   description: string;
   time: string; // ISO string
   company: string;
-  status: 'today' | 'upcoming' | 'overdue' | 'completed';
+  status: 'pending' | 'completed';
   companyId: string;
 };
 

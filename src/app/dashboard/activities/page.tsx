@@ -53,7 +53,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { collection, onSnapshot, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Activity, Company } from '@/lib/types';
-import { formatISO, parseISO, isToday, isFuture, isPast, format, formatDistanceToNow, startOfWeek, startOfMonth, startOfToday, isAfter } from 'date-fns';
+import { formatISO, parseISO, isToday, isFuture, isPast, format, formatDistanceToNow, startOfWeek, startOfMonth, startOfToday, isAfter, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
@@ -426,56 +426,64 @@ function GenerateReportDialog({ open, onOpenChange, activities, user, company }:
         period: period.replace('-', ' '),
       });
       
-      const doc = new jsPDF();
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
       const margin = 40;
       let y = margin;
-      
+
+      // --- Header ---
       if (company?.logoUrl) {
-        try {
-            const img = new Image();
-            img.crossOrigin = 'Anonymous';
-            img.src = company.logoUrl;
-            await new Promise<void>((resolve, reject) => {
-                img.onload = () => {
-                    doc.addImage(img, 'PNG', margin, y - 20, 40, 40);
-                    resolve();
-                };
-                img.onerror = (e) => reject(e);
-            });
-        } catch (e) {
-            console.error("Error adding company logo to PDF:", e);
-        }
+          try {
+              const img = new Image();
+              img.crossOrigin = 'Anonymous';
+              img.src = company.logoUrl;
+              await new Promise<void>((resolve, reject) => {
+                  img.onload = () => {
+                      doc.addImage(img, 'PNG', margin, y, 40, 40);
+                      resolve();
+                  };
+                  img.onerror = (e) => reject(e);
+              });
+          } catch (e) {
+              console.error("Error adding company logo to PDF:", e);
+          }
       }
 
       const companyName = company?.name || "FieldWise";
+      const companyAddress = company?.address || "123 Main St, Anytown";
+
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(companyName, pageWidth - margin, y - 10, { align: 'right' });
-      y += 30; // Space after header
+      doc.text(companyName, margin + 50, y + 12);
+      doc.text(companyAddress.split('\n'), margin + 50, y + 24);
+
+      const reportTitle = "Activity Report";
+      const reportIdText = `For: ${user.name}`;
+      const dateText = `Date: ${format(new Date(), 'MMMM do, yyyy')}`;
       
       doc.setFontSize(18);
-      doc.text(reportData.reportTitle, margin, y);
-      y += 20;
+      doc.setFont('helvetica', 'bold');
+      doc.text(reportTitle, pageWidth - margin, y + 12, { align: 'right' });
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(reportIdText, pageWidth - margin, y + 27, { align: 'right' });
+      doc.text(dateText, pageWidth - margin, y + 42, { align: 'right' });
 
-      doc.setFontSize(11);
-      doc.setTextColor(100);
-      doc.text(`Report for: ${user.name}`, margin, y);
-      y += 15;
-      doc.text(`Period: ${period.replace('-', ' ')}`, margin, y);
-      y += 25;
-      doc.setTextColor(0);
+      y += 80;
 
+      // --- Executive Summary ---
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.text('Executive Summary', margin, y);
-      y += 20;
+      y += 15;
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       const summaryLines = doc.splitTextToSize(reportData.executiveSummary, pageWidth - margin * 2);
       doc.text(summaryLines, margin, y);
       y += summaryLines.length * 12 + 10;
-
+      
+      // --- KPIs ---
       (doc as any).autoTable({
         startY: y,
         theme: 'plain',
@@ -491,11 +499,12 @@ function GenerateReportDialog({ open, onOpenChange, activities, user, company }:
       });
       y = (doc as any).lastAutoTable.finalY + 15;
       
+      // --- Sections ---
       for (const section of reportData.sections) {
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.text(section.title, margin, y);
-        y += 20;
+        y += 15;
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'italic');
@@ -725,6 +734,8 @@ export default function ActivitiesPage() {
       }
       
       const activityDate = parseISO(activity.time);
+      if (!isValid(activityDate)) return;
+
       if (isPast(activityDate) && !isToday(activityDate)) {
         overdue.push(activity);
       } else if (isToday(activityDate)) {

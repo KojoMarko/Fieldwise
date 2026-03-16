@@ -383,6 +383,7 @@ function AddActivityDialog({ open, onOpenChange, onAddActivity }: { open: boolea
 function GenerateReportDialog({ open, onOpenChange, activities, user }: { open: boolean, onOpenChange: (open: boolean) => void, activities: Activity[], user: any }) {
   const [period, setPeriod] = useState('this-week');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
 
   const handleGenerateReport = async () => {
@@ -508,6 +509,74 @@ function GenerateReportDialog({ open, onOpenChange, activities, user }: { open: 
     }
   };
 
+  const handleSendReport = async () => {
+    setIsSending(true);
+    toast({ title: 'Sending Report...', description: 'Your report is being sent to all administrators.' });
+
+    try {
+      const now = new Date();
+      let startDate: Date;
+
+      switch (period) {
+        case 'today':
+          startDate = startOfToday();
+          break;
+        case 'this-week':
+          startDate = startOfWeek(now, { weekStartsOn: 1 });
+          break;
+        case 'this-month':
+          startDate = startOfMonth(now);
+          break;
+        default:
+          startDate = startOfWeek(now, { weekStartsOn: 1 });
+      }
+
+      const filteredActivities = activities.filter(a => isAfter(parseISO(a.time), startDate));
+
+      if (filteredActivities.length === 0) {
+        toast({
+          variant: 'destructive',
+          title: 'No Activities Found',
+          description: 'There are no activities in the selected period to report on.',
+        });
+        setIsSending(false);
+        return;
+      }
+      
+      const reportData = await generateActivityReport({
+        activities: filteredActivities,
+        userName: user.name,
+        period: period.replace('-', ' '),
+      });
+      
+      if (user.companyId) {
+          await addDoc(collection(db, 'notifications'), {
+              type: 'System',
+              title: `Activity Report from ${user.name}`,
+              description: reportData.executiveSummary,
+              timestamp: new Date().toISOString(),
+              isRead: false,
+              author: user.name,
+              companyId: user.companyId,
+              recipientRole: 'Admin',
+          });
+      }
+
+      toast({
+        title: 'Report Sent',
+        description: 'Your activity report has been sent to all administrators.',
+      });
+      onOpenChange(false);
+
+    } catch (e) {
+      console.error('Report sending failed', e);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to send the report.' });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -533,7 +602,11 @@ function GenerateReportDialog({ open, onOpenChange, activities, user }: { open: 
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleGenerateReport} disabled={isLoading}>
+           <Button onClick={handleSendReport} disabled={isLoading || isSending} variant="secondary">
+            {isSending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+            {isSending ? 'Sending...' : 'Send to Admins'}
+          </Button>
+          <Button onClick={handleGenerateReport} disabled={isLoading || isSending}>
             {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
             {isLoading ? 'Generating...' : 'Generate & Download PDF'}
           </Button>
@@ -763,5 +836,3 @@ export default function ActivitiesPage() {
     </>
   );
 }
-
-    

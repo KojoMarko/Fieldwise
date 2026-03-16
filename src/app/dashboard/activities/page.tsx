@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -232,6 +233,7 @@ export default function ActivitiesPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('today');
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -296,6 +298,13 @@ export default function ActivitiesPage() {
   }, [activities]);
 
   const { today: todayActivities, upcoming: upcomingActivities, overdue: overdueActivities, completed: completedActivities } = categorizedActivities;
+
+  const TABS = [
+    { value: 'today', label: 'Today' },
+    { value: 'upcoming', label: 'Upcoming' },
+    { value: 'overdue', label: 'Overdue' },
+    { value: 'completed', label: 'Completed' },
+  ];
 
   return (
     <>
@@ -363,15 +372,28 @@ export default function ActivitiesPage() {
           </div>
 
           <div className="lg:col-span-2">
-            <Tabs defaultValue="today">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <Card>
                 <CardHeader>
                   <CardTitle>Activity Timeline</CardTitle>
-                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mt-2">
-                    <TabsTrigger value="today">Today</TabsTrigger>
-                    <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-                    <TabsTrigger value="overdue">Overdue</TabsTrigger>
-                    <TabsTrigger value="completed">Completed</TabsTrigger>
+                   <div className="sm:hidden pt-2">
+                    <Select value={activeTab} onValueChange={setActiveTab}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {TABS.map((tab) => (
+                                <SelectItem key={tab.value} value={tab.value}>
+                                    {tab.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                  </div>
+                  <TabsList className="hidden sm:grid w-full grid-cols-4 mt-2">
+                     {TABS.map((tab) => (
+                        <TabsTrigger key={tab.value} value={tab.value}>{tab.label}</TabsTrigger>
+                    ))}
                   </TabsList>
                 </CardHeader>
                 <CardContent>
@@ -410,3 +432,5 @@ export default function ActivitiesPage() {
     </>
   );
 }
+
+    

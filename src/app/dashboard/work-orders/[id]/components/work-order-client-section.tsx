@@ -189,7 +189,7 @@ export function WorkOrderClientSection({
           });
         } else {
           setQuestionnaireData({
-            reportedProblem: savedData.summary?.reportedProblem || '',
+            reportedProblem: savedData.summary?.reportedProblem || workOrder.description || '',
             symptomSummary: savedData.summary?.symptomSummary || '',
             problemSummary: savedData.summary?.problemSummary || '',
             resolutionSummary: savedData.summary?.resolutionSummary || '',
@@ -205,7 +205,19 @@ export function WorkOrderClientSection({
         }
       } catch (e) {
         console.error("Could not parse saved report data.", e);
+        // If parsing fails, it's probably old text data.
+        if (isInstallation) {
+          setInstallationQuestionnaireData(prev => ({...prev, finalHandoverNotes: workOrder.technicianNotes || '' }));
+        } else {
+          setQuestionnaireData(prev => ({...prev, resolutionSummary: workOrder.technicianNotes || '', reportedProblem: workOrder.description || '' }));
+        }
       }
+    } else { // Handle old, non-JSON notes or empty notes
+        if (isInstallation) {
+          setInstallationQuestionnaireData(prev => ({...prev, finalHandoverNotes: workOrder.technicianNotes || '' }));
+        } else {
+          setQuestionnaireData(prev => ({...prev, resolutionSummary: workOrder.technicianNotes || '', reportedProblem: workOrder.description || '' }));
+        }
     }
 
     // Auto-update parts used from work order
@@ -627,3 +639,4 @@ export function WorkOrderClientSection({
     </>
   );
 }
+

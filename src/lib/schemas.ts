@@ -1,6 +1,13 @@
 
 import { z } from 'zod';
 
+export const PreInstallationCheckSchema = z.object({
+  item: z.string().min(1, 'Item name is required'),
+  requirements: z.string().min(1, 'Requirements are required'),
+  actual: z.string().min(1, 'Actual condition is required'),
+  status: z.enum(['Passed', 'Failed', 'N/A']),
+});
+
 export const ServiceReportQuestionnaireSchema = z.object({
   reportedProblem: z.string().describe("The problem as reported by the customer."),
   symptomSummary: z.string().describe("Summary of the symptoms observed."),
@@ -22,7 +29,7 @@ export const ServiceReportQuestionnaireSchema = z.object({
 });
 
 export const InstallationReportQuestionnaireSchema = z.object({
-  preInstallationChecks: z.string().describe("Summary of pre-installation checks performed (e.g., site readiness, power availability)."),
+  preInstallationChecks: z.array(PreInstallationCheckSchema).default([]),
   systemConfigurationNotes: z.string().describe("Notes on system configuration and setup (e.g., software version, network settings)."),
   testingAndValidationSummary: z.string().describe("Summary of post-installation tests, calibration, and validation procedures."),
   customerTrainingNotes: z.string().describe("Details of any basic operational training provided to the customer."),

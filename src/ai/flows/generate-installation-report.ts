@@ -32,7 +32,12 @@ const ReportDataSchema = z.object({
         performedBy: z.string(),
     }),
     summary: z.object({
-        preInstallationChecks: z.string().describe("A professional summary of pre-installation checks."),
+        preInstallationChecks: z.array(z.object({
+            item: z.string(),
+            requirements: z.string(),
+            actual: z.string(),
+            status: z.string(),
+        })).describe("A professional summary of pre-installation checks in a structured format."),
         systemConfiguration: z.string().describe("A professional summary of the system configuration process."),
         testingAndValidation: z.string().describe("A clear summary of testing and validation outcomes."),
         customerTraining: z.string().describe("A summary of the training provided to the customer."),
@@ -59,17 +64,8 @@ const prompt = ai.definePrompt({
     prompt: `You are an expert technical writer specializing in equipment installation reports.
     Your task is to take the raw notes from an engineer's installation questionnaire and transform them into a professional, well-written report.
     
-    Review the following fields from the questionnaire:
-    - preInstallationChecks
-    - systemConfigurationNotes
-    - testingAndValidationSummary
-    - customerTrainingNotes
-    - finalHandoverNotes
-
-    For each of these fields, correct any grammar or spelling mistakes, improve the phrasing, and ensure the tone is professional and clear for the end customer. Do not change the core meaning of the notes.
+    Review the following fields from the questionnaire. Correct any grammar or spelling mistakes, improve the phrasing, and ensure the tone is professional and clear for the end customer. Do not change the core meaning of the notes.
     
-    Then, assemble all the provided information into the required JSON output format.
-
     --- ENGINEER'S QUESTIONNAIRE INPUT ---
     Work Order ID: {{{workOrderId}}}
     Asset: {{{assetName}}} ({{{assetModel}}} / {{{assetSerial}}})
@@ -77,7 +73,14 @@ const prompt = ai.definePrompt({
     Engineer: {{{preparedBy}}}
     Completion Date: {{{completionDate}}}
 
-    Pre-installation Checks: {{{preInstallationChecks}}}
+    Pre-installation Checks:
+    {{#each preInstallationChecks}}
+    - Item: {{this.item}}
+      Requirement: {{this.requirements}}
+      Actual: {{this.actual}}
+      Status: {{this.status}}
+    {{/each}}
+
     System Configuration Notes: {{{systemConfigurationNotes}}}
     Testing & Validation Summary: {{{testingAndValidationSummary}}}
     Customer Training Notes: {{{customerTrainingNotes}}}
@@ -86,7 +89,7 @@ const prompt = ai.definePrompt({
     Signing Person: {{{signingPerson}}}
     --- END OF INPUT ---
     
-    Now, generate the final, polished installation report in the required JSON format.
+    Now, generate the final, polished installation report in the required JSON format. The 'preInstallationChecks' in your output should be an array of objects, just like the input, but with professionalized text.
     `,
 });
 

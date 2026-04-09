@@ -12,10 +12,12 @@ import {
   Check,
   Pause,
   Play,
+  PlusCircle,
+  Trash2,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import { generateInstallationReport } from '@/ai/flows/generate-installation-report';
-import type { ServiceReportQuestionnaire, InstallationReportQuestionnaire } from '@/lib/types';
+import type { ServiceReportQuestionnaire, InstallationReportQuestionnaire, PreInstallationCheck } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import type { WorkOrder, Customer, User, Asset, Company, WorkOrderStatus, AllocatedPart } from '@/lib/types';
 import { format, parseISO, differenceInMinutes, isValid, formatISO } from 'date-fns';
@@ -156,7 +158,7 @@ export function WorkOrderClientSection({
   });
 
   const [installationQuestionnaireData, setInstallationQuestionnaireData] = useState<Partial<InstallationReportQuestionnaire>>({
-    preInstallationChecks: '',
+    preInstallationChecks: [],
     systemConfigurationNotes: '',
     testingAndValidationSummary: '',
     customerTrainingNotes: '',
@@ -178,7 +180,7 @@ export function WorkOrderClientSection({
         const savedData = JSON.parse(workOrder.technicianNotes);
         if (isInstallation) {
           setInstallationQuestionnaireData({
-            preInstallationChecks: savedData.summary?.preInstallationChecks || '',
+            preInstallationChecks: savedData.summary?.preInstallationChecks || [],
             systemConfigurationNotes: savedData.summary?.systemConfiguration || '',
             testingAndValidationSummary: savedData.summary?.testingAndValidation || '',
             customerTrainingNotes: savedData.summary?.customerTraining || '',
@@ -235,7 +237,7 @@ export function WorkOrderClientSection({
     const data = isInstallation ? installationQuestionnaireData : questionnaireData;
     const { timeWorkStarted, timeWorkCompleted } = data;
     if (timeWorkStarted && timeWorkCompleted && timeWorkCompleted > timeWorkStarted) {
-      const minutes = differenceInMinutes(timeWorkCompleted, timeWorkStarted);
+      const minutes = differenceInMinutes(timeWorkCompleted, timeWorkCompleted);
       const hours = parseFloat((minutes / 60).toFixed(2));
       if (!isInstallation && questionnaireData.laborHours !== hours) {
         setQuestionnaireData(prev => ({ ...prev, laborHours: hours }));
@@ -391,6 +393,22 @@ export function WorkOrderClientSection({
 
   const hasGeneratedReport = workOrder.technicianNotes?.startsWith('{');
 
+  const handleInstallationCheckChange = (index: number, field: keyof PreInstallationCheck, value: string) => {
+    const newChecks = [...(installationQuestionnaireData.preInstallationChecks || [])];
+    const checkToUpdate = { ...newChecks[index], [field]: value };
+    newChecks[index] = checkToUpdate;
+    setInstallationQuestionnaireData({ ...installationQuestionnaireData, preInstallationChecks: newChecks });
+  };
+  const addInstallationCheckRow = () => {
+      const newChecks = [...(installationQuestionnaireData.preInstallationChecks || []), { item: '', requirements: '', actual: '', status: 'N/A' }];
+      setInstallationQuestionnaireData({ ...installationQuestionnaireData, preInstallationChecks: newChecks });
+  }
+  const removeInstallationCheckRow = (index: number) => {
+      const newChecks = [...(installationQuestionnaireData.preInstallationChecks || [])];
+      newChecks.splice(index, 1);
+      setInstallationQuestionnaireData({ ...installationQuestionnaireData, preInstallationChecks: newChecks });
+  }
+
   const renderContent = () => {
     if (isGeneratingReport) {
       return (
@@ -535,8 +553,28 @@ export function WorkOrderClientSection({
             {isInstallation ? (
                 <>
                     <div className="space-y-2">
-                        <Label>Pre-Installation Checks</Label>
-                        <Textarea value={installationQuestionnaireData.preInstallationChecks} onChange={e => setInstallationQuestionnaireData({ ...installationQuestionnaireData, preInstallationChecks: e.target.value })} placeholder="e.g., Confirmed site power and space requirements met." />
+                      <Label>Pre-Installation Checks</Label>
+                      <div className="space-y-3">
+                        {(installationQuestionnaireData.preInstallationChecks || []).map((check, index) => (
+                          <div key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-end p-3 border rounded-md">
+                            <div className='space-y-1'><Label className='text-xs'>Item</Label><Input value={check.item} onChange={e => handleInstallationCheckChange(index, 'item', e.target.value)} placeholder="e.g., Environment Temp." /></div>
+                            <div className='space-y-1'><Label className='text-xs'>Requirements</Label><Input value={check.requirements} onChange={e => handleInstallationCheckChange(index, 'requirements', e.target.value)} placeholder="e.g., 10-30°C" /></div>
+                            <div className='space-y-1'><Label className='text-xs'>Actual</Label><Input value={check.actual} onChange={e => handleInstallationCheckChange(index, 'actual', e.target.value)} placeholder="e.g., 25.6°C" /></div>
+                            <div className='space-y-1'><Label className='text-xs'>Status</Label>
+                              <Select value={check.status} onValueChange={value => handleInstallationCheckChange(index, 'status', value as 'Passed' | 'Failed' | 'N/A')}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value="Passed">Passed</SelectItem>
+                                      <SelectItem value="Failed">Failed</SelectItem>
+                                      <SelectItem value="N/A">N/A</SelectItem>
+                                  </SelectContent>
+                              </Select>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => removeInstallationCheckRow(index)}><Trash2 className="text-destructive h-4 w-4" /></Button>
+                          </div>
+                        ))}
+                        <Button variant="outline" size="sm" onClick={addInstallationCheckRow} className='mt-2'><PlusCircle className="mr-2 h-4 w-4"/>Add Check</Button>
+                      </div>
                     </div>
                     <div className="space-y-2">
                         <Label>System Configuration Notes</Label>
@@ -639,4 +677,3 @@ export function WorkOrderClientSection({
     </>
   );
 }
-

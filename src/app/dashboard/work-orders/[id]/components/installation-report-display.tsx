@@ -14,6 +14,8 @@ import { format, isValid, parseISO } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 
 export function InstallationReportDisplay({
@@ -125,6 +127,32 @@ export function InstallationReportDisplay({
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
+    // --- PRE-INSTALLATION CHECKS ---
+    const preInstallChecks = reportData.summary?.preInstallationChecks || [];
+    (doc as any).autoTable({
+        startY: finalY,
+        head: [[{ content: 'Pre-Installation Checks', colSpan: 4 }]],
+        theme: 'grid',
+        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
+    });
+    if (preInstallChecks.length > 0) {
+        (doc as any).autoTable({
+            startY: (doc as any).lastAutoTable.finalY,
+            head: [['Item', 'Requirements', 'Actual Conditions', 'Status']],
+            body: preInstallChecks.map((check: any) => [check.item, check.requirements, check.actual, check.status]),
+            theme: 'grid',
+            headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
+        });
+    } else {
+        (doc as any).autoTable({
+            startY: (doc as any).lastAutoTable.finalY,
+            body: [['No pre-installation checks were recorded.']],
+            theme: 'grid'
+        });
+    }
+    finalY = (doc as any).lastAutoTable.finalY + 10;
+    
+    
     const addSectionWithAutoWrap = (title: string, content: string) => {
         const maxWidth = pageWidth - (margin * 2);
         (doc as any).autoTable({
@@ -138,8 +166,7 @@ export function InstallationReportDisplay({
         finalY = (doc as any).lastAutoTable.finalY + 10;
     };
     
-    // --- Installation Sections ---
-    addSectionWithAutoWrap('Pre-Installation Checks', safe(reportData.summary?.preInstallationChecks));
+    // --- Other Installation Sections ---
     addSectionWithAutoWrap('System Configuration', safe(reportData.summary?.systemConfiguration));
     addSectionWithAutoWrap('Testing & Validation', safe(reportData.summary?.testingAndValidation));
     addSectionWithAutoWrap('Customer Training', safe(reportData.summary?.customerTraining));
@@ -165,10 +192,10 @@ export function InstallationReportDisplay({
     });
   };
 
-  const Section = ({ title, content }: { title: string, content?: string }) => (
+  const Section = ({ title, children }: { title: string, children: React.ReactNode }) => (
     <div className="mb-6">
         <h3 className="text-lg font-semibold text-primary mb-2 border-b pb-1">{title}</h3>
-        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{content || 'N/A'}</p>
+        {children}
     </div>
   );
 
@@ -191,6 +218,12 @@ export function InstallationReportDisplay({
   
   const isEngineerView = user?.role === 'Engineer';
 
+  const statusColors: Record<string, string> = {
+    Passed: 'bg-green-100 text-green-800',
+    Failed: 'bg-red-100 text-red-800',
+    'N/A': 'bg-gray-100 text-gray-800',
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -206,11 +239,32 @@ export function InstallationReportDisplay({
           </div>
       </CardHeader>
       <CardContent>
-          <Section title="Pre-Installation Checks" content={reportData.summary?.preInstallationChecks} />
-          <Section title="System Configuration" content={reportData.summary?.systemConfiguration} />
-          <Section title="Testing & Validation" content={reportData.summary?.testingAndValidation} />
-          <Section title="Customer Training" content={reportData.summary?.customerTraining} />
-          <Section title="Final Handover Notes" content={reportData.summary?.finalHandoverNotes} />
+          <Section title="Pre-Installation Checks">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Item</TableHead>
+                  <TableHead>Requirements</TableHead>
+                  <TableHead>Actual Conditions</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(reportData.summary?.preInstallationChecks || []).map((check: any, index: number) => (
+                  <TableRow key={index}>
+                    <TableCell>{check.item}</TableCell>
+                    <TableCell>{check.requirements}</TableCell>
+                    <TableCell>{check.actual}</TableCell>
+                    <TableCell><Badge variant="outline" className={statusColors[check.status]}>{check.status}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Section>
+          <Section title="System Configuration"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{reportData.summary?.systemConfiguration || 'N/A'}</p></Section>
+          <Section title="Testing & Validation"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{reportData.summary?.testingAndValidation || 'N/A'}</p></Section>
+          <Section title="Customer Training"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{reportData.summary?.customerTraining || 'N/A'}</p></Section>
+          <Section title="Final Handover Notes"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{reportData.summary?.finalHandoverNotes || 'N/A'}</p></Section>
       </CardContent>
     </Card>
   );

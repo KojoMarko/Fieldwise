@@ -21,6 +21,17 @@ export const ServiceReportQuestionnaireSchema = z.object({
   })).describe('A list of parts that were used during the service.'),
 });
 
+export const InstallationReportQuestionnaireSchema = z.object({
+  preInstallationChecks: z.string().describe("Summary of pre-installation checks performed (e.g., site readiness, power availability)."),
+  systemConfigurationNotes: z.string().describe("Notes on system configuration and setup (e.g., software version, network settings)."),
+  testingAndValidationSummary: z.string().describe("Summary of post-installation tests, calibration, and validation procedures."),
+  customerTrainingNotes: z.string().describe("Details of any basic operational training provided to the customer."),
+  finalHandoverNotes: z.string().describe("Any final notes or comments upon handing over the system to the customer."),
+  signingPerson: z.string().describe("The name of the customer representative signing off on the installation."),
+  timeWorkStarted: z.any().describe("The date and time the engineer started the work."),
+  timeWorkCompleted: z.any().describe("The date and time the engineer completed the work."),
+});
+
 
 export const CreateUserInputSchema = z.object({
     name: z.string().min(1, 'Name is required'),

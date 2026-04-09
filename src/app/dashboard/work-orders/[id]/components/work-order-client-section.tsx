@@ -14,7 +14,8 @@ import {
   Play,
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
-import type { ServiceReportQuestionnaire } from '@/lib/types';
+import { generateInstallationReport } from '@/ai/flows/generate-installation-report';
+import type { ServiceReportQuestionnaire, InstallationReportQuestionnaire } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import type { WorkOrder, Customer, User, Asset, Company, WorkOrderStatus, AllocatedPart } from '@/lib/types';
 import { format, parseISO, differenceInMinutes, isValid, formatISO } from 'date-fns';
@@ -36,6 +37,12 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { CalendarIcon } from 'lucide-react';
 import { ServiceReportDisplay } from './service-report-display';
+import dynamic from 'next/dynamic';
+
+const InstallationReportDisplay = dynamic(() => import('./installation-report-display').then(mod => mod.InstallationReportDisplay), {
+  loading: () => <div className="flex items-center justify-center p-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>,
+});
+
 
 const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: Date) => void }) => {
   const [date, setDate] = useState<Date | undefined>(value);
@@ -132,6 +139,7 @@ export function WorkOrderClientSection({
   const { toast } = useToast();
   const [isQuestionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
+  
   const [questionnaireData, setQuestionnaireData] = useState<Partial<ServiceReportQuestionnaire>>({
     reportedProblem: workOrder.description || '',
     symptomSummary: '',
@@ -146,53 +154,82 @@ export function WorkOrderClientSection({
     timeWorkStarted: undefined,
     timeWorkCompleted: undefined,
   });
+
+  const [installationQuestionnaireData, setInstallationQuestionnaireData] = useState<Partial<InstallationReportQuestionnaire>>({
+    preInstallationChecks: '',
+    systemConfigurationNotes: '',
+    testingAndValidationSummary: '',
+    customerTrainingNotes: '',
+    finalHandoverNotes: '',
+    signingPerson: customer?.contactPerson || '',
+    timeWorkStarted: undefined,
+    timeWorkCompleted: undefined,
+  });
+  
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const isEngineerView = user?.role === 'Engineer';
+  const isInstallation = workOrder.type === 'Installation';
 
   useEffect(() => {
     // Pre-fill questionnaire from saved notes if they exist
     if (workOrder.technicianNotes && workOrder.technicianNotes.startsWith('{')) {
       try {
         const savedData = JSON.parse(workOrder.technicianNotes);
-        setQuestionnaireData({
-          reportedProblem: savedData.summary?.reportedProblem || '',
-          symptomSummary: savedData.summary?.symptomSummary || '',
-          problemSummary: savedData.summary?.problemSummary || '',
-          resolutionSummary: savedData.summary?.resolutionSummary || '',
-          verificationOfActivity: savedData.summary?.verificationOfActivity || '',
-          instrumentCondition: savedData.workOrder?.instrumentCondition || 'Operational',
-          agreementType: savedData.agreement?.type || 'Warranty',
-          laborHours: savedData.labor?.[0]?.hours || 0,
-          signingPerson: savedData.summary?.signingPerson || savedData.signingPerson || '',
-          timeWorkStarted: savedData.labor?.[0]?.startDate ? parseISO(savedData.labor[0].startDate) : undefined,
-          timeWorkCompleted: savedData.labor?.[0]?.endDate ? parseISO(savedData.labor[0].endDate) : undefined,
-          partsUsed: savedData.parts || [],
-        });
+        if (isInstallation) {
+          setInstallationQuestionnaireData({
+            preInstallationChecks: savedData.summary?.preInstallationChecks || '',
+            systemConfigurationNotes: savedData.summary?.systemConfiguration || '',
+            testingAndValidationSummary: savedData.summary?.testingAndValidation || '',
+            customerTrainingNotes: savedData.summary?.customerTraining || '',
+            finalHandoverNotes: savedData.summary?.finalHandoverNotes || '',
+            signingPerson: savedData.signingPerson || '',
+            timeWorkStarted: savedData.workOrder?.completionDate ? parseISO(savedData.workOrder.completionDate) : undefined, // Approximation
+            timeWorkCompleted: savedData.workOrder?.completionDate ? parseISO(savedData.workOrder.completionDate) : undefined,
+          });
+        } else {
+          setQuestionnaireData({
+            reportedProblem: savedData.summary?.reportedProblem || '',
+            symptomSummary: savedData.summary?.symptomSummary || '',
+            problemSummary: savedData.summary?.problemSummary || '',
+            resolutionSummary: savedData.summary?.resolutionSummary || '',
+            verificationOfActivity: savedData.summary?.verificationOfActivity || '',
+            instrumentCondition: savedData.workOrder?.instrumentCondition || 'Operational',
+            agreementType: savedData.agreement?.type || 'Warranty',
+            laborHours: savedData.labor?.[0]?.hours || 0,
+            signingPerson: savedData.summary?.signingPerson || savedData.signingPerson || '',
+            timeWorkStarted: savedData.labor?.[0]?.startDate ? parseISO(savedData.labor[0].startDate) : undefined,
+            timeWorkCompleted: savedData.labor?.[0]?.endDate ? parseISO(savedData.labor[0].endDate) : undefined,
+            partsUsed: savedData.parts || [],
+          });
+        }
       } catch (e) {
         console.error("Could not parse saved report data.", e);
       }
     }
 
     // Auto-update parts used from work order
-    setQuestionnaireData(prev => ({
-      ...prev,
-      partsUsed: workOrder.allocatedParts?.filter(p => p.status === 'Used') || []
-    }));
+    if (!isInstallation) {
+      setQuestionnaireData(prev => ({
+        ...prev,
+        partsUsed: workOrder.allocatedParts?.filter(p => p.status === 'Used') || []
+      }));
+    }
 
-  }, [workOrder]);
+  }, [workOrder, isInstallation]);
 
   // Effect to handle automatic updates to the questionnaire form data
   useEffect(() => {
-    const { timeWorkStarted, timeWorkCompleted } = questionnaireData;
+    const data = isInstallation ? installationQuestionnaireData : questionnaireData;
+    const { timeWorkStarted, timeWorkCompleted } = data;
     if (timeWorkStarted && timeWorkCompleted && timeWorkCompleted > timeWorkStarted) {
       const minutes = differenceInMinutes(timeWorkCompleted, timeWorkStarted);
       const hours = parseFloat((minutes / 60).toFixed(2));
-      if (questionnaireData.laborHours !== hours) {
+      if (!isInstallation && questionnaireData.laborHours !== hours) {
         setQuestionnaireData(prev => ({ ...prev, laborHours: hours }));
       }
     }
-  }, [questionnaireData.timeWorkStarted, questionnaireData.timeWorkCompleted, questionnaireData.laborHours]);
+  }, [isInstallation, installationQuestionnaireData, questionnaireData]);
 
 
   const handlePutOnHold = async (reason: string) => {
@@ -267,7 +304,6 @@ export function WorkOrderClientSection({
       
       const completedDate = new Date();
 
-      // If it's a preventive maintenance, update the asset's last PPM date
       if (workOrder.type === 'Preventive' && asset) {
           const assetRef = doc(db, 'assets', asset.id);
           await updateDoc(assetRef, { lastPpmDate: formatISO(completedDate) });
@@ -300,6 +336,47 @@ export function WorkOrderClientSection({
     }
   }
 
+  const handleInstallationReportSubmit = async () => {
+    if(!db) return;
+    setQuestionnaireOpen(false);
+    setIsGeneratingReport(true);
+    try {
+        const result = await generateInstallationReport({
+            ...(installationQuestionnaireData as InstallationReportQuestionnaire),
+            workOrderId: workOrder.id,
+            assetName: asset?.name || 'N/A',
+            assetModel: asset?.model || 'N/A',
+            assetSerial: asset?.serialNumber || 'N/A',
+            clientName: customer?.name || 'N/A',
+            preparedBy: technician?.name || user?.name || 'N/A',
+            completionDate: format(new Date(), 'yyyy-MM-dd HH:mm'),
+        });
+        
+        const completedDate = new Date();
+
+        const workOrderRef = doc(db, 'work-orders', workOrder.id);
+        await updateDoc(workOrderRef, {
+            status: 'Completed',
+            technicianNotes: result.report,
+            completedDate: formatISO(completedDate),
+        });
+
+        toast({
+            title: 'Installation Report Generated',
+            description: 'The AI-powered installation report has been successfully created.',
+        });
+    } catch (error) {
+      console.error('Error generating installation report:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Report Generation Failed',
+        description: 'Could not generate the installation report at this time.',
+      });
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }
+
   const hasGeneratedReport = workOrder.technicianNotes?.startsWith('{');
 
   const renderContent = () => {
@@ -308,7 +385,7 @@ export function WorkOrderClientSection({
         <Card>
           <CardContent className="p-6 flex flex-col items-center justify-center min-h-[200px] sm:min-h-[300px]">
             <LoaderCircle className="h-10 w-10 animate-spin text-primary mb-4" />
-            <p className="font-medium">Generating Service Report...</p>
+            <p className="font-medium">Generating Report...</p>
             <p className="text-sm text-muted-foreground">The AI is structuring your report data.</p>
           </CardContent>
         </Card>
@@ -316,6 +393,18 @@ export function WorkOrderClientSection({
     }
 
     if (hasGeneratedReport) {
+      if (isInstallation) {
+        return (
+          <InstallationReportDisplay
+            workOrder={workOrder}
+            company={company ?? undefined}
+            customer={customer ?? undefined}
+            asset={asset ?? undefined}
+            technician={technician ?? undefined}
+            onRegenerate={() => setQuestionnaireOpen(true)}
+          />
+        )
+      }
       return (
         <ServiceReportDisplay
           workOrder={workOrder}
@@ -338,12 +427,12 @@ export function WorkOrderClientSection({
             <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
               {workOrder.status === 'Cancelled'
                 ? 'This work order has been cancelled.'
-                : 'This work order is marked as completed but no service report was generated.'}
+                : 'This work order is marked as completed but no report was generated.'}
             </div>
             {workOrder.status !== 'Cancelled' && (
               <Button className="w-full" onClick={() => setQuestionnaireOpen(true)}>
                 <Check className="mr-2" />
-                Generate Service Report
+                Generate Report
               </Button>
             )}
           </CardContent>
@@ -357,7 +446,7 @@ export function WorkOrderClientSection({
           <CardHeader><CardTitle>Service Report</CardTitle></CardHeader>
           <CardContent>
             <div className="flex items-center text-sm text-muted-foreground border p-3 rounded-md">
-              A service report will be available once the engineer completes the work.
+              A report will be available once the engineer completes the work.
             </div>
           </CardContent>
         </Card>
@@ -392,11 +481,9 @@ export function WorkOrderClientSection({
             Current Status: <span className="font-semibold ml-1">{workOrder.status}</span>
           </div>
 
-          {/* Action buttons layout: vertical on small screens, columns on wider screens */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {currentAction ? (
               <Button className="w-full" onClick={() => handleStatusChange(currentAction.nextStatus)}>
-                {/* dynamic icon usage - instantiate as component */}
                 {createElement(currentAction.icon, { className: 'mr-2' })}
                 {currentAction.label}
               </Button>
@@ -425,153 +512,118 @@ export function WorkOrderClientSection({
         onSubmit={handlePutOnHold}
       />
 
-      {/* Dialog: responsive width and scrollable content area */}
       <Dialog open={isQuestionnaireOpen} onOpenChange={setQuestionnaireOpen}>
         <DialogContent className="w-full max-w-full sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Engineer Service Report Questionnaire</DialogTitle>
-            <DialogDescription>Fill out all fields to generate the final service report.</DialogDescription>
+            <DialogTitle>{isInstallation ? 'Installation Report Questionnaire' : 'Engineer Service Report Questionnaire'}</DialogTitle>
+            <DialogDescription>Fill out all fields to generate the final report.</DialogDescription>
           </DialogHeader>
 
           <div className="py-4 space-y-4 max-h-[72vh] overflow-y-auto px-4 sm:px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Reported Problem</Label>
-                <Textarea
-                  value={questionnaireData.reportedProblem}
-                  onChange={e => setQuestionnaireData({ ...questionnaireData, reportedProblem: e.target.value })}
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Symptom Summary</Label>
-                <Textarea
-                  value={questionnaireData.symptomSummary}
-                  onChange={e => setQuestionnaireData({ ...questionnaireData, symptomSummary: e.target.value })}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Problem Summary</Label>
-                <Textarea
-                  value={questionnaireData.problemSummary}
-                  onChange={e => setQuestionnaireData({ ...questionnaireData, problemSummary: e.target.value })}
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Resolution Summary</Label>
-                <Textarea
-                  value={questionnaireData.resolutionSummary}
-                  onChange={e => setQuestionnaireData({ ...questionnaireData, resolutionSummary: e.target.value })}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Verification of Activity</Label>
-                <Input
-                  value={questionnaireData.verificationOfActivity}
-                  onChange={e => setQuestionnaireData({ ...questionnaireData, verificationOfActivity: e.target.value })}
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Instrument Condition</Label>
-                <Select
-                  value={questionnaireData.instrumentCondition}
-                  onValueChange={(value) => setQuestionnaireData({ ...questionnaireData, instrumentCondition: value })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Operational">Operational</SelectItem>
-                    <SelectItem value="Operational with Limitations">Operational with Limitations</SelectItem>
-                    <SelectItem value="Not Operational">Not Operational</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Agreement Type</Label>
-                <Input
-                  value={questionnaireData.agreementType}
-                  onChange={e => setQuestionnaireData({ ...questionnaireData, agreementType: e.target.value })}
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Labor Hours</Label>
-                <Input
-                  type="number"
-                  value={questionnaireData.laborHours || 0}
-                  onChange={e => setQuestionnaireData({ ...questionnaireData, laborHours: parseFloat(e.target.value) || 0 })}
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Person Signing Report</Label>
-                <Input
-                  value={questionnaireData.signingPerson}
-                  onChange={e => setQuestionnaireData({ ...questionnaireData, signingPerson: e.target.value })}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Service Start Date</Label>
-                <DateTimePicker
-                  value={questionnaireData.timeWorkStarted}
-                  onChange={date => setQuestionnaireData({ ...questionnaireData, timeWorkStarted: date })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Service Completion Date</Label>
-                <DateTimePicker
-                  value={questionnaireData.timeWorkCompleted}
-                  onChange={date => setQuestionnaireData({ ...questionnaireData, timeWorkCompleted: date })}
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label>Parts Used in Service</Label>
-              <div className="text-sm text-muted-foreground p-3 border rounded-md min-h-[60px]">
-                {questionnaireData.partsUsed && questionnaireData.partsUsed.length > 0 ? (
-                  <ul className='list-disc list-inside'>
-                    {questionnaireData.partsUsed.map((p: AllocatedPart) => (
-                      <li key={p.id}>{p.name} (Qty: {p.quantity})</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No parts marked as 'Used' will be included in the report.</p>
-                )}
-              </div>
-            </div>
+            {isInstallation ? (
+                <>
+                    <div className="space-y-2">
+                        <Label>Pre-Installation Checks</Label>
+                        <Textarea value={installationQuestionnaireData.preInstallationChecks} onChange={e => setInstallationQuestionnaireData({ ...installationQuestionnaireData, preInstallationChecks: e.target.value })} placeholder="e.g., Confirmed site power and space requirements met." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>System Configuration Notes</Label>
+                        <Textarea value={installationQuestionnaireData.systemConfigurationNotes} onChange={e => setInstallationQuestionnaireData({ ...installationQuestionnaireData, systemConfigurationNotes: e.target.value })} placeholder="e.g., Software v2.1 installed, network configured." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Testing & Validation Summary</Label>
+                        <Textarea value={installationQuestionnaireData.testingAndValidationSummary} onChange={e => setInstallationQuestionnaireData({ ...installationQuestionnaireData, testingAndValidationSummary: e.target.value })} placeholder="e.g., All diagnostic tests passed. Calibration successful." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Customer Training Notes</Label>
+                        <Textarea value={installationQuestionnaireData.customerTrainingNotes} onChange={e => setInstallationQuestionnaireData({ ...installationQuestionnaireData, customerTrainingNotes: e.target.value })} placeholder="e.g., Provided basic operational training to lab staff." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Final Handover Notes</Label>
+                        <Textarea value={installationQuestionnaireData.finalHandoverNotes} onChange={e => setInstallationQuestionnaireData({ ...installationQuestionnaireData, finalHandoverNotes: e.target.value })} placeholder="e.g., System handed over in full working condition." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Person Signing Report</Label>
+                        <Input value={installationQuestionnaireData.signingPerson} onChange={e => setInstallationQuestionnaireData({ ...installationQuestionnaireData, signingPerson: e.target.value })} />
+                    </div>
+                </>
+            ) : (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label>Reported Problem</Label>
+                        <Textarea value={questionnaireData.reportedProblem} onChange={e => setQuestionnaireData({ ...questionnaireData, reportedProblem: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Symptom Summary</Label>
+                        <Textarea value={questionnaireData.symptomSummary} onChange={e => setQuestionnaireData({ ...questionnaireData, symptomSummary: e.target.value })} />
+                    </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label>Problem Summary</Label>
+                        <Textarea value={questionnaireData.problemSummary} onChange={e => setQuestionnaireData({ ...questionnaireData, problemSummary: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Resolution Summary</Label>
+                        <Textarea value={questionnaireData.resolutionSummary} onChange={e => setQuestionnaireData({ ...questionnaireData, resolutionSummary: e.target.value })} />
+                    </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Verification of Activity</Label>
+                            <Input value={questionnaireData.verificationOfActivity} onChange={e => setQuestionnaireData({ ...questionnaireData, verificationOfActivity: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Instrument Condition</Label>
+                            <Select value={questionnaireData.instrumentCondition} onValueChange={(value) => setQuestionnaireData({ ...questionnaireData, instrumentCondition: value })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="Operational">Operational</SelectItem><SelectItem value="Operational with Limitations">Operational with Limitations</SelectItem><SelectItem value="Not Operational">Not Operational</SelectItem></SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <Label>Agreement Type</Label>
+                            <Input value={questionnaireData.agreementType} onChange={e => setQuestionnaireData({ ...questionnaireData, agreementType: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Labor Hours</Label>
+                            <Input type="number" value={questionnaireData.laborHours as any} onChange={e => setQuestionnaireData({ ...questionnaireData, laborHours: parseFloat(e.target.value) || 0 })} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Person Signing Report</Label>
+                            <Input value={questionnaireData.signingPerson} onChange={e => setQuestionnaireData({ ...questionnaireData, signingPerson: e.target.value })} />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2"><Label>Service Start Date</Label><DateTimePicker value={questionnaireData.timeWorkStarted} onChange={date => setQuestionnaireData({ ...questionnaireData, timeWorkStarted: date })} /></div>
+                        <div className="space-y-2"><Label>Service Completion Date</Label><DateTimePicker value={questionnaireData.timeWorkCompleted} onChange={date => setQuestionnaireData({ ...questionnaireData, timeWorkCompleted: date })} /></div>
+                    </div>
+                    <div>
+                        <Label>Parts Used in Service</Label>
+                        <div className="text-sm text-muted-foreground p-3 border rounded-md min-h-[60px]">
+                            {questionnaireData.partsUsed && questionnaireData.partsUsed.length > 0 ? (
+                            <ul className='list-disc list-inside'>
+                                {questionnaireData.partsUsed.map((p: AllocatedPart) => (
+                                <li key={p.id}>{p.name} (Qty: {p.quantity})</li>
+                                ))}
+                            </ul>
+                            ) : (<p>No parts marked as 'Used' will be included in the report.</p>)}
+                        </div>
+                    </div>
+                </>
+            )}
           </div>
 
           <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3 px-4 pb-4">
             <Button variant="outline" onClick={() => setQuestionnaireOpen(false)}>Cancel</Button>
-            <Button onClick={handleQuestionnaireSubmit}>Generate Report</Button>
+            <Button onClick={isInstallation ? handleInstallationReportSubmit : handleQuestionnaireSubmit}>Generate Report</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {renderContent()}
-
     </>
   );
 }
-
-    
-    

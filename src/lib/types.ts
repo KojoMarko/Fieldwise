@@ -1,7 +1,6 @@
 
-
 import type { z } from 'zod';
-import type { ServiceReportQuestionnaireSchema } from './schemas';
+import type { ServiceReportQuestionnaireSchema, InstallationReportQuestionnaireSchema } from './schemas';
 
 export type UserRole = 'Admin' | 'Engineer' | 'Customer' | 'Sales Rep';
 
@@ -121,6 +120,7 @@ export type WorkOrder = {
 };
 
 export type ServiceReportQuestionnaire = z.infer<typeof ServiceReportQuestionnaireSchema>;
+export type InstallationReportQuestionnaire = z.infer<typeof InstallationReportQuestionnaireSchema>;
 
 
 export type Company = {

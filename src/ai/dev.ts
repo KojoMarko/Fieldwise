@@ -4,6 +4,7 @@ config();
 
 import '@/ai/flows/suggest-spare-parts.ts';
 import '@/ai/flows/generate-service-report.ts';
+import '@/ai/flows/generate-installation-report.ts';
 import '@/ai/flows/find-part-number.ts';
 import '@/ai/flows/create-user.ts';
 import '@/ai/flows/delete-user.ts';

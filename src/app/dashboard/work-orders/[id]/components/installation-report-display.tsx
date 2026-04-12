@@ -128,7 +128,10 @@ export function InstallationReportDisplay({
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
     // --- PRE-INSTALLATION CHECKS ---
-    const preInstallChecks = reportData.summary?.preInstallationChecks || [];
+    const preInstallChecks = Array.isArray(reportData.summary?.preInstallationChecks)
+    ? reportData.summary.preInstallationChecks
+    : [];
+
     (doc as any).autoTable({
         startY: finalY,
         head: [[{ content: 'Pre-Installation Checks', colSpan: 4 }]],
@@ -170,7 +173,10 @@ export function InstallationReportDisplay({
     addSectionWithAutoWrap('System Configuration', safe(reportData.summary?.systemConfiguration));
 
     // --- Testing & Validation ---
-    const validationChecks = reportData.summary?.testingAndValidation || [];
+    const validationChecks = Array.isArray(reportData.summary?.testingAndValidation)
+    ? reportData.summary.testingAndValidation
+    : [];
+
     (doc as any).autoTable({
         startY: finalY,
         head: [[{ content: 'Testing & Validation', colSpan: 2 }]],
@@ -250,6 +256,16 @@ export function InstallationReportDisplay({
     'N/A': 'bg-gray-100 text-gray-800',
   }
 
+  // FIX: Ensure preInstallationChecks and testingAndValidationChecks are arrays before mapping
+  const preInstallationChecks = Array.isArray(reportData.summary?.preInstallationChecks)
+    ? reportData.summary.preInstallationChecks
+    : [];
+  
+  const testingAndValidationChecks = Array.isArray(reportData.summary?.testingAndValidation)
+    ? reportData.summary.testingAndValidation
+    : [];
+
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -276,7 +292,7 @@ export function InstallationReportDisplay({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(reportData.summary?.preInstallationChecks || []).map((check: any, index: number) => (
+                {preInstallationChecks.map((check: any, index: number) => (
                   <TableRow key={index}>
                     <TableCell>{check.item}</TableCell>
                     <TableCell>{check.requirements}</TableCell>
@@ -284,7 +300,7 @@ export function InstallationReportDisplay({
                     <TableCell><Badge variant="outline" className={statusColors[check.status]}>{check.status}</Badge></TableCell>
                   </TableRow>
                 ))}
-                 {(reportData.summary?.preInstallationChecks?.length === 0) && (
+                 {(preInstallationChecks.length === 0) && (
                     <TableRow>
                         <TableCell colSpan={4} className="text-center h-24">No checks recorded.</TableCell>
                     </TableRow>
@@ -302,13 +318,13 @@ export function InstallationReportDisplay({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(reportData.summary?.testingAndValidation || []).map((check: any, index: number) => (
+                {testingAndValidationChecks.map((check: any, index: number) => (
                   <TableRow key={index}>
                     <TableCell>{check.item}</TableCell>
                     <TableCell><Badge variant="outline" className={statusColors[check.status]}>{check.status}</Badge></TableCell>
                   </TableRow>
                 ))}
-                {(reportData.summary?.testingAndValidation?.length === 0) && (
+                {(testingAndValidationChecks.length === 0) && (
                     <TableRow>
                         <TableCell colSpan={2} className="text-center h-24">No checks recorded.</TableCell>
                     </TableRow>

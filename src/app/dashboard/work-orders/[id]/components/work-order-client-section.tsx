@@ -39,11 +39,7 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { CalendarIcon } from 'lucide-react';
 import { ServiceReportDisplay } from './service-report-display';
-import dynamic from 'next/dynamic';
-
-const InstallationReportDisplay = dynamic(() => import('./installation-report-display').then(mod => mod.InstallationReportDisplay), {
-  loading: () => <div className="flex items-center justify-center p-10"><LoaderCircle className="h-8 w-8 animate-spin" /></div>,
-});
+import { InstallationReportDisplay } from './installation-report-display';
 
 
 const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: Date) => void }) => {
@@ -215,7 +211,13 @@ export function WorkOrderClientSection({
         console.error("Could not parse saved report data.", e);
         // If parsing fails, it's probably old text data.
         if (isInstallation) {
-          setInstallationQuestionnaireData(prev => ({...prev, finalHandoverNotes: workOrder.technicianNotes || '' }));
+            setInstallationQuestionnaireData(prev => ({
+                ...prev,
+                finalHandoverNotes: workOrder.technicianNotes || '',
+                // Ensure arrays are not undefined from a bad parse
+                preInstallationChecks: Array.isArray(prev.preInstallationChecks) ? prev.preInstallationChecks : [],
+                testingAndValidationChecks: Array.isArray(prev.testingAndValidationChecks) ? prev.testingAndValidationChecks : [],
+            }));
         } else {
           setQuestionnaireData(prev => ({...prev, resolutionSummary: workOrder.technicianNotes || '', reportedProblem: workOrder.description || '' }));
         }
@@ -718,3 +720,4 @@ const removeValidationCheckRow = (index: number) => {
     </>
   );
 }
+

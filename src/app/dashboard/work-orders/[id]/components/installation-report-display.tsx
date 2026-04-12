@@ -144,7 +144,13 @@ export function InstallationReportDisplay({
             head: [['Item', 'Requirements', 'Actual Conditions', 'Status']],
             body: preInstallChecks.map((check: any) => [check.item, check.requirements, check.actual, check.status]),
             theme: 'grid',
-            headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
+            headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+            columnStyles: {
+                0: { cellWidth: 100 },
+                1: { cellWidth: 'auto' },
+                2: { cellWidth: 'auto' },
+                3: { cellWidth: 60 },
+            },
         });
     } else {
         (doc as any).autoTable({
@@ -189,7 +195,11 @@ export function InstallationReportDisplay({
             head: [['Item', 'Status']],
             body: validationChecks.map((check: any) => [check.item, check.status]),
             theme: 'grid',
-            headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
+            headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+            columnStyles: {
+                0: { cellWidth: 'auto' },
+                1: { cellWidth: 80 },
+            }
         });
     } else {
         (doc as any).autoTable({

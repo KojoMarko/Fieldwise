@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { generateServiceReport } from '@/ai/flows/generate-service-report';
 import { generateInstallationReport } from '@/ai/flows/generate-installation-report';
-import type { ServiceReportQuestionnaire, InstallationReportQuestionnaire, PreInstallationCheck } from '@/lib/types';
+import type { ServiceReportQuestionnaire, InstallationReportQuestionnaire, PreInstallationCheck, TestValidationCheck } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import type { WorkOrder, Customer, User, Asset, Company, WorkOrderStatus, AllocatedPart } from '@/lib/types';
 import { format, parseISO, differenceInMinutes, isValid, formatISO } from 'date-fns';
@@ -159,8 +159,8 @@ export function WorkOrderClientSection({
 
   const [installationQuestionnaireData, setInstallationQuestionnaireData] = useState<Partial<InstallationReportQuestionnaire>>({
     preInstallationChecks: [],
+    testingAndValidationChecks: [],
     systemConfigurationNotes: '',
-    testingAndValidationSummary: '',
     customerTrainingNotes: '',
     finalHandoverNotes: '',
     signingPerson: customer?.contactPerson || '',
@@ -181,8 +181,8 @@ export function WorkOrderClientSection({
         if (isInstallation) {
           setInstallationQuestionnaireData({
             preInstallationChecks: savedData.summary?.preInstallationChecks || [],
+            testingAndValidationChecks: savedData.summary?.testingAndValidation || [],
             systemConfigurationNotes: savedData.summary?.systemConfiguration || '',
-            testingAndValidationSummary: savedData.summary?.testingAndValidation || '',
             customerTrainingNotes: savedData.summary?.customerTraining || '',
             finalHandoverNotes: savedData.summary?.finalHandoverNotes || '',
             signingPerson: savedData.signingPerson || '',
@@ -400,7 +400,7 @@ export function WorkOrderClientSection({
     setInstallationQuestionnaireData({ ...installationQuestionnaireData, preInstallationChecks: newChecks });
   };
   const addInstallationCheckRow = () => {
-      const newChecks = [...(installationQuestionnaireData.preInstallationChecks || []), { item: '', requirements: '', actual: '', status: 'N/A' }];
+      const newChecks = [...(installationQuestionnaireData.preInstallationChecks || []), { item: '', requirements: '', actual: '', status: 'N/A' as const }];
       setInstallationQuestionnaireData({ ...installationQuestionnaireData, preInstallationChecks: newChecks });
   }
   const removeInstallationCheckRow = (index: number) => {
@@ -408,6 +408,23 @@ export function WorkOrderClientSection({
       newChecks.splice(index, 1);
       setInstallationQuestionnaireData({ ...installationQuestionnaireData, preInstallationChecks: newChecks });
   }
+
+  const handleValidationCheckChange = (index: number, field: keyof TestValidationCheck, value: string) => {
+    const newChecks = [...(installationQuestionnaireData.testingAndValidationChecks || [])];
+    const checkToUpdate = { ...newChecks[index], [field]: value };
+    newChecks[index] = checkToUpdate;
+    setInstallationQuestionnaireData({ ...installationQuestionnaireData, testingAndValidationChecks: newChecks });
+};
+const addValidationCheckRow = () => {
+    const newChecks = [...(installationQuestionnaireData.testingAndValidationChecks || []), { item: '', status: 'Passed' as const }];
+    setInstallationQuestionnaireData({ ...installationQuestionnaireData, testingAndValidationChecks: newChecks });
+}
+const removeValidationCheckRow = (index: number) => {
+    const newChecks = [...(installationQuestionnaireData.testingAndValidationChecks || [])];
+    newChecks.splice(index, 1);
+    setInstallationQuestionnaireData({ ...installationQuestionnaireData, testingAndValidationChecks: newChecks });
+}
+
 
   const renderContent = () => {
     if (isGeneratingReport) {
@@ -556,7 +573,7 @@ export function WorkOrderClientSection({
                       <Label>Pre-Installation Checks</Label>
                       <div className="space-y-3">
                         {(installationQuestionnaireData.preInstallationChecks || []).map((check, index) => (
-                          <div key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-end p-3 border rounded-md">
+                          <div key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto_auto] gap-2 items-end p-3 border rounded-md">
                             <div className='space-y-1'><Label className='text-xs'>Item</Label><Input value={check.item} onChange={e => handleInstallationCheckChange(index, 'item', e.target.value)} placeholder="e.g., Environment Temp." /></div>
                             <div className='space-y-1'><Label className='text-xs'>Requirements</Label><Input value={check.requirements} onChange={e => handleInstallationCheckChange(index, 'requirements', e.target.value)} placeholder="e.g., 10-30°C" /></div>
                             <div className='space-y-1'><Label className='text-xs'>Actual</Label><Input value={check.actual} onChange={e => handleInstallationCheckChange(index, 'actual', e.target.value)} placeholder="e.g., 25.6°C" /></div>
@@ -576,13 +593,31 @@ export function WorkOrderClientSection({
                         <Button variant="outline" size="sm" onClick={addInstallationCheckRow} className='mt-2'><PlusCircle className="mr-2 h-4 w-4"/>Add Check</Button>
                       </div>
                     </div>
+                     <div className="space-y-2">
+                        <Label>Testing & Validation Checks</Label>
+                        <div className="space-y-3">
+                        {(installationQuestionnaireData.testingAndValidationChecks || []).map((check, index) => (
+                            <div key={index} className="grid grid-cols-[1fr_150px_auto] gap-2 items-end p-3 border rounded-md">
+                            <div className='space-y-1'><Label className='text-xs'>Item</Label><Input value={check.item} onChange={e => handleValidationCheckChange(index, 'item', e.target.value)} placeholder="e.g., Controls Run" /></div>
+                            <div className='space-y-1'><Label className='text-xs'>Status</Label>
+                                <Select value={check.status} onValueChange={value => handleValidationCheckChange(index, 'status', value as 'Passed' | 'Failed' | 'N/A')}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Passed">Passed</SelectItem>
+                                        <SelectItem value="Failed">Failed</SelectItem>
+                                        <SelectItem value="N/A">N/A</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => removeValidationCheckRow(index)}><Trash2 className="text-destructive h-4 w-4" /></Button>
+                            </div>
+                        ))}
+                        <Button variant="outline" size="sm" onClick={addValidationCheckRow} className='mt-2'><PlusCircle className="mr-2 h-4 w-4"/>Add Validation Check</Button>
+                        </div>
+                    </div>
                     <div className="space-y-2">
                         <Label>System Configuration Notes</Label>
                         <Textarea value={installationQuestionnaireData.systemConfigurationNotes} onChange={e => setInstallationQuestionnaireData({ ...installationQuestionnaireData, systemConfigurationNotes: e.target.value })} placeholder="e.g., Software v2.1 installed, network configured." />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Testing & Validation Summary</Label>
-                        <Textarea value={installationQuestionnaireData.testingAndValidationSummary} onChange={e => setInstallationQuestionnaireData({ ...installationQuestionnaireData, testingAndValidationSummary: e.target.value })} placeholder="e.g., All diagnostic tests passed. Calibration successful." />
                     </div>
                     <div className="space-y-2">
                         <Label>Customer Training Notes</Label>

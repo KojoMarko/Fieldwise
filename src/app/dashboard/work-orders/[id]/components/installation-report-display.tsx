@@ -168,7 +168,33 @@ export function InstallationReportDisplay({
     
     // --- Other Installation Sections ---
     addSectionWithAutoWrap('System Configuration', safe(reportData.summary?.systemConfiguration));
-    addSectionWithAutoWrap('Testing & Validation', safe(reportData.summary?.testingAndValidation));
+
+    // --- Testing & Validation ---
+    const validationChecks = reportData.summary?.testingAndValidation || [];
+    (doc as any).autoTable({
+        startY: finalY,
+        head: [[{ content: 'Testing & Validation', colSpan: 2 }]],
+        theme: 'grid',
+        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
+    });
+    if (validationChecks.length > 0) {
+        (doc as any).autoTable({
+            startY: (doc as any).lastAutoTable.finalY,
+            head: [['Item', 'Status']],
+            body: validationChecks.map((check: any) => [check.item, check.status]),
+            theme: 'grid',
+            headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
+        });
+    } else {
+        (doc as any).autoTable({
+            startY: (doc as any).lastAutoTable.finalY,
+            body: [['No testing & validation checks were recorded.']],
+            theme: 'grid'
+        });
+    }
+    finalY = (doc as any).lastAutoTable.finalY + 10;
+
+
     addSectionWithAutoWrap('Customer Training', safe(reportData.summary?.customerTraining));
     addSectionWithAutoWrap('Final Handover Notes', safe(reportData.summary?.finalHandoverNotes));
 
@@ -258,11 +284,38 @@ export function InstallationReportDisplay({
                     <TableCell><Badge variant="outline" className={statusColors[check.status]}>{check.status}</Badge></TableCell>
                   </TableRow>
                 ))}
+                 {(reportData.summary?.preInstallationChecks?.length === 0) && (
+                    <TableRow>
+                        <TableCell colSpan={4} className="text-center h-24">No checks recorded.</TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
           </Section>
           <Section title="System Configuration"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{reportData.summary?.systemConfiguration || 'N/A'}</p></Section>
-          <Section title="Testing & Validation"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{reportData.summary?.testingAndValidation || 'N/A'}</p></Section>
+          <Section title="Testing & Validation">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Item</TableHead>
+                  <TableHead className="w-[100px]">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(reportData.summary?.testingAndValidation || []).map((check: any, index: number) => (
+                  <TableRow key={index}>
+                    <TableCell>{check.item}</TableCell>
+                    <TableCell><Badge variant="outline" className={statusColors[check.status]}>{check.status}</Badge></TableCell>
+                  </TableRow>
+                ))}
+                {(reportData.summary?.testingAndValidation?.length === 0) && (
+                    <TableRow>
+                        <TableCell colSpan={2} className="text-center h-24">No checks recorded.</TableCell>
+                    </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Section>
           <Section title="Customer Training"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{reportData.summary?.customerTraining || 'N/A'}</p></Section>
           <Section title="Final Handover Notes"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{reportData.summary?.finalHandoverNotes || 'N/A'}</p></Section>
       </CardContent>

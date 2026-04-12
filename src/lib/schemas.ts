@@ -8,6 +8,11 @@ export const PreInstallationCheckSchema = z.object({
   status: z.enum(['Passed', 'Failed', 'N/A']),
 });
 
+export const TestValidationCheckSchema = z.object({
+  item: z.string().min(1, 'Item name is required'),
+  status: z.enum(['Passed', 'Failed', 'N/A']),
+});
+
 export const ServiceReportQuestionnaireSchema = z.object({
   reportedProblem: z.string().describe("The problem as reported by the customer."),
   symptomSummary: z.string().describe("Summary of the symptoms observed."),
@@ -30,8 +35,8 @@ export const ServiceReportQuestionnaireSchema = z.object({
 
 export const InstallationReportQuestionnaireSchema = z.object({
   preInstallationChecks: z.array(PreInstallationCheckSchema).default([]),
+  testingAndValidationChecks: z.array(TestValidationCheckSchema).default([]),
   systemConfigurationNotes: z.string().describe("Notes on system configuration and setup (e.g., software version, network settings)."),
-  testingAndValidationSummary: z.string().describe("Summary of post-installation tests, calibration, and validation procedures."),
   customerTrainingNotes: z.string().describe("Details of any basic operational training provided to the customer."),
   finalHandoverNotes: z.string().describe("Any final notes or comments upon handing over the system to the customer."),
   signingPerson: z.string().describe("The name of the customer representative signing off on the installation."),

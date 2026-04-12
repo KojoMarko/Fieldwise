@@ -11,7 +11,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { InstallationReportQuestionnaireSchema } from '@/lib/schemas';
+import { InstallationReportQuestionnaireSchema, TestValidationCheckSchema } from '@/lib/schemas';
 
 const GenerateInstallationReportInputSchema = InstallationReportQuestionnaireSchema.extend({
     workOrderId: z.string().describe("The ID of the work order."),
@@ -39,7 +39,7 @@ const ReportDataSchema = z.object({
             status: z.string(),
         })).describe("A professional summary of pre-installation checks in a structured format."),
         systemConfiguration: z.string().describe("A professional summary of the system configuration process."),
-        testingAndValidation: z.string().describe("A clear summary of testing and validation outcomes."),
+        testingAndValidation: z.array(TestValidationCheckSchema).describe("A clear list of testing and validation outcomes."),
         customerTraining: z.string().describe("A summary of the training provided to the customer."),
         finalHandoverNotes: z.string().describe("Professional-sounding final handover notes."),
     }),
@@ -81,15 +81,20 @@ const prompt = ai.definePrompt({
       Status: {{this.status}}
     {{/each}}
 
+    Testing & Validation Checks:
+    {{#each testingAndValidationChecks}}
+    - Item: {{this.item}}
+      Status: {{this.status}}
+    {{/each}}
+
     System Configuration Notes: {{{systemConfigurationNotes}}}
-    Testing & Validation Summary: {{{testingAndValidationSummary}}}
     Customer Training Notes: {{{customerTrainingNotes}}}
     Final Handover Notes: {{{finalHandoverNotes}}}
     
     Signing Person: {{{signingPerson}}}
     --- END OF INPUT ---
     
-    Now, generate the final, polished installation report in the required JSON format. The 'preInstallationChecks' in your output should be an array of objects, just like the input, but with professionalized text.
+    Now, generate the final, polished installation report in the required JSON format. The 'preInstallationChecks' and 'testingAndValidation' in your output should be an array of objects, just like the input, but with professionalized text.
     `,
 });
 

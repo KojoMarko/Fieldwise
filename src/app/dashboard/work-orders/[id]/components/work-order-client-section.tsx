@@ -179,9 +179,15 @@ export function WorkOrderClientSection({
       try {
         const savedData = JSON.parse(workOrder.technicianNotes);
         if (isInstallation) {
+          const preChecks = savedData.summary?.preInstallationChecks;
+          const validPreChecks = Array.isArray(preChecks) ? preChecks : [];
+          
+          const validationChecks = savedData.summary?.testingAndValidation;
+          const validValidationChecks = Array.isArray(validationChecks) ? validationChecks : [];
+
           setInstallationQuestionnaireData({
-            preInstallationChecks: savedData.summary?.preInstallationChecks || [],
-            testingAndValidationChecks: savedData.summary?.testingAndValidation || [],
+            preInstallationChecks: validPreChecks,
+            testingAndValidationChecks: validValidationChecks,
             systemConfigurationNotes: savedData.summary?.systemConfiguration || '',
             customerTrainingNotes: savedData.summary?.customerTraining || '',
             finalHandoverNotes: savedData.summary?.finalHandoverNotes || '',

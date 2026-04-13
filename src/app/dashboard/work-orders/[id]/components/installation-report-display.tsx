@@ -93,7 +93,8 @@ export function InstallationReportDisplay({
 
     const titleText = "Equipment Installation Report";
     const reportIdText = `Report ID: INR-${workOrder.id.substring(0,8)}`;
-    const dateText = `Date: ${format(new Date(), 'MMMM do, yyyy')}`;
+    const installationDateStr = reportData.workOrder?.completionDate || workOrder.completedDate;
+    const dateText = `Date: ${installationDateStr && isValid(parseISO(installationDateStr)) ? format(parseISO(installationDateStr), 'MMMM do, yyyy') : 'N/A'}`;
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -146,9 +147,9 @@ export function InstallationReportDisplay({
             theme: 'grid',
             headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] },
             columnStyles: {
-                0: { cellWidth: 100 },
-                1: { cellWidth: 'auto' },
-                2: { cellWidth: 'auto' },
+                0: { cellWidth: 120 },
+                1: { cellWidth: 150 },
+                2: { cellWidth: 150 },
                 3: { cellWidth: 60 },
             },
         });
@@ -266,7 +267,7 @@ export function InstallationReportDisplay({
     'N/A': 'bg-gray-100 text-gray-800',
   }
 
-  // FIX: Ensure preInstallationChecks and testingAndValidationChecks are arrays before mapping
+  // FIX: Ensure preInstallationChecks and testingAndValidation are arrays before mapping
   const preInstallationChecks = Array.isArray(reportData.summary?.preInstallationChecks)
     ? reportData.summary.preInstallationChecks
     : [];

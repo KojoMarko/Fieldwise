@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { WorkOrder, Customer, User, Asset, Company } from '@/lib/types';
-import { format, isValid, parseISO } from 'date-fns';
+import { format, isValid, parseISO, differenceInMinutes } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -125,6 +125,30 @@ export function InstallationReportDisplay({
             ]
         ],
         theme: 'grid'
+    });
+    finalY = (doc as any).lastAutoTable.finalY + 10;
+    
+    // --- LABOR / DURATION ---
+    const timeStarted = reportData.workOrder?.timeWorkStarted;
+    const timeCompleted = reportData.workOrder?.timeWorkCompleted;
+
+    const formattedStarted = timeStarted && isValid(parseISO(timeStarted)) ? format(parseISO(timeStarted), 'MMM d, yyyy, p') : 'N/A';
+    const formattedCompleted = timeCompleted && isValid(parseISO(timeCompleted)) ? format(parseISO(timeCompleted), 'MMM d, yyyy, p') : 'N/A';
+    
+    let duration = 'N/A';
+    if (timeStarted && timeCompleted && isValid(parseISO(timeStarted)) && isValid(parseISO(timeCompleted))) {
+        const diffMinutes = differenceInMinutes(parseISO(timeCompleted), parseISO(timeStarted));
+        const hours = Math.floor(diffMinutes / 60);
+        const minutes = diffMinutes % 60;
+        duration = `${hours}h ${minutes}m`;
+    }
+
+    (doc as any).autoTable({
+        startY: finalY,
+        head: [['Installation Start', 'Installation End', 'Total Duration']],
+        body: [[formattedStarted, formattedCompleted, duration]],
+        theme: 'grid',
+        headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
     

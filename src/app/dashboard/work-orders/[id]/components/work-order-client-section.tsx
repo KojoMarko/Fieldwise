@@ -188,8 +188,8 @@ export function WorkOrderClientSection({
             customerTrainingNotes: savedData.summary?.customerTraining || '',
             finalHandoverNotes: savedData.summary?.finalHandoverNotes || '',
             signingPerson: savedData.signingPerson || '',
-            timeWorkStarted: savedData.workOrder?.completionDate ? parseISO(savedData.workOrder.completionDate) : undefined, // Approximation
-            timeWorkCompleted: savedData.workOrder?.completionDate ? parseISO(savedData.workOrder.completionDate) : undefined,
+            timeWorkStarted: savedData.workOrder?.timeWorkStarted ? parseISO(savedData.workOrder.timeWorkStarted) : undefined,
+            timeWorkCompleted: savedData.workOrder?.timeWorkCompleted ? parseISO(savedData.workOrder.timeWorkCompleted) : undefined,
           });
         } else {
           setQuestionnaireData({
@@ -639,6 +639,10 @@ const removeValidationCheckRow = (index: number) => {
                         <Label>Person Signing Report</Label>
                         <Input value={installationQuestionnaireData.signingPerson} onChange={e => setInstallationQuestionnaireData({ ...installationQuestionnaireData, signingPerson: e.target.value })} />
                     </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2"><Label>Installation Start</Label><DateTimePicker value={installationQuestionnaireData.timeWorkStarted} onChange={date => setInstallationQuestionnaireData({ ...installationQuestionnaireData, timeWorkStarted: date })} /></div>
+                        <div className="space-y-2"><Label>Installation End</Label><DateTimePicker value={installationQuestionnaireData.timeWorkCompleted} onChange={date => setInstallationQuestionnaireData({ ...installationQuestionnaireData, timeWorkCompleted: date })} /></div>
+                    </div>
                 </>
             ) : (
                 <>
@@ -720,4 +724,3 @@ const removeValidationCheckRow = (index: number) => {
     </>
   );
 }
-

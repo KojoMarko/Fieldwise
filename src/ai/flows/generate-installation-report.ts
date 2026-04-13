@@ -12,6 +12,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { InstallationReportQuestionnaireSchema, TestValidationCheckSchema } from '@/lib/schemas';
+import { formatISO } from 'date-fns';
 
 const GenerateInstallationReportInputSchema = InstallationReportQuestionnaireSchema.extend({
     workOrderId: z.string().describe("The ID of the work order."),
@@ -30,6 +31,8 @@ const ReportDataSchema = z.object({
         number: z.string(),
         completionDate: z.string(),
         performedBy: z.string(),
+        timeWorkStarted: z.string().describe("The start date and time of the installation."),
+        timeWorkCompleted: z.string().describe("The end date and time of the installation."),
     }),
     summary: z.object({
         preInstallationChecks: z.array(z.object({
@@ -71,7 +74,8 @@ const prompt = ai.definePrompt({
     Asset: {{{assetName}}} ({{{assetModel}}} / {{{assetSerial}}})
     Client: {{{clientName}}}
     Engineer: {{{preparedBy}}}
-    Completion Date: {{{completionDate}}}
+    Installation Start Time: {{{timeWorkStarted}}}
+    Installation Completion Time: {{{timeWorkCompleted}}}
 
     Pre-installation Checks:
     {{#each preInstallationChecks}}
@@ -95,6 +99,7 @@ const prompt = ai.definePrompt({
     --- END OF INPUT ---
     
     Now, generate the final, polished installation report in the required JSON format. The 'preInstallationChecks' and 'testingAndValidation' in your output should be an array of objects, just like the input, but with professionalized text.
+    The workOrder object in your output must include the timeWorkStarted and timeWorkCompleted fields.
     `,
 });
 
@@ -110,6 +115,14 @@ const generateInstallationReportFlow = ai.defineFlow(
     
     if (!output) {
       throw new Error("AI failed to generate an installation report.");
+    }
+    
+    // Ensure dates are correctly formatted and passed through
+    if (input.timeWorkStarted) {
+        output.workOrder.timeWorkStarted = formatISO(new Date(input.timeWorkStarted));
+    }
+     if (input.timeWorkCompleted) {
+        output.workOrder.timeWorkCompleted = formatISO(new Date(input.timeWorkCompleted));
     }
     
     return {

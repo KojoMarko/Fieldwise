@@ -248,8 +248,8 @@ export function InstallationReportDisplay({
         startY: finalY,
         body: [
              [
-                { content: `Customer Sign-off: ${safe(reportData.signingPerson)}`, styles: { valign: 'bottom', minCellHeight: 40 } },
-                { content: `Engineer Signature: ${safe(reportData.workOrder?.performedBy)}`, styles: { valign: 'bottom' } }
+                { content: `Customer Sign-off: ${safe(reportData.signingPerson)}`, styles: { valign: 'bottom', minCellHeight: 80 } },
+                { content: `Engineer Signature: ${safe(reportData.workOrder?.performedBy)}`, styles: { valign: 'bottom', minCellHeight: 80 } }
             ]
         ],
         theme: 'grid',

@@ -15,7 +15,6 @@ import { format, isValid, parseISO } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import Image from 'next/image';
 
 const createAcronym = (name: string) => {
     if (!name) return 'CUST';
@@ -444,3 +443,5 @@ export function ServiceReportDisplay({
     </Card>
   );
 }
+
+    

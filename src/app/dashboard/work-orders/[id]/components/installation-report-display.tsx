@@ -16,6 +16,16 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
+
+const createAcronym = (name: string) => {
+    if (!name) return 'CUST';
+    const words = name.replace(/[^a-zA-Z\s]/g, "").split(' ').filter(Boolean);
+    if (words.length > 1) {
+        return words.map(w => w[0]).join('').toUpperCase().substring(0, 4);
+    }
+    return name.substring(0, 4).toUpperCase();
+};
 
 
 export function InstallationReportDisplay({
@@ -101,8 +111,12 @@ export function InstallationReportDisplay({
     doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
     doc.text(companyAddress, margin + 50, logoY + 24);
 
+    const customerAcronym = customer?.name ? createAcronym(customer.name) : 'CUST';
+    const numberPart = String(Math.floor(100000 + Math.random() * 900000));
+    const reportId = `${customerAcronym}IR${numberPart}`;
+    
     const titleText = "Equipment Installation Report";
-    const reportIdText = `Report ID: INR-${workOrder.id.substring(0,8)}`;
+    const reportIdText = `Report ID: ${reportId}`;
     const installationDateStr = reportData.workOrder?.completionDate || workOrder.completedDate;
     const dateText = `Date: ${installationDateStr && isValid(parseISO(installationDateStr)) ? format(parseISO(installationDateStr), 'MMMM do, yyyy') : 'N/A'}`;
     
@@ -115,7 +129,7 @@ export function InstallationReportDisplay({
     doc.text(reportIdText, pageWidth - margin, logoY + 27, { align: 'right' });
     doc.text(dateText, pageWidth - margin, logoY + 42, { align: 'right' });
     
-    finalY += 50;
+    finalY += 60;
     
     // --- CUSTOMER & EQUIPMENT INFORMATION ---
     (doc as any).autoTable({
@@ -286,7 +300,7 @@ export function InstallationReportDisplay({
     finalY = (doc as any).lastAutoTable.finalY + 5;
 
 
-    doc.save(`InstallationReport-INR-${workOrder.id.substring(0, 8)}.pdf`);
+    doc.save(`InstallationReport-${reportId}.pdf`);
     toast({
         title: "Download Ready",
         description: "Your PDF installation report has been downloaded.",

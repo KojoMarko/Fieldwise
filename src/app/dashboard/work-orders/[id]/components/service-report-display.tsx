@@ -15,6 +15,16 @@ import { format, isValid, parseISO } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import Image from 'next/image';
+
+const createAcronym = (name: string) => {
+    if (!name) return 'CUST';
+    const words = name.replace(/[^a-zA-Z\s]/g, "").split(' ').filter(Boolean);
+    if (words.length > 1) {
+        return words.map(w => w[0]).join('').toUpperCase().substring(0, 4);
+    }
+    return name.substring(0, 4).toUpperCase();
+};
 
 
 export function ServiceReportDisplay({
@@ -136,9 +146,12 @@ export function ServiceReportDisplay({
     doc.text(company?.name || "Alos Paraklet Healthcare Limited", margin + 50, logoY + 12);
     doc.text(companyAddress, margin + 50, logoY + 24);
 
+    const customerAcronym = customer?.name ? createAcronym(customer.name) : 'CUST';
+    const numberPart = String(Math.floor(100000 + Math.random() * 900000));
+    const reportId = `${customerAcronym}SR${numberPart}`;
 
     const titleText = "Engineering Service Report";
-    const reportIdText = `Report ID: ESR-${workOrder.id.substring(0,8)}`;
+    const reportIdText = `Report ID: ${reportId}`;
     const dateText = `Date: ${format(new Date(), 'MMMM do, yyyy')}`;
 
     const titleWidth = doc.getTextWidth(titleText);
@@ -345,7 +358,7 @@ export function ServiceReportDisplay({
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
 
-    doc.save(`ServiceReport-INV-${workOrder.id.substring(0, 8)}.pdf`);
+    doc.save(`ServiceReport-${reportId}.pdf`);
     toast({
         title: "Download Ready",
         description: "Your PDF invoice has been downloaded.",

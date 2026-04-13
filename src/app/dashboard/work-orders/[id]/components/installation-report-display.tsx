@@ -56,12 +56,22 @@ export function InstallationReportDisplay({
         styles: {
             overflow: 'linebreak',
             cellWidth: 'wrap',
+            fontSize: 8,
+        },
+        headStyles: {
+            fontSize: 9,
+            fillColor: [220, 220, 220],
+            textColor: [0,0,0],
+            fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+            fillColor: [248, 249, 250]
         }
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 40;
-    let finalY = margin + 20;
+    const margin = 30;
+    let finalY = margin;
 
     const safe = (val: any, fallback = 'N/A') => val || fallback;
 
@@ -100,22 +110,22 @@ export function InstallationReportDisplay({
     doc.setFont('helvetica', 'bold');
     doc.text(titleText, pageWidth - margin, logoY + 12, { align: 'right' });
     
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.text(reportIdText, pageWidth - margin, logoY + 27, { align: 'right' });
     doc.text(dateText, pageWidth - margin, logoY + 42, { align: 'right' });
     
-    finalY += 60;
+    finalY += 50;
     
     // --- CUSTOMER & EQUIPMENT INFORMATION ---
     (doc as any).autoTable({
         startY: finalY,
         body: [
             [
-                { content: 'Customer Name', styles: { fontStyle: 'bold', fillColor: [220, 220, 220] } },
-                { content: 'Equipment', styles: { fontStyle: 'bold', fillColor: [220, 220, 220] } },
-                { content: 'Model', styles: { fontStyle: 'bold', fillColor: [220, 220, 220] } },
-                { content: 'Serial Number', styles: { fontStyle: 'bold', fillColor: [220, 220, 220] } },
+                { content: 'Customer Name', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+                { content: 'Equipment', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+                { content: 'Model', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
+                { content: 'Serial Number', styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } },
             ],
             [
                 safe(customer?.name),
@@ -124,7 +134,8 @@ export function InstallationReportDisplay({
                 safe(asset?.serialNumber),
             ]
         ],
-        theme: 'grid'
+        theme: 'grid',
+        styles: { cellPadding: 3 }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
@@ -148,20 +159,18 @@ export function InstallationReportDisplay({
         head: [['Installation Start', 'Installation End', 'Total Duration']],
         body: [[formattedStarted, formattedCompleted, duration]],
         theme: 'grid',
-        headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
+        headStyles: { fillColor: [230, 230, 230] },
+        styles: { cellPadding: 3 }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
     // --- PRE-INSTALLATION CHECKS ---
-    const preInstallChecks = Array.isArray(reportData.summary?.preInstallationChecks)
-    ? reportData.summary.preInstallationChecks
-    : [];
+    const preInstallChecks = Array.isArray(reportData.summary?.preInstallationChecks) ? reportData.summary.preInstallationChecks : [];
 
     (doc as any).autoTable({
         startY: finalY,
         head: [[{ content: 'Pre-Installation Checks', colSpan: 4 }]],
-        theme: 'grid',
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
+        theme: 'plain',
     });
     if (preInstallChecks.length > 0) {
         (doc as any).autoTable({
@@ -169,12 +178,12 @@ export function InstallationReportDisplay({
             head: [['Item', 'Requirements', 'Actual Conditions', 'Status']],
             body: preInstallChecks.map((check: any) => [check.item, check.requirements, check.actual, check.status]),
             theme: 'grid',
-            headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+            styles: { cellPadding: 3 },
             columnStyles: {
-                0: { cellWidth: 120 },
+                0: { cellWidth: 100 },
                 1: { cellWidth: 150 },
-                2: { cellWidth: 150 },
-                3: { cellWidth: 60 },
+                2: { cellWidth: 'auto' },
+                3: { cellWidth: 50 },
             },
         });
     } else {
@@ -188,14 +197,12 @@ export function InstallationReportDisplay({
     
     
     const addSectionWithAutoWrap = (title: string, content: string) => {
-        const maxWidth = pageWidth - (margin * 2);
         (doc as any).autoTable({
             startY: finalY,
             head: [[title]],
             body: [[content]],
             theme: 'grid',
-            headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' },
-            tableWidth: maxWidth,
+            styles: { cellPadding: 3 }
         });
         finalY = (doc as any).lastAutoTable.finalY + 10;
     };
@@ -204,15 +211,12 @@ export function InstallationReportDisplay({
     addSectionWithAutoWrap('System Configuration', safe(reportData.summary?.systemConfiguration));
 
     // --- Testing & Validation ---
-    const validationChecks = Array.isArray(reportData.summary?.testingAndValidation)
-    ? reportData.summary.testingAndValidation
-    : [];
+    const validationChecks = Array.isArray(reportData.summary?.testingAndValidation) ? reportData.summary.testingAndValidation : [];
 
     (doc as any).autoTable({
         startY: finalY,
         head: [[{ content: 'Testing & Validation', colSpan: 2 }]],
-        theme: 'grid',
-        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: 'bold' }
+        theme: 'plain',
     });
     if (validationChecks.length > 0) {
         (doc as any).autoTable({
@@ -220,7 +224,7 @@ export function InstallationReportDisplay({
             head: [['Item', 'Status']],
             body: validationChecks.map((check: any) => [check.item, check.status]),
             theme: 'grid',
-            headStyles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+            styles: { cellPadding: 3 },
             columnStyles: {
                 0: { cellWidth: 'auto' },
                 1: { cellWidth: 80 },
@@ -244,13 +248,14 @@ export function InstallationReportDisplay({
         startY: finalY,
         body: [
              [
-                { content: `Customer Sign-off: ${safe(reportData.signingPerson)}`, styles: { valign: 'bottom', minCellHeight: 80 } },
+                { content: `Customer Sign-off: ${safe(reportData.signingPerson)}`, styles: { valign: 'bottom', minCellHeight: 40 } },
                 { content: `Engineer Signature: ${safe(reportData.workOrder?.performedBy)}`, styles: { valign: 'bottom' } }
             ]
         ],
         theme: 'grid',
+        styles: { cellPadding: 3 }
     });
-    finalY = (doc as any).lastAutoTable.finalY + 10;
+    finalY = (doc as any).lastAutoTable.finalY + 5;
 
     doc.save(`InstallationReport-INR-${workOrder.id.substring(0, 8)}.pdf`);
     toast({

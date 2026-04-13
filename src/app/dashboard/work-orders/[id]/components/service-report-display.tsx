@@ -118,7 +118,7 @@ export function ServiceReportDisplay({
     let logoY = finalY;
     if (company?.logoUrl) {
         try {
-            const img = new (window as any).Image();
+            const img = new window.Image();
             img.crossOrigin = 'Anonymous';
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
@@ -326,8 +326,8 @@ export function ServiceReportDisplay({
                 { content: `Engineer Signature`, styles: { fontStyle: 'bold', valign: 'top' } }
             ],
             [
-                { content: ` `, styles: { minCellHeight: 50 } },
-                { content: ` `, styles: { minCellHeight: 50 } }
+                { content: ` `, styles: { minCellHeight: 60 } },
+                { content: ` `, styles: { minCellHeight: 60 } }
             ],
             [
                 { content: `Name: ${safe(reportData.summary?.signingPerson || reportData.signingPerson)}`, styles: { valign: 'bottom' } },
@@ -335,6 +335,7 @@ export function ServiceReportDisplay({
             ]
         ],
         theme: 'grid',
+        tableWidth: pageWidth - margin * 2,
         styles: {
             lineColor: [0, 0, 0],
             lineWidth: 0.5,
@@ -342,19 +343,15 @@ export function ServiceReportDisplay({
         didDrawCell: (data: any) => {
             if (data.section === 'body' && data.row.index === 1 && data.column.index === 0 && reportData.customerSignature) {
                 try {
-                    doc.addImage(reportData.customerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 100, 40);
+                    doc.addImage(reportData.customerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 120, 50);
                 } catch (e) { console.error("Failed to add customer signature to PDF", e); }
             }
             if (data.section === 'body' && data.row.index === 1 && data.column.index === 1 && reportData.engineerSignature) {
                  try {
-                    doc.addImage(reportData.engineerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 100, 40);
+                    doc.addImage(reportData.engineerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 120, 50);
                 } catch (e) { console.error("Failed to add engineer signature to PDF", e); }
             }
         },
-        columnStyles: {
-            0: { cellWidth: 250 },
-            1: { cellWidth: 250 },
-        }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
 
@@ -444,3 +441,5 @@ export function ServiceReportDisplay({
     </Card>
   );
 }
+
+    

@@ -15,6 +15,7 @@ import { format, isValid, parseISO } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import Image from 'next/image';
 
 const createAcronym = (name: string) => {
     if (!name) return 'CUST';
@@ -117,7 +118,7 @@ export function ServiceReportDisplay({
     let logoY = finalY;
     if (company?.logoUrl) {
         try {
-            const img = new Image();
+            const img = new (window as any).Image();
             img.crossOrigin = 'Anonymous';
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
@@ -125,7 +126,7 @@ export function ServiceReportDisplay({
                     doc.addImage(img, 'PNG', margin, logoY, 40, 40);
                     resolve(null);
                 };
-                img.onerror = (e) => {
+                img.onerror = (e: any) => {
                     console.error("Could not load company logo for PDF.", e);
                     reject(e);
                 }
@@ -325,8 +326,8 @@ export function ServiceReportDisplay({
                 { content: `Engineer Signature`, styles: { fontStyle: 'bold', valign: 'top' } }
             ],
             [
-                { content: ` `, styles: { minCellHeight: 60 } },
-                { content: ` `, styles: { minCellHeight: 60 } }
+                { content: ` `, styles: { minCellHeight: 50 } },
+                { content: ` `, styles: { minCellHeight: 50 } }
             ],
             [
                 { content: `Name: ${safe(reportData.summary?.signingPerson || reportData.signingPerson)}`, styles: { valign: 'bottom' } },
@@ -443,5 +444,3 @@ export function ServiceReportDisplay({
     </Card>
   );
 }
-
-    

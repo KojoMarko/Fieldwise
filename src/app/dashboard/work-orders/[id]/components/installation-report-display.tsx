@@ -16,6 +16,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
 
 const createAcronym = (name: string) => {
     if (!name) return 'CUST';
@@ -69,7 +70,7 @@ export function InstallationReportDisplay({
         },
         headStyles: {
             fontSize: 8,
-            fillColor: [220, 220, 220],
+            fillColor: [230, 230, 230],
             textColor: [0,0,0],
             fontStyle: 'bold',
         },
@@ -88,7 +89,7 @@ export function InstallationReportDisplay({
     let logoY = finalY;
     if (company?.logoUrl) {
         try {
-            const img = new Image();
+            const img = new (window as any).Image();
             img.crossOrigin = 'Anonymous';
             img.src = company.logoUrl;
             await new Promise((resolve, reject) => {
@@ -96,7 +97,7 @@ export function InstallationReportDisplay({
                     doc.addImage(img, 'PNG', margin, logoY, 40, 40);
                     resolve(null);
                 };
-                img.onerror = (e) => reject(e);
+                img.onerror = (e: any) => reject(e);
             });
         } catch (e) { console.error("Error adding company logo to PDF:", e)}
     }
@@ -266,8 +267,8 @@ export function InstallationReportDisplay({
                 { content: `Engineer Signature`, styles: { fontStyle: 'bold', valign: 'top' } }
             ],
             [
-                { content: ` `, styles: { minCellHeight: 80 } },
-                { content: ` `, styles: { minCellHeight: 80 } }
+                { content: ` `, styles: { minCellHeight: 50 } },
+                { content: ` `, styles: { minCellHeight: 50 } }
             ],
             [
                 { content: `Name: ${safe(reportData.signingPerson)}`, styles: { valign: 'bottom' } },
@@ -420,5 +421,3 @@ export function InstallationReportDisplay({
     </Card>
   );
 }
-
-    

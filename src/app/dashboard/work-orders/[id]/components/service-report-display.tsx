@@ -309,14 +309,34 @@ export function ServiceReportDisplay({
         startY: finalY,
         body: [
              [
-                { content: `Customer Name: ${safe(reportData.summary?.signingPerson || reportData.signingPerson)}`, styles: { valign: 'bottom', minCellHeight: 80 } },
-                { content: `Engineer Name: ${safe(reportData.workOrder?.performedBy || reportData.technicianName)}`, styles: { valign: 'bottom' } }
+                { content: `Customer Signature`, styles: { fontStyle: 'bold', valign: 'top' } },
+                { content: `Engineer Signature`, styles: { fontStyle: 'bold', valign: 'top' } }
+            ],
+            [
+                { content: ` `, styles: { minCellHeight: 60 } },
+                { content: ` `, styles: { minCellHeight: 60 } }
+            ],
+            [
+                { content: `Name: ${safe(reportData.summary?.signingPerson || reportData.signingPerson)}`, styles: { valign: 'bottom' } },
+                { content: `Name: ${safe(reportData.workOrder?.performedBy || reportData.technicianName)}`, styles: { valign: 'bottom' } }
             ]
         ],
         theme: 'grid',
         styles: {
             lineColor: [0, 0, 0],
             lineWidth: 0.5,
+        },
+        didDrawCell: (data: any) => {
+            if (data.section === 'body' && data.row.index === 1 && data.column.index === 0 && reportData.customerSignature) {
+                try {
+                    doc.addImage(reportData.customerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 100, 40);
+                } catch (e) { console.error("Failed to add customer signature to PDF", e); }
+            }
+            if (data.section === 'body' && data.row.index === 1 && data.column.index === 1 && reportData.engineerSignature) {
+                 try {
+                    doc.addImage(reportData.engineerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 100, 40);
+                } catch (e) { console.error("Failed to add engineer signature to PDF", e); }
+            }
         },
         columnStyles: {
             0: { cellWidth: (pageWidth - margin * 2) / 2 },

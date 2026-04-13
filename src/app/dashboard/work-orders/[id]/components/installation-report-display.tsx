@@ -59,7 +59,7 @@ export function InstallationReportDisplay({
             fontSize: 8,
         },
         headStyles: {
-            fontSize: 9,
+            fontSize: 8,
             fillColor: [220, 220, 220],
             textColor: [0,0,0],
             fontStyle: 'bold',
@@ -70,7 +70,7 @@ export function InstallationReportDisplay({
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 30;
+    const margin = 25;
     let finalY = margin;
 
     const safe = (val: any, fallback = 'N/A') => val || fallback;
@@ -92,7 +92,7 @@ export function InstallationReportDisplay({
         } catch (e) { console.error("Error adding company logo to PDF:", e)}
     }
     
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     
     const defaultAddress = ['GW-0988-6564, JMP8+P3F FH948', 'OXYGEN STREET, Oduman'];
@@ -135,7 +135,7 @@ export function InstallationReportDisplay({
             ]
         ],
         theme: 'grid',
-        styles: { cellPadding: 3 }
+        styles: { cellPadding: 3, fontSize: 8 }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
@@ -160,7 +160,7 @@ export function InstallationReportDisplay({
         body: [[formattedStarted, formattedCompleted, duration]],
         theme: 'grid',
         headStyles: { fillColor: [230, 230, 230] },
-        styles: { cellPadding: 3 }
+        styles: { cellPadding: 3, fontSize: 8 }
     });
     finalY = (doc as any).lastAutoTable.finalY + 10;
     
@@ -178,7 +178,7 @@ export function InstallationReportDisplay({
             head: [['Item', 'Requirements', 'Actual Conditions', 'Status']],
             body: preInstallChecks.map((check: any) => [check.item, check.requirements, check.actual, check.status]),
             theme: 'grid',
-            styles: { cellPadding: 3 },
+            styles: { cellPadding: 3, fontSize: 8 },
             columnStyles: {
                 0: { cellWidth: 100 },
                 1: { cellWidth: 150 },
@@ -202,7 +202,8 @@ export function InstallationReportDisplay({
             head: [[title]],
             body: [[content]],
             theme: 'grid',
-            styles: { cellPadding: 3 }
+            styles: { cellPadding: 3, fontSize: 8 },
+            headStyles: { fontSize: 8 }
         });
         finalY = (doc as any).lastAutoTable.finalY + 10;
     };
@@ -224,7 +225,7 @@ export function InstallationReportDisplay({
             head: [['Item', 'Status']],
             body: validationChecks.map((check: any) => [check.item, check.status]),
             theme: 'grid',
-            styles: { cellPadding: 3 },
+            styles: { cellPadding: 3, fontSize: 8 },
             columnStyles: {
                 0: { cellWidth: 'auto' },
                 1: { cellWidth: 80 },
@@ -248,14 +249,42 @@ export function InstallationReportDisplay({
         startY: finalY,
         body: [
              [
-                { content: `Customer Sign-off: ${safe(reportData.signingPerson)}`, styles: { valign: 'bottom', minCellHeight: 80 } },
-                { content: `Engineer Signature: ${safe(reportData.workOrder?.performedBy)}`, styles: { valign: 'bottom', minCellHeight: 80 } }
+                { content: `Customer Signature`, styles: { fontStyle: 'bold', valign: 'top' } },
+                { content: `Engineer Signature`, styles: { fontStyle: 'bold', valign: 'top' } }
+            ],
+            [
+                { content: ` `, styles: { minCellHeight: 80 } },
+                { content: ` `, styles: { minCellHeight: 80 } }
+            ],
+            [
+                { content: `Name: ${safe(reportData.signingPerson)}`, styles: { valign: 'bottom' } },
+                { content: `Name: ${safe(reportData.workOrder?.performedBy)}`, styles: { valign: 'bottom' } }
             ]
         ],
         theme: 'grid',
-        styles: { cellPadding: 3 }
+        styles: {
+            lineColor: [0, 0, 0],
+            lineWidth: 0.5,
+        },
+        didDrawCell: (data: any) => {
+            if (data.section === 'body' && data.row.index === 1 && data.column.index === 0 && reportData.customerSignature) {
+                try {
+                    doc.addImage(reportData.customerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 100, 40);
+                } catch (e) { console.error("Failed to add customer signature to PDF", e); }
+            }
+            if (data.section === 'body' && data.row.index === 1 && data.column.index === 1 && reportData.engineerSignature) {
+                 try {
+                    doc.addImage(reportData.engineerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 100, 40);
+                } catch (e) { console.error("Failed to add engineer signature to PDF", e); }
+            }
+        },
+        columnStyles: {
+            0: { cellWidth: (pageWidth - margin * 2) / 2 },
+            1: { cellWidth: (pageWidth - margin * 2) / 2 },
+        }
     });
     finalY = (doc as any).lastAutoTable.finalY + 5;
+
 
     doc.save(`InstallationReport-INR-${workOrder.id.substring(0, 8)}.pdf`);
     toast({

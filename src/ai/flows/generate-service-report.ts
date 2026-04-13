@@ -65,6 +65,8 @@ const ReportDataSchema = z.object({
     customerCallOriginator: z.string(),
     signingPerson: z.string(),
     technicianName: z.string(),
+    engineerSignature: z.string().optional(),
+    customerSignature: z.string().optional(),
 });
 
 
@@ -147,6 +149,10 @@ const generateServiceReportFlow = ai.defineFlow(
       throw new Error("AI failed to generate a report.");
     }
     
+    // Manually add signatures to the output as they are not part of the AI's generation process.
+    output.engineerSignature = input.engineerSignature;
+    output.customerSignature = input.customerSignature;
+
     // The prompt now directly returns the structured data, so we just need to stringify it.
     return {
       report: JSON.stringify(output),

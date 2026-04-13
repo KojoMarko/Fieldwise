@@ -31,6 +31,8 @@ export const ServiceReportQuestionnaireSchema = z.object({
     quantity: z.coerce.number(),
     price: z.coerce.number(),
   })).describe('A list of parts that were used during the service.'),
+  engineerSignature: z.string().optional(),
+  customerSignature: z.string().optional(),
 });
 
 export const InstallationReportQuestionnaireSchema = z.object({
@@ -42,6 +44,8 @@ export const InstallationReportQuestionnaireSchema = z.object({
   signingPerson: z.string().describe("The name of the customer representative signing off on the installation."),
   timeWorkStarted: z.any().describe("The date and time the engineer started the work."),
   timeWorkCompleted: z.any().describe("The date and time the engineer completed the work."),
+  engineerSignature: z.string().optional(),
+  customerSignature: z.string().optional(),
 });
 
 

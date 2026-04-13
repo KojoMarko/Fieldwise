@@ -47,6 +47,8 @@ const ReportDataSchema = z.object({
         finalHandoverNotes: z.string().describe("Professional-sounding final handover notes."),
     }),
     signingPerson: z.string(),
+    engineerSignature: z.string().optional(),
+    customerSignature: z.string().optional(),
 });
 
 
@@ -125,6 +127,10 @@ const generateInstallationReportFlow = ai.defineFlow(
         output.workOrder.timeWorkCompleted = formatISO(new Date(input.timeWorkCompleted));
     }
     
+    // Manually add signatures
+    output.engineerSignature = input.engineerSignature;
+    output.customerSignature = input.customerSignature;
+
     return {
       report: JSON.stringify(output),
     };

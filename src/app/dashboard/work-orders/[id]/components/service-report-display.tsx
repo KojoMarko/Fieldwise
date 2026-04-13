@@ -335,14 +335,12 @@ export function ServiceReportDisplay({
             ]
         ],
         theme: 'grid',
-        margin: { left: margin, right: margin },
-        columnStyles: {
-            0: { cellWidth: 'auto' },
-            1: { cellWidth: 'auto' },
-        },
+        tableWidth: 'auto',
         styles: {
             lineColor: [0, 0, 0],
             lineWidth: 0.5,
+            cellPadding: 3,
+            fontSize: 8,
         },
         didDrawCell: (data: any) => {
             if (data.section === 'body' && data.row.index === 1 && data.column.index === 0 && reportData.customerSignature) {
@@ -445,7 +443,3 @@ export function ServiceReportDisplay({
     </Card>
   );
 }
-
-    
-
-    

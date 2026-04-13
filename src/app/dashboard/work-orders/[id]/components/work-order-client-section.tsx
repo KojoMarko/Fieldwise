@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, createElement } from 'react';
+import { useState, useEffect, createElement, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,6 +40,8 @@ import { useFirestore } from '@/firebase';
 import { CalendarIcon } from 'lucide-react';
 import { ServiceReportDisplay } from './service-report-display';
 import { InstallationReportDisplay } from './installation-report-display';
+import SignatureCanvas from 'react-signature-canvas';
+import Image from 'next/image';
 
 
 const DateTimePicker = ({ value, onChange }: { value?: Date; onChange: (date?: Date) => void }) => {
@@ -138,6 +140,12 @@ export function WorkOrderClientSection({
   const [isQuestionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [isHoldDialogOpen, setHoldDialogOpen] = useState(false);
   
+  const engSigPad = useRef<SignatureCanvas>(null);
+  const custSigPad = useRef<SignatureCanvas>(null);
+  const engSigUploadRef = useRef<HTMLInputElement>(null);
+  const custSigUploadRef = useRef<HTMLInputElement>(null);
+
+  
   const [questionnaireData, setQuestionnaireData] = useState<Partial<ServiceReportQuestionnaire>>({
     reportedProblem: workOrder.description || '',
     symptomSummary: '',
@@ -151,6 +159,8 @@ export function WorkOrderClientSection({
     partsUsed: workOrder.allocatedParts?.filter(p => p.status === 'Used') || [],
     timeWorkStarted: undefined,
     timeWorkCompleted: undefined,
+    engineerSignature: undefined,
+    customerSignature: undefined,
   });
 
   const [installationQuestionnaireData, setInstallationQuestionnaireData] = useState<Partial<InstallationReportQuestionnaire>>({
@@ -162,11 +172,13 @@ export function WorkOrderClientSection({
     signingPerson: customer?.contactPerson || '',
     timeWorkStarted: undefined,
     timeWorkCompleted: undefined,
+    engineerSignature: undefined,
+    customerSignature: undefined,
   });
   
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
-  const isEngineerView = user?.role === 'Engineer';
+  const isEngineerView = user?.role === 'Engineer' || user?.role === 'Admin';
   const isInstallation = workOrder.type === 'Installation';
 
   useEffect(() => {
@@ -190,6 +202,8 @@ export function WorkOrderClientSection({
             signingPerson: savedData.signingPerson || '',
             timeWorkStarted: savedData.workOrder?.timeWorkStarted ? parseISO(savedData.workOrder.timeWorkStarted) : undefined,
             timeWorkCompleted: savedData.workOrder?.timeWorkCompleted ? parseISO(savedData.workOrder.timeWorkCompleted) : undefined,
+            engineerSignature: savedData.engineerSignature,
+            customerSignature: savedData.customerSignature,
           });
         } else {
           setQuestionnaireData({
@@ -205,6 +219,8 @@ export function WorkOrderClientSection({
             timeWorkStarted: savedData.labor?.[0]?.startDate ? parseISO(savedData.labor[0].startDate) : undefined,
             timeWorkCompleted: savedData.labor?.[0]?.endDate ? parseISO(savedData.labor[0].endDate) : undefined,
             partsUsed: savedData.parts || [],
+            engineerSignature: savedData.engineerSignature,
+            customerSignature: savedData.customerSignature,
           });
         }
       } catch (e) {
@@ -295,6 +311,16 @@ export function WorkOrderClientSection({
   };
 
 
+  const getSignatureData = (sigPadRef: React.RefObject<SignatureCanvas>, uploadedSignature?: string) => {
+    if (uploadedSignature) {
+        return uploadedSignature;
+    }
+    if (sigPadRef.current && !sigPadRef.current.isEmpty()) {
+        return sigPadRef.current.getTrimmedCanvas().toDataURL('image/png');
+    }
+    return undefined;
+  };
+
   const handleQuestionnaireSubmit = async () => {
     if(!db) return;
     setQuestionnaireOpen(false);
@@ -309,8 +335,12 @@ export function WorkOrderClientSection({
           price: 0,
         }));
 
+      const engineerSignature = getSignatureData(engSigPad, questionnaireData.engineerSignature);
+      const customerSignature = getSignatureData(custSigPad, questionnaireData.customerSignature);
+
+
       const result = await generateServiceReport({
-        ...(questionnaireData as Omit<ServiceReportQuestionnaire, 'partsUsed'>),
+        ...(questionnaireData as Omit<ServiceReportQuestionnaire, 'partsUsed' | 'engineerSignature' | 'customerSignature'>),
         partsUsed: usedParts,
         workOrderId: workOrder.id,
         assetName: asset?.name || 'N/A',
@@ -322,6 +352,8 @@ export function WorkOrderClientSection({
         clientAddress: customer?.address || 'N/A',
         preparedBy: technician?.name || user?.name || 'N/A',
         completionDate: format(new Date(), 'yyyy-MM-dd HH:mm'),
+        engineerSignature,
+        customerSignature,
       });
       
       const completedDate = new Date();
@@ -363,6 +395,9 @@ export function WorkOrderClientSection({
     setQuestionnaireOpen(false);
     setIsGeneratingReport(true);
     try {
+        const engineerSignature = getSignatureData(engSigPad, installationQuestionnaireData.engineerSignature);
+        const customerSignature = getSignatureData(custSigPad, installationQuestionnaireData.customerSignature);
+
         const result = await generateInstallationReport({
             ...(installationQuestionnaireData as InstallationReportQuestionnaire),
             workOrderId: workOrder.id,
@@ -372,6 +407,8 @@ export function WorkOrderClientSection({
             clientName: customer?.name || 'N/A',
             preparedBy: technician?.name || user?.name || 'N/A',
             completionDate: format(new Date(), 'yyyy-MM-dd HH:mm'),
+            engineerSignature,
+            customerSignature,
         });
         
         const completedDate = new Date();
@@ -432,6 +469,24 @@ const removeValidationCheckRow = (index: number) => {
     newChecks.splice(index, 1);
     setInstallationQuestionnaireData({ ...installationQuestionnaireData, testingAndValidationChecks: newChecks });
 }
+
+const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>, signatureType: 'engineer' | 'customer') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        const stateUpdater = isInstallation ? setInstallationQuestionnaireData : setQuestionnaireData;
+        const fieldName = signatureType === 'engineer' ? 'engineerSignature' : 'customerSignature';
+        
+        stateUpdater(prev => ({
+            ...prev,
+            [fieldName]: dataUrl
+        }));
+    };
+    reader.readAsDataURL(file);
+};
 
 
   const renderContent = () => {
@@ -711,6 +766,55 @@ const removeValidationCheckRow = (index: number) => {
                     </div>
                 </>
             )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+              <div className="space-y-2">
+                <Label>{isEngineerView ? "Your Signature" : "Engineer's Signature"}</Label>
+                 <div className="rounded-lg border bg-muted/50 p-2 space-y-2">
+                    {(isInstallation ? installationQuestionnaireData.engineerSignature : questionnaireData.engineerSignature) ? (
+                        <div><Image src={(isInstallation ? installationQuestionnaireData.engineerSignature : questionnaireData.engineerSignature)!} alt="Engineer Signature" width={300} height={150} className="rounded-md border bg-white object-contain" /></div>
+                    ) : (
+                        <SignatureCanvas ref={engSigPad} penColor="black" canvasProps={{ className: 'w-full h-32 rounded-md border bg-white' }} />
+                    )}
+                    <div className="flex gap-2">
+                       <Button type="button" variant="outline" size="sm" onClick={() => {
+                          const stateUpdater = isInstallation ? setInstallationQuestionnaireData : setQuestionnaireData;
+                          const currentSig = isInstallation ? installationQuestionnaireData.engineerSignature : questionnaireData.engineerSignature;
+                          if (currentSig) {
+                              stateUpdater(prev => ({ ...prev, engineerSignature: undefined }));
+                          } else {
+                              engSigPad.current?.clear();
+                          }
+                       }}>Clear</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => engSigUploadRef.current?.click()}>Upload Signature</Button>
+                        <input type="file" ref={engSigUploadRef} className="hidden" accept="image/*" onChange={(e) => handleSignatureUpload(e, 'engineer')} />
+                    </div>
+                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Customer Signature</Label>
+                 <div className="rounded-lg border bg-muted/50 p-2 space-y-2">
+                     {(isInstallation ? installationQuestionnaireData.customerSignature : questionnaireData.customerSignature) ? (
+                        <div><Image src={(isInstallation ? installationQuestionnaireData.customerSignature : questionnaireData.customerSignature)!} alt="Customer Signature" width={300} height={150} className="rounded-md border bg-white object-contain" /></div>
+                    ) : (
+                        <SignatureCanvas ref={custSigPad} penColor="black" canvasProps={{ className: 'w-full h-32 rounded-md border bg-white' }} />
+                    )}
+                     <div className="flex gap-2">
+                       <Button type="button" variant="outline" size="sm" onClick={() => {
+                           const stateUpdater = isInstallation ? setInstallationQuestionnaireData : setQuestionnaireData;
+                           const currentSig = isInstallation ? installationQuestionnaireData.customerSignature : questionnaireData.customerSignature;
+                           if (currentSig) {
+                               stateUpdater(prev => ({ ...prev, customerSignature: undefined }));
+                           } else {
+                               custSigPad.current?.clear();
+                           }
+                       }}>Clear</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => custSigUploadRef.current?.click()}>Upload Signature</Button>
+                        <input type="file" ref={custSigUploadRef} className="hidden" accept="image/*" onChange={(e) => handleSignatureUpload(e, 'customer')} />
+                    </div>
+                 </div>
+              </div>
+            </div>
           </div>
 
           <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3 px-4 pb-4">
@@ -721,6 +825,7 @@ const removeValidationCheckRow = (index: number) => {
       </Dialog>
 
       {renderContent()}
+
     </>
   );
 }

@@ -276,7 +276,11 @@ export function InstallationReportDisplay({
             ]
         ],
         theme: 'grid',
-        tableWidth: pageWidth - margin * 2,
+        margin: { left: margin, right: margin },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 'auto' },
+        },
         styles: {
             lineColor: [0, 0, 0],
             lineWidth: 0.5,
@@ -328,7 +332,7 @@ export function InstallationReportDisplay({
       )
   }
   
-  const isEngineerView = user?.role === 'Engineer';
+  const isEngineerView = user?.role === 'Engineer' || user?.role === 'Admin';
 
   const statusColors: Record<string, string> = {
     Passed: 'bg-green-100 text-green-800',
@@ -418,5 +422,7 @@ export function InstallationReportDisplay({
     </Card>
   );
 }
+
+    
 
     

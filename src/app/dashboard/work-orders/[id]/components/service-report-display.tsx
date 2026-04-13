@@ -335,7 +335,11 @@ export function ServiceReportDisplay({
             ]
         ],
         theme: 'grid',
-        tableWidth: pageWidth - margin * 2,
+        margin: { left: margin, right: margin },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 'auto' },
+        },
         styles: {
             lineColor: [0, 0, 0],
             lineWidth: 0.5,
@@ -441,5 +445,7 @@ export function ServiceReportDisplay({
     </Card>
   );
 }
+
+    
 
     

@@ -267,8 +267,8 @@ export function InstallationReportDisplay({
                 { content: `Engineer Signature`, styles: { fontStyle: 'bold', valign: 'top' } }
             ],
             [
-                { content: ` `, styles: { minCellHeight: 50 } },
-                { content: ` `, styles: { minCellHeight: 50 } }
+                { content: ` `, styles: { minCellHeight: 30 } },
+                { content: ` `, styles: { minCellHeight: 30 } }
             ],
             [
                 { content: `Name: ${safe(reportData.signingPerson)}`, styles: { valign: 'bottom' } },
@@ -283,18 +283,18 @@ export function InstallationReportDisplay({
         didDrawCell: (data: any) => {
             if (data.section === 'body' && data.row.index === 1 && data.column.index === 0 && reportData.customerSignature) {
                 try {
-                    doc.addImage(reportData.customerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 100, 40);
+                    doc.addImage(reportData.customerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 100, 20);
                 } catch (e) { console.error("Failed to add customer signature to PDF", e); }
             }
             if (data.section === 'body' && data.row.index === 1 && data.column.index === 1 && reportData.engineerSignature) {
                  try {
-                    doc.addImage(reportData.engineerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 100, 40);
+                    doc.addImage(reportData.engineerSignature, 'PNG', data.cell.x + 10, data.cell.y + 5, 100, 20);
                 } catch (e) { console.error("Failed to add engineer signature to PDF", e); }
             }
         },
         columnStyles: {
-            0: { cellWidth: (pageWidth - margin * 2) / 2 },
-            1: { cellWidth: (pageWidth - margin * 2) / 2 },
+            0: { cellWidth: 250 },
+            1: { cellWidth: 250 },
         }
     });
     finalY = (doc as any).lastAutoTable.finalY + 5;

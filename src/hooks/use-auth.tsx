@@ -1,4 +1,3 @@
-
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -11,6 +10,7 @@ import {
     createUserWithEmailAndPassword, 
     signOut,
     updateProfile,
+    sendPasswordResetEmail,
     type User as FirebaseUser
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -21,6 +21,7 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   login: (email: string, pass: string) => Promise<void>;
   signup: (email: string, pass: string, name: string, companyName: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -104,13 +105,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const sendPasswordReset = useCallback(async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  }, []);
+
   const logout = useCallback(async () => {
     await signOut(auth);
     router.push('/login');
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, firebaseUser, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, firebaseUser, login, signup, sendPasswordReset, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

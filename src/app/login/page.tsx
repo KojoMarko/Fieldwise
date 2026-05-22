@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Card,
@@ -17,6 +16,80 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+function ForgotPasswordDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { sendPasswordReset } = useAuth();
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setIsSubmitting(true);
+    try {
+      await sendPasswordReset(email);
+      toast({
+        title: "Reset link sent",
+        description: "Check your email for the password reset link.",
+      });
+      onOpenChange(false);
+      setEmail('');
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Reset failed",
+        description: error.message || "Could not send reset email. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Reset Password</DialogTitle>
+          <DialogDescription>
+            Enter your email address and we&apos;ll send you a link to reset your password.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleReset}>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="reset-email">Email</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting || !email}>
+              {isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Send Link
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function LoginForm() {
   const { login, user, isLoading } = useAuth();
@@ -27,6 +100,7 @@ function LoginForm() {
   const [email, setEmail] = useState(searchParams.get('email') || '');
   const [password, setPassword] = useState(searchParams.get('password') || '');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +113,7 @@ function LoginForm() {
       // We don't console.error standard auth errors to avoid the dev overlay
       let message = 'Invalid credentials. Please check your email and password.';
       
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         message = 'Invalid email or password.';
       } else if (error.code === 'auth/too-many-requests') {
         message = 'Too many failed login attempts. Please try again later.';
@@ -73,78 +147,83 @@ function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="text-center items-center">
-        <Link
-          href="/"
-          className="flex items-center justify-center gap-2 font-semibold mb-4"
-        >
-           <Image
-            src="/Field Wise Logo.png"
-            width={80}
-            height={80}
-            alt="FieldWise Logo"
-            className="transition-all group-hover:scale-110"
-          />
-        </Link>
+    <>
+      <ForgotPasswordDialog open={isForgotOpen} onOpenChange={setIsForgotOpen} />
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center items-center">
+          <Link
+            href="/"
+            className="flex items-center justify-center gap-2 font-semibold mb-4"
+          >
+            <Image
+              src="/Field Wise Logo.png"
+              width={80}
+              height={80}
+              alt="FieldWise Logo"
+              className="transition-all group-hover:scale-110"
+            />
+          </Link>
 
-        <CardTitle className="text-2xl">Login to your account</CardTitle>
-        <CardDescription>Enter your email below to login</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleLogin}>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoggingIn}
-              />
-            </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  href="#"
-                  className="ml-auto inline-block text-sm underline"
-                >
-                  Forgot your password?
+          <CardTitle className="text-2xl">Login to your account</CardTitle>
+          <CardDescription>Enter your email below to login</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin}>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoggingIn}
+                />
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    className="ml-auto inline-block text-sm underline p-0 h-auto"
+                    onClick={() => setIsForgotOpen(true)}
+                  >
+                    Forgot your password?
+                  </Button>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoggingIn}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                {isLoggingIn ? (
+                  <>
+                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                    Logging in...
+                  </>
+                ) : (
+                  'Login'
+                )}
+              </Button>
+              <div className="mt-4 text-center text-sm">
+                Don&apos;t have an account?{' '}
+                <Link href="/signup" className="underline">
+                  Sign up
                 </Link>
               </div>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoggingIn}
-              />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoggingIn}>
-              {isLoggingIn ? (
-                <>
-                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                  Logging in...
-                </>
-              ) : (
-                'Login'
-              )}
-            </Button>
-             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{' '}
-              <Link href="/signup" className="underline">
-                Sign up
-              </Link>
-            </div>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+          </form>
+        </CardContent>
+      </Card>
+    </>
   )
 }
 

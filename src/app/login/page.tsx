@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { LoaderCircle } from 'lucide-react';
 
 function LoginForm() {
   const { login, user, isLoading } = useAuth();
@@ -25,33 +26,48 @@ function LoginForm() {
 
   const [email, setEmail] = useState(searchParams.get('email') || '');
   const [password, setPassword] = useState(searchParams.get('password') || '');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoggingIn(true);
     try {
       await login(email, password);
-      router.push('/dashboard');
-    } catch (error) {
-      console.error(error);
+      // router.push is handled by the useEffect redirect below for consistency
+    } catch (error: any) {
+      setIsLoggingIn(false);
+      // We don't console.error standard auth errors to avoid the dev overlay
+      let message = 'Invalid credentials. Please check your email and password.';
+      
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        message = 'Invalid email or password.';
+      } else if (error.code === 'auth/too-many-requests') {
+        message = 'Too many failed login attempts. Please try again later.';
+      }
+
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description:
-          'Invalid credentials. Please check your email and password.',
+        description: message,
       });
     }
   };
 
   useEffect(() => {
+    // If the user is already authenticated, redirect them to the dashboard
     if (!isLoading && user) {
       router.push('/dashboard');
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || user) {
+  // We only show a minimal loading state if we've already detected a user and are redirecting
+  if (!isLoading && user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        Loading...
+        <div className="text-center">
+            <LoaderCircle className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Redirecting to dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -87,6 +103,7 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoggingIn}
               />
             </div>
             <div className="grid gap-2">
@@ -105,10 +122,18 @@ function LoginForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoggingIn}
               />
             </div>
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full" disabled={isLoggingIn}>
+              {isLoggingIn ? (
+                <>
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                  Logging in...
+                </>
+              ) : (
+                'Login'
+              )}
             </Button>
              <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{' '}
@@ -127,7 +152,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 p-4">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div className="flex items-center justify-center"><LoaderCircle className="h-10 w-10 animate-spin text-primary" /></div>}>
         <LoginForm />
       </Suspense>
     </div>
